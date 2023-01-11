@@ -361,9 +361,9 @@ declare(
       if (result instanceof Error) {
         // Distinctify and try again.
         // Why does this path execute in just one test case, where using
-        // distinctify does not resolve the problem?
+        // distinctifyTypes does not resolve the problem?
         window.dCounter = (window.dCounter || 0) + 1;
-        const eq2 = equation.distinctify(target);
+        const eq2 = equation.distinctifyTypes(target);
         const result2 = eq2.wff.ruleRCore(target, path, eq2);
         if (result2 instanceof Error) {
           return result2;
