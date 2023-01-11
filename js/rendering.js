@@ -443,6 +443,17 @@ ProofDisplay.prototype.addStep = function(step) {
 };
 
 /**
+ * Adds to this proof display all unrendered dependencies
+ * of this regular step.
+ */
+ProofDisplay.prototype.addDerivation = function(step) {
+  var steps = Toy.unrenderedDeps(step);
+  steps.forEach(function(s) {
+    self.proofDisplay.addStep(s);
+  });
+};
+
+/**
  * Finds a step belonging to this ProofDisplay that depends on the original
  * of the given target step; or null if none found.
  */

@@ -1388,10 +1388,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
       var simplified = (trial.sameAs(result)
                         ? result
                         : trial);
-      var steps = Toy.unrenderedDeps(simplified);
-      steps.forEach(function(step) {
-        self.proofDisplay.addStep(step);
-      });
+      self.proofDisplay.addDerivation(simplified);
       // Scroll the proof steps DIV all the way to the bottom
       // so the new step(s) are visible.
       editor.$node.find('.proofSteps').scrollTop(1e9)
