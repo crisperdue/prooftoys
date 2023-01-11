@@ -1153,6 +1153,28 @@ function normalReturn(fn, ...args) {
   }
 }
 
+/**
+ * Returns the value of calling the given function with the given
+ * arguments, unless a throw occurs during its execution.  In that
+ * case returns the error.  This does not interfere with exits, i.e.
+ * continues the unwinding process.
+ *
+ * By using "catch" internally, this suppresses debugging when the
+ * developer tools are open, so this is intended for catching errors
+ * that are expected as part of normal operation.
+ */
+function catching(fn, ...args) {
+  try {
+    return fn.apply(undefined, args);
+  } catch(e) {
+    if (exitTarget) {
+      unwind();
+    } else {
+      return e;
+    }
+  }
+}
+
 
 //// NestedTimer -- timer that excludes time in other timers
 
@@ -2652,6 +2674,7 @@ Toy.error = error;
 Toy.newError = newError;
 Toy.isError = isError;
 Toy.normalReturn = normalReturn;
+Toy.catching = catching;
 Toy.withExit = withExit;
 Toy.catchAborts = catchAborts;
 Toy.thrown = null;
