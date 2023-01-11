@@ -1786,8 +1786,10 @@ RuleMenu.prototype._update = function() {
       if (!map) {
         return;
       }
-      const eqn = proofStep.andThen('instMultiVars', map, true);
-      if (!Toy.boundVarsOK(selStep, sitePath, eqn)) {
+      // Try to do the substitution, which can fail.
+      const eqn = Toy.catching(
+        () => proofStep.andThen('instMultiVars', map, true));
+      if (eqn instanceof Error || !Toy.boundVarsOK(selStep, sitePath, eqn)) {
         return;
       }
       // TODO: Render this info and rewrite _rule_ content
@@ -1834,8 +1836,10 @@ RuleMenu.prototype._update = function() {
       // deduction step, or invent a "suppose" rule that
       // proves (forall)A => A for arbitrary A, and use that.
       const eqn1 = rules.assert(statement);
-      const eqn2 = eqn1.andThen('instMultiVars', subst, true);
-      if (!Toy.boundVarsOK(selStep, sitePath, eqn2)) {
+      // Try to do the substitution, which can fail.
+      const eqn2 = Toy.catching(
+        () => eqn1.andThen('instMultiVars', subst, true));
+      if (eqn2 instanceof Error || !Toy.boundVarsOK(selStep, sitePath, eqn2)) {
         return;
       }
       const resultTerm = eqn2.replacementTerm();
