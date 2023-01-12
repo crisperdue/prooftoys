@@ -1824,6 +1824,17 @@ RuleMenu.prototype._update = function() {
       if (!subst) {
         return;
       }
+      // This is special case code for rewriting of predicates to set
+      // membership.
+      if (selection.isInfixCall()) {
+        // Don't offer this transformation on infix calls.  It's not
+        // especially helpful and looks weird.
+        if (fact.alphaMatch('Y x == x in Y')) {
+          return;
+        }
+      }
+      // Prepare to avoid unnecessary identification of potentially
+      // distinct free variables.
       const renamer = fact.distinctifier(sitePath, selStep, subst);
       const statement = fact.rename(renamer);
       // CAUTION: eqn1 and eqn2 are not to be added to the
