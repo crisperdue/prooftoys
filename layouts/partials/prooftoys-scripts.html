@@ -9,10 +9,11 @@
   {{ $un := resources.Get "/pt/js/unify.js" }}
   {{ $lo := resources.Get "/pt/js/logic.js" }}
   {{ $nu := resources.Get "/pt/js/numbers.js" }}
+  {{ $nn := resources.Get "/pt/js/natnums.js" }}
   {{ $st := resources.Get "/pt/js/step-editor.js" }}
   {{ $re := resources.Get "/pt/js/rendering.js" }}
   {{ $so := resources.Get "/pt/js/solution-status.js" }}
-  {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nu $st $re $so }}
+  {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nu $nn $st $re $so }}
   {{ $allJS := resources.Concat "/js/all.js" $all }}
   {{ if $.Site.IsServer }}
     {{ range $all }}
