@@ -5163,10 +5163,12 @@ declare(
         // Justify the final result in each usage of the fact.
         return instance.justify('fact', arguments);
       }
-      // Next try arithmetic facts.
-      const arith = rules.arithFact(wff);
-      if (arith) {
-        return arith;
+      // Next try arithmetic facts (if reals are available).
+      if (rules.arithFact) {
+        const arith = rules.arithFact(wff);
+        if (arith) {
+          return arith;
+        }
       }
       // Try tautologies.
       if (Toy.looksBoolean(wff)) {
@@ -5187,28 +5189,6 @@ declare(
       return d || 'fact';
     },
     labels: 'basic'
-  },
-
-  // A rule just for arithmetic facts, currently inline.
-  // Returns null if the input is not an arithmetic fact.
-  {name: 'arithFact',
-   action: function(wff) {
-     if (wff.isEquation()) {
-       var result = Toy.tryArithmetic(wff.eqnLeft());
-       if (result && result.alphaMatch(wff)) {
-         return result.justify('fact', arguments);
-       }
-     } else {
-       // Relational operators can go here.
-       var result = Toy.tryArithmetic(wff);
-       // x = T is the expected result.
-       if (result && result.matchSchema('x == T')) {
-         return (rules.rewriteOnly(result, '', '(x == T) == x')
-                 .justify('fact', arguments));
-       }
-     }
-     return null;
-   }
   },
 
   // Traditionally in lambda calculus (use of) this is referred to as

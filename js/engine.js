@@ -823,7 +823,7 @@ function declare(...declarations) {
 }
 
 
-// Essentially unique
+//// Essential uniqueness
 
 // This concept applies to a carrier set and one or more functions of
 // one or more arguments from that set, a.k.a. a "structure".
@@ -1611,7 +1611,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         //   and warn when a match is rejected due to fact proof in
         //   progress.
         var fullFact = (factExpansion(stmt) ||
-                        rules.arithFact(stmt) ||
+                        rules.arithFact && rules.arithFact(stmt) ||
                         rules.tautology(stmt));
         if (Toy.isError(fullFact)) {
           continue;
@@ -2201,24 +2201,6 @@ var basicSimpFacts = [
                       'not (a = b) == a != b',
                       'if T x y = x',
                       'if F x y = y',
-                      {stmt: '@a + neg b = a - b',
-                       // This condition makes extra-sure there will be
-                       // no circularity during simplification.
-                       // Negation of a numeral will be simplified by
-                       // other rules.
-                       where: '!$.b.isNumeral()'},
-                      {stmt: '@a - b = a + neg b',
-                       // This one is an exception to the general rule
-                       // that simplifiers make the expression tree
-                       // smaller; but arithmetic will follow this, and
-                       // with high priority.
-                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
-                      {apply: function(term, cxt) {
-                          return (Toy.isArithmetic(term) &&
-                                  rules.axiomArithmetic(term));
-                        }
-                      }
-                      // {apply: arithRight} Done in numbers.js.
                       ];
 
 

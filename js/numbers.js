@@ -4,7 +4,12 @@
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
-Toy.useRealNumbers = function() {
+Toy.requireRealNumbers = function() {
+
+if (Toy.realNumbersLoaded) {
+  return;
+}
+Toy.realNumbersLoaded = true;
 
 //// THEOREMS AND RULES
 
@@ -869,7 +874,28 @@ declare
     toOffer: 'return Toy.isArithmetic(term);',
     tooltip: 'arithmetic',
     labels: 'algebra'
-  }
+  },
+  // A rule just for arithmetic facts, currently inline.
+  // Returns null if the input is not an arithmetic fact.
+  {name: 'arithFact',
+   action: function(wff) {
+     if (wff.isEquation()) {
+       var result = Toy.tryArithmetic(wff.eqnLeft());
+       if (result && result.alphaMatch(wff)) {
+         return result.justify('fact', arguments);
+       }
+     } else {
+       // Relational operators can go here.
+       var result = Toy.tryArithmetic(wff);
+       // x = T is the expected result.
+       if (result && result.matchSchema('x == T')) {
+         return (rules.rewriteOnly(result, '', '(x == T) == x')
+                 .justify('fact', arguments));
+       }
+     }
+     return null;
+   }
+  },
   );
 
 
@@ -3850,6 +3876,7 @@ definition('abs x = ifReal x (if (x < 0) (neg x) x)');
 
 definition('ZZ x == x = floor x');
 
+/*
 definition('NN x == ZZ x & x >= 0');
 
 // This is natural number division, defined only for naturals.
@@ -3868,6 +3895,7 @@ declare
   );
 
 definition('absdiv x d = natdiv (abs x) (abs d)');
+*/
 
 // definition('quo x d = sgn (the {r. idiv x d + r = d})');
 
@@ -3929,7 +3957,27 @@ Toy.isArithmetic = isArithmetic;
 // From here is overall initialization for the complete system.
 
 // This is an easy way to get arithRight into the list of simplifiers.
-basicSimpFacts.push({apply: arithRight});
+basicSimpFacts.push
+  ({stmt: '@a + neg b = a - b',
+    // This condition makes extra-sure there will be
+    // no circularity during simplification.
+    // Negation of a numeral will be simplified by
+    // other rules.
+    where: '!$.b.isNumeral()'},
+   {stmt: '@a - b = a + neg b',
+    // This one is an exception to the general rule
+    // that simplifiers make the expression tree
+    // smaller; but arithmetic will follow this, and
+    // with high priority.
+    where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
+   {apply:
+    function(term, cxt) {
+      return (Toy.isArithmetic(term) &&
+              rules.axiomArithmetic(term));
+    }
+   },
+   {apply: arithRight},
+  );
 
 // For testing (computed value).
 Toy._ungroupingFacts = ungroupingFacts;
