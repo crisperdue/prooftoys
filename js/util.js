@@ -1370,9 +1370,13 @@ function grepDocs(pattern) {
 //// Proof editor state, by proofEditorId
 
 // This is persistent state, document name per editor ID.
+// Each proof editor object has a numeric ID that is unique within its
+// window, based on order of creation within the window, starting
+// with number 1.
 
-// Internal function.  Here "ped" is short for
-// proof editor.
+// Internal function that returns a localstorage key for information
+// associated with a specific proof editor at a specific URL.  Here
+// "ped" is short for proof editor.
 function pedKey(ed) {
   return Toy.format('Toy:ped:{1}', ed.proofEditorId);
 }
