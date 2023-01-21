@@ -42,6 +42,9 @@ var nextProofEditorId = 1;
  * 
  * docName: if given, overrides the default document name.
  * loadDoc: if false, suppresses initial loading of the document.
+ * oneDoc: if true, the editor cannot switch to work on any
+ *   document other than the initial one.  Currently implemented
+ *   by hiding the worksheets button.
  *
  * Public properties:
  *
@@ -95,6 +98,11 @@ function ProofEditor(options_arg) {
   // Top-level element of the proof editor display:
   const $node = this.$node =
     $('<div class="proofEditor logicZone"></div>');
+
+  // Style the editor as "stable" if requested.
+  if (options.oneDoc) {
+    $node.addClass('oneDoc');
+  }
 
   const stepEditor = new StepEditor(this);
   self.stepEditor = stepEditor;

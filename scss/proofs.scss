@@ -749,6 +749,11 @@ input.varName, input.step, input.equation, input.implication {
 
 /* Worksheet-related controls */
 
+// If the document is preassigned, hide the worksheets button.
+.proofEditor.oneDoc .wksButton {
+  display: none;
+}
+
 /* Outermost of worksheet containers, without border or padding. */
 .wksControlsOuter {
     z-index: 3;
