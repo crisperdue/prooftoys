@@ -2090,9 +2090,16 @@ function dumpProof(proofEditor) {
 }
 
 /**
- * Given an array of step descriptions, each in the serialized form as
- * from encodeSteps, builds a proof consisting of those steps, and
- * returns the proved result (last step).
+ * Coerces a value into a proof (that can be presented to the user).
+ * Given a string that is a sequence of step descriptions, optionally
+ * enclosed in "(steps ... )", or an array of step description
+ * strings, returns an array of ordinary proof steps ready to render
+ * into a proof.  If given a function, the function should return an
+ * array of proved steps.
+ *
+ * Adding the elements of the result to a proof editor should be done
+ * with addDerivation, to be sure the proof display includes needed
+ * dependencies.
  *
  * In case of an Error return from decodeSteps, returns that error.
  */
@@ -2104,13 +2111,17 @@ function asProof(info) {
     return info;
   } else if (type === 'string') {
     return () => {
-      const decoded = decodeSteps(info);
+      const fullSteps =
+            info.startsWith('(steps') ? info : `(steps ${info})`;
+      const decoded = decodeSteps(fullSteps);
       return (decoded instanceof Error
               ? decoded
               : decoded[decoded.length - 1]);
     }
   } else if (Array.isArray(info)) {
     return asProof(['(steps '].concat(info, ')').join('\n'));
+  } else if (typeof info === 'function') {
+    return info();
   } else {
     return new Error(`Not a proof: ${info}`);
   }
