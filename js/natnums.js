@@ -16,11 +16,13 @@ const rules = Toy.rules;
 const declare = Toy.declare;
 const definition = Toy.definition;
 
-declare(
-  // {theory: 'nat'},
+Toy.exercise(
+  'nat',
+
   {statement: 'NN zero', axiom: true,
    description: 'zero is a natural number'
   },
+  {exertion: 'nat0'},
   {statement: 'NN n => NN (succ n)', axiom: true,
    description: 'successor is closed over the natural numbers'
   },
@@ -32,7 +34,8 @@ declare(
   },
   {statement: 'P zero & (P n => P (succ n)) => (NN x => P x)', axiom: true,
    description: 'induction over the natural numbers'
-  }
+  },
+  {exertion: 'nat1'},
 );
 
 }();

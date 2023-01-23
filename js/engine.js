@@ -823,6 +823,23 @@ function declare(...declarations) {
 }
 
 
+//// Exercises
+  
+// This maps from an exercise name to its declarations.
+var exercises = new Map();
+
+/**
+ * Declares an exercise with a number of declarations.  This is like
+ * the declarations function, but is specific to exercises and requires
+ * the name of the exercise as its first argument.
+ */
+function exercise(name, ...declarations) {
+  const decls = exercises.get(name) || [];
+  decls.push(...declarations);
+  exercises.set(name, decls);
+}
+
+
 //// Essential uniqueness
 
 // This concept applies to a carrier set and one or more functions of
@@ -2571,8 +2588,9 @@ $(function() {
   const db = window.Toy.db = new Dexie('Prooftoys');
   db.version(1).stores({
     prefs: '&key',
-    pages: '&page',
+    editors: '&id',
     sheets: '&sheetName',
+    exercises: '&exName',
   });
   db.prefs.put({key: 'boo', value: 'far'});
 });
@@ -2603,6 +2621,8 @@ Toy.noSimplify = noSimplify;
 Toy.boundVarsOK = boundVarsOK;
 
 Toy.declare = declare;
+Toy.exercise = exercise;
+Toy.exercises = exercises;
 Toy.addRule = addRule;
 Toy.definition = definition;
 Toy.deferredDefnFacts = deferredDefnFacts;
