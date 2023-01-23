@@ -4487,7 +4487,7 @@ declare(
         const simp = info.autoSimplify;
         return simp(step);
       } else {
-        if (Toy.isDistribFact(stmt)) {
+        if (Toy.isDistribFact && Toy.isDistribFact(stmt)) {
           var step1 = rules.arrangeTerm(step, path.concat('/right'));
           var step2 = rules.arrangeTerm(step1, path.concat('/left'));
           var step3 = rules.simplifyFocalPart(step2);
