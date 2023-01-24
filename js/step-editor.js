@@ -1768,7 +1768,8 @@ function RuleMenu(proofEditor) {
   self.$modeList = $modeList;
   $modeList.append('<div class=mode data-mode=algebra>Algebra</div>',
                    '<div class="mode selected" data-mode=general>' +
-                   'General</div>',
+                   'Popular</div>',
+                   '<div class=mode data-mode=backward>Backward</div>',
                    '<div class=mode data-mode=other>Other</div>',
                    '<div class=mode data-mode=edit>Edit</div>',
                   );
@@ -1866,8 +1867,9 @@ RuleMenu.prototype._update = function() {
 
   const blurbs = {
     algebra: 'Actions for basic algebra:',
-    general: 'Rewrites (and such):',
-    other: 'Wild and crazy stuff:'
+    general: 'Rewrites and other often-used actions:',
+    backward: 'Working backward to prove the selected term:',
+    other: 'Less common or advanced:',
   };
   const mode = proofEditor.showRuleType;
   const blurb = blurbs[mode] || 'Actions:';
@@ -2024,11 +2026,6 @@ RuleMenu.prototype._update = function() {
       html += (' <span class=description>' + blurb + '</span>');
       const $node = $('<span>').append(html);
       $node.find('br.resultTerm').replaceWith(resultTerm.renderTerm());
-      // Rule name format of "fact <fact text>"
-      // indicates that the text defines a fact to use in
-      // rules.rewrite.
-      // TODO: Replace this obsolete "fact <stmt>" syntax
-      //   with modern "rewrite" ruleName and ruleArgs.
       var info = {ruleName: 'rewrite',
                   ruleArgs: [selStep.original, sitePath, statement],
                   html: html,
@@ -2111,7 +2108,9 @@ RuleMenu.prototype._update = function() {
     // If there is a selected term, render it and any right neighbor
     // term, and insert the renderings into all menu items that have
     // slots for them.
-    var $term = $(selection.renderTerm());
+    //
+    // TODO: Uncomment this line to get a rendering of the selection.
+    // var $term = $(selection.renderTerm());
     $items.find('.menuSelected').append('&star;');
     var rightTerm = Toy.getRightNeighbor(selStep, selection);
     var $right = '?';
@@ -2375,7 +2374,7 @@ RuleMenu.prototype.labelApproved = function(name) {
   case 'other':
     return !okAlgebra() && !okGeneral() && !labels.primitive;
   default:
-    throw new Error('Bad rule policy value: ' + editor.showRuleType);
+    return false;
   }
 };
 
@@ -2517,6 +2516,8 @@ const catsOfMenu =
                ['algebra', new Set(['algebra'])],
                ['general',
                 new Set(['general', 'simplifier', 'algebra', 'realType'])],
+               ['backward',
+                new Set(['backward'])],
                ['edit', new Set(['edit'])],
                ['other', new Set(['advanced', 'other',
                                   'desimplifier', 'forward'])]]);
