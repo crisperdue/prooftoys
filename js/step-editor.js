@@ -2505,42 +2505,7 @@ const catsOfMenu =
                 new Set(['general', 'simplifier', 'algebra', 'realType'])],
                ['edit', new Set(['edit'])],
                ['other', new Set(['advanced', 'other',
-                                  'desimplifier', 'backward', 'forward'])]]);
-
-/* TODO: Remove this temporary utility.
-function factCheck(... which_arg) {
-  const which = new Set(which_arg);
-  const categories = info => {
-    const cats = new Set();
-    const labels = info.labels;
-    const find = lbl =>
-          (which.size
-           ? which.has(lbl) && labels[lbl]
-           : labels[lbl]);
-    if (find('algebra')) {
-      cats.add('algebra');
-    }
-    if (find('general')) {
-      cats.add('general');
-    }
-    if (find('display') || find('edit')) {
-      cats.add('edit');
-    }
-    if (cats.size) {
-      info.simplifier && cats.add('simplifier');
-      info.desimplifier && cats.add('desimplifier');
-    }
-    return cats;
-  };
-  const checkFact = info => {
-    const cats = categories(info);
-    if (cats.size) {
-      console.log(info.goal.getMain().$$, ':', [... cats].join(' '));
-    }
-  }
-  Toy.eachFact(checkFact);
-}
-*/
+                                  'desimplifier', 'forward'])]]);
 
 /**
  * This matches a step against the inputs descriptor of an inference
