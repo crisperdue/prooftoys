@@ -1913,6 +1913,20 @@ RuleMenu.prototype._update = function() {
 
     // This searches for steps that can rewrite.
     proofEditor.steps.forEach((proofStep, index) => {
+      const submenu = proofEditor.showRuleType;
+
+      // The "backward" menu shows precisely matching steps that
+      // set up a subgoal.
+      const worksBack = proofStep.wff.hasSubgoal();
+      const isBackMenu = submenu === 'backward';
+      if (worksBack !== isBackMenu) {
+        return;
+      }
+      // Other steps only appear in the "general" menu.
+      if (submenu !== 'general' && !isBackMenu) {
+        return;
+      }
+
       const n = index + 1;
       const schema = proofStep.matchPart();
 
