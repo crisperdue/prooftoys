@@ -1355,6 +1355,16 @@ Expr.prototype.likeSubgoal = function() {
 };
 
 /**
+ * Tests whether the given goal (wff) has a subgoal within its
+ * assumptions, currently defined as anything other than a real number
+ * assumption or an inequality condition.
+ */
+Expr.prototype.hasSubgoal = function() {
+  const asms = this.getAsms();
+  return asms && asms.scanConj(x => x.likeSubgoal());
+};
+
+/**
  * Returns the nth "element" of this expression.  Recurs top down
  * through function parts of calls until finding a Atom, which is
  * consider element 0.  The arg part of that call is element 1,

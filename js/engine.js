@@ -258,15 +258,15 @@ function computeMenuCategories(info, isConverse) {
   }
 
   if (categories.size === 0) {
-    // If there is no explicit category, look for implicit ones
-    // based on the statement of the rule and metadata other than
-    // labels.  (Currently there is at most one.)
+    // If the labels alone do not determine a category, look for
+    // implicit category(s) based on the statement of the rule and
+    // metadata other than labels.
     const category =
           (info.desimplifier ? 'desimplifier'
            : info.simplifier ? 'simplifier'
            : (goal.matchSchema('a = the b') ||
               goal.matchSchema('a = the1 b')) ? 'advanced'
-           : hasSubgoal(goal) ? 'backward'
+           : goal.hasSubgoal() ? 'backward'
            // If it adds no subgoal, but has a type ("real")
            // assumption, show only if it has a label.
            : hasTypeAsm(goal) ? 'realType'
@@ -303,16 +303,6 @@ const categoryOfLabel = {
   backward: 'backward',
   forward: 'forward',
 };
-
-/**
- * Tests whether the given goal (wff) has a subgoal within its
- * assumptions, currently defined as anything other than a real number
- * assumption or an inequality condition.
- */
-function hasSubgoal(goal) {
-  const asms = goal.getAsms();
-  return asms && asms.scanConj(x => x.likeSubgoal());
-}
 
 /**
  * Tests whether the given goal (wff) has a type (real number)
