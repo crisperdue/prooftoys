@@ -300,20 +300,11 @@ $(function() {
     // page results in loading from a document, so that needs to have
     // priority.
     $('div.proof-editor').each(function() {
-        const data = this.dataset;
-        const stepsInfo = data.steps;
-        const editor = new Toy.ProofEditor();
-        editor.initialSteps = stepsInfo;
-        window.proofEditor = editor;
-        if (!editor.fromDoc) {
-          // Editor not loaded from a document, so load it
-          // from any data-steps property.
-          if (stepsInfo) {
-            editor.setSteps(Toy.decodeSteps(stepsInfo));
-          }
-        }
-        $(this).append(editor.$node);
-      });
+      const options = this.dataset;
+      const editor = new Toy.ProofEditor(options);
+      $(this).append(editor.$node);
+      window.proofEditor = editor;
+    });
     // Similarly create a proof display for each div.proof-display node.
     // These are read-only.
     $('div.proof-display').each(function() {

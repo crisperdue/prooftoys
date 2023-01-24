@@ -14,9 +14,12 @@ const format = Toy.format;
 const dom = Toy.dom;
 const TermSet = Toy.TermSet;
 const rules = Toy.rules;
+const infixCall = Toy.infixCall;  
 
 
 //// PROOF EDITOR
+
+var proofEditors = new Set();
 
 // TODO: Use events and event handlers to make cleaner separation
 //   between ProofEditor, ProofDisplay, and StepEditor.  StepEditor
@@ -24,7 +27,7 @@ const rules = Toy.rules;
 //   translate step numbers to steps.  Perhaps ProofDisplay can notify
 //   when its list of steps changes.
 
-// Each instance has a unique numeric ID.
+// Each instance has a unique, sequential numeric ID starting at 1.
 var nextProofEditorId = 1;
 
 /**
@@ -38,13 +41,20 @@ var nextProofEditorId = 1;
  * "theory" documents, only loads them up to that one.  The effect is
  * to load the "theory" documents automatically into the page.
  *
- * Optional argument "options", plain object with properties:
+ * Optional argument "options", plain object with named properties:
  * 
- * docName: if given, overrides the default document name.
- * loadDoc: if false, suppresses initial loading of the document.
+ * docName: if given, overrides the default workspace name.  This is
+ *   ignored if an exercise is given.
  * oneDoc: if true, the editor cannot switch to work on any
  *   document other than the initial one.  Currently implemented
  *   by hiding the worksheets button.
+ * exercise: name of an exercise set and part to set up, in the format
+ *   exercise/part.  Suppresses automatic loading of real numbers.
+ *   Also has the effect of oneDoc.  This is for tutorials and problem
+ *   sets (really lists).  If given, this must be the only proof
+ *   editor within this page.
+ * steps: encoding of initial steps; only applies if no document
+ *   matching the computed workspace name already exists.
  *
  * Public properties:
  *
@@ -58,8 +68,11 @@ var nextProofEditorId = 1;
  *   an integer sequence number of the editor within the page.  In
  *   principle an editor could also be assigned an ID explicitly during
  *   editor initialization immediately after creation.
- * fromDoc: boolean, true if state loaded from a document in constructor.
- * initialSteps: string with initial steps to reset to on "clear work".
+ * fromDoc: boolean, true if the constructor gets state from an existing document.
+ * initialSteps: array of ordinary steps to display when cleared, or
+ *   initially if no state is saved in the database.  From the "steps"
+ *   option if given, or from an exercise problem statement; defaults
+ *   to an empty array.
  * givens: read-only TermSet of boolean terms defining the problem, often
  *   equations (not steps).  Non-empty iff the first step is a "given"
  *   step; then contains the conjuncts of the main part, as determined
@@ -77,8 +90,24 @@ var nextProofEditorId = 1;
  *   editor is reset.
  */
 function ProofEditor(options_arg) {
+
+  //// Initialize properties.
+
   const self = this;
-  const options = Object.assign({loadDoc: true}, options_arg);
+  const options = self._options =
+    Object.assign({oneDoc: false, exercise: null},
+                  options_arg);
+  
+  // This is set up by a later part of the constructor.
+  // It stays null for exercises.
+  self.docName = null;
+  assert(proofEditors.size === 0 || options.exercise === null,
+         `Exercises permit only one ProofEditor (${options.exercise}).`);
+  proofEditors.add(self);
+  if (!options.exercise) {
+    Toy.requireRealNumbers();
+  }
+
   // If the first step of the proof is a "givens" step, this will
   // become a TermSet with all conjuncts of its main part.
   self._givens = new TermSet();
@@ -87,9 +116,14 @@ function ProofEditor(options_arg) {
   self.standardSolution = true;
   self.showRuleType = 'general';
   self.showRules = [];
+  // Exercises often override the default empty value.
+  self.initialSteps = options.steps ? Toy.decodeSteps(options.steps) : [];
 
-  // Set the ID.
-  self.proofEditorId = window.location.pathname + '#' + nextProofEditorId++;
+  //// Build the DOM structures and connect the parts.
+
+  const nid = nextProofEditorId++;
+  self.proofEditorId =
+    window.location.pathname + (nid === 1 ? '' : '#' + nid);
   const mainDisplay = new Toy.ProofDisplay();
   mainDisplay.proofEditor = self;
   self.proofDisplay = mainDisplay;
@@ -106,7 +140,7 @@ function ProofEditor(options_arg) {
 
   const stepEditor = new StepEditor(this);
   self.stepEditor = stepEditor;
-  // This provides a coordinate system for absolute positioning.
+  // This node provides a coordinate system for absolute positioning.
   const $formParent = $('<div style="position: relative">');
   $formParent.append(stepEditor.$form);
 
@@ -134,7 +168,8 @@ function ProofEditor(options_arg) {
   // at the end of this $header div.
   let $header =
     ($('<div class=proofEditorHeader>')
-     .append('<b>Worksheet "<span class=wksName></span>"</b>'));
+     .append('&nbsp;<b class=wksTitle>Worksheet \
+             "<span class=wksName></span>"</b>'));
   const $clearWork =
         $('<input type=button class=clearWork value="Clear work">');
   const css = {float: 'right',
@@ -164,16 +199,19 @@ function ProofEditor(options_arg) {
     .append(menu.$node);
   this.setEditable(true);
 
-  // Restore editor state.
-  const state = Toy.getSavedState(self);
-  // The (default) document name is the proofEditorId.
-  self.setDocumentName(options.docName ||
-                       (state
-                        ? state.docName
-                        // By default set the document name according
-                        // to the URI path, and the editor number if
-                        // that is greater than one.
-                        : this.proofEditorId));
+  if (!options.exercise) {
+    // Restore editor state.
+    const state = Toy.getSavedState(self);
+    // The (default) document name is the proofEditorId.
+    self.docName = (options.docName ||
+                    (state
+                     ? state.docName
+                     // By default set the document name according
+                     // to the URI path, and the editor number if
+                     // that is greater than one.
+                     : this.proofEditorId));
+    self.syncToDocName();
+  }
 
   // Prepare to write out proof state during refresh, so basically
   // whenever it changes.
@@ -196,11 +234,11 @@ function ProofEditor(options_arg) {
       }
     });
 
-  // Restores proof state if possible from the recorded document name,
-  // but only after a short delay.  The delay causes this to honor
-  // any setting of the editor document name, and is conceptually compatible
-  // with data stores that may return data asynchronously.
-  if (Toy.isDocHeldFrom(self._documentName, self)) {
+  // Caution the user in case the same document may be in use in another
+  // tab or window.
+  // TODO: Consider using a BroadcastChannel to communicate this sort
+  //   of information.
+  if (self.docName && Toy.isDocHeldFrom(self.docName, self)) {
     // Caution the user.  The isDocHeldFrom test seems to be unreliable,
     // at least during development, so just caution rather than
     // setting editable to false.
@@ -221,34 +259,48 @@ function ProofEditor(options_arg) {
     //   e.g.  with a "Save" command.
     Toy.alert('Caution: editing may be in progress in another tab/window');
   }
-  if (options.loadDoc) {
-    const docName = self._documentName;
-    let names = [docName];
-    if (nextProofEditorId <= 2) {
-      // In other words, this is the first proof editor on this page.
-      const theories = (Toy.lsDocs()
-                        .filter(nm => nm.startsWith('Theory '))
-                        .sort());
-      const index = theories.indexOf(docName);
-      if (index >= 0) {
-        // This removes everything starting at the index.
-        theories.splice(index);
-      }
-      names = theories.concat(docName);
-    }
-    for (const nm of names) {
-      if (self.openDoc(nm)) {
-        self.fromDoc = true;
-      } else {
-        break;
-      }
-    }
-  }
 
   // Initialize the uxBox state.
   self.$node.find('.uxBox')
     .prop('checked', localStorage.getItem('Toy:uxOK') === 'true');
 
+  // Loads a desired document.  If this is the first editor on the
+  // page, load any theory documents first.
+  if (self.docName) {
+    const dependencies = () => {
+      if (nextProofEditorId <= 2) {
+        // In other words, this is the first proof editor on this
+        // page.  Note: In the current implementation, any other proof
+        // editors or displays on the page will have this same proof
+        // context whether it is appropriate or not.
+        const theories = (Toy.lsDocs()
+                          .filter(nm => nm.startsWith('Theory '))
+                          .sort());
+        const index = theories.indexOf(self.docName);
+        if (index >= 0) {
+          // This removes everything starting at the index.
+          theories.splice(index);
+        }
+        return theories;
+      } else {
+        return [];
+      }
+    };
+    let names = dependencies();
+    for (const nm of names) {
+      self.openDoc(nm);
+    }
+    if (self.openDoc(self.docName)) {
+      // There is an existing saved document.
+      self.fromDoc = true;
+    }
+  }
+  // Loads the desired exercise into the proof's state
+  // from state in the database, or from the relevant declaration
+  // if no state has been saved.
+  if (options.exercise) {
+    self._initExercise(options.exercise);
+  }
 
   //// Event handlers
 
@@ -336,6 +388,84 @@ function ProofEditor(options_arg) {
 }
 
 /**
+ * Initialize theory and proof state for the given exercise.
+ * Also may set initialSteps to use in case the editor is cleared.
+ */
+ProofEditor.prototype._initExercise = function(exName) {
+  const self = this;
+  const db = Toy.db;
+  const info = prepExercise(exName);
+  if (!self._options.steps && info.statement) {
+    self.initialSteps = exerciseInits(info.statement);
+  }
+  db.exercises.get(exName)
+    .then(data => {
+        console.log('Exercise in db:', data);
+      const steps =
+            data
+            ? Toy.decodeSteps(data.proofState)
+            : self.initialSteps;
+      self.setSteps(steps);
+    });
+};
+
+/**
+ * Returns an array of ordinary proof steps that initialize an
+ * exercise based on setting the given statement as a goal.
+ * A null statement results in an empty array.
+ */
+function exerciseInits(statement) {
+  if (statement) {
+    const stmt = Toy.mathParse(statement);
+    console.log('Exercise statement:', stmt.$$);
+    const goal =
+          (stmt.implies()
+           ? infixCall(infixCall(stmt.getLeft(), '&', stmt.getRight()),
+                       '=>', stmt.getRight())
+           : infixCall(stmt, '=>', stmt));
+    console.log('Goal:', goal.$$);
+    const step = rules.tautologous(goal);
+    return [step];
+  } else {
+    return [];
+  }
+}
+
+/**
+ * Adds the declarations to set up the theory state desired for the
+ * given exercise name, given as "exercise/item".  In the declarations
+ * these are called "exertion"s.  Applies all but the last of them up
+ * through the exertion record.  Returns that last, omitting any
+ * exertion property and value.
+ */
+function prepExercise(name) {
+  const matches = name.match(/(.*?)\/(.*)/);
+  assert(matches, `Not an exercise item name: ${name}`);
+  const [_, exName, partName] = matches;
+  const decls = Toy.exercises.get(exName);
+  assert(decls, `No such exercise set: ${exName}`);
+  let found = false;
+  const keepers = [];
+  for (const decl of decls) {
+    const thisName = decl.exertion;
+    // This line copies the own properties.
+    const info = { ...decl };
+    delete info.exertion;
+    if (!Toy.isEmpty(info)) {
+      keepers.push(info);
+    }
+    if (thisName === partName) {
+      found = true;
+      break;
+    }
+  }
+  assert(found, `Exercise item ${name} not found`);
+  const result = keepers.pop();
+  keepers.forEach(Toy.addRule);
+  return result;
+};
+
+/**
  * Builds and returns an object for the proofButtons DIV of the given
  * proof editor.  This is the block of controls with the "worksheet"
  * button.  The returned plain object has properties:
@@ -349,7 +479,8 @@ function buildProofButtons(editor) {
   const $proofButtons = $('<div class="proofButtons">');
 
   // Toggling the proof state display visibility with a button.
-  const $wksButton = $('<input type=button value="Worksheets... ">');
+  const $wksButton =
+    $('<input type=button class=wksButton value="Worksheets... ">');
 
   // This holds textual representation of the latest selected term.
   // It is writable so the user can scroll it horizontally (using the
@@ -673,7 +804,7 @@ function buildWksControls(editor) {
   $saveAs.on('click', '.go', function() {
       const name = $($(this).closest('div.form')).find('.input').val();
       if (checkName(name)) {
-        editor.setDocumentName(name);
+        editor.syncToDocName(name);
         Toy.writeDoc(name, {proofState: editor.getStateString()});
         $message.text('Saved worksheet as "' + name + '"');
         toggleControl($message);
@@ -766,26 +897,26 @@ function makeButton(label, classes) {
 }
 
 /**
- * Sets the name of this editor's worksheet, and does associated
- * bookkeeping.  This does not load or save any proof state.  (In most
- * use cases one or the other should also be done.)
+ * Sets the name of this editor's worksheet, (this.docName) and
+ * does associated bookkeeping for the UI.  This does not load or save
+ * any proof state.  (In most use cases one or the other should also
+ * be done.)
  */
-ProofEditor.prototype.setDocumentName = function(name) {
+ProofEditor.prototype.syncToDocName = function(name) {
   const self = this;
-  self._documentName = name;
   // Set the document name into all nodes of class wksName.
   self.$node.find('.wksName').text(name);
   // Remember the state of this editor.
   // TODO: Replace the following with some form of state observation.
-  if (self.proofDisplay.isEditable()) {
+  if (self.isEditable()) {
     // Only note the state within this context if editing the proof,
     // so that otherwise the document can be edited by other editors.
     // (See Toy.isDocHeldFrom.)
-    Toy.noteState(self, {docName: self._documentName});
+    Toy.noteState(self, {docName: self.docName});
   }
   // Visiting the same page in another tab then will cause its proof
   // editor to visit the same document as this one.
-  Toy.saveState(self, {docName: self._documentName});
+  Toy.saveState(self, {docName: self.docName});
 };
 
 /**
@@ -798,7 +929,7 @@ ProofEditor.prototype.openDoc = function(name) {
   // TODO: Check for possible active editing in another tab/window.
   if (proofData) {
     this.setEditable(true);
-    this.setDocumentName(name);
+    this.syncToDocName(name);
     this.setSteps(Toy.decodeSteps(proofData.proofState));
     return true;
   } else {
@@ -810,7 +941,7 @@ ProofEditor.prototype.openDoc = function(name) {
  * Returns the name of the editor's current document.
  */
 ProofEditor.prototype.getDocumentName = function() {
-  return this._documentName;
+  return this.docName;
 };
 
 /**
@@ -819,10 +950,7 @@ ProofEditor.prototype.getDocumentName = function() {
 ProofEditor.prototype.clear = function() {
   this.showRules = [];
   this.stepEditor.hideForm();
-  const stepsInfo = this.initialSteps;
-  const steps = (stepsInfo ? Toy.decodeSteps(stepsInfo) : []);
-  // TODO: Respond in some way to any error in decoding.
-  this.proofDisplay.setSteps(steps);
+  this.proofDisplay.setSteps(this.initialSteps);
 };
 
 /**
@@ -930,9 +1058,18 @@ ProofEditor.prototype.setSteps = function(steps) {
  * rather than calling this directly, to avoid redundant work.
  */
 ProofEditor.prototype.saveProofState = function() {
-  var text = this.getStateString();
-  this._wksControls.setProofText(text);
-  Toy.writeDoc(this._documentName, {proofState: text});
+  const self = this;
+  const options = self._options;
+  var text = self.getStateString();
+  self._wksControls.setProofText(text);
+  if (self.docName) {
+    Toy.writeDoc(self.docName, {proofState: text});
+  } else if (options.exercise) {
+    Toy.db.exercises.put({exName: options.exercise, proofState: text})
+      .catch(reason => console.warn('Not put:', reason));
+  } else {
+    console.warn('State not saved');
+  }
 };
 
 /**
