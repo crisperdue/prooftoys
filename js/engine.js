@@ -308,9 +308,7 @@ const categoryOfLabel = {
  */
 function hasTypeAsm(goal) {
   const asms = goal.getAsms();
-  return asms && asms.scanConj(t => {
-      return !!t.isTypeTest();
-    });
+  return asms && asms.scanConj(t => !!t.isTypeTest());
 }
 
 // Used to order execution of proof steps so they can display
