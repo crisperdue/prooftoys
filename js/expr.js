@@ -1350,6 +1350,8 @@ Expr.prototype.getAsms = function() {
  */
 Expr.prototype.likeSubgoal = function() {
   return (!this.matchSchema('R x') &&
+          // This is the natural number predicate for the tutorial.
+          !this.matchSchema('NN x') &&
           !this.matchSchema('not (x = y)') &&
           !this.matchSchema('x != y'));
 };
