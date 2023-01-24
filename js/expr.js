@@ -1344,14 +1344,17 @@ Expr.prototype.getAsms = function() {
   return this.isCall2('=>') && this.getLeft();
 };
 
+Expr.prototype.isTypeTest = function() {
+  return (this.isCall1() &&
+          (this.fn.name === 'R' || this.fn.name === 'NN'));
+};
+
 /**
  * Returns truthy iff this looks like a subgoal.
  * Specific to real numbers.
  */
 Expr.prototype.likeSubgoal = function() {
-  return (!this.matchSchema('R x') &&
-          // This is the natural number predicate for the tutorial.
-          !this.matchSchema('NN x') &&
+  return (!this.isTypeTest() &&
           !this.matchSchema('not (x = y)') &&
           !this.matchSchema('x != y'));
 };
