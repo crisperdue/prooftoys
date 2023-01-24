@@ -2871,9 +2871,9 @@ declare(
   }
 );
 
-declare(
-  // Subtraction facts
+//// Subtraction facts
 
+declare(
   // Moving terms to the left
    {statement: 'a + b - c = a - c + b',
     proof: function() {
