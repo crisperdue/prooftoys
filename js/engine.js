@@ -267,8 +267,6 @@ function computeMenuCategories(info, isConverse) {
            : (goal.matchSchema('a = the b') ||
               goal.matchSchema('a = the1 b')) ? 'advanced'
            : goal.hasSubgoal() ? 'backward'
-           // If it adds no subgoal, but has a type ("real")
-           // assumption, show only if it has a label.
            : hasTypeAsm(goal) ? 'realType'
            : info.goal.matchPart().isVariable() ? 'varMatch'
            : 'other'
@@ -311,7 +309,7 @@ const categoryOfLabel = {
 function hasTypeAsm(goal) {
   const asms = goal.getAsms();
   return asms && asms.scanConj(t => {
-      return !!t.matchSchema('R x');
+      return !!t.isTypeTest();
     });
 }
 
