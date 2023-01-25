@@ -1958,7 +1958,7 @@ RuleMenu.prototype._update = function() {
       //   block just below.
       const html =
             // \u27ad is a lower-right shadowed rightwards arrow.
-            ` \u27ad <br class=resultTerm> <span class=description> \
+            ` \u27ad <b><br class=resultTerm></b> <span class=description> \
                using step ${n}</span>`;
       const $node = $('<span>').append(html);
       $node.find('br.resultTerm')
@@ -2016,13 +2016,21 @@ RuleMenu.prototype._update = function() {
       }
       const resultTerm = eqn2.replacementTerm();
       // The special character is a form of white right arrow.
-      let html = ' \u27ad <br class=resultTerm>';
+      let html = ' \u27ad <b><br class=resultTerm></b>';
       // TODO: Consider using the length of the unicode in deciding
       //   what message to generate here.
       // const unicode = statement.toUnicode();
+      const shortie = statement.shortForm();
+      const main = shortie.getMain();
+      const asms = shortie.getAsms();
+      const mainText = Toy.trimParens(main.toHtml());
+      const asmText = asms ? Toy.trimParens(asms.toHtml()) : '';
       const blurb = (info.definitional
                      ? 'definition of ' + statement.getLeft().func().name
-                     : 'using ' + Toy.trimParens(statement.toHtml()));
+                     : asmText
+                     ? ('using <subgoals>' + asmText + '</subgoals> &rArr; ' +
+                        mainText)
+                     : 'using ' + mainText)
       html += (' <span class=description>' + blurb + '</span>');
       const $node = $('<span>').append(html);
       $node.find('br.resultTerm').replaceWith(resultTerm.renderTerm());

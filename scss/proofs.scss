@@ -856,6 +856,7 @@ input.copyText {
         z-index: 2;
         left: 1em;
         right: 1em;
+        color: black;
         background: AliceBlue;
         visibility: hidden;
         opacity: 0;
@@ -915,6 +916,12 @@ input.copyText {
     .ruleItem:active {
       background-color: #aaf;
       border-color: gray;
+    }
+
+    // These are the styles for subgoal displays in rule items.
+    .ruleItem subgoals {
+      color: black;
+      font-style: normal;
     }
 
     // Waiting for the prover to complete also dims
