@@ -836,11 +836,6 @@ declare(
   // Removes the selected step and any following steps from the proof.
   // Prompts before actually removing.
   {name: 'removeFromHere',
-    precheck: function(step) {
-      const rendered = step.rendering;
-      const last = Toy.getProofDisplay(rendered).getLastStep();
-      return rendered != last;
-    },
     action: function(step) {
       if (window.confirm('Remove selected step and all following?')) {
         const rendered = step.rendering;
