@@ -157,7 +157,7 @@ declare(
 
   {name: 'axiom2',
     statement: 'x = y => h x = h y', axiom: true,
-    labels: 'primitive',
+    labels: 'primitive backward',
     inputs: {},
     description: 'axiom of function application',
     tooltip: ('functions take equal values to equal values')
@@ -169,6 +169,7 @@ declare(
    */
   {name: 'axiom2a',
     statement: 'x = y => (p x == p y)', axiom: true,
+    // TODO: Consider marking this for working backward.
     labels: 'primitive',
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
