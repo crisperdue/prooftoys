@@ -447,9 +447,10 @@ ProofDisplay.prototype.addStep = function(step) {
  * of this regular step.
  */
 ProofDisplay.prototype.addDerivation = function(step) {
+  const self = this;
   var steps = Toy.unrenderedDeps(step);
   steps.forEach(function(s) {
-    self.proofDisplay.addStep(s);
+    self.addStep(s);
   });
 };
 
