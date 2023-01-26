@@ -211,10 +211,15 @@ function ownProperties(object) {
 }
 
 /**
- * Synonym for ownProperties.
+ * Converts an object/map into a Map from own property names to their
+ * values.
  */
 function asMap(object) {
-  return ownProperties(object);
+  const result = new Map();
+  Object.getOwnPropertyNames(object).forEach(function(name) {
+      result.set(name, object[name]);
+  });
+  return result;
 }
 
 /**
