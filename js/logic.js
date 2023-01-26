@@ -1417,6 +1417,42 @@ declare(
   },
 
   /**
+   * A term anywhere in a step that is identical to one of the step's
+   * assumptions can be taken to be true if all of the variables free
+   * within it are also free in its context.
+   */
+  {name: 'assumed',
+   precheck: function(step, path) {
+     const asms = step.getAsms();
+     const target = step.get(path);
+     if (asms && asms.scanConj(a => a.sameAs(target))) {
+       const freeHere = target.freeVarSet();
+       const boundHere = Toy.asSet(step.wff.boundNames(path));
+       if (Toy.equalSets(freeHere, Toy.setDiff(freeHere, boundHere))) {
+         return true;
+       }
+     }
+   },
+   // This proof amounts to assuming the term is true, then replacing
+   // it with T based on that. Since the term is already an
+   // assumption, this adds no new assumptions.
+   action: function(step, path) {
+     const asms = step.getAsms();
+     const target = step.get(path);
+     const asm = asms && asms.scanConj(a => a.sameAs(target) && a);
+     const step1 = rules.tautology('a => (a == T)');
+     const step2 = rules.instMultiVars(step1, {a: asm});
+     const step3 = rules.replace(step, path, step2);
+     return step3.justify('assumed', arguments, [step]);
+   },
+   inputs: {site: 1},
+   labels: 'basic',
+   // Display it in the menu much like a rewrite.
+   menu: '\u27ad <b>T</b> (assumption)',
+   description: 'true by assumption',
+  },   
+
+  /**
    * Extract the body term from a select use of forall, renaming the
    * bound variable if necessary to keep it distinct from all (other)
    * free variables.  This is a useful special case of instForall that
