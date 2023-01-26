@@ -79,6 +79,16 @@ wffblock- > * {
 }
 
 .proofEditor {
+
+  .proofEditorHeader {
+    color: black;
+  }
+
+  // Exercises may have a wff, styled as a formula.
+  .proofEditorHeader .wff {
+    font-family: StixGeneral, times;
+  }
+
   input, button, select {
       /* font-size: .8rem;  */
       margin: 0 4px;

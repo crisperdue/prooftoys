@@ -295,9 +295,9 @@ function ProofEditor(options_arg) {
       self.fromDoc = true;
     }
   }
-  // Loads the desired exercise into the proof's state
-  // from state in the database, or from the relevant declaration
-  // if no state has been saved.
+  // Updates proof editor state for the desired exercise based on
+  // exercise proof state in the database, or from the relevant
+  // declaration if no state has been saved.
   if (options.exercise) {
     self._initExercise(options.exercise);
   }
@@ -388,16 +388,18 @@ function ProofEditor(options_arg) {
 }
 
 /**
- * Initialize theory and proof state for the given exercise.
+ * Initialize theory and proof editor state for the given exercise.
  * Also may set initialSteps to use in case the editor is cleared.
  */
 ProofEditor.prototype._initExercise = function(exName) {
   const self = this;
   const db = Toy.db;
   const info = prepExercise(exName);
+  // Set initial steps if appropriate.
   if (!self._options.steps && info.statement) {
     self.initialSteps = exerciseInits(info.statement);
   }
+  // Display steps saved in the database or else initial steps.
   db.exercises.get(exName)
     .then(data => {
         console.log('Exercise in db:', data);
@@ -407,6 +409,10 @@ ProofEditor.prototype._initExercise = function(exName) {
             : self.initialSteps;
       self.setSteps(steps);
     });
+  // Display the exercise goal in the editor's header.
+  const $header = self.$node.find('.proofEditorHeader');
+  $header.html('<b>Goal: prove </b><span class=wff></span>');
+  $header.find('.wff').append(Toy.mathParse(info.statement).renderTerm());
 };
 
 /**
