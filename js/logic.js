@@ -1446,6 +1446,15 @@ declare(
      const step3 = rules.replace(step, path, step2);
      return step3.justify('assumed', arguments, [step]);
    },
+   // Only offer it if the step has assumptions and the selection
+   // is not one of them.
+   toOffer: function(step, term) {
+     if (!step.wff.implies()) {
+       return false;
+     }
+     const path = step.prettyPathTo(term);
+     return path.isRight();
+   },
    inputs: {site: 1},
    labels: 'basic',
    // Display it in the menu much like a rewrite.
