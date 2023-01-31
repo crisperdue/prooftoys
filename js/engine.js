@@ -279,13 +279,14 @@ function computeMenuCategories(info, isConverse) {
   info.categories = categories;
 }
 
-// Private to computeMenuCategories.
+// Maps fact labels to categories.  Private to computeMenuCategories.
 const categoryOfLabel = {
   // The "none" label is assigned automatically when no labels
   // are given.
   none: 'default',
   // The "none" category means "do not offer this fact".
   primitive: 'none',
+  ignore: 'none',
   // The remaining labels occur in one or more facts today.
   display: 'edit',
   uncommon: 'other',

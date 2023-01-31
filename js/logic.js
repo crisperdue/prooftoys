@@ -157,7 +157,8 @@ declare(
 
   {name: 'axiom2',
     statement: 'x = y => h x = h y', axiom: true,
-    labels: 'primitive backward',
+    labels: 'ignore',
+    converse: {labels: 'ignore'},
     inputs: {},
     description: 'axiom of function application',
     tooltip: ('functions take equal values to equal values')
@@ -170,7 +171,8 @@ declare(
   {name: 'axiom2a',
     statement: 'x = y => (p x == p y)', axiom: true,
     // TODO: Consider marking this for working backward.
-    labels: 'primitive',
+    labels: 'ignore',
+    converse: {labels: 'ignore'},
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqSelf('(==)');
@@ -1744,7 +1746,7 @@ declare(
   // F => x; bookish
   {name: 'r5227',
     statement: 'F => x',
-    labels: 'primitive',
+    labels: 'ignore',
     proof: function() {
       var step1 = rules.theorem('r5225');
       var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'p');
@@ -2519,7 +2521,8 @@ declare(
       var step6 = rules.reduce(step5, '/right/right');
       // This could be changed into a rewrite.
       return rules.r(rules.r5218(Toy.parse('p x')), step6, '/right');
-    }
+    },
+   labels: 'ignore',
   },
 
   // r5226 is r5225 with "p" and "x" instantiated, then beta conversion.
@@ -5108,7 +5111,8 @@ declare(
     },
     inputs: {},
     description: 'transitivity of equality',
-    labels: 'forward'
+   labels: 'forward',
+   converse: {labels: 'forward'},
   },
 
   // Proves an equation that can replace the given boolean term.
