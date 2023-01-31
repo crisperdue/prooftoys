@@ -19,7 +19,7 @@ const definition = Toy.definition;
 Toy.exercise(
   'nat',
 
-  {statement: '@NN zero', axiom: true,
+  {statement: '@NN 0', axiom: true,
    description: 'zero is a natural number'
   },
   {exertion: 'nat0'},
@@ -29,10 +29,10 @@ Toy.exercise(
   {statement: '@NN n & NN m & succ m = succ n => m = n', axiom: true,
    description: 'if successors of two numbers are equal, the numbers are equal'
   },
-  {statement: '@NN n => zero != succ n', axiom: true,
+  {statement: '@NN n => 0 != succ n', axiom: true,
    description: 'zero is not a successor'
   },
-  {statement: '@P zero & (P n => P (succ n)) => (NN x => P x)', axiom: true,
+  {statement: '@P 0 & (P n => P (succ n)) => (NN x => P x)', axiom: true,
    description: 'induction over the natural numbers'
   },
   {statement: '@x + 22 = x + 22',
@@ -45,10 +45,10 @@ Toy.exercise(
   {exertion: 'nat3'},
 
   // Recursive definition of "+":
-  {statement: '@NN a => a + zero = a', axiom: true},
+  {statement: '@NN a => a + 0 = a', axiom: true},
   {statement: '@NN a & NN d => a + succ d = succ (a + d)', axiom: true},
 
-  {statement: '@NN a => a + succ zero = succ a'},
+  {statement: '@NN a => a + succ 0 = succ a'},
   {exertion: 'nat4'},
   
 );
