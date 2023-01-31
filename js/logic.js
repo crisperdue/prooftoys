@@ -2064,6 +2064,18 @@ declare(
     labels: 'primitive'
   },
 
+  // This does what we usually would like to do with axiom 2,
+  // proving f x = f y from a proof of x = y.
+  {statement: 'x = y => (f x = f y == T)',
+   proof: function() {
+     const step1 = rules.axiom2();
+     const step2 = step1.andThen('rewriteOnly', '/right', 'a == (a == T)');
+     return step2;
+   },
+   labels: 'backward',
+   converse: {labels: 'backward'},
+  },
+
   // Replaces an occurrence of T at the given path of the given step
   // with the entirety of another step.
   //
@@ -3527,6 +3539,12 @@ declare(
   // the step.  The arguments are a step and path to the assumption.
   //
   // TODO: Require an instance of the asm rather than a path.
+  //
+  // TODO: Probably generalize this to support assumptions of the
+  //   form p x1 ... xn = <term>, where x1 ... xn are fresh
+  //   variables.  Introducing such assumptions should be a nice
+  //   way to introduce local function definitions, more convenient
+  //   than p = {x1 . ... {xn . <term>}}.
   //
   // TODO: Generalize this into a rule for removal of irrelevant
   //   assumptions, based on a collection of predicates that "exist"
