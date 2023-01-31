@@ -5468,7 +5468,7 @@ declare(
    // generally conditional on some assumptions that limit its
    // applicability.
    {name: 'inverseFunLaw_old',
-    statement: 'f x = the1 (Q x) & exists1 (Q x) => (Q x y == f x = y)',
+    statement: 'f x = the1 (p x) & exists1 (p x) => (p x y == f x = y)',
     proof: [
       '(1 exists1Law)',
       '(2 instantiateVar (s 1) (path "/right/right/left") (t y))',
@@ -5477,7 +5477,7 @@ declare(
       '(5 rewrite (s 4) (path "/left/left") (t ((x = y) == (y = x))))',
       '(6 rewrite (s 5) (path "/right/right") (t ((x = y) == (y = x))))',
       '(7 display (s 6))',
-      '(8 instantiateVar (s 7) (path "/left/left/right/arg") (t (Q x)))'
+      '(8 instantiateVar (s 7) (path "/left/left/right/arg") (t (p x)))'
     ]
    },
 
