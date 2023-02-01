@@ -1713,11 +1713,11 @@ function lambda(bound, body) {
  *
  * TODO: Rename this to isInfixOp.
  */
-function isInfixDesired(vbl) {
-  if (!(vbl instanceof Atom)) {
+function isInfixDesired(atom) {
+  if (!(atom instanceof Atom)) {
     return false;
   }
-  var p = getPrecedence(vbl);
+  var p = getPrecedence(atom);
   return 0 < p && p < namePower;
 }
 
