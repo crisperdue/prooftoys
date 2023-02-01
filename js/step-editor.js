@@ -79,6 +79,7 @@ var nextProofEditorId = 1;
  *   by scanConjuncts.
  * givenVars: object/set keyed by names of variables free in the givens;
  *   read-only.
+ * goalStatement: for proof exercises, a proof statement wff.
  * solutions: If any of these expressions (or strings) is an alphaMatch
  *   with a step, announce the step as a solution.
  * standardSolution: Boolean.  If no explicit solutions given, but the
@@ -114,6 +115,7 @@ function ProofEditor(options_arg) {
   self.givenVars = {};
   self.solutions = [];
   self.standardSolution = true;
+  self.goalStatement = null;
   self.showRuleType = 'general';
   self.showRules = [];
   // Exercises often override the default empty value.
@@ -395,9 +397,10 @@ ProofEditor.prototype._initExercise = function(exName) {
   const self = this;
   const db = Toy.db;
   const info = prepExercise(exName);
+  const stmt = self.goalStatement = Toy.mathParse(info.statement);
   // Set initial steps if appropriate.
   if (!self._options.steps && info.statement) {
-    self.initialSteps = exerciseInits(info.statement);
+    self.initialSteps = exerciseInits(stmt);
   }
   // Display steps saved in the database or else initial steps.
   db.exercises.get(exName)
@@ -412,29 +415,23 @@ ProofEditor.prototype._initExercise = function(exName) {
   // Display the exercise goal in the editor's header.
   const $header = self.$node.find('.proofEditorHeader');
   $header.html('<b>Goal: prove </b><span class=wff></span>');
-  $header.find('.wff').append(Toy.mathParse(info.statement).renderTerm());
+  $header.find('.wff').append(stmt.renderTerm());
 };
 
 /**
  * Returns an array of ordinary proof steps that initialize an
- * exercise based on setting the given statement as a goal.
- * A null statement results in an empty array.
+ * exercise based on setting the given wff as a goal.
  */
-function exerciseInits(statement) {
-  if (statement) {
-    const stmt = Toy.mathParse(statement);
-    console.log('Exercise statement:', stmt.$$);
-    const goal =
-          (stmt.implies()
-           ? infixCall(infixCall(stmt.getLeft(), '&', stmt.getRight()),
-                       '=>', stmt.getRight())
-           : infixCall(stmt, '=>', stmt));
-    console.log('Goal:', goal.$$);
-    const step = rules.tautologous(goal);
-    return [step];
-  } else {
-    return [];
-  }
+function exerciseInits(stmt) {
+  console.log('Exercise statement:', stmt.$$);
+  const goal =
+        (stmt.implies()
+         ? infixCall(infixCall(stmt.getLeft(), '&', stmt.getRight()),
+                     '=>', stmt.getRight())
+         : infixCall(stmt, '=>', stmt));
+  console.log('Goal:', goal.$$);
+  const step = rules.tautologous(goal);
+  return [step];
 }
 
 /**
