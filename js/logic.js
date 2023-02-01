@@ -1425,6 +1425,7 @@ declare(
    * within it are also free in its context.
    */
   {name: 'assumed',
+   // This and "assumedEq" are very similar.
    precheck: function(step, path) {
      const asms = step.getAsms();
      const target = step.get(path);
@@ -1462,7 +1463,50 @@ declare(
    // Display it in the menu much like a rewrite.
    menu: '\u27ad <b>T</b> (assumption)',
    description: 'true by assumption',
-  },   
+  },  
+
+  /**
+   * A term anywhere in a step that is identical to the left side of
+   * an equational assumptions of the step can be taken to be equal to
+   * its right side if all of the variables free within it are also
+   * free in its context.
+   */
+  {name: 'assumedEq',
+   // This and "assumed" are very similar.
+   precheck: function(step, path) {
+     const asms = step.getAsms();
+     const target = step.get(path);
+     if (asms &&
+         asms.scanConj(a => a.isCall2('=') && a.getLeft().sameAs(target))) {
+       const freeHere = target.freeVarSet();
+       const boundHere = Toy.asSet(step.wff.boundNames(path));
+       if (Toy.equalSets(freeHere, Toy.setDiff(freeHere, boundHere))) {
+         return true;
+       }
+     }
+   },
+   // This proof amounts to assuming the term is true, then replacing
+   // it with T based on that. Since the term is already an
+   // assumption, this adds no new assumptions.
+   action: function(step, path) {
+     const asms = step.getAsms();
+     const target = step.get(path);
+     const asmMatch = a =>
+           a.isCall2('=') && a.getLeft().sameAs(target) && a;
+     const asm = asms && asms.scanConj(asmMatch);
+     const step1 = rules.assume(asm);
+     const step2 = rules.replace(step, path, step1);
+     return step2.justify('assumedEq', arguments, [step]);
+   },
+   // Ideally this would not be offered for a selection in
+   // the term used for the replacement, because it is not
+   // helpful there; but the test is not totally simple.
+   inputs: {site: 1},
+   labels: 'basic',
+   // Display it in the menu much like a rewrite.
+   menu: '\u27ad <b>{right}</b> (assumed)',
+   description: 'replace using assumption',
+  },  
 
   /**
    * Extract the body term from a select use of forall, renaming the
