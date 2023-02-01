@@ -2534,7 +2534,7 @@ declare(
       // This could be changed into a rewrite.
       return rules.r(rules.r5218(Toy.parse('p x')), step6, '/right');
     },
-   labels: 'ignore',
+   labels: 'forward',
   },
 
   // r5226 is r5225 with "p" and "x" instantiated, then beta conversion.
@@ -2961,9 +2961,6 @@ declare(
      return rules.tautology('a == (a == T)');
    },
    desimplifier: true,
-   // TODO: At some point hopefully this will not be needed
-   //   in the "general" menu.
-   labels: 'general',
   },
 
 );
