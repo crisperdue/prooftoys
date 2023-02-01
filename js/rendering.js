@@ -356,8 +356,9 @@ ProofDisplay.prototype.suggest = function(node) {
 
 
 /**
- * Create and return a renderable step to display the given real step
- * within the given display.
+ * Create and return a (rendered) renderable step to display the given
+ * real step within the given display.  The returned step is not
+ * attached to the DOM.
  *
  * This also sets up event handlers for click and hover events within
  * the step.  Does not insert the new node into the document.
@@ -414,6 +415,34 @@ ProofDisplay.prototype.renderStep = function(step) {
   return $(node).data('proofStep');
 };
 
+
+/**
+ * Processes a rendered step, searching for assumptions not in the
+ * given goal statement.  Flags the node of each such assumption node
+ * with an "unsolved" class if it has a node, and returns the number
+ * of "extra" assumptions as its value.
+ */
+Expr.prototype.goalify = function(goalWff) {
+  const self = this;
+  const main = self.getMain();
+  const goalMain = goalWff.getMain();
+  if (!(self.getAsms() && goalWff.getAsms() && goalMain.sameAs(main))) {
+    return;
+  }
+  const asms = self.asmSet();
+  const goalAsms = goalWff.asmSet();
+  let found = 0;
+  asms.each(asm => {
+    if (!goalAsms.has(asm)) {
+      found++;
+      if (asm.node) {
+        $(asm.node).addClass('unsolved');
+      }
+    }
+  });
+  return found;
+};
+
 /**
  * Adds a rendering of the given "real" proof step to the end
  * of the control's proof, assigning it the stepNumber for its
@@ -425,6 +454,11 @@ ProofDisplay.prototype.renderStep = function(step) {
 ProofDisplay.prototype.addStep = function(step) {
   var self = this;
   var rendered = self.renderStep(step);
+  const ed = self.proofEditor;
+  if (ed) {
+    const stmt = ed.goalStatement;
+    stmt && rendered.goalify(stmt);
+  }
   $(self.stepsNode).append(rendered.stepNode);
   this.steps.push(rendered);
   rendered.stepNumber =  (this.prevStep

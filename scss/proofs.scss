@@ -20,6 +20,14 @@
   background-color: hsl(200deg, 100%, 85%);
 }
 
+.expr.unsolved {
+  font-weight: bold;
+  color: red;
+  // Use these for even more emphasis:
+  // text-decoration: solid underline red;
+  // text-decoration-thickness: 2px;
+}
+
 wffblock- {
   display: inline-block;
 }
