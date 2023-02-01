@@ -330,6 +330,7 @@ function ProofEditor(options_arg) {
   self.$node.find('.clearWork').on('click', function() {
     if (window.confirm('Do you really want to clear your work?')) {
       self.clear();
+      self.setEditable(true);
     }
   });
 
