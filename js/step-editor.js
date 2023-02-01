@@ -1993,6 +1993,19 @@ RuleMenu.prototype._update = function() {
       if (!subst) {
         return;
       }
+
+      // Do not match function variables in the schema to calls in the
+      // target that apply a binary operator to a single argument, i.e
+      // partial applications of a binop.  This eliminates many ugly
+      // suggestions.
+      for (const key in subst) {
+        const term = subst[key];
+        if (term instanceof Toy.Call &&
+            term.isCall1() && Toy.isInfixDesired(term.fn)) {
+          return;
+        }
+      }
+      
       // This is special case code for rewriting of predicates to set
       // membership.
       if (selection.isInfixCall()) {
@@ -2024,7 +2037,7 @@ RuleMenu.prototype._update = function() {
       }
       const resultTerm = eqn2.replacementTerm();
       // The special character is a form of white right arrow.
-      let html = ' \u27ad <b><br class=resultTerm></b>';
+      let html = ' \u27ad <b class=resultTerm></b>';
       // TODO: Consider using the length of the unicode in deciding
       //   what message to generate here.
       // const unicode = statement.toUnicode();
@@ -2032,16 +2045,18 @@ RuleMenu.prototype._update = function() {
       const main = shortie.getMain();
       const asms = shortie.getAsms();
       const mainText = Toy.trimParens(main.toHtml());
-      const asmText = asms ? Toy.trimParens(asms.toHtml()) : '';
       const blurb = (info.definitional
                      ? 'definition of ' + statement.getLeft().func().name
-                     : asmText
-                     ? ('using <subgoals>' + asmText + '</subgoals> &rArr; ' +
-                        mainText)
                      : 'using ' + mainText)
       html += (' <span class=description>' + blurb + '</span>');
       const $node = $('<span>').append(html);
-      $node.find('br.resultTerm').replaceWith(resultTerm.renderTerm());
+      const $resultTerm = $node.find('.resultTerm');
+      $resultTerm.append(resultTerm.renderTerm());
+      if (asms) {
+        const $asms = $('<b class=resultTerm>');
+        $asms.append(asms.subFree(subst).renderTerm());
+        $resultTerm.after(sitePath.isLeft() ? ' and ' : ' if ', $asms);
+      }
       var info = {ruleName: 'rewrite',
                   ruleArgs: [selStep.original, sitePath, statement],
                   html: html,
@@ -2361,8 +2376,8 @@ RuleMenu.prototype.offerableRuleNames = function() {
 
 /**
  * Policy-based rule offering policy function based on this.showRules
- * and rule labels.  Returns a truthy value iff current policy is to
- * show the rule.
+ * and rule labels.  Given a rule name, returns a truthy value iff
+ * current policy is to show the rule.
  */
 RuleMenu.prototype.labelApproved = function(name) {
   const editor = this.proofEditor;
@@ -2396,9 +2411,10 @@ RuleMenu.prototype.labelApproved = function(name) {
 
 /**
  * Returns true iff the rule name can be offered by the UI, based on
- * any current selection and declared inputs.  This method does not
- * screen out rules that lack a way to present a menu string; use the
- * ruleMenuInfo function for that.
+ * any current selection and declared inputs.  If there are no
+ * declared inputs, it does not count as a rule for this purpose.
+ * This method does not screen out rules that lack a way to present a
+ * menu string; use the ruleMenuInfo function for that.
  *
  * If there is a selection and the rule can get all of its arguments
  * from the selection, this screens the rule with the precheck.  If
