@@ -200,17 +200,16 @@ function ProofEditor(options_arg) {
   this.setEditable(true);
 
   if (!options.exercise) {
-    // Restore editor state.
+    // Restore editor state (not document state).
     const state = Toy.getSavedState(self);
     // The (default) document name is the proofEditorId.
-    self.docName = (options.docName ||
-                    (state
-                     ? state.docName
-                     // By default set the document name according
-                     // to the URI path, and the editor number if
-                     // that is greater than one.
-                     : this.proofEditorId));
-    self.syncToDocName();
+    self.syncToDocName(options.docName ||
+                       (state
+                        ? state.docName
+                        // By default set the document name according
+                        // to the URI path, and the editor number if
+                        // that is greater than one.
+                        : this.proofEditorId));
   }
 
   // Prepare to write out proof state during refresh, so basically
@@ -825,12 +824,14 @@ function buildWksControls(editor) {
       }
     });
   $openersArea.on('click', '.docName', function() {
-      const text = $(this).text();
-      const success = editor.openDoc(text);
-      if (!success) {
-        Toy.alert('Could not open worksheet ' + text);
-      }
-    });
+    const text = $(this).text();
+    const success = editor.openDoc(text);
+    if (success) {
+      editor.syncToDocName(text);
+    } else {
+      Toy.alert('Could not open worksheet ' + text);
+    }
+  });
   $deletersArea.on('click', '.docName', function() {
       const name = $(this).text();
       if (name === editor.getDocumentName()) {
@@ -910,6 +911,7 @@ function makeButton(label, classes) {
  */
 ProofEditor.prototype.syncToDocName = function(name) {
   const self = this;
+  self.docName = name;
   // Set the document name into all nodes of class wksName.
   self.$node.find('.wksName').text(name);
   // Remember the state of this editor.
@@ -956,7 +958,7 @@ ProofEditor.prototype.getDocumentName = function() {
 ProofEditor.prototype.clear = function() {
   this.showRules = [];
   this.stepEditor.hideForm();
-  this.proofDisplay.setSteps(this.initialSteps);
+  this.setSteps(this.initialSteps);
 };
 
 /**
@@ -1040,7 +1042,7 @@ ProofEditor.prototype.getStateString = function() {
 ProofEditor.prototype.setStateFromString = function(encoded) {
   // TODO: Rename to setProofFromString.
   var steps = encoded ? Toy.decodeSteps(encoded) : [];
-  this.proofDisplay.setSteps(steps);
+  this.setSteps(steps);
 };
 
 /**
