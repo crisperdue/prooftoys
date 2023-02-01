@@ -2946,6 +2946,12 @@ function factForCase0(trueCases, falseCases, op, tf) {
 }
 const factForCase = factForCase0.bind(null, new Map(), new Map());
 
+// Ensure that all of these facts are available early on.
+// This also proves them.
+$(function() {
+  factForCase('=>', 'T');
+});
+
 // A few useful tautologies registered as facts.
 declare(
   
