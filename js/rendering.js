@@ -454,14 +454,6 @@ Expr.prototype.goalify = function(goalWff) {
 ProofDisplay.prototype.addStep = function(step) {
   var self = this;
   var rendered = self.renderStep(step);
-  const ed = self.proofEditor;
-  if (ed) {
-    const stmt = ed.goalStatement;
-    if (stmt) {
-      ed.$node.find('.proofEditorHeader .solved')
-        .toggleClass('hidden', rendered.goalify(stmt) > 0);
-    }
-  }
   $(self.stepsNode).append(rendered.stepNode);
   this.steps.push(rendered);
   rendered.stepNumber =  (this.prevStep

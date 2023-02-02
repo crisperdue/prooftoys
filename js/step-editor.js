@@ -226,6 +226,14 @@ function ProofEditor(options_arg) {
       var len = steps.length;
       if (len) {
         var step = steps[len - 1];
+
+        // Is the goal proved?
+        const stmt = self.goalStatement;
+        if (stmt) {
+          self.$node.find('.proofEditorHeader .solved')
+            .toggleClass('hidden', step.goalify(stmt) > 0);
+        }
+
         var message = self.progressMessage(step.original);
         $statusDisplay.empty();
         $statusDisplay.append(message || '&nbsp;');
@@ -415,7 +423,7 @@ ProofEditor.prototype._initExercise = function(exName) {
   // Display the exercise goal in the editor's header.
   const $header = self.$node.find('.proofEditorHeader');
   $header.html('<b>Goal: prove </b><span class=wff></span>' +
-               '<span class="solved hidden">&check; Proof Complete</span>');
+               '<span class="solved hidden">&check; Proof complete</span>');
   $header.find('.wff').append(stmt.renderTerm());
 };
 
