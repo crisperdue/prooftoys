@@ -457,7 +457,10 @@ ProofDisplay.prototype.addStep = function(step) {
   const ed = self.proofEditor;
   if (ed) {
     const stmt = ed.goalStatement;
-    stmt && rendered.goalify(stmt);
+    if (stmt) {
+      ed.$node.find('.proofEditorHeader .solved')
+        .toggleClass('hidden', rendered.goalify(stmt) > 0);
+    }
   }
   $(self.stepsNode).append(rendered.stepNode);
   this.steps.push(rendered);

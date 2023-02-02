@@ -97,6 +97,13 @@ wffblock- > * {
     font-family: StixGeneral, times;
   }
 
+  .proofEditorHeader .solved {
+    margin-left: 2em;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: green;
+  }
+
   input, button, select {
       /* font-size: .8rem;  */
       margin: 0 4px;

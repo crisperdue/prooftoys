@@ -414,7 +414,8 @@ ProofEditor.prototype._initExercise = function(exName) {
     });
   // Display the exercise goal in the editor's header.
   const $header = self.$node.find('.proofEditorHeader');
-  $header.html('<b>Goal: prove </b><span class=wff></span>');
+  $header.html('<b>Goal: prove </b><span class=wff></span>' +
+               '<span class="solved hidden">&check; Proof Complete</span>');
   $header.find('.wff').append(stmt.renderTerm());
 };
 
