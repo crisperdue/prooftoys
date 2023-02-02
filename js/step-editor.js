@@ -231,7 +231,7 @@ function ProofEditor(options_arg) {
         const stmt = self.goalStatement;
         if (stmt) {
           self.$node.find('.proofEditorHeader .solved')
-            .toggleClass('hidden', step.goalify(stmt) > 0);
+            .toggleClass('hidden', step.checkSubgoals(stmt) > 0);
         }
 
         var message = self.progressMessage(step.original);

@@ -422,7 +422,7 @@ ProofDisplay.prototype.renderStep = function(step) {
  * with an "unsolved" class if it has a node, and returns the number
  * of "extra" assumptions as its value.
  */
-Expr.prototype.goalify = function(goalWff) {
+Expr.prototype.checkSubgoals = function(goalWff) {
   const self = this;
   const main = self.getMain();
   const goalMain = goalWff.getMain();
