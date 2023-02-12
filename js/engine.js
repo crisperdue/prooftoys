@@ -927,6 +927,8 @@ function definition(defn_arg) {
     const defined = new Atom(name);
     // The defn is the definition in standard form: <constant> = <term>.
     const defn = normalizeDefn(candidate);
+    // TODO: Is the best place to assert it?
+    const assertion = rules.assert(defn);
     if (defn.isCall2('=') && defn.getLeft().isNamedConst()) {
       // Allow benign redefinition same as an existing one.
       const name = defn.getLeft().name;
@@ -942,10 +944,10 @@ function definition(defn_arg) {
         Toy.isEmpty(defn.getRight().newConstants())) {
       // It is a classic equational definition.
       // Add it to the facts andthe definitions database.
-      addFact({goal: defn, definition: true,
-               desimplifier: !(defn.getRight() instanceof Atom)});
-      definitions[name] = defn;
-      addDefnFacts(defn);
+      addFact({goal: assertion, definition: true,
+               desimplifier: !(assertion.getRight() instanceof Atom)});
+      definitions[name] = assertion;
+      addDefnFacts(assertion);
     } else {
       // It is not a classic equational definition.
       var x = Toy.genVar('x', defn.allNames());
