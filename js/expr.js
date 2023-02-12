@@ -1099,7 +1099,8 @@ Expr.prototype.subFree1 = function(replacement, name) {
  * object/map from strings to Atoms, which this uses to rename free
  * variables.  This assumes that the names of the Atoms in the map are
  * distinct from all variable names in this, free or not, so the
- * result will be equivalent to the input term.
+ * result will be equivalent to the input term.  The result is
+ * untyped.
  */
 Expr.prototype.rename = function(map) {
   const rename = term => {
@@ -1338,7 +1339,6 @@ Expr.prototype.isTypeTest = function() {
 
 /**
  * Returns truthy iff this looks like a subgoal.
- * Specific to real numbers.
  */
 Expr.prototype.likeSubgoal = function() {
   return (!this.isTypeTest() &&
@@ -2134,6 +2134,7 @@ Expr.prototype.scanConj = function(action) {
 /**
  * Returns a map from path string to term, containing all terms of the
  * step that are assumptions; empty if there are no assumptions.
+ * The paths use /left and /right.
  */
 Step.prototype.asmMap = function() {
   const scan = function(expr, pathStr) {
@@ -2207,8 +2208,8 @@ Expr.prototype.asmSet = function() {
 
 /**
  * Applies the given action to each conjunct in a chain of conjuncts,
- * from left to right.  If any action returns a truthy value,
- * immediately returns that value.
+ * from left to right, and a reverse path to the conjunct.  If any
+ * action returns a truthy value, immediately returns that value.
  */
 Expr.prototype.eachConjunct = function(action, rpath_arg) {
   const rpath = rpath_arg || Path.empty;

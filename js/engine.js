@@ -2140,6 +2140,10 @@ function conjunctionSchema(term) {
  * variable of that name is bound.
  *
  * The path must only have segments fn, arg, and/or body.
+ *
+ * TODO: Define a similar method that reports _all_ bindings.  If a
+ *   name is bound in multiple parents of the target term, this
+ *   only reports the innermost binding of that name.
  */
 Expr.prototype.pathBindings = function(path_arg) {
   const Path = Toy.Path;

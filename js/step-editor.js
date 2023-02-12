@@ -2127,6 +2127,7 @@ RuleMenu.prototype._update = function() {
     //
     // TODO: Provide less ad hoc means for ordering, such as
     //   additional properties of the info objects, e.g. "priority".
+    // TODO: Support a separate "key" property for sorting.
     return a.html.localeCompare(b.html);
   });
 

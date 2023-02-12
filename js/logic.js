@@ -4814,9 +4814,11 @@ declare(
   // Given a proof step of the form [a => b] and a path that refers to
   // an element "e" of a taken as a conjunction chain, derives a step
   // of the form [a' => (e => b)] where e is the referenced element,
-  // and h' is h with all occurrences of "e" removed.
+  // and a' is a with all occurrences of "e" removed.
   //
   // If e is a, returns its input (or a copy?).
+  //
+  // This rule is an inline version of extractHyp.
   //
   // TODO: Use this only from the UI.  Use of paths to assumptions
   //   is unreliable.
@@ -4836,10 +4838,10 @@ declare(
   },
 
   // Like extractHypAt, accepting a term to be matched against the
-  // assumptions Useful for pulling out implicit assumptions such as
+  // assumptions.  Useful for pulling out implicit assumptions such as
   // variable types.
   //
-  // TODO: Decide what to do if there is no such assumption.
+  // TODO: Report an error if there is no such assumption.
   {name: 'extractHyp',
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
