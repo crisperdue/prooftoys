@@ -3378,30 +3378,30 @@ function addFnMatch(schema, fn, expr, map, renamings) {
   // substitution.
   var args = schema.args();
   // These are free in expr, but may be bound in expr's context.
-  var exprVars = expr.freeVars();
+  var exprVars = expr.freeVarSet();
   // If any variable occurring (free) in expr is bound in expr's
   // context and thus needs to have a bound variable here
   // substituted for it, but that bound variable is not in the args,
   // the substitution fails.
   var findBindingValue = Toy.findBindingValue;
-  for (var name in exprVars) {
+  for (var name of exprVars) {
     var b = findBindingValue(name, renamings);
     if (b) {
       var argName = b.from;
-      if (!args.find(function(arg) {
-            return arg.isVariable() && arg.name == argName;
-          })) {
+      if (!args.find(arg => arg.isVariable() && arg.name == argName)) {
         return false;
       }
     }
   }
-  // The function call arguments are suitable.  Construct a lambda to
-  // substitute for the function variable.
+
+  // Now we know the function call arguments are suitable.  Construct
+  // a lambda to substitute for the function variable.
   var result = expr;
   var arg;
   // This will be the number of beta reductions to apply after the
   // substitution.
   var expansions = 0;
+  const vList = Array.from(exprVars);
   while (args.length) {
     // This is the next actual argument to the function variable.
     var arg = args.pop();
@@ -3412,6 +3412,8 @@ function addFnMatch(schema, fn, expr, map, renamings) {
       // If it is a fresh variable, it will be substituted nowhere.
       var toBind = (exprName
                     ? new Atom(exprName)
+                    : vList.length > 0
+                    ? new Atom(vList.pop())
                     : expr.freshVar(arg.name));
       result = new Lambda(toBind, result);
       expansions++;
