@@ -2000,18 +2000,6 @@ RuleMenu.prototype._update = function() {
       if (!subst) {
         return;
       }
-
-      // Do not match function variables in the schema to calls in the
-      // target that apply a binary operator to a single argument, i.e
-      // partial applications of a binop.  This eliminates many ugly
-      // suggestions.
-      for (const key in subst) {
-        const term = subst[key];
-        if (term instanceof Toy.Call &&
-            term.isCall1() && Toy.isInfixDesired(term.fn)) {
-          return;
-        }
-      }
       
       // This is special case code for rewriting of predicates to set
       // membership.
