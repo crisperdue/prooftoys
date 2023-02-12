@@ -437,15 +437,17 @@ Path.prototype.reverse = function() {
 };
 
 /**
- * Under the precondition that the given path is equal to an initial
- * portion of this path, returns the tail of this path following the
- * argument path.
+ * If the given path is equal to an initial portion of this path,
+ * returns the tail of this path following the argument path,
+ * otherwise null.
  */
 Path.prototype.remainder = function(path) {
   let self = this;
   let that = path;
   while (!that.isEnd()) {
-    assert(self.segment === that.segment);
+    if (self.segment !== that.segment) {
+      return null;
+    }
     self = self.rest;
     that = that.rest;
   }
