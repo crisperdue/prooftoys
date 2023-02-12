@@ -1452,11 +1452,8 @@ declare(
    // Only offer it if the step has assumptions and the selection
    // is not one of them.
    toOffer: function(step, term) {
-     if (!step.wff.implies()) {
-       return false;
-     }
-     const path = step.prettyPathTo(term);
-     return path.isRight();
+     const asms = step.getAsms();
+     return asms && !asms.scanConj(t => t == term);
    },
    inputs: {site: 1},
    labels: 'basic',
@@ -4834,7 +4831,9 @@ declare(
   {name: 'extractHypAt',
     precheck: function(step, path_arg) {
       const path = Toy.asPath(path_arg);
-      return step.wff.isCall2('=>') && path.isLeft();
+      const pathstr = step.wff.prettifyPath(path).toString();
+      const asms = step.asmMap();
+      return asms.has(pathstr);
     },
     action: function(step, path) {
       const hyp = step.get(path);
@@ -4849,9 +4848,12 @@ declare(
   // Like extractHypAt, accepting a term to be matched against the
   // assumptions.  Useful for pulling out implicit assumptions such as
   // variable types.
-  //
-  // TODO: Report an error if there is no such assumption.
   {name: 'extractHyp',
+   precheck: function(step, asm_arg) {
+     const asm = termify(asm_arg);
+     const asms = step.getAsms();
+     return asms && asms.scanConj(a => a.sameAs(asm)) || false;
+   },
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
       assert(step.isCall2('=>'));
