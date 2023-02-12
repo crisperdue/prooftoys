@@ -1028,7 +1028,11 @@ ProofEditor.prototype._updateGivenVars = function() {
  * Add a step to the proof.
  */
 ProofEditor.prototype.addStep = function(step) {
-  this.proofDisplay.addStep(step);
+  const rendered = this.proofDisplay.addStep(step);
+  const stmt = this.goalStatement;
+  if (stmt) {
+    rendered.checkSubgoals(stmt);
+  }
 };
 
 ProofEditor.prototype.getLastStep = function() {
@@ -1056,12 +1060,20 @@ ProofEditor.prototype.setStateFromString = function(encoded) {
  * Sets the steps to the given array of non-renderable steps.
  */
 ProofEditor.prototype.setSteps = function(steps) {
+  const setTheSteps = steps => {
+    // Note that the editor does not have its own
+    // removeStepAndFollowing method.
+    this.proofDisplay.setSteps([]);
+    for (var i = 0; i < steps.length; i++) {
+      this.addStep(steps[i]);
+    }
+  };
   if (steps instanceof Error) {
-    this.proofDisplay.setSteps(steps.steps);
+    setTheSteps(steps.steps);
     this.setEditable(false);
     this.toggleClass('proofLoadError', true);
   } else {
-    this.proofDisplay.setSteps(steps);
+    setTheSteps(steps);
     this.toggleClass('proofLoadError', false);
     Toy.soonDo(() => this.$node.find('.proofSteps').scrollTop(1e9));
   }
@@ -1521,7 +1533,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     //   proof display to trigger another event after the step is
     //   successfully rendered, triggering auto-simplification.
     const error = Toy.catchAborts(() => {
-      this.proofDisplay.addStep(result);
+      self._proofEditor.addStep(result);
     });
     if (error) {
       if (error instanceof Error) {
