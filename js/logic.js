@@ -2110,7 +2110,7 @@ declare(
 
   // This does what we usually would like to do with axiom 2,
   // proving f x = f y from a proof of x = y.
-  {statement: 'x = y => (f x = f y == T)',
+  {statement: '@x = y => (f x = f y == T)',
    proof: function() {
      const step1 = rules.axiom2();
      const step2 = step1.andThen('rewriteOnly', '/right', 'a == (a == T)');
@@ -2118,6 +2118,15 @@ declare(
    },
    labels: 'backward',
    converse: {labels: 'backward'},
+  },
+
+  // Another form of axiom 2, useful for induction proofs.
+  {statement: '@(x = y => f x = f y) == T',
+   proof: function() {
+     const step1 = rules.axiom2();
+     const step2 = step1.andThen('rewriteOnly', '', 'a == (a == T)');
+     return step2;
+   },
   },
 
   // Replaces an occurrence of T at the given path of the given step
