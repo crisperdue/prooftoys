@@ -2025,7 +2025,7 @@ RuleMenu.prototype._update = function() {
       // Prepare to avoid unnecessary identification of potentially
       // distinct free variables.
       const renamer = fact.distinctifier(sitePath, selStep, subst);
-      const statement = fact.rename(renamer);
+      const statement = fact.rename(renamer).typedCopy();
       // CAUTION: eqn1 and eqn2 are not to be added to the
       // current theory, as they are only hypothetically true
       // to test the unification.
@@ -2061,7 +2061,7 @@ RuleMenu.prototype._update = function() {
       $resultTerm.append(resultTerm.renderTerm());
       if (asms) {
         const $asms = $('<b class=resultTerm>');
-        $asms.append(asms.subFree(subst).renderTerm());
+        $asms.append(asms.subFree(subst).typedCopy().renderTerm());
         $resultTerm.after(sitePath.isLeft() ? ' and ' : ' if ', $asms);
       }
       var info = {ruleName: 'rewrite',
