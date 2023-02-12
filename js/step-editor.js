@@ -2555,7 +2555,7 @@ const catsOfMenu =
       new Map([['none', new Set()],
                ['algebra', new Set(['algebra'])],
                ['general',
-                new Set(['general', 'simplifier', 'algebra', 'realType'])],
+                new Set(['general', 'simplifier', 'algebra'])],
                ['backward',
                 new Set(['backward'])],
                ['edit', new Set(['edit'])],

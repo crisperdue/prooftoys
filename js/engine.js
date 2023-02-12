@@ -267,9 +267,8 @@ function computeMenuCategories(info, isConverse) {
            : (goal.matchSchema('a = the b') ||
               goal.matchSchema('a = the1 b')) ? 'advanced'
            : goal.hasSubgoal() ? 'backward'
-           : hasTypeAsm(goal) ? 'realType'
            : info.goal.matchPart().isVariable() ? 'varMatch'
-           : 'other'
+           : 'general'
           );
     if (category) {
       categories.add(category);
@@ -518,6 +517,10 @@ var rules = {};
 //   step, selected term or null if none, and the ProofEditor for which
 //   it is generating the menu.  A falsy value indicates no
 //   menu entries; a non-empty string is for one entry.
+//   One or more plain objects give full menu information, with  
+//   properties ruleName (string), ruleArgs (Array), html (string),
+//   and optional $node, which overrides the html.
+//   TODO: In the future there may be a sort "key" (Array).
 //
 // tooltip: plain text to become the title attribute of mentions of the
 //   rule name in proof displays and the description in subproof displays.
