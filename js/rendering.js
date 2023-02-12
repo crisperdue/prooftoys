@@ -418,16 +418,18 @@ ProofDisplay.prototype.renderStep = function(step) {
 
 /**
  * Processes a rendered step, searching for assumptions not in the
- * given goal statement.  Flags the node of each such assumption node
- * with an "unsolved" class if it has a node, and returns the number
- * of "extra" assumptions as its value.
+ * given goal statement.  If the main part is not the same as the
+ * goal, returns -1.  Otherwise flags the node of each such assumption
+ * node with an "unsolved" class if it has a node, and returns the
+ * number of unwanted assumptions as its value, so a result of 0
+ * means that this is the desired result.
  */
 Expr.prototype.checkSubgoals = function(goalWff) {
   const self = this;
   const main = self.getMain();
   const goalMain = goalWff.getMain();
-  if (!(self.getAsms() && goalWff.getAsms() && goalMain.sameAs(main))) {
-    return;
+  if (!goalMain.sameAs(main)) {
+    return -1;
   }
   const asms = self.asmSet();
   const goalAsms = goalWff.asmSet();
