@@ -24,6 +24,7 @@
   font-weight: bold;
   color: red;
   // Use these for even more emphasis:
+  // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
   // text-decoration-thickness: 2px;
 }
@@ -97,8 +98,16 @@ wffblock- > * {
     font-family: StixGeneral, times;
   }
 
+  .proofEditorHeader .clearWork {
+    float: right;
+    margin-left: 1em;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+
   .proofEditorHeader .solved {
-    margin-left: 2em;
+    float: right;
+    margin-left: 1em;
     font-weight: bold;
     font-size: 1.1em;
     color: green;
@@ -191,7 +200,7 @@ wffblock- > * {
 .proofDisplay.editable > .proofSteps {
   height: 400px;
   position: relative; // This makes it an offsetParent.
-  resize: both;
+  resize: vertical;   // "Both" does not resize the container horizontally.
   overflow-x: clip;
   overflow-y: auto;
   padding-top: 3px;
