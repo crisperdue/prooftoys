@@ -548,39 +548,28 @@ Expr.prototype.occurrences = function(names) {
  * before its arg, and the occurrence is the first in the order.
  */
 Expr.prototype.freeVarsMap = function() {
-  const map = new Map();
-  const bindings = new Map();
-  const doit = term => {
-    const c = term.constructor;
-    if (term.isVariable()) {
-      const nm = term.name;
-      const count = bindings.get(nm);
-      if (!count) {
-        // Count is either 0 or undefined!
-        map.set(nm, term);
+  const byName = new Map();
+  const boundNames = [];
+  const traverse = term => {
+    const ct = term.constructor;
+    if (ct === Atom) {
+      if (term.isVariable() && !boundNames.includes(term.name)) {
+        byName.set(term.name, term);
       }
-    } else if (c === Atom) {
-      // Ignore
-    } else if (c === Call) {
-      doit(term.fn);
-      doit(term.arg);
-    } else if (c === Lambda) {
-      const nm = term.bound.name;
-      const v = bindings.get(nm);
-      if (v == undefined) {
-        bindings.set(nm, 0);
-      }
-      const count = v == undefined ? 0 : v;
-      bindings.set(nm, count + 1);
-      doit(term.body);
-      bindings.set(nm, count);
+    } else if (ct === Call) {
+      traverse(term.arg);
+      traverse(term.fn);
     } else {
-      abort('bad input');
+      const nm = term.bound.name;
+      boundNames.push(nm);
+      traverse(term.body);
+      boundNames.pop();
     }
-  };
-  doit(this);
-  return map;
+  }
+  traverse(this);
+  return byName;
 };
+
 
 //// Atoms -- functions
 

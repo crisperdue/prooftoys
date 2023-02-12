@@ -822,7 +822,7 @@ var testCase = {
     const check = (term_arg, expected) => {
       const term = termify(term_arg);
       const result = term.freeVarsMap();
-      const r1 = Array.from(result.keys());
+      const r1 = Array.from(result.keys()).sort();
       for (const k of r1) {
         assert(result.get(k).name === k);
       }
@@ -830,7 +830,7 @@ var testCase = {
     };
     check('x + y + 2 = y + (x + 2)', ['x', 'y']);
     check('{x. x + y + 2} = {x. y + (x + 2)}', ['y']);
-    check('{x. x + y + 2} x = {x. y + (x + 2)} x', ['y', 'x']);
+    check('{x. x + y + 2} x = {x. y + (x + 2)} x', ['x', 'y']);
   },
 
   testBoundNames: function() {
