@@ -227,14 +227,14 @@ function ProofEditor(options_arg) {
       // Set (or clear) the message in the $status box.
       var steps = mainDisplay.steps;
       var len = steps.length;
-      if (len) {
+      if (len > 0) {
         var step = steps[len - 1];
 
         // Is the goal proved?
         const stmt = self.goalStatement;
         if (stmt) {
           self.$node.find('.proofEditorHeader .solved')
-            .toggleClass('hidden', step.checkSubgoals(stmt) > 0);
+            .toggleClass('hidden', step.checkSubgoals(stmt) !== 0);
         }
 
         var message = self.progressMessage(step.original);
