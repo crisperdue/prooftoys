@@ -986,23 +986,18 @@ function definition(defn_arg) {
  * "element of", defining a boolean-valued function (predicate).
  */
 function normalizeDefn(defn_arg) {
-  const normed = defn => {
-    let left = defn.getLeft();
-    if (left instanceof Call) {
-      const arg = left.arg;
-      if (arg.isVariable()) {
-        const bound = rules.bindEqn(defn, arg);
-        const reduced = rules.rewriteOnly(bound, '/left', 'eta');
-        // The reduced has an extra layer of lambda on the right
-        // and one less variable on the left.
-        return normed(reduced);
-      }
-    }
-    return defn;
-  };
-  const converted = defn_arg.isCall2('=') &&
-    normed(rules.assert(defn_arg));
-  return converted || defn_arg;
+  if (!defn_arg.isCall2('=')) {
+    return defn_arg;
+  }
+  let left = defn_arg.getLeft();
+  let right = defn_arg.getRight();
+  while (left instanceof Call) {
+    assert(left.arg.isVariable(), 'Not a variable: {1}', left.arg);
+    right = Toy.lambda(left.arg, right);
+    left = left.fn;
+  }
+  const result = Toy.infixCall(left, '=', right);
+  return result;
 }
 
 // Set to false when defn facts can be proved immediately.
