@@ -172,8 +172,7 @@ function ProofEditor(options_arg) {
     ($('<div class=proofEditorHeader>')
      .append('&nbsp;<b class=wksTitle>Worksheet \
              "<span class=wksName></span>"</b>'));
-  const $clearWork =
-        $('<input type=button class=clearWork value="Clear work">');
+  const $clearWork = $('<input type=button class=clearWork value="Clear work">');
   const css = {float: 'right',
                border: '1px solid red',
                color: '#d9534f',
@@ -181,7 +180,11 @@ function ProofEditor(options_arg) {
                backgroundColor: 'white'
   };
   $clearWork.css(css);
-  $header.append($clearWork);
+  const $headerRight = $('<span>');
+  $headerRight.append
+    ($clearWork,
+     '<span><span class="solved hidden">&check; Proof complete</span></span>');
+  $header.append($headerRight);
 
   let $readOnly =
     $(`<p class=ifProofLoadError><i><b style="color:red">
@@ -422,8 +425,8 @@ ProofEditor.prototype._initExercise = function(exName) {
     });
   // Display the exercise goal in the editor's header.
   const $header = self.$node.find('.proofEditorHeader');
-  $header.html('<b>Goal: prove </b><span class=wff></span>' +
-               '<span class="solved hidden">&check; Proof complete</span>');
+  $header.find('.wksTitle')
+  .replaceWith('<b>Goal: prove </b><span class=wff></span>');
   $header.find('.wff').append(stmt.renderTerm());
 };
 
