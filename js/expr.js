@@ -3476,7 +3476,7 @@ Lambda.prototype._toString = function() {
     if (type && type.isSetType() && !type.fromType.equal(Toy.boolean)) {
       return '{' + this.bound + '. ' + this.body + '}';
     } else {
-      return '(' + this.bound + ' \u2192 ' + this.body + ')';
+      return '(' + this.bound + '. ' + this.body + ')';
     }
   } else {
     return '{' + this.bound + '. ' + this.body + '}';
