@@ -4101,8 +4101,9 @@ declare(
           function check(eqn) {
             if (eqn.isCall2('=') && eqn.getLeft().isVariable() &&
                 eqn.getLeft().name === vname) {
+              // TODO: Give each item its own action information.
               results.push(format('replace {1} with {2}',
-                                  term.pname, eqn.getRight().toUnicode()));
+                                  term.name, eqn.getRight().toUnicode()));
             }
           }
           terms.each(check);
