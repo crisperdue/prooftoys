@@ -4470,7 +4470,7 @@ declare(
   // Performs the needed substitution, with higher-order matching,
   // and returns the result of that.
   {name: '_replacementFor',
-    action: function(step, path, eqn_arg) {
+   action: function(step, path, eqn_arg, reduce=true) {
       const map = canRewrite(step, path, eqn_arg);
       if (!map) {
         abort('Fact not applicable: {1}', eqn_arg);
@@ -4481,7 +4481,7 @@ declare(
                       // Coerce to an equation.
                       : eqn_arg.andThen('rewriteOnly',
                                         '/main', 'a == (a == T)'));
-      const result = rules.instMultiVars(equation, map, true);
+      const result = rules.instMultiVars(equation, map, reduce);
       return result;
     }
   },
@@ -4529,10 +4529,10 @@ declare(
   // Minimal rewriter with no simplification; like rewriteOnlyFrom
   // except takes a fact statement rather than a step.
   {name: 'rewriteOnly',
-    action: function(step, path_arg, stmt_arg) {
+   action: function(step, path_arg, stmt_arg, reduce=true) {
       const path = step.wff.asPath(path_arg);
       const statement = rules.fact(stmt_arg);
-      const replacement = rules._replacementFor(step, path, statement);
+      const replacement = rules._replacementFor(step, path, statement, reduce);
       const rewritten = rules.r2(step, path, replacement);
       let flatter = rewritten;
       if (step.implies() && statement.implies() && !path.isEnd()) {
