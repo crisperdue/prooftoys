@@ -1603,7 +1603,7 @@ Lambda.prototype.render = function(minPower) {
   } else {
     $expr.append('(');
     $expr.append(this.bound.render(0));
-    $expr.append(' &rarr; ');
+    $expr.append('. ');
     $expr.append($body);
     $expr.append(')');
   }
