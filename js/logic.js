@@ -3672,11 +3672,11 @@ declare(
     description: 'remove irrelevant assumption {site};; {in step siteStep}'
   },
 
-  // Removes an irrelevant type assumption of the form (R v) at the
-  // target site, where v is a variable.  Currently only for predicate
-  // R, but should be extended as needed.
+  // Removes an irrelevant type assumption at the target site, where v
+  // is a variable.
   //
   // TODO: Merge this into removeLet and rename as e.g. "removeIrrelevant".
+  // TODO: Modify this to use a term rather than a path.
   {name: 'removeTypeAsm',
     precheck: function(step, path_arg) {
       var path = Toy.asPath(path_arg);
@@ -3685,13 +3685,12 @@ declare(
       }
       var term = step.get(path);
       // This check is adequate.
-      var termMap = term.matchSchema('R v');
-      if (!termMap || !termMap.v.isVariable()) {
+      if (!term.isTypeTest() || !term.arg.isVariable()) {
         return false;
       }
       var step1 = rules.extractHypAt(step, path);
       var map = step1.matchSchema('a => (b => c)');
-      var vName = termMap.v.name;
+      var vName = term.arg.name;
       if (map) {
         var aFree = map.a.freeVars();
         var cFree = map.c.freeVars();
@@ -3719,7 +3718,7 @@ declare(
       var step3 = rules.toForall0(step2, vName);
       var equiv = rules.fact('forall {x. p x => q} == exists p => q');
       var step4 = rules.rewriteOnly(step3, '', equiv);
-      var exists = rules.fact('exists R');
+      var exists = rules.fact(new Call(new Atom('exists'), asm.fn));
       var step5 = rules.trueBy0(step4, '/left', exists);
       var step6 = rules.rewrite(step5, '', 'T => x == x');
       return step6.justify('removeTypeAsm', arguments, [step]);
