@@ -438,8 +438,7 @@ function exerciseInits(stmt) {
   console.log('Exercise statement:', stmt.$$);
   const goal =
         (stmt.implies()
-         ? infixCall(infixCall(stmt.getLeft(), '&', stmt.getRight()),
-                     '=>', stmt.getRight())
+         ? infixCall(stmt.getRight(), '=>', stmt.getRight())
          : infixCall(stmt, '=>', stmt));
   console.log('Goal:', goal.$$);
   const step = rules.tautologous(goal);
