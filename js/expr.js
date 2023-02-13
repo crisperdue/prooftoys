@@ -947,7 +947,7 @@ Expr.prototype.unmappedVars = function(map) {
 /**
  * Returns a truthy value iff this and the given Expr differ only in
  * names of free and/or bound variables.  When true, the value is a
- * substition ("alpha conversion") that maps free variable names in
+ * substitution ("alpha conversion") that maps free variable names in
  * this to Atom objects in the Expr.  Applying the substitution to this
  * Expr results in an Expr that "matches" the Expr argument of this
  * method.
@@ -2783,9 +2783,9 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
     return expr.name == boundTo;
   }
   // When within the scope of any bound variables, check that the
-  // candidate substitution would not have to rename any (in expr), as
-  // that would violate the specifications for this kind of matching
-  // by requiring substitution into expr.
+  // candidate substitution would not have to rename any variables in
+  // expr, as this kind of matching is not defined to include
+  // substitution into expr.
   var frees = bindings && expr.freeVars();
   for (var binding = bindings; binding; binding = binding.more) {
     if (frees[binding.to]) {
