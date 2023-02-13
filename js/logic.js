@@ -466,10 +466,29 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
   const rhs = eqn.getRight();
   const path = this.asPath(path_arg).uglify();
 
-  // Maps vbl name to vbl name, x to y.
-  const renamings = new Map();
-  const namesMatch = (x, y) =>
-        (renamings.get(x.name) || x.name) === y.name;
+  // Mappings from names of in-scope bound variables to their binding
+  // level, during calls to "match".  These may contain mappings to
+  // "undefined", meaning that there is no current binding.
+  const xLevels = new Map();
+  const yLevels = new Map();
+
+  // Tests whether strings x and y represent corresponding variables
+  // of the terms being matched, in the current scope.
+  const namesMatch = (x, y) => {
+    const xlev = xLevels.get(x);
+    const ylev = yLevels.get(y);
+    // This test needs all values in xLevels and yLevels to be
+    // nonzero if not undefined.
+    if (xlev) {
+      return xlev === ylev;
+    } else {
+      return !ylev && x === y;
+    }
+  };
+
+  // This is the current depth of nesting within lambdas during
+  // executions of "match", below.
+  let level = 0;
 
   // Checks if terms x and y are the same up to renamings of bound
   // variables, returning a boolean value.  Types of corresponding
@@ -483,18 +502,24 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
       return false;
     }
     if (ct === Atom) {
-      return (namesMatch(x, y) &&
+      return (namesMatch(x.name, y.name) &&
               Toy.andUnifTypes(x.type, y.type, typeMap, pairs));
     } else if (ct === Call) {
       return match(x.fn, y.fn) && match(x.arg, y.arg);
     } else if (ct === Lambda) {
+      level++;
       const xnm = x.bound.name;
-      const outerx = renamings.get(xnm);
-      renamings.set(xnm, y.bound.name);
+      const ynm = y.bound.name;
+      const outerx = xLevels.get(xnm);
+      const outery = yLevels.get(ynm);
+      xLevels.set(xnm, level);
+      yLevels.set(ynm, level);
       const result =
             (Toy.andUnifTypes(x.bound.type, y.bound.type, typeMap, pairs) &&
              match(x.body, y.body));
-      renamings.set(xnm, outerx);
+      xLevels.set(xnm, outerx);
+      yLevels.set(ynm, outery);
+      level--;
       return result;
     } else {
       abort('');
