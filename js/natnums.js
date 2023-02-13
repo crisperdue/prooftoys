@@ -63,7 +63,7 @@ Toy.exercise(
        return false;
      }
      const name = vbl.name;
-     if (step.wff.pathBindings(path.uglify(true)).has(name)) {
+     if (step.wff.pathBindings(path.uglify(step.implies())).has(name)) {
        return false;
      }
      const asmsByPath = step.wff.asmMap();
