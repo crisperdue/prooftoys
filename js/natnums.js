@@ -99,7 +99,7 @@ Toy.exercise(
      return rules.reduceAll(step4, '').justify('induct3', arguments, [step]);
    },
    inputs: {site: 1},
-   menu: 'set up induction',
+   menu: 'induction on {term}',
    description: 'set up induction',
   },
 
