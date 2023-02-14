@@ -52,6 +52,19 @@ Toy.exercise(
              .andThen('simplifySite', ''));
    }
   },
+  {statement: '@NN n => NN (succ n) == T',
+   proof: function() {
+     return (rules.fact('@NN n => NN (succ n)')
+             .andThen('rewriteOnly', '', 'a == (a == T)'));
+   }
+  },
+  {statement: '@NN n & NN m => (succ m = succ n => m = n)',
+   proof: function() {
+     return (rules.fact('@NN n & NN m & succ m = succ n => m = n')
+             .andThen('extractHyp', 'succ m = succ n'));
+   }
+  },
+
   // Uses a selected variable occurrence within an assumption.
   {name: 'induct3',
    precheck: function(step, path) {
@@ -208,6 +221,12 @@ Toy.exercise(
   
   {statement: '@NN a => 0 + a = a'},
   {exertion: 'add1'},
+
+  {statement: '@NN a & NN b => NN (a + b)'},
+  {exertion: 'add1.5'},
+
+  {statement: '@NN a & NN b & NN c => (a + b) + c = a + (b + c)'},
+  {exertion: 'add2'},
 
 // Define 1 = succ 0
 
