@@ -3750,7 +3750,7 @@ declare(
     form: (''),
     menu: '  remove irrelevant {term}',
     tooltip: 'Remove irrelevant type assumption',
-    description: 'remove irrelevant type assumption {site};; {in step siteStep}'
+    description: 'irrelevant assumption {site};; {in step siteStep}'
   },
 
   // Rule P/Q for a single antecedent (5234).  The schema step must
