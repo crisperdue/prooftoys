@@ -65,143 +65,15 @@ Toy.exercise(
    }
   },
 
-  // Uses a selected variable occurrence within an assumption.
-  {name: 'induct3',
-   precheck: function(step, path_arg) {
-     const path = step.asPath(path_arg);
-     if (!step.implies() && path.isLeft()) {
-       return false;
-     }
-     const vbl = step.get(path);
-     if (!vbl.isVariable()) {
-       return false;
-     }
-     const name = vbl.name;
-     if (step.wff.pathBindings(path.uglify(step.implies())).has(name)) {
-       return false;
-     }
-     const asmsByPath = step.wff.asmMap();
-     const here = step.wff.prettifyPath(path);
-     let asm = null;
-     let pstr;
-     for (pstr of asmsByPath.keys()) {
-       const pth = Toy.asPath(pstr);
-       if (here.remainder(pth)) {
-         asm = asmsByPath.get(pstr);
-         break;
-       }
-     }
-     if (!asm) {
-       return false;
-     }
-     return {asm: asm, asmPath: Toy.asPath(pstr)};
-   },
-   action: function(step, path) {
-     const vbl = step.get(path);
-     const name = vbl.name;
-     const {asm, asmPath} = Toy._actionInfo;
-
-     // This equates a lambda call to the asm.
-     const reducer = rules.axiom4(Toy.call(Toy.lambda(name, asm), name));
-     // This replaces the assumption with the lambda call.
-     const step2 = rules.r1(step, asmPath, rules.eqnSwap(reducer));
-     // Apply the induction2 fact to the modified assumption.
-     // Do not reduce introduced lambdas.
-     const step3 = rules.rewriteOnly(step2, asmPath, 'induction2', false);
-     // This has effect much like using plain rewrite in step3.
-     const step4 = rules.simplifyAsms(step3);
-     return rules.reduceAll(step4, '').justify('induct3', arguments, [step]);
-   },
-   inputs: {site: 1},
-   menu: 'induction on {term}',
-   description: 'set up induction',
-  },
-
-  // Induction on a variable; if given, the name, otherwise the
-  // rightmost name declared/assumed to be NN.  It is possible to
-  // induct on non-variable terms, but this does not handle that.
-  // This takes the selection as the term to convert to application of
-  // the lambda predicate to the desired induction variable.
-  {name: 'induct2',
-   precheck: function(step, path, name=null) {
-     return false;  // XXX
-     const term = step.get(path);
-     // Slightly better than checking "sameAs" would be to check
-     // whether the path is appropriate for an assumption.
-     const asms = step.getAsms();
-     return (term instanceof Call && asms &&
-             asms.scanConj(t => t.sameAs(term)) &&
-             term.freeVarSet().size > 0);
-     // XXX also find and check the name if not given.
-   },
-   toOffer: function(step, term) {
-     return true;  // XXX
-     const path = step.prettyPathTo(term);
-     // XXX Put this in menuGen, which has the needed information.
-     return step.asmMap().has(path.toString());
-   },
-   action: function(step, path, name_arg=null) {
-     const term = step.get(path);
-     const findName = () => {
-       let v = null;
-       step.asmSet().scanConj(t => {
-         const map = t.matchSchema('NN x');
-         if (map && map.x.isVariable()) {
-           v = map.x;
-         }
-       });
-       return v && v.name;
-     };
-     const name = name_arg || findName();
-     assert(name, 'No variable for induction');
-
-     const reducer = rules.axiom4(Toy.call(Toy.lambda(name, A), name));
-     const step2 = rules.r1(step, path, rules.eqnSwap(reducer));
-     const step3 = rules.rewriteOnly(step2, '/left', 'induction2', false);
-     // This has effect much like using plain rewrite in step2.
-     const step4 = rules.simplifyAsms(step3);
-     return rules.reduceAll(step4, '').justify('induct2', arguments, [step]);
-   },
-   inputs: {site: 1},
-   menu: 'set up induction',
-   description: 'set up induction',
-  },
-
-  {name: 'induct',
-   precheck: function(step, path) {
-     const term = step.get(path);
-     return (term.matchSchema('NN x => P x') ||
-             term.matchSchema('A & NN x => P x'));
-    },
-    action: function(step, path) {
-      const term = step.get(path);
-      const subst = (term.matchSchema('NN v => A') ||
-                     term.matchSchema('A1 & NN v => A'));
-      const {v, A} = subst;
-      const reducer = rules.axiom4(Toy.call(Toy.lambda(v, A), v));
-      const step2 = rules.r1(step, path.concat('/right'),
-                             rules.eqnSwap(reducer));
-      const step3 = rules.rewriteOnly(step2, '/left', 'induction', false);
-      // This has effect much like using plain rewrite.
-      const step4 = rules.simplifyAsms(step3);
-      return rules.reduceAll(step4, '').justify('induct', arguments, [step]);
-    },
-    toOffer: (step, term) => step.implies() && step.prettyPathTo(term).isLeft(),
-    inputs: {site: 1},
-    menu: 'try induction',
-   // labels: 'backward',
-    description: 'apply induction',
-  },
-
   // Target is a boolean term with an individual variable to try
   // induction on.
-  {name: 'induct4',
+  {name: 'induct',
    menuGen: function(ruleName, step, term, proofEditor) {
      const path = step.prettyPathTo(term);
      const localFrees = term.freeVarSet();
      const items = [];
      for (const name of localFrees) {
-       if (rules.induct4.precheck(step.original, path, name)) {
+       if (rules.induct.precheck(step.original, path, name)) {
          // TODO: Consider checking with the editor whether the goal
          //   says the variable could be NN.
          items.push({ruleName: ruleName,
@@ -220,7 +92,8 @@ Toy.exercise(
      if (term instanceof Call && term.isBoolean()) {
        const frees = term.freeVarsMap();
        const vbl = frees.get(v);
-       /*
+       /* Consider including these lines, which should probably
+          also allow the type to be a type variable.
        if (!vbl || vbl.type !== Toy.individual) {
          return false;
        }
@@ -247,7 +120,7 @@ Toy.exercise(
      const step3 = rules.rewriteOnly(step2, path, 'induction2', false);
      // This has effect much like using plain rewrite in step3.
      const step4 = rules.simplifyAsms(step3);
-     return rules.reduceAll(step4, '').justify('induct4', arguments, [step]);
+     return rules.reduceAll(step4, '').justify('induct', arguments, [step]);
    },
    inputs: {site: 1},
    menu: 'induction on {term}',
