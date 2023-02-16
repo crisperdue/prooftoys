@@ -254,16 +254,14 @@ Toy.exercise(
    description: 'set up induction',
   },
 
-  {statement: '@x + 22 = x + 22',
-   proof: `(1 assumeExplicitly (t ((x + 22) = (x + 22))))
-           (2 rewrite (s 1) (path "/left") (t ((x = x) == T)))`},
+  {statement: '@succ x = succ x',
+   proof: `(1 assumeExplicitly (t ((succ x) = (succ x))))
+           (2 rewrite (s 1) (path "/left") (t ((x = x) == T)))`
+  },
   {exertion: 'nat1'},
 
-  {statement: '@NN x & NN y & y = x + 7 => 2 * y = 2 * (x + 7)'},
-  {exertion: 'nat2'},
-
   {statement: '@NN a & NN b & succ a = b => succ (succ a) = succ b'},
-  {exertion: 'nat3'},
+  {exertion: 'nat2'},
 
   // Recursive definition of "+":
   {statement: '@NN a => a + 0 = a', axiom: true},
