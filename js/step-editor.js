@@ -1926,15 +1926,21 @@ RuleMenu.prototype._update = function() {
   self.offerableRuleNames().forEach(function(ruleName) {
       // Info is a string or array of strings.
       var info = ruleMenuInfo(ruleName, selStep, selection, proofEditor);
-      if (Array.isArray(info)) {
-        // An array occurs when a rule may be used in multiple ways,
-        // notably where there are multiple possible replacements of
-        // a term by equal terms.
-        info.forEach(function(msg) {
-            itemInfos.push({ruleName: ruleName, html: msg});
-          });
-      } else if (info) {
+      if (typeof info === 'string') {
         itemInfos.push({ruleName: ruleName, html: info});
+      } else if (Array.isArray(info)) {
+        // An array occurs when a rule may be used in multiple ways.
+        info.forEach(function(arg) {
+          if (arg.constructor === Object) {
+            itemInfos.push(arg);
+          } else {
+            console.error('Bad menu info:', arg);
+            debugger;
+          }
+        });
+      } else if (info != null) {
+        console.error('Bad menu info:', info);
+        debugger;
       }
   });
 
@@ -2627,9 +2633,17 @@ function acceptsSelection(step, ruleName) {
  *
  * This returns either a falsy value (including the empty string),
  * indicating the rule will not be offered, or a string with the menu
- * HTML, or an array of strings, indicating multiple menu items for
- * this rule with the possibly selected step and term.  Returned
- * strings should be HTML text.
+ * HTML, or an array, indicating multiple menu items for
+ * this rule with the possibly selected step and term.
+ * An array must contain strings or plain objects with properties:
+ *
+ * ruleName: rule name string
+ * ruleArgs: array of arguments to be passed to the rule
+ * html: HTML string to be displayed.
+ * $node: optional jQuery object containing a DOM node to insert.
+ *   If given, the "html" only affects sorting.
+ * 
+ * Strings in the return value should be HTML text.
  *
  * If there is a selected term, it can be formatted using {term} in
  * the rule's "menu" format string, or {right} for the term's
@@ -2639,7 +2653,27 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
   const info = Toy.rules[ruleName].info;
   const gen = info.menuGen;
   if (gen) {
-    return gen(ruleName, step, term, proofEditor);
+    const items = gen(ruleName, step, term, proofEditor);
+    // Check that the menu items are well-formedd.
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        if (item.constructor === Object &&
+            (typeof item.ruleName === 'string') &&
+            (item.ruleArgs == null || Array.isArray(item.ruleArgs)) &&
+            typeof item.html === 'string') {
+          continue;
+        } else {
+          console.error('Bad rule menu item:', item);
+          debugger;
+        }
+      }
+    } else {
+      if (items != null && typeof items !== 'string') {
+        console.error('Bad menuGen result:', items);
+        debugger;
+      }
+    }
+    return items;
   }
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
