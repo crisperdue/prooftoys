@@ -67,7 +67,8 @@ Toy.exercise(
 
   // Uses a selected variable occurrence within an assumption.
   {name: 'induct3',
-   precheck: function(step, path) {
+   precheck: function(step, path_arg) {
+     const path = step.asPath(path_arg);
      if (!step.implies() && path.isLeft()) {
        return false;
      }
@@ -190,6 +191,67 @@ Toy.exercise(
     menu: 'try induction',
    // labels: 'backward',
     description: 'apply induction',
+  },
+
+  // Target is a boolean term with an individual variable to try
+  // induction on.
+  {name: 'induct4',
+   menuGen: function(ruleName, step, term, proofEditor) {
+     const path = step.prettyPathTo(term);
+     const localFrees = term.freeVarSet();
+     const items = [];
+     for (const name of localFrees) {
+       if (rules.induct4.precheck(step.original, path, name)) {
+         // TODO: Consider checking with the editor whether the goal
+         //   says the variable could be NN.
+         items.push({ruleName: ruleName,
+                     ruleArgs: [step.original, path, name],
+                     html: `  induction on ${name}`
+                    });
+       }
+     }
+     return items;
+   },
+   // The term must be a boolean Call, the variable occurring free in
+   // the term and globally free in the step.
+   precheck: function(step, path_arg, v) {
+     const path = step.asPath(path_arg);
+     const term = step.get(path);
+     if (term instanceof Call && term.isBoolean()) {
+       const frees = term.freeVarsMap();
+       const vbl = frees.get(v);
+       /*
+       if (!vbl || vbl.type !== Toy.individual) {
+         return false;
+       }
+       */
+       const pth = path.uglify(step.implies());
+       const bindings = step.pathBindings(pth);
+       if (bindings.has(v)) {
+         return false;
+       }
+       return true;
+     }
+     return false;
+   },
+   action: function(step, path_arg, name) {
+     const path = step.asPath(path_arg);
+     const asm = step.get(path);
+
+     // This equates a lambda call to the asm.
+     const reducer = rules.axiom4(Toy.call(Toy.lambda(name, asm), name));
+     // This replaces the assumption with the lambda call.
+     const step2 = rules.r1(step, path, rules.eqnSwap(reducer));
+     // Apply the induction2 fact to the modified assumption.
+     // Do not reduce introduced lambdas.
+     const step3 = rules.rewriteOnly(step2, path, 'induction2', false);
+     // This has effect much like using plain rewrite in step3.
+     const step4 = rules.simplifyAsms(step3);
+     return rules.reduceAll(step4, '').justify('induct4', arguments, [step]);
+   },
+   inputs: {site: 1},
+   menu: 'induction on {term}',
+   description: 'set up induction',
   },
 
   {statement: '@x + 22 = x + 22',
