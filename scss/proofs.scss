@@ -111,6 +111,11 @@ wffblock- > * {
     font-weight: bold;
     font-size: 1.1em;
     color: green;
+    position: relative;
+    // Animate this value to get attention.
+    // right: 5em;
+    // This is the same as .proofEditor
+    background-color: hsl(200deg, 100%, 97%);
   }
 
   input, button, select {
@@ -148,6 +153,7 @@ wffblock- > * {
     border-radius: 8px;
     padding: 1em;
     font-size: 1.1rem;
+    clear: both;
 }
 
 .proofDisplay .link {
