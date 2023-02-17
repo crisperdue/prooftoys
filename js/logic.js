@@ -1096,7 +1096,7 @@ declare(
               .justify('considerPart', arguments, [step]));
     },
     inputs: {site: 1},
-    menu: 'consider {term} in isolation',
+    menu: ' consider {term} in isolation',
     tooltip: ('prepare to transform term'),
     description: 'term equal to itself',
     labels: 'general algebra'
@@ -1526,8 +1526,8 @@ declare(
    inputs: {site: 1},
    labels: 'basic',
    // Display it in the menu much like a rewrite.
-   menu: '\u27ad <b>{right}</b> (assumed)',
-   description: 'replace using assumption',
+   menu: '\u27ad <b>{right}</b> (by assumption)',
+   description: 'replace {site} using assumption',
   },  
 
   /**
@@ -5442,8 +5442,8 @@ declare(
       return result.justify('witnessExists', arguments, [step]);
     },
     inputs: {site: 1},
-    menu: "A to &exist; x. A'",
-    description: 'existentially quantify',
+    menu: "conclude existence from {term}",
+    description: 'witness existence',
     labels: 'basic'
    },
 
