@@ -1051,8 +1051,8 @@ function addDefnFacts(definition) {
     if (eqn != eqn0) {
       // Flag the fact as being essentially the same as the definition
       // of the function or predicate.
-      addFact({goal: eqn, definitional: true});
-      addSwappedFact({goal: eqn, definitional: true});
+      addFact({goal: eqn, definitional: true, desimplifier: true});
+      addSwappedFact({goal: eqn, definitional: true, simplifier: true});
     }
   }
 }
