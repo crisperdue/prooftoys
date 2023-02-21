@@ -1,5 +1,4 @@
 
-
 /* Invisibly fills space */
 .invisible {
   visibility: hidden;
@@ -14,6 +13,16 @@
 .description {
   font-style: italic;
   color: gray;
+}
+
+// For video tooltips:
+a[videotip] {
+  font-weight: bold;
+}
+
+b[videotip], b[imagetip] {
+  border: 1px solid black;
+  padding: 0 2px;
 }
 
 .expr.hover, .inShadow {
@@ -102,7 +111,6 @@ wffblock- > * {
     float: right;
     margin-left: 1em;
     font-weight: bold;
-    font-size: 1.1em;
   }
 
   .proofEditorHeader .solved {
