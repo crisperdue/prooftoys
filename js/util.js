@@ -1868,11 +1868,7 @@ function soonDo(action) {
  * Returns a promise that resolves to null after the given number of
  * milliseconds.
  */
-function wait(millis) {
-  return new Promise(function (resolve, reject) {
-      setTimeout(resolve, millis);
-  });
-}
+const sleep = millis => new Promise(resolve => setTimeout(resolve, millis));
 
 /**
  * Do the action as soon as possible after giving the page a chance to
@@ -1889,7 +1885,7 @@ function afterRepaint(action) {
  * for a repaint to trigger.
  */
 function allowRepaint() {
-  return wait(10);
+  return sleep(10);
 }
 
 //// Change handlers
@@ -2738,7 +2734,7 @@ Toy.showStacks = showStacks;
 
 Toy.Refresher = Refresher;
 Toy.soonDo = soonDo;
-Toy.wait = wait;
+Toy.sleep = sleep;
 Toy.afterRepaint = afterRepaint;
 Toy.allowRepaint = allowRepaint;
 
