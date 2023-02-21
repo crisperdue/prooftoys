@@ -22,7 +22,7 @@
 
 .expr.unsolved {
   font-weight: bold;
-  color: red;
+  color: crimson;
   // Use these for even more emphasis:
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
@@ -110,7 +110,7 @@ wffblock- > * {
     margin-left: 1em;
     font-weight: bold;
     font-size: 1.1em;
-    color: green;
+    color: #00a000;
     position: relative;
     // Animate this value to get attention.
     // right: 5em;
@@ -204,7 +204,8 @@ wffblock- > * {
 // Notice that this rule requires .proofSteps immediately under
 // .proofDisplay, i.e. top-level of proof steps.
 .proofDisplay.editable > .proofSteps {
-  height: 400px;
+  min-height: 100px;
+  max-height: 400px;
   position: relative; // This makes it an offsetParent.
   resize: vertical;   // "Both" does not resize the container horizontally.
   overflow-x: clip;

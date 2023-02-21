@@ -361,9 +361,65 @@ function footerOnResize() {
 }
 
 /**
+ * Makes image tooltips base
+ */
+function makeImageTips() {
+  tippy('b[imagetip]', {
+    content: (reference) => {
+      const img = document.createElement('img');
+      img.src = reference.getAttribute('imagetip');
+      img.style.maxWidth = '80vw';
+      img.style.objectFit = 'scale-down';
+      return img;
+    },
+    placement: 'bottom',
+    maxWidth: '82vw',
+    delay: [500, 0],
+    allowHTML: true,
+    arrow: false,
+    hideOnClick: false,
+  });
+}    
+
+/**
+ * Makes video tooltips based on info in elements -- SPAN or A or B,
+ * with a videotip attribute, where the attribute value is the URL of
+ * an mp4 video.  If the element tag is A or B, the element style will
+ * have a border box around it.
+ */
+function makeVideoTips() {
+  tippy('span[videotip], a[videotip], b[videotip]', {
+    content: element => {
+      const source = element.getAttribute('videotip');
+      return `<video loop muted playsinline style="max-width: 80vw">
+                 <source src="${source}" type="video/mp4">
+               </video>`;
+    },
+    placement: 'bottom',
+    delay: [500, 100],
+    trigger: 'mouseenter',
+    hideOnClick: false,
+    maxWidth: '82vw', 
+    allowHTML: true,
+    interactive: true,
+    arrow: false,
+    appendTo: () => document.body,
+    onShow(instance) {
+        let video = instance.popper.getElementsByTagName('video')[0];
+        video.currentTime = 0; //start from begining
+        video.play();
+    },
+  });
+}
+
+/**
  * Initializations on DOMContentLoaded.
  */
 $(function() {
+  // Make image tooltips.
+  makeImageTips();
+  // Make video tooltips as needed.
+  makeVideoTips();
   // If there is at least one footer element, this sets up
   // repositioning it any time the window resizes.
   if ($('div.pageFooter').length > 0) {

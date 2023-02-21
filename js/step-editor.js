@@ -136,7 +136,7 @@ function ProofEditor(options_arg) {
     $('<div class="proofEditor logicZone"></div>');
 
   // Style the editor as "stable" if requested.
-  if (options.oneDoc) {
+  if (options.oneDoc || options.exercise) {
     $node.addClass('oneDoc');
   }
 
@@ -426,7 +426,7 @@ ProofEditor.prototype._initExercise = function(exName) {
   // Display the exercise goal in the editor's header.
   const $header = self.$node.find('.proofEditorHeader');
   $header.find('.wksTitle')
-  .replaceWith('<b>Goal: prove </b><span class=wff></span>');
+  .replaceWith('<b>Proving:</b> <span class=wff></span>');
   $header.find('.wff').append(stmt.renderTerm());
 };
 
@@ -435,13 +435,7 @@ ProofEditor.prototype._initExercise = function(exName) {
  * exercise based on setting the given wff as a goal.
  */
 function exerciseInits(stmt) {
-  console.log('Exercise statement:', stmt.$$);
-  const goal =
-        (stmt.implies()
-         ? infixCall(stmt.getRight(), '=>', stmt.getRight())
-         : infixCall(stmt, '=>', stmt));
-  console.log('Goal:', goal.$$);
-  const step = rules.tautologous(goal);
+  const step = rules.goal(stmt);
   return [step];
 }
 

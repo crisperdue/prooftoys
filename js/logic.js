@@ -1081,12 +1081,29 @@ declare(
     menuGen: function(ruleName, step, term, proofEditor) {
       // This rule is only available if the proof is currently empty.
       return (proofEditor.proofDisplay.steps.length == 0
-              ? ['problem to solve (givens)']
+              ? 'problem to solve (givens)'
               : null);
     },
     tooltip: ('statement to take as given'),
     description: 'given',
     labels: 'algebra basic'
+  },
+
+  {name: 'goal',
+    action: function(term) {
+      return rules.assumeExplicitly(term).justify('goal', arguments);
+    },
+    inputs: {bool: 1},
+    form: 'Goal statement: <input name=bool>',
+    menuGen: function(ruleName, step, term, proofEditor) {
+      // This rule is only available if the proof is currently empty.
+      return (proofEditor.proofDisplay.steps.length == 0
+              ? 'state the goal'
+              : null);
+    },
+    tooltip: ('goal statement'),
+    description: 'goal statement',
+    labels: 'basic',
   },
 
   // Similar to "consider", but uses a selected term.
@@ -5359,7 +5376,35 @@ declare(
     // with assertFacts == false.
     // simplifier: true,
     description: 'eta conversion'
-  }
+  },
+
+  // TODO: Make this superfluous by fixing rewriting to work with
+  //   the eta fact.  Rewriting with rewriteOnly already works if
+  //   called with reduce=false.
+  {name: 'etaReduce',
+   precheck: function(step, path) {
+     const term = step.get(path);
+     if (!(term instanceof Lambda)) {
+       return false;
+     }
+     const body = term.body;
+     const name = term.bound.name;
+     return (body instanceof Call &&
+             body.arg instanceof Atom &&
+             body.arg.name === name);
+   },
+   action: function(step, path) {
+     const term = step.get(path);
+     const step2 = rules.eta()
+           .andThen('instVar', term.body.fn, 'p');
+     const step3 = rules.r1(step, path, step2);
+     return step3.justify('etaReduce', arguments, [step]);
+   },
+   inputs: {site: 1},
+   menu: 'eta reduce',
+   labels: 'basic',
+  },
+
 );
 
 // This fact states the truth table for ==.  At present the
