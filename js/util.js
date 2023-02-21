@@ -1016,6 +1016,19 @@ function newError(...args) {
   return strict(error(...args));
 }
 
+/**
+ * Designed to be called with an arrow function as its argument, one
+ * with one or more default parameters, as in:
+ *
+ * bind((y=complexComputation()) => { console.log(y); return y; }).
+ * This way it serves much like a "let expression" in languages such
+ * as Lisp or ML.
+ *
+ * This calls its function argument, passing it no arguments, and
+ * returns the function's value.
+ */
+const bind = f => f();
+
 // Calls the function with no arguments in a context where the given
 // property of Toy has the given value and returns its value if it
 // returns at all.  Guarantees restoration of the old value on exit
@@ -2678,6 +2691,7 @@ Toy.sortMap = sortMap;
 
 Toy.rebind = rebind;
 Toy.abort = abort;
+Toy.bind = bind;
 Toy.invoker = invoker;
 Toy.error = error;
 Toy.newError = newError;
