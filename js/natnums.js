@@ -31,6 +31,12 @@ Toy.exercise(
   {statement: '@NN n => NN (succ n)', axiom: true,
    description: 'successor is closed over the natural numbers'
   },
+  {statement: '@NN n => NN (succ n) == T',
+   proof: function() {
+     return (rules.fact('@NN n => NN (succ n)')
+             .andThen('rewriteOnly', '', 'a == (a == T)'));
+   }
+  },
   {statement: '@NN n & NN m & succ m = succ n => m = n', axiom: true,
    description: 'if successors of two numbers are equal, the numbers are equal'
   },
@@ -45,6 +51,14 @@ Toy.exercise(
    name: 'induction2',
    proof: `(1 induction)
            (2 rewriteOnly (s 1) (path "") (t (a => (b => c) == (a & b => c))))`},
+
+
+  // Recursive definition of "+":
+  {statement: '@NN a => a + 0 = a', axiom: true},
+  {statement: '@NN a & NN d => a + succ d = succ (a + d)', axiom: true},
+
+  {definition: '1 = succ 0'},
+
   {statement: 'exists NN',
    proof: function() {
      return (rules.fact('p x => exists p')
@@ -52,12 +66,7 @@ Toy.exercise(
              .andThen('simplifySite', ''));
    }
   },
-  {statement: '@NN n => NN (succ n) == T',
-   proof: function() {
-     return (rules.fact('@NN n => NN (succ n)')
-             .andThen('rewriteOnly', '', 'a == (a == T)'));
-   }
-  },
+
   {statement: '@NN n & NN m => (succ m = succ n => m = n)',
    proof: function() {
      return (rules.fact('@NN n & NN m & succ m = succ n => m = n')
@@ -127,18 +136,18 @@ Toy.exercise(
    description: 'set up induction',
   },
 
-  {statement: '@succ x = succ x',
-   proof: `(1 assumeExplicitly (t ((succ x) = (succ x))))
+  {statement: '@x + y = x + y',
+   proof: `(1 goal (t x + y = x + y))
            (2 rewrite (s 1) (path "/left") (t ((x = x) == T)))`
   },
   {exertion: 'nat1'},
 
-  {statement: '@NN a & NN b & succ a = b => succ (succ a) = succ b'},
+  {statement: '@NN a & NN b & succ a = b => succ (succ a) = succ b',
+   proof:
+   `(1 tautologous
+      (t (((succ (succ a)) = (succ b)) => ((succ (succ a)) = (succ b)))))
+    (2 rewrite (s 1) (path "/left") (t ((x = y) => (((f x) = (f y)) == T))))`},
   {exertion: 'nat2'},
-
-  // Recursive definition of "+":
-  {statement: '@NN a => a + 0 = a', axiom: true},
-  {statement: '@NN a & NN d => a + succ d = succ (a + d)', axiom: true},
 
   {statement: '@NN a => a + succ 0 = succ a',
    proof: `(1 tautologous
@@ -152,19 +161,62 @@ Toy.exercise(
            (5 rewrite (s 4) (path "/left/left") (t (NN 0)))`},
   {exertion: 'nat4'},
   
-  {statement: '@NN a => 0 + a = a'},
+  {statement: '@NN a => 0 + a = a',
+   proof: `(1 tautologous (t (((0 + a) = a) => ((0 + a) = a))))
+           (2 induct (s 1) (path "/left") "a")
+           (3 rewrite (s 2) (path "/left/left/left/right/left")
+             (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+           (4 rewrite (s 3) (path "/left/left/left/left/left/left")
+             (t ((NN a) => ((a + 0) = a))))
+           (5 rewrite (s 4) (path "/left/left/left/left/left")
+             (t ((x = x) == T)))
+           (6 rewrite (s 5) (path "/left/left/left/left")
+             (t (((x = y) => ((f x) = (f y))) == T)))
+           (7 rewrite (s 6) (path "/left/left/left") (t (NN 0)))
+           (8 removeTypeAsm (s 7) (path "/left/right"))`},
   {exertion: 'add1'},
 
-  {statement: '@NN a & NN b => NN (a + b)'},
+  {statement: '@NN a & NN b => NN (a + b)',
+   proof: `(1 tautologous (t ((NN (a + b)) => (NN (a + b)))))
+           (2 induct (s 1) (path "/left") "b")
+           (3 rewrite (s 2) (path "/left/left/left/right/arg")
+             (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+           (4 rewrite (s 3) (path "/left/left/left/left/right/arg")
+             (t ((NN a) => ((a + 0) = a))))
+           (5 rewrite (s 4) (path "/left/left/left/left")
+             (t (((NN n) => (NN (succ n))) == T)))
+           (6 removeTypeAsm (s 5) (path "/left/right"))`},
   {exertion: 'add1.5'},
 
-  {statement: '@NN a & NN b & NN c => (a + b) + c = a + (b + c)'},
+  {statement: '@NN a & NN b & NN c => (a + b) + c = a + (b + c)',
+   proof:
+   `(1 tautologous
+      (t ((((a + b) + c) = (a + (b + c))) => (((a + b) + c) = (a + (b + c))))))
+    (2 induct (s 1) (path "/left") "c")
+    (3 rewrite (s 2) (path "/left/right/right/right")
+      (t ((NN a) => ((a + 0) = a))))
+    (4 rewrite (s 3) (path "/left/left/left/left/left")
+      (t ((NN a) => ((a + 0) = a))))
+    (5 rewrite (s 4) (path "/left/left/left/left/left") (t ((x = x) == T)))
+    (6 rewrite (s 5) (path "/left/left/left/left/right/right/right")
+      (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (7 rewrite (s 6) (path "/left/left/left/left/left/right/right")
+      (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (8 rewrite (s 7) (path "/left/left/left/left/left/left/left/right/left")
+      (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (9 rewrite (s 8) (path "/left/left/left/left/left/left/left")
+      (t (((x = y) => ((f x) = (f y))) == T)))
+    (10 rewrite (s 9) (path "/left/left/left/left/left/right")
+      (t (((NN a) & (NN b)) => (NN (a + b)))))
+    (11 rewrite (s 10) (path "/left/left/left/left/left")
+      (t (((NN a) & (NN b)) => (NN (a + b)))))
+    (12 removeTypeAsm (s 11) (path "/left/right"))`},
   {exertion: 'add2'},
 
 // Define 1 = succ 0
 
-// 1: 0 + n = n                  (zero_add) (induction on n)
-// 2: (a + b) + c = a + (b + c)  (add_assoc) (induction on c)
+// 1: 0 + n = n                  (zero_add) (induction on n) add1
+// 2: (a + b) + c = a + (b + c)  (add_assoc) (induction on c) add2
 // 3: succ a + b = succ (a + b)  (succ_add) (induction on b)
 // 4: a + b = b + a           (add_comm) (induction on b)
 // 5: succ n = n + 1          (succ_eq_add_one)
