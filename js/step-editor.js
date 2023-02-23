@@ -181,9 +181,7 @@ function ProofEditor(options_arg) {
   };
   $clearWork.css(css);
   const $headerRight = $('<span>');
-  $headerRight.append
-    ($clearWork,
-     '<span><span class="solved hidden">&check; Proof complete</span></span>');
+  $headerRight.append($clearWork);
   $header.append($headerRight);
 
   let $readOnly =
@@ -233,8 +231,20 @@ function ProofEditor(options_arg) {
         // Is the goal proved?
         const stmt = self.goalStatement;
         if (stmt) {
-          self.$node.find('.proofEditorHeader .solved')
-            .toggleClass('hidden', step.checkSubgoals(stmt) !== 0);
+          async function showStatus(solved) {
+            await Toy.sleep(200);
+            const $node = $('.proofEditorHeader .status');
+            $node.empty();
+            if (solved) {
+              for (const ch of '\u2713 Proof complete. '.split('')) {
+                $node.append(ch);
+                await Toy.sleep(20);
+              }
+            } else {
+              $node.append('Proving:');
+            }
+          }
+          showStatus(step.checkSubgoals(stmt) === 0);
         }
 
         var message = self.progressMessage(step.original);
@@ -426,7 +436,7 @@ ProofEditor.prototype._initExercise = function(exName) {
   // Display the exercise goal in the editor's header.
   const $header = self.$node.find('.proofEditorHeader');
   $header.find('.wksTitle')
-  .replaceWith('<b>Proving:</b> <span class=wff></span>');
+  .replaceWith('<b class=status>Proving:</b> <span class=wff></span>');
   $header.find('.wff').append(stmt.renderTerm());
 };
 
@@ -435,7 +445,7 @@ ProofEditor.prototype._initExercise = function(exName) {
  * exercise based on setting the given wff as a goal.
  */
 function exerciseInits(stmt) {
-  const step = rules.goal(stmt);
+  const step = rules.goal(stmt.getMain());
   return [step];
 }
 
