@@ -25,11 +25,11 @@ Toy.exercise(
 
   {statement: '@NN 0', axiom: true,
    simplifier: true,
-   description: 'zero is a natural number'
+   description: 'axiom: zero is a natural number'
   },
   {exertion: 'nat0'},
   {statement: '@NN n => NN (succ n)', axiom: true,
-   description: 'successor is closed over the natural numbers'
+   description: 'axiom: successor is closed over the natural numbers'
   },
   {statement: '@NN n => NN (succ n) == T',
    proof: function() {
@@ -41,14 +41,15 @@ Toy.exercise(
    description: 'if successors of two numbers are equal, the numbers are equal'
   },
   {statement: '@NN n => 0 != succ n', axiom: true,
-   description: 'zero is not a successor'
+   description: 'axiom: zero is not a successor'
   },
   {statement: '@P 0 & (P n => P (succ n)) => (NN x => P x)', axiom: true,
    name: 'induction',
-   description: 'induction for natural numbers'
+   description: 'axiom: induction for natural numbers'
   },
   {statement: '@P 0 & (P n => P (succ n)) & NN x => P x',
    name: 'induction2',
+   description: 'convenient statement of induction for natural numbers',
    proof: `(1 induction)
            (2 rewriteOnly (s 1) (path "") (t (a => (b => c) == (a & b => c))))`},
 
@@ -135,6 +136,8 @@ Toy.exercise(
    menu: 'induction on {term}',
    description: 'set up induction',
   },
+
+  // The exercises:
 
   {statement: '@x + y = x + y',
    proof: `(1 goal (t x + y = x + y))
