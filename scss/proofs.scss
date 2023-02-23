@@ -75,10 +75,11 @@ wffblock- > * {
 .proofEditor {
     position: relative;
     line-height: 1.3;
-    border: 1px solid #bbb;
+    border: 2px solid gray;
     padding: 1em;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: hsl(200deg, 100%, 97%);
+    margin-bottom: 1.5em;
 }
 
 // This causes all pointer events in the proof editor
@@ -915,7 +916,7 @@ input.copyText {
 
     &:hover .ruleMenu {
         visibility: visible;
-        opacity: 1;
+        opacity: .9;
         transition: all .3s linear;
     }
 

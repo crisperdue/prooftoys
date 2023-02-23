@@ -50,6 +50,11 @@ sub, sup {
   font-style: italic;
 }
 
+img {
+  border: 1px solid hsl(210deg, 14%, 75%);  // very lightslategray;
+  box-shadow: #ccc 7px 5px 7px;
+}
+
 /* Text wrapping */
 .nowrap {
   white-space: nowrap;
