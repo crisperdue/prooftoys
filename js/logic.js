@@ -2814,7 +2814,7 @@ declare(
       return result;
     },
     inputs: {bool: 1},
-    menu: 'prove a tautology',
+    menu: 'check a tautology',
     form: 'Enter tautology: <input name=bool size=40>',
     autoSimplify: noSimplify,
   },
@@ -2908,7 +2908,7 @@ declare(
     },  
     inputs: {bool: 1},
     form: 'Enter statement: <input name=bool size=40>',
-    menu: 'prove a tautology instance',
+    menu: 'check a tautology instance',
     tooltip: ('Tautology instantiator'),
     autoSimplify: noSimplify,
     description: 'tautology instance'
