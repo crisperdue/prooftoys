@@ -674,6 +674,31 @@ Expr.prototype.hasName = function(name) {
 };
 
 /**
+ * Returns a set of the names of named constants found within this
+ * term.
+ */
+Expr.prototype.constantNames = function() {
+  const result = new Set();
+  const traverse = term => {
+    const ct = term.constructor;
+    if (ct === Atom) {
+      if (term.isNamedConst()) {
+        result.add(term.name);
+      }
+    } else if (ct === Call) {
+      traverse(term.fn);
+      traverse(term.arg);
+    } else if (ct === Lambda) {
+      traverse(term.body);
+    } else {
+      abort('Not an Expr: {1}', term);
+    }
+  };
+  traverse(this);
+  return result;
+};
+
+/**
  * True iff this is a Atom that is a constant.  If the optional name
  * is given, this constant must have the given name.
  */
