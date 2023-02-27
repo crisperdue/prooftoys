@@ -27,6 +27,8 @@ const Atom = Toy.Atom;
 const Call = Toy.Call;
 const Lambda = Toy.Lambda;
 
+const Step = Expr;
+
 const definition = Toy.definition;
 
 // The book definition of F is just fine, and can be presented either
@@ -2482,31 +2484,9 @@ declare(
       if (!isEqn) {
         step = rules.fromTIsA(step);
       }
-
       if (reduceFns) {
-        // Eliminate introduced lambdas where feasible.
-        const funSites = new Map();
-        for (const key in map) {
-          if (map[key] instanceof Lambda) {
-            funSites.set(key, b.locateFree(key));
-          }
-        }
-        funSites.forEach(function(rPaths) {
-          rPaths.forEach(function (rPath) {
-            for (let r = rPath; r.segment === 'fn'; r = r.rest) {
-              // First time r refers to the lambda, then successive
-              // parents as this does more reductions.  Could be
-              // done more efficiently.
-              const path = r.rest.reverse();
-              const s = rules.backReduce(step, path);
-              if (!s) {
-                break;
-              }
-              step = s;
-            }
-          });
-        });
-      }
+        step = step.reduceSites(b, map);
+      };
       return step.justify('instMultiVars', arguments, [b]);
     },
     inputs: {step: 1},
@@ -2997,6 +2977,41 @@ declare(
     }
   }
 );
+
+/**
+ * With this a step resulting from a substitution, and given the input
+ * wff and substitution map for the substitution, this determines all
+ * sites where a lambda is substituted as the function in a Call, and
+ * reduces those calls, repeating in each spot until no lambda
+ * "surfaces" as a result of the reduction, in case the lambda is
+ * actually multiple nested lambdas, i.e. {x. {y. ... }}.
+ */
+Step.prototype.reduceSites = function(wff, map) {
+  // Eliminate introduced lambdas where feasible.
+  let step = this;
+  const funSites = new Map();
+  for (const key in map) {
+    if (map[key] instanceof Lambda) {
+      funSites.set(key, wff.locateFree(key));
+    }
+  }
+  funSites.forEach(function(rPaths) {
+    rPaths.forEach(function (rPath) {
+      for (let r = rPath; r.segment === 'fn'; r = r.rest) {
+        // First time r refers to the lambda, then successive
+        // parents as this does more reductions.  Could be
+        // done more efficiently.
+        const path = r.rest.reverse();
+        const s = rules.backReduce(step, path);
+        if (!s) {
+          break;
+        }
+        step = s;
+      }
+    });
+  });
+  return step;
+};
 
 /**
  * Supporting function for evalBool.  Given the name of a defined
