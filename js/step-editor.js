@@ -1965,8 +1965,17 @@ RuleMenu.prototype._update = function() {
         return;
       }
 
+      // This is the step number to report.
       const n = index + 1;
       const schema = proofStep.matchPart();
+      if (proofEditor.goalStatement) {
+        const goalSchema = proofEditor.goalStatement.matchPart();
+        if (schema.sameAs(goalSchema)) {
+          // Don't offer to use the goal to prove itself.
+          // That seems counterproductive.
+          return;
+        }
+      }
 
       // Experimentally omit matching schemas that are just a "$"
       // variable.  This occurs very often when solving an algebra
