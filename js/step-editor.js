@@ -1919,6 +1919,7 @@ RuleMenu.prototype._update = function() {
     });
   $items.empty();
   const selStep = proofEditor.proofDisplay.selection;
+  const thisStep = selStep && selStep.original;
   const selection = selStep && selStep.selection;
   const sitePath = selection && selStep.prettyPathTo(selection);
 
@@ -2053,13 +2054,8 @@ RuleMenu.prototype._update = function() {
       const resultTerm = eqn2.replacementTerm();
       // The special character is a form of white right arrow.
       let html = ' \u27ad <b class=resultTerm></b>';
-      // TODO: Consider using the length of the unicode in deciding
-      //   what message to generate here.
-      // const unicode = statement.toUnicode();
-      const shortie = statement.shortForm();
-      const main = shortie.getMain();
-      const asms = shortie.getAsms();
-      const mainText = Toy.trimParens(main.toHtml());
+      const shorty = statement.shortForm();
+      const mainText = Toy.trimParens(shorty.getMain().toHtml());
       const blurb = (info.definitional
                      ? 'definition of ' + statement.getLeft().func().name
                      : 'using ' + mainText)
@@ -2067,10 +2063,50 @@ RuleMenu.prototype._update = function() {
       const $node = $('<span>').append(html);
       const $resultTerm = $node.find('.resultTerm');
       $resultTerm.append(resultTerm.renderTerm());
-      if (asms) {
+
+      // This is a fake rewrite result based on asserting the fact.
+      // It is derived using rewriteFrom, because that puts the
+      // assumptions in a predictable order, with the original
+      // assumptions first, followed by ones from the fact statement.
+      const dumResult = rules.rewriteFrom(thisStep, sitePath,
+                                          rules.assert(statement));
+      // Count the asms of thisStep.
+      const numAsms =
+            Toy.bind((asms = thisStep.getAsms(), n = 0) =>
+                     asms ? (asms.scanConj(a => { n++; }), n) : 0);
+
+      // This will become a conjunction of all subgoals added in this
+      // step.
+      let subgoals = null;
+      const resultAsms = dumResult.getAsms();
+      if (resultAsms) {
+        const infixCall = Toy.infixCall;
+        const goalAsms = (proofEditor.goalStatement &&
+                          proofEditor.goalStatement.asmSet());
+        const currentAsms = thisStep.asmSet();
+        let i = 0;
+        resultAsms.scanConj(a => {
+          i++;
+          // Entirely skip over asms from the input step.
+          // Notice that one of them has probably been replaced
+          // by the rewrite, but we still skip it.
+          if (i > numAsms) {
+            // After that, if it was expected (in the goal), or
+            // already in the input step, ignore them.
+            if (!(goalAsms.has(a) || currentAsms.has(a))) {
+              subgoals = subgoals ? infixCall(subgoals, '&', a) : a;
+            }
+          }
+        });
+      }
+      if (subgoals) {
         const $asms = $('<b class=resultTerm>');
-        $asms.append(asms.subFree(subst).typedCopy().renderTerm());
-        $resultTerm.after(sitePath.isLeft() ? ' and ' : ' if ', $asms);
+        $asms.append(subgoals.renderTerm());
+        $resultTerm.after(sitePath.isLeft() ? ' adding ' : ' if ', $asms);
+      } else {
+        // If there are no subgoal-ish assumptions, give this rewrite
+        // priority with an extra leading space.
+        html = ' ' + html;
       }
       var info = {ruleName: 'rewrite',
                   ruleArgs: [selStep.original, sitePath, statement],
