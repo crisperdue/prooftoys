@@ -2111,7 +2111,7 @@ RuleMenu.prototype._update = function() {
       if (subgoals) {
         const $asms = $('<b class=resultTerm>');
         $asms.append(subgoals.renderTerm());
-        $resultTerm.after(sitePath.isLeft() ? ' adding ' : ' if ', $asms);
+        $resultTerm.after(' <b>if</b> ', $asms);
       } else {
         // If there are no subgoal-ish assumptions, give this rewrite
         // priority with an extra leading space.
