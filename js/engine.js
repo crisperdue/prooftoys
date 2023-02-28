@@ -241,12 +241,15 @@ function processLabels(labels) {
   }
 }
 
+// Constants related to description.
+const descriptors = new Set(['exists1', 'the', 'the1']);
+
 // Computes the fact's set of menu categories based on its metadata
 // and goal, and stores them as info.categories.  The categories are
 // like menus, but can be more fine-grained, each menu displaying a
 // characteristic set of categories.
 function computeMenuCategories(info, isConverse) {
-  const goal = info.goal;
+  const stmt = info.goal;
   const categories = new Set;
 
   for (let label in info.labels) {
@@ -258,16 +261,20 @@ function computeMenuCategories(info, isConverse) {
   }
 
   if (categories.size === 0) {
+    // TODO: Consider moving this computation to fact registration time.
+    const introDescrip = () => {
+      const factConsts = stmt.constantNames();
+      return Toy.intersection(factConsts, descriptors).size > 0;
+    };
+
     // If the labels alone do not determine a category, look for
     // implicit category(s) based on the statement of the rule and
     // metadata other than labels.
     const category =
           (info.desimplifier ? 'desimplifier'
            : info.simplifier ? 'simplifier'
-           : (goal.matchSchema('a = the b') ||
-              goal.matchSchema('a = the1 b')) ? 'advanced'
-           : goal.hasSubgoal() ? 'backward'
-           : info.goal.matchPart().isVariable() ? 'varMatch'
+           : introDescrip() ? 'descriptors'
+           : stmt.matchPart().isVariable() ? 'varMatch'
            : 'general'
           );
     if (category) {

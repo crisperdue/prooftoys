@@ -2157,8 +2157,8 @@ declare(
      const step2 = step1.andThen('rewriteOnly', '/right', 'a == (a == T)');
      return step2;
    },
-   labels: 'backward',
-   converse: {labels: 'backward'},
+   // labels: 'backward',
+   // converse: {labels: 'backward'},
   },
 
   // Another form of axiom 2, useful for induction proofs.

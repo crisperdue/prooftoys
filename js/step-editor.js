@@ -1802,8 +1802,8 @@ function RuleMenu(proofEditor) {
   $modeList.append('<div class=mode data-mode=algebra>Algebra</div>',
                    '<div class="mode selected" data-mode=general>' +
                    'Popular</div>',
-                   '<div class=mode data-mode=backward>Backward</div>',
-                   '<div class=mode data-mode=other>Other</div>',
+                   '<div class=mode data-mode=other>More</div>',
+                   '<div class=mode data-mode=descriptors>Descriptions</div>',
                    '<div class=mode data-mode=edit>Edit</div>',
                   );
 
@@ -1901,7 +1901,7 @@ RuleMenu.prototype._update = function() {
   const blurbs = {
     algebra: 'Actions for basic algebra:',
     general: 'Rewrites and other often-used actions:',
-    backward: 'Working backward to prove the selected term:',
+    descriptors: 'Unique existence and such:',
     other: 'Less common or advanced:',
   };
   const mode = proofEditor.showRuleType;
@@ -1959,12 +1959,8 @@ RuleMenu.prototype._update = function() {
       // The "backward" menu shows precisely matching steps that
       // set up a subgoal.
       const worksBack = proofStep.wff.hasSubgoal();
-      const isBackMenu = submenu === 'backward';
-      if (worksBack !== isBackMenu) {
-        return;
-      }
       // Other steps only appear in the "general" menu.
-      if (submenu !== 'general' && !isBackMenu) {
+      if (submenu !== 'general') {
         return;
       }
 
@@ -2568,8 +2564,7 @@ const catsOfMenu =
                ['algebra', new Set(['algebra'])],
                ['general',
                 new Set(['general', 'simplifier', 'algebra'])],
-               ['backward',
-                new Set(['backward'])],
+               ['descriptors', new Set(['descriptors'])],
                ['edit', new Set(['edit'])],
                ['other', new Set(['advanced', 'other',
                                   'desimplifier', 'forward'])]]);
