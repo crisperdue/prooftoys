@@ -1662,7 +1662,6 @@ Step.prototype.isRendered = function() { return this == this.rendering; };
 
 /**
  * Removes "minor" conditions from the assumptions, returning an Expr.
- * This is specific to real numbers.
  */
 Step.prototype.shortForm = function() {
   const infix = Toy.infixCall;

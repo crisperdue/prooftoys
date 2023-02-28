@@ -4346,7 +4346,8 @@ declare(
   },
 
   // If the step has the form a => (b => c), moves all conjuncts
-  // of a to the inner level, erasing one level of "=>".
+  // of "a" to the inner level and finally erasing the outer "=>".
+  // The conjuncts of "a" end up following all the conjuncts of "b".
   {name: 'flattenAsms',
     action: function(step) {
       let flatter = step;
