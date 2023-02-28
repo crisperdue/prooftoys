@@ -3722,8 +3722,8 @@ declare(
     labels: 'basic',
     form: (''),
     menu: '   remove irrelevant {term}',
-    tooltip: 'Remove irrelevant assumption',
-    description: 'remove irrelevant assumption {site};; {in step siteStep}'
+    tooltip: 'Drop irrelevant assumption',
+    description: 'drop irrelevant {site};; {in step siteStep}'
   },
 
   // Removes an irrelevant type assumption at the target site, where v
@@ -3781,8 +3781,8 @@ declare(
     labels: 'basic',
     form: (''),
     menu: '  remove irrelevant {term}',
-    tooltip: 'Remove irrelevant type assumption',
-    description: 'irrelevant assumption {site};; {in step siteStep}'
+    tooltip: 'Drop irrelevant type assumption',
+    description: 'drop irrelevant {site};; {in step siteStep}'
   },
 
   // Rule P/Q for a single antecedent (5234).  The schema step must
@@ -4498,6 +4498,11 @@ function canRewrite(step, path, eqn_arg) {
   const expr = step.get(path);
   return expr.findSubst(Toy.schemaPart(eqn_arg));
 }
+
+Step.prototype.rewriter = function(path, eqn_arg) {
+  const expr = this.get(path);
+  return expr.findSubst(Toy.schemaPart(eqn_arg));
+};
 
 declare(
   // Rewriters take a proof step, a path, and a proved step, typically
