@@ -4150,14 +4150,16 @@ declare(
         // TODO: Use makeConjunctionSet there.
         var conjuncts = conjunction.scanConjuncts(add);
         if (terms.size() > 1) {
-          // There are multiple conjunctions, so check for possible
+          // There are multiple conjuncts, so check for possible
           // replacements.
           function check(eqn) {
             if (eqn.isCall2('=') && eqn.getLeft().isVariable() &&
                 eqn.getLeft().name === vname) {
               // TODO: Give each item its own action information.
-              results.push(format('replace {1} with {2}',
-                                  term.name, eqn.getRight().toUnicode()));
+              const html = format('replace {1} with {2}',
+                                  term.name, eqn.getRight().toUnicode());
+              const ruleArgs = [step.original, path];
+              results.push({ruleName, ruleArgs, html});
             }
           }
           terms.each(check);
