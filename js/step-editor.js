@@ -1902,7 +1902,7 @@ RuleMenu.prototype._update = function() {
     algebra: 'Actions for basic algebra:',
     general: 'Rewrites and other often-used actions:',
     descriptors: 'Unique existence and such:',
-    other: 'Less common or advanced:',
+    other: 'Advanced or less common:',
   };
   const mode = proofEditor.showRuleType;
   const blurb = blurbs[mode] || 'Actions:';
@@ -1957,7 +1957,7 @@ RuleMenu.prototype._update = function() {
     proofEditor.steps.forEach((proofStep, index) => {
       const submenu = proofEditor.showRuleType;
 
-      // All computations her apply only to the "general" menu.
+      // Rewriting with steps applies only to the "general" menu.
       if (submenu !== 'general') {
         return;
       }
@@ -2095,7 +2095,8 @@ RuleMenu.prototype._update = function() {
       const subgoals =
             figureSubgoals(thisStep, eqn2, proofEditor.goalStatement);
       if (subgoals.length) {
-        $resultTerm.append(' if ', subgoals[0].renderTerm());
+        $resultTerm.append(' <span class=description>when</span> ',
+                           subgoals[0].renderTerm());
         for (let i = 1; i < subgoals.length; i++) {
           $resultTerm.append(', ', subgoals[i].renderTerm());
         }
