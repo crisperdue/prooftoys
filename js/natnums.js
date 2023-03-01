@@ -140,7 +140,7 @@ Toy.exercise(
   // The exercises:
 
   {statement: '@x + y = x + y',
-   proof: `(1 goal (t x + y = x + y))
+   proof: `(1 goal (t (x + y = x + y)))
            (2 rewrite (s 1) (path "/left") (t ((x = x) == T)))`
   },
   {exertion: 'nat1'},
