@@ -1957,10 +1957,7 @@ RuleMenu.prototype._update = function() {
     proofEditor.steps.forEach((proofStep, index) => {
       const submenu = proofEditor.showRuleType;
 
-      // The "backward" menu shows precisely matching steps that
-      // set up a subgoal.
-      const worksBack = proofStep.wff.hasSubgoal();
-      // Other steps only appear in the "general" menu.
+      // All computations her apply only to the "general" menu.
       if (submenu !== 'general') {
         return;
       }
