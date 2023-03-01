@@ -2073,45 +2073,35 @@ RuleMenu.prototype._update = function() {
       const $resultTerm = $node.find('.resultTerm');
       $resultTerm.append(resultTerm.renderTerm());
 
-      // This is a fake rewrite result based on asserting the fact.
-      // It is derived using rewriteFrom, because that puts the
-      // assumptions in a predictable order, with the original
-      // assumptions first, followed by ones from the fact statement.
-      const dumResult = rules.rewriteFrom(thisStep, sitePath,
-                                          rules.assert(statement));
-      // Count the asms of thisStep.
-      const numAsms =
-            Toy.bind((asms = thisStep.getAsms(), n = 0) =>
-                     asms ? (asms.scanConj(a => { n++; }), n) : 0);
 
-      // This will become a conjunction of all subgoals added in this
-      // step.
-      let subgoals = null;
-      const resultAsms = dumResult.getAsms();
-      if (resultAsms) {
-        const infixCall = Toy.infixCall;
-        const goalAsms = (proofEditor.goalStatement &&
-                          proofEditor.goalStatement.asmSet());
-        const currentAsms = thisStep.asmSet();
-        let i = 0;
-        resultAsms.scanConj(a => {
-          i++;
-          // Entirely skip over asms from the input step.
-          // Notice that one of them has probably been replaced
-          // by the rewrite, but we still skip it.
-          if (i > numAsms) {
-            // After that, if it was expected (in the goal), or
-            // already in the input step, ignore them.
-            if (!(goalAsms.has(a) || currentAsms.has(a))) {
-              subgoals = subgoals ? infixCall(subgoals, '&', a) : a;
+      // Computes an array of significant subgoals added to the given
+      // step by the given "replacer" in case it is used to replace
+      // some part of the step.  The goal is intended to be a proof
+      // goal.  Any added subgoals that are among its assumptions will
+      // not be included in the result array.
+      const figureSubgoals = (step, replacer, goal) => {
+        const subgoals = [];
+        const newAsms = replacer.getAsms();
+        if (newAsms) {
+          const goalAsms = goal ? goal.asmSet() : new TermSet();
+          const currentAsms = step.asmSet();
+          newAsms.scanConj(a => {
+            // Ignore asms that were expected (in the goal), or
+            // already in the input step.
+            if (a.likeSubgoal() && !(goalAsms.has(a) || currentAsms.has(a))) {
+              subgoals.push(a);
             }
-          }
-        });
-      }
-      if (subgoals) {
-        const $asms = $('<b class=resultTerm>');
-        $asms.append(subgoals.renderTerm());
-        $resultTerm.after(' <b>if</b> ', $asms);
+          });
+        }
+        return subgoals;
+      };
+      const subgoals =
+            figureSubgoals(thisStep, eqn2, proofEditor.goalStatement);
+      if (subgoals.length) {
+        $resultTerm.append(' if ', subgoals[0].renderTerm());
+        for (let i = 1; i < subgoals.length; i++) {
+          $resultTerm.append(', ', subgoals[i].renderTerm());
+        }
       } else {
         // If there are no subgoal-ish assumptions, give this rewrite
         // priority with an extra leading space.
