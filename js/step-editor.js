@@ -8,6 +8,8 @@
 
 // Make application assertions available through "assert".
 const assert = Toy.assertTrue;
+  
+const Expr = Toy.Expr;
 
 const abort = Toy.abort;
 const format = Toy.format;
@@ -2061,7 +2063,7 @@ RuleMenu.prototype._update = function() {
       // The special character is a form of white right arrow.
       let html = ' \u27ad <b class=resultTerm></b>';
       const shorty = statement.shortForm();
-      const mainText = Toy.trimParens(shorty.getMain().toHtml());
+      const mainText = Toy.trimParens(shorty.toHtml());
       const blurb = (info.definitional
                      ? 'definition of ' + statement.getLeft().func().name
                      : 'using ' + mainText)
@@ -2079,29 +2081,40 @@ RuleMenu.prototype._update = function() {
       const figureSubgoals = (step, replacer, goal) => {
         const subgoals = [];
         const newAsms = replacer.getAsms();
+        let more = false;
         if (newAsms) {
           const goalAsms = goal ? goal.asmSet() : new TermSet();
           const currentAsms = step.asmSet();
           newAsms.scanConj(a => {
             // Ignore asms that were expected (in the goal), or
             // already in the input step.
-            if (a.likeSubgoal() && !(goalAsms.has(a) || currentAsms.has(a))) {
-              subgoals.push(a);
+            if (a.likeSubgoal()) {
+              if (goalAsms.has(a) || currentAsms.has(a)) {
+                more = true;
+              } else {
+                subgoals.push(a);
+              }
             }
           });
+        }
+        if (more) {
+          subgoals.push('&hellip;');
         }
         return subgoals;
       };
       const subgoals =
             figureSubgoals(thisStep, eqn2, proofEditor.goalStatement);
+      const render =
+            item => item instanceof Expr ? item.renderTerm() : item;
       if (subgoals.length) {
         $resultTerm.append(' <span class=description>when</span> ',
-                           subgoals[0].renderTerm());
+                           render(subgoals[0]));
         for (let i = 1; i < subgoals.length; i++) {
-          $resultTerm.append(', ', subgoals[i].renderTerm());
+          $resultTerm.append(', ', render(subgoals[i]));
         }
-      } else {
-        // If there are no subgoal-ish assumptions, give this rewrite
+      }
+      if (subgoals.length === 0 || typeof subgoals[0] === 'string') {
+        // If there are no explicit assumptions, give this rewrite
         // priority with an extra leading space.
         html = ' ' + html;
       }
