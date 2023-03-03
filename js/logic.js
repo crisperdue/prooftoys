@@ -1096,15 +1096,15 @@ declare(
       return rules.assumeExplicitly(term).justify('goal', arguments);
     },
     inputs: {bool: 1},
-    form: 'Goal statement: <input name=bool>',
+    form: 'Desired conclusion: <input name=bool>',
     menuGen: function(ruleName, step, term, proofEditor) {
       // This rule is only available if the proof is currently empty.
       return (proofEditor.proofDisplay.steps.length == 0
               ? 'state the goal'
               : null);
     },
-    tooltip: ('goal statement'),
-    description: 'goal statement',
+    tooltip: ('proof starter'),
+    description: 'start proof of {bool}',
     labels: 'basic',
   },
 
@@ -5714,6 +5714,13 @@ declare(
     simplifier: true,
     proof: function() {
        return rules.tautology('(T => a) == a');
+     }
+   },
+
+   {statement: 'a => a == T',
+    simplifier: true,
+    proof: function() {
+       return rules.tautology('a => a == T');
      }
    },
 
