@@ -1507,45 +1507,56 @@ declare(
   },  
 
   /**
-   * A term anywhere in a step that is identical to the left side of
-   * an equational assumptions of the step can be taken to be equal to
-   * its right side if all of the variables free within it are also
-   * free in its context.
+   * The given unconditional equation will be assumed and used
+   * to replace the target term, and this must be feasible.
+   * The menu only offers this for equational assumptions either
+   * already in the target step, or in the proof editor's goal.
    */
   {name: 'assumedEq',
    // This and "assumed" are very similar.
-   precheck: function(step, path) {
+   precheck: function(step, path, eqn) {
      const asms = step.getAsms();
      const target = step.get(path);
-     if (asms &&
-         asms.scanConj(a => a.isCall2('=') && a.getLeft().sameAs(target))) {
+     if (eqn.isCall2('=') && eqn.getLeft().sameAs(target)) {
        const freeHere = target.freeVarSet();
        const boundHere = Toy.asSet(step.wff.boundNames(path));
        if (Toy.equalSets(freeHere, Toy.setDiff(freeHere, boundHere))) {
+         // No locally-free variables are bound in context.
          return true;
        }
+       return false;
      }
    },
    // This proof amounts to assuming the term is true, then replacing
    // it with T based on that. Since the term is already an
    // assumption, this adds no new assumptions.
-   action: function(step, path) {
-     const asms = step.getAsms();
+   action: function(step, path, eqn) {
      const target = step.get(path);
-     const asmMatch = a =>
-           a.isCall2('=') && a.getLeft().sameAs(target) && a;
-     const asm = asms && asms.scanConj(asmMatch);
-     const step1 = rules.assume(asm);
+     const step1 = rules.assume(eqn);
      const step2 = rules.replace(step, path, step1);
      return step2.justify('assumedEq', arguments, [step]);
    },
    // Ideally this would not be offered for a selection in
    // the term used for the replacement, because it is not
    // helpful there; but the test is not totally simple.
-   inputs: {site: 1},
+   inputs: {site: 1, bool: 3},
    labels: 'basic',
-   // Display it in the menu much like a rewrite.
-   menu: '\u27ad <b>{right}</b> (by assumption)',
+   form: 'Assuming: <input name=bool>',
+   menuGen: function(ruleName, step, term, editor) {
+     const match = a => a.isCall2('=') && a.getLeft().sameAs(term) && a;
+     const asms = step.original.wff.getAsms();
+     const goal = editor.goalStatement;
+     const gasms = goal && goal.getAsms();
+     const asm = (asms && asms.scanConj(match)
+                  || gasms && gasms.scanConj(match));
+     if (asm) {
+       const path = step.prettyPathTo(term);
+       return [{ruleName,
+                ruleArgs: [step.original, path, asm],
+                html: `\u27ad <b>${asm.getRight().$$}</b> by assumption`
+               }];
+     }
+   },
    description: 'replace {site} using assumption',
   },  
 
