@@ -40,6 +40,8 @@ var F = constify('F');
 
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.
+//
+// TODO: Part of a proof context.
 var _tautologies = new Map();
 
 
@@ -394,6 +396,8 @@ Toy.addMethods(Expr, ruleMethods);
 
 // Map from rule name to function used in all proofs.
 // This is a central global variable.
+//
+// TODO: Part of a proof context.
 var rules = {};
 
 //// RULE PROPERTIES
@@ -1013,6 +1017,8 @@ function normalizeDefn(defn_arg) {
 }
 
 // Set to false when defn facts can be proved immediately.
+//
+// TODO: Part of a proof context.
 let deferringDefnFacts = true;
 
 // Functions to compute defnFacts when the needed support is ready.
@@ -1096,6 +1102,8 @@ function addDefnFacts(definition) {
 // eachFact (but see also factSquish).
 //
 // This structure be eliminated, using _resolutionsByKey in its place.
+//
+// TODO: Part of a proof context.
 var _factsByKey = new Map();
 
 // Fact declarations and fact references:
@@ -1144,6 +1152,7 @@ var _factsByKey = new Map();
  * _resolutionsByKey giving access to resInfo, possibly this could
  * store just pairs of statement and fact goal.
  */
+// TODO: Part of a proof context.
 const _resolutionsByKey = new Map();
 
 /**
@@ -1356,6 +1365,7 @@ function isInProgress(stmt) {
  * This can support string keys, but mathParse already accelerates
  * conversion of strings to wffs.
  */
+// TODO: Part of a proof context.
 const _statementResInfos = new Map();
 
 const noTerms = new Toy.TermSet();
@@ -2195,6 +2205,7 @@ Expr.prototype.pathBindings = function(path_arg) {
  * TODO: Consider whether x - 7 is simpler than x + -7.
  * TODO: Declare number facts as simplifiers rather than adding here.
  */
+// TODO: Part of a proof context.
 var basicSimpFacts = [
                       'T & a == a',
                       'a & T == a',
