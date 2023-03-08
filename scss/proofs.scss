@@ -80,6 +80,9 @@ wffblock- > * {
     border-radius: 12px;
     background-color: hsl(200deg, 100%, 97%);
     margin-bottom: 1.5em;
+    // Alternate border and shadow:
+    border: 1px solid #aaa;
+    box-shadow: #aaa 1px 1px 2px;
 }
 
 // This causes all pointer events in the proof editor
@@ -214,13 +217,16 @@ wffblock- > * {
 // .proofDisplay, i.e. top-level of proof steps.
 .proofDisplay.editable > .proofSteps {
   min-height: 100px;
-  max-height: 60vh;
+  height: 200px;
   position: relative; // This makes it an offsetParent.
-  resize: vertical;   // "Both" does not resize the container horizontally.
+  // Note that "resize: both" does not resize the
+  // containing element horizontally.
+  resize: vertical;   
   overflow-x: clip;
   overflow-y: auto;
   padding-top: 3px;
   padding-left: 3px;
+  color: #0b0d0e;
   background-color: white;
   border: 1px solid #ddd;
   box-shadow: inset lightgray 2px 2px 2px;
