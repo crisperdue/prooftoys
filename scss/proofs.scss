@@ -243,25 +243,17 @@ wffblock- > * {
 
 /* The outermost element of a step */
 .proofStep {
-  white-space: nowrap;
-    display: flex;
-    align-items: start;
-    // Allow the stepInfo to wrap down to another row.
-    // This is a rather trivial use of flex layout.
-    flex-wrap: wrap;
-    font-family: STIXGeneral, times, serif;
-    /* Each proofStep has a 1px border, which is gray when
-     * the step is selected in the UI or hovered.
-     */
-    border: 1px solid transparent;
-    margin-left: 4em;
-    margin-bottom: .4em;
+  font-family: STIXGeneral, times, serif;
+  border: 1px solid transparent;
+  margin-left: 4em;
+  margin-bottom: .4em;
 }
 
 // Override the left margin just above to bring the stepAndNum back to the left.
 // If the stepInfo flows down to another row, it will be indented.
 .proofStep .stepAndControls {
-    margin-left: -4em;
+  white-space: pre;
+  margin-left: -4em;
 }
 
 .proofStep.stepSuggestion {
@@ -518,11 +510,16 @@ span.ruleStats {
 
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
+  display: inline-block;
     white-space: normal;
     padding-left: .3em;
     font-family: Roboto, sans-serif;
     font-size: 90%;
-    color: #aaa;
+    color: #999;
+
+    b {
+      color: #555;
+    }
 }
 
 /* Fact or term within a step description */
@@ -530,7 +527,6 @@ span.ruleStats {
     font-family: StixGeneral, times;
     /* Temporary until these terms have internal styling. */
     font-style: italic;
-    color: #bbb;
 }
 
 .proofStep .stepNumber {
@@ -955,7 +951,6 @@ input.copyText {
       position: relative;
       left: 0px;
       top: 0px;
-      margin: 2px 1px;
       padding: 2px 4px;
       border: 1px solid #eee;
       cursor: pointer;

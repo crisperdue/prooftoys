@@ -324,8 +324,12 @@ ProofDisplay.prototype.stepSuggestion = function(step) {
   }
   var rendered = step.rendering || this.renderStep(step);
   if (rendered) {
-    rendered.stepNumber = '&ndash;';
+    rendered.stepNumber = this.steps.length + 1;
     renderStepNumber(rendered);
+    const ed = this.proofEditor;
+    if (ed && ed.goalStatement) {
+      rendered.checkSubgoals(ed.goalStatement);
+    }
     var node = rendered.stepNode;
     $(node).addClass('stepSuggestion');
     return node;
@@ -350,7 +354,7 @@ ProofDisplay.prototype.suggestionMessage = function(message) {
  */
 ProofDisplay.prototype.suggest = function(node) {
   this.hideSuggestion();
-  $(this.stepsNode).closest('.proofDisplay').append(node);
+  $(this.stepsNode).append(node).scrollTop(1e9);
   this.suggesting = node;
 };
 
@@ -910,7 +914,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
  * the first may be broken before.
  *
  * "Chains" of infix calls to the same operator, or + and - or * and /
- * are flattened to put all arguments and operator terms are at the
+ * are flattened to put all arguments and operator terms at the
  * same level in the tree, reducing nesting of terms to the left.
  *
  * Right operands of infix operators and the argument to an ordinary
@@ -995,6 +999,9 @@ Expr.prototype.reIndent = function(depth, portWidth) {
   }
   const offset = term => term.node.offsetLeft + term.node.offsetWidth;
   const breakBefore = term => {
+    // The linebreak class is not intended to affect styling.  It just
+    // serves as a way to find all inserted linebreaks when needed.
+    //
     // The "ch" unit approximates the width of an average character.
     // The approximate padding calculation here could be replaced by
     // insertion of invisible text that is the prefix needed before
@@ -1004,11 +1011,14 @@ Expr.prototype.reIndent = function(depth, portWidth) {
   };
   const pw = portWidth;
   portWidth = portWidth || top.node.offsetParent.clientWidth - 10;
+  const $step = $(top.node)
+        .closest('.proofDisplay.editable .proofStep');
 
   pw || log('Port:', portWidth);
   log('Indenting', this.$$);
+
   // Remove all linebreak elements (inserted by breakBefore).
-  depth === 1 && $(this.node).find('.linebreak').remove();
+  depth === 1 && $step.find('.linebreak').remove();
 
   // Get indenting info and apply it to insert linebreaks.
   const a = top.formatTerm();
@@ -1055,6 +1065,12 @@ Expr.prototype.reIndent = function(depth, portWidth) {
     });
   } else if (top instanceof Lambda) {
     top.body.reIndent(depth + 1, portWidth);
+  }
+
+  // If there are any linebreaks in the display of the step,
+  // also insert one before the stepInfo.
+  if (depth == 1 && $(top.node).find('.linebreak').length) {
+    $step.find('.stepInfo').before('<br class=linebreak>');
   }
 };
 
