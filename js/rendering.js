@@ -2025,7 +2025,7 @@ function expandMarkup(step, markup) {
   case 'shortFact':
     var place = info.inputs.bool[0] || info.inputs.bool;
     var bool = Toy.mathParse(step.ruleArgs[place - 1]);
-    return termDisplay(markupName === 'fact' ? bool : bool.shortForm());
+    return factDisplay(markupName === 'fact' ? bool : bool.shortForm());
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
     return Toy.termify(step.ruleArgs[place - 1]).toHtml();
@@ -2041,12 +2041,15 @@ function expandMarkup(step, markup) {
 }
 
 /**
- * Returns an HTML display of the given term, as in step descriptions.
+ * Returns an HTML display of the given term for step descriptions.
+ * This bolds the main part of the fact.
  */
-function termDisplay(term) {
-  const html = term.toHtml();
-  const text = (html[0] === '(') ? html.slice(1, -1) : html;
-  return '<span class=term>' + text + '</span>'
+function factDisplay(bool) {
+  const html = bool.getMain().toHtml();
+  const asms = bool.getAsms();
+  const leftHtml =
+    asms ? asms.toHtml() + ' ⇒ ' : '';
+  return `<span class=term>${leftHtml}<b>${html}</b></span>`;
 }
 
 /**
