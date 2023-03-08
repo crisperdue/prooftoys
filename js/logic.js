@@ -4609,7 +4609,7 @@ declare(
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
     menu: 'primitive rewrite using a fact',
     isRewriter: true,
-    description: 'use;; {shortFact} {&nbsp;in step siteStep}',
+    description: 'use;; {fact} {&nbsp;in step siteStep}',
     labels: 'primitive'
   },
 
@@ -4699,7 +4699,7 @@ declare(
     menu: 'rewrite using a fact',
     labels: 'other',
     isRewriter: true,
-    description: 'use;; {shortFact} {&nbsp;in step siteStep}'
+    description: 'use;; {fact} {&nbsp;in step siteStep}'
   },
 
   // E-Rule (5244), specified by a step and name.  Checks first for
