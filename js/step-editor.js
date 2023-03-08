@@ -1952,7 +1952,7 @@ RuleMenu.prototype._update = function() {
             debugger;
           }
         });
-      } else if (info != null) {
+      } else if (info) {
         console.error('Bad menu info:', info);
         debugger;
       }
@@ -2720,7 +2720,7 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
         }
       }
     } else {
-      if (items != null && typeof items !== 'string') {
+      if (items && typeof items !== 'string') {
         console.error('Bad menuGen result:', items);
         debugger;
       }
