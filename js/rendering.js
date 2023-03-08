@@ -2058,6 +2058,15 @@ function expandMarkup(step, markup) {
 
 /**
  * Returns an HTML display of the given term for step descriptions.
+ */
+function termDisplay(term) {
+  const html = term.toHtml();
+  const text = (html[0] === '(') ? html.slice(1, -1) : html;
+  return '<span class=term>' + text + '</span>'
+}
+
+/**
+ * Returns an HTML display of the given fact for step descriptions.
  * This bolds the main part of the fact.
  */
 function factDisplay(bool) {
