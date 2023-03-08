@@ -1466,44 +1466,72 @@ declare(
   /**
    * A term anywhere in a step that is identical to one of the step's
    * assumptions can be taken to be true if all of the variables free
-   * within it are also free in its context.
+   * within it are also free in its context.  Removes the resulting T
+   * if it is in a conjunction.
    */
   {name: 'assumed',
    // This and "assumedEq" are very similar.
    precheck: function(step, path) {
-     const asms = step.getAsms();
      const target = step.get(path);
-     if (asms && asms.scanConj(a => a.sameAs(target))) {
+     if (target.isBoolean()) {
        const freeHere = target.freeVarSet();
        const boundHere = Toy.asSet(step.wff.boundNames(path));
        if (Toy.equalSets(freeHere, Toy.setDiff(freeHere, boundHere))) {
+         // No locally-free variables are bound in context.
          return true;
        }
      }
+     return false;
    },
    // This proof amounts to assuming the term is true, then replacing
-   // it with T based on that. Since the term is already an
-   // assumption, this adds no new assumptions.
-   action: function(step, path) {
-     const asms = step.getAsms();
+   // it with T based on that.
+   action: function(step, path_arg) {
+     const tryRewrite = (step, path, eqn_arg) => {
+       const eqn = termify(eqn_arg);
+       const result = canRewrite(step, path, eqn);
+       return result && rules.rewrite(step, path, eqn);
+     };
+     const path = step.asPath(path_arg);
      const target = step.get(path);
-     const asm = asms && asms.scanConj(a => a.sameAs(target) && a);
-     const step1 = rules.tautology('a => (a == T)');
-     const step2 = rules.instMultiVars(step1, {a: asm});
-     const step3 = rules.replace(step, path, step2);
-     return step3.justify('assumed', arguments, [step]);
-   },
-   // Only offer it if the step has assumptions and the selection
-   // is not one of them.
-   toOffer: function(step, term) {
-     const asms = step.getAsms();
-     return asms && !asms.scanConj(t => t == term);
+     const step1 = rules.assume(target);
+     const step2 = rules.trueBy1(step, path, step1);
+     // const step3 = rules.instMultiVars(step2, {a: asm});
+     // const step4 = rules.replace(step, path, step3);
+     
+     let step5 = step2;
+     if (!path.isEnd()) {
+       const parentPath = step.prettifyPath(path).parent();
+       step5 = (tryRewrite(step2, parentPath, 'T & a == a') ||
+                tryRewrite(step2, parentPath, 'a & T == a') ||
+                step2);
+     }
+     return step5.justify('assumed', arguments, [step]);
    },
    inputs: {site: 1},
    labels: 'basic',
-   // Display it in the menu much like a rewrite.
-   menu: '\u27ad <b>T</b> (assumption)',
-   description: 'true by assumption',
+   menuGen: function(ruleName, step, term, editor) {
+     const asms = step.wff.getAsms();
+     if (asms && asms.scanConj(a => a == term)) {
+       // Don't offer to assume an existing assumption.
+       return false;
+     }
+     const goal = editor.goalStatement;
+     const gasms = goal && goal.getAsms();
+     const match = a => a.sameAs(term);
+     const isAsm = asms && asms.scanConj(match);
+     const inGoal = gasms && gasms.scanConj(match);
+     const html =
+           (isAsm
+            ? '\u27ad <b>T</b> assumption'
+            : inGoal
+            ? '\u27ad <b>T</b> (goal assumption)'
+            : '\u27ad <b>T</b> assuming &star;');
+     const path = step.prettyPathTo(term);
+     return [{html, ruleName,
+              ruleArgs: [step.original, path]
+             }];
+   },
+   description: 'assumed',
   },  
 
   /**
@@ -1515,7 +1543,6 @@ declare(
   {name: 'assumedEq',
    // This and "assumed" are very similar.
    precheck: function(step, path, eqn) {
-     const asms = step.getAsms();
      const target = step.get(path);
      if (eqn.isCall2('=') && eqn.getLeft().sameAs(target)) {
        const freeHere = target.freeVarSet();
@@ -3203,41 +3230,6 @@ declare(
     description: 'add assumption {bool};; {in step step}'
   },
 
-  // Given a RHS site that is the same as an assumption of the step,
-  // converts the expression to T and simplifies out the T if it can.
-  //
-  // TODO: Consider whether we may want to detect and offer opportunities
-  //   to use this rule in situations where an occurrence of the assumption
-  //   is not explicitly selected.
-  {name: 'assumed',
-    precheck: function(step, path_arg) {
-      const path = step.asPath(path_arg);
-      if (!(step.isCall2('=>') && path.isRight())) {
-        return false;
-      } else {
-        return step.asmSet().has(step.get(path));
-      }
-    },
-    action: function(step, path_arg) {
-      const path = step.asPath(path_arg);
-      if (step.isCall2('=>') && path.isRight()) {
-        const term = step.get(path);
-        if (step.asmSet().has(term)) {
-          const step1 = rules.assume(term);
-          return (rules.trueBy1(step, path, step1)
-                  // Crudely bludgeon out certain kinds of occurrences of T.
-                  // Improve this with smart simplification.
-                  .andThen('simplifySite', '/right',
-                           ['T & a == a', 'a & T == a'])
-                  .justify('assumed', arguments, [step]));
-        }
-      }
-    },
-    inputs: {site: 1},
-    menu: 'true by assumption',
-    description: 'true by assumption'
-  },
-
   // Given a variable v that is not free in the given wff A, and a wff B, derive
   // ((forall {v. A | B}) => A | (forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
@@ -4655,6 +4647,15 @@ declare(
   // TODO: Modify all of these rewrite* rules to return Error objects
   //   in case preconditions are not met.
   {name: 'rewrite',
+   /**
+    // Omitting this precheck for now, because several tests fail
+    // for undetermined reasons.
+    precheck: function(step, path, eqn) {
+      // Rewrite uses rules.fact, which uses mathParse.
+      let result = canRewrite(step, path, mathParse(eqn));
+      return result;
+    },
+    */
     action: function(step, path_arg, statement) {
       // Be careful to convert a possible search pattern into
       // an ordinary path _before_ replacing the target term.
