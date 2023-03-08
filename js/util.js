@@ -359,6 +359,80 @@ function equalSets(arg1, arg2) {
   return true
 }
 
+//// Sorting
+
+/**
+ * Dexie/IndexedDb comparison, currently only supporting numbers,
+ * dates, strings, and Arrays.  Returns negative, zero, or positive,
+ * suitable for Array.sort.
+ */
+function dexCompare(a, b) {
+  const t1 = typeof a;
+  const t2 = typeof b;
+  //  Array.isArray here should probably be just "instanceof Array".
+  const tt1 =
+    a instanceof Date ? 'date'
+    : Array.isArray(a) ? 'array'
+    : t1;
+  const tt2 =
+    b instanceof Date ? 'date'
+    : Array.isArray(b) ? 'array'
+    : t2;
+  if (tt1 !== tt2) {
+    if (tt1 === 'number') {
+      return -1;
+    }
+    if (tt2 === 'number') {
+      return 1;
+    }
+    if (tt1 === 'date') {
+      return -1;
+    }
+    if (tt2 === 'date') {
+      return 1;
+    }
+    if (tt1 === 'string') {
+      return -1;
+    }
+    if (tt2 === 'string') {
+      return 1;
+    }
+    if (tt1 === 'array') {
+      return -1;
+    }
+    if (tt2 === 'array') {
+      return 1;
+    }
+    abort('Unsupported type');
+  }
+  if (tt1 === 'number') {
+    // Subtraction does not work for the infinities, so
+    // this uses comparisons.  Problematic with NaNs.
+    return a > b ? 1 : a < b ? -1 : 0;
+  }
+  if (tt1 === 'date') {
+    // This ordering is problematic with invalid dates.
+    return a > b ? 1 : a < b ? -1 : 0;
+  }
+  if (tt1 === 'string') {
+    return a === b ? 0 : a < b ? -1 : 1;
+  }
+  if (tt1 === 'array') {
+    const aLength = a.length;
+    const bLength = b.length;
+    const length = Math.min(a.length, b.length);
+    for (let i = 0; i < length; i++) {
+      const v = dexCompare(a[i], b[i]);
+      if (v !== 0) {
+        return v;
+      }
+    }
+    // If values up to length are equal, the shorter array is less.
+    return aLength - bLength;
+  }
+  abort('Unsupported type');
+}
+
 
 //// Stricter property access
 
@@ -2678,6 +2752,7 @@ Toy.intersection = intersection;
 Toy.setDiff = setDiff;
 Toy.isSubset = isSubset;
 Toy.equalSets = equalSets;
+Toy.dexCompare = dexCompare;
 Toy.each = each;
 Toy.memo = memo;
 Toy.format = format;

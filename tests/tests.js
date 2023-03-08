@@ -547,6 +547,23 @@ var testCase = {
     assert(map.isEmpty());
   },
 
+  testDexCompare: function() {
+    const cmp = Toy.dexCompare;
+    const keys =
+          [-1, 0, 1, new Date(0), new Date(),
+           '', 'goodbye', 'hello',
+           [], [1, Infinity], [1, ''], [[]]];
+    for (let i = 0; i < keys.length; i++) {
+      for (let j = 0; j < keys.length; j++) {
+        const v = cmp(keys[i], keys[j]);
+        const ok =(i < j ? v < 0
+                   : i === j ? v === 0
+                   : v > 0);
+        assert(ok);
+      }
+    }
+  },
+
   testAddTerm: function() {
     var map = new Toy.TermMap();
     var term = Toy.infixCall(x, '=', x);
