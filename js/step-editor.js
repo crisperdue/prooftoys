@@ -290,9 +290,16 @@ function ProofEditor(options_arg) {
 
   // Loads a desired document.  If this is the first editor on the
   // page, load any theory documents first.
+  //
+  // TODO: Replace this with a mechanism that tracks theories
+  //   loaded into the current "proof context".  Ideally a page
+  //   could have any number of proof contexts, often associating
+  //   each proof editor with a context.
   if (self.docName) {
+    // TODO: his functionality is currently disabled with "if false".
+    // Someday replace it with something better.
     const dependencies = () => {
-      if (nextProofEditorId <= 2) {
+      if (false && nextProofEditorId <= 2) {
         // In other words, this is the first proof editor on this
         // page.  Note: In the current implementation, any other proof
         // editors or displays on the page will have this same proof
