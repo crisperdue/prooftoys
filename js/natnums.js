@@ -23,11 +23,13 @@ const Lambda = Toy.Lambda;
 Toy.exercise(
   'nat',
 
+  // NN axioms; 1
   {statement: '@NN 0', axiom: true,
    simplifier: true,
    description: 'axiom: zero is a natural number'
   },
-  {exertion: 'nat0'},
+
+  // 2
   {statement: '@NN n => NN (succ n)', axiom: true,
    description: 'axiom: successor is closed over the natural numbers'
   },
@@ -37,12 +39,25 @@ Toy.exercise(
              .andThen('rewriteOnly', '', 'a == (a == T)'));
    }
   },
+
+  // 3
   {statement: '@NN n & NN m & succ m = succ n => m = n', axiom: true,
+   name: 'succInjective',
    description: 'if successors of two numbers are equal, the numbers are equal'
   },
+  {statement: '@NN n & NN m & succ m = succ n => (m = n == T)', axiom: true,
+   proof: function() {
+     return rules.fact('succInjective')
+       .andThen('rewriteOnly', '', 'a => b == a => (b == T)');
+   }
+  },
+
+  // 4
   {statement: '@NN n => 0 != succ n', axiom: true,
    description: 'axiom: zero is not a successor'
   },
+
+  // 5 (induction)
   {statement: '@P 0 & (P n => P (succ n)) => (NN x => P x)', axiom: true,
    name: 'induction',
    description: 'axiom: induction for natural numbers'
@@ -51,8 +66,8 @@ Toy.exercise(
    name: 'induction2',
    description: 'convenient statement of induction for natural numbers',
    proof: `(1 induction)
-           (2 rewriteOnly (s 1) (path "") (t (a => (b => c) == (a & b => c))))`},
-
+           (2 rewriteOnly (s 1) (path "")
+             (t (a => (b => c) == (a & b => c))))`},
 
   // Recursive definition of "+":
   {statement: '@NN a => a + 0 = a', axiom: true},
@@ -75,8 +90,8 @@ Toy.exercise(
    }
   },
 
-  // Target is a boolean term with an individual variable to try
-  // induction on.
+  // Tactic.  Target is a boolean term with an individual variable to
+  // try induction on.
   {name: 'induct',
    menuGen: function(ruleName, step, term, proofEditor) {
      const path = step.prettyPathTo(term);
@@ -139,13 +154,25 @@ Toy.exercise(
 
   // The exercises:
 
-  {statement: '@x + y = x + y',
-   proof: `(1 goal (t (x + y = x + y)))
-           (2 rewrite (s 1) (path "/left") (t ((x = x) == T)))`
-  },
-  {exertion: 'nat1'},
+  {exertion: 'nat0', statement: '0 = 0'},
 
-  {statement: '@NN a & NN b & succ a = b => succ (succ a) = succ b',
+  {exertion: 'nat0.5', statement: '@NN (succ (succ 0))'},
+
+  {exertion: 'nat0.6',
+   statement:
+   '@NN m & NN n & succ (succ (succ n)) = succ (succ m) => succ n = m'},
+
+  {exertion: 'nat0.7',
+   statement: '@NN m & NN n & succ m = succ (succ n) => succ n = m'},
+
+  {exertion: 'nat0.8',
+   statement:
+   '@NN i & NN j & NN k & succ i = j & succ j = k => k = succ (succ i)'},
+
+  {exertion: 'nat1',
+   statement: '0 = x => x = 0'},
+
+  {statement: '@succ a = b => succ (succ a) = succ b',
    proof:
    `(1 tautologous
       (t (((succ (succ a)) = (succ b)) => ((succ (succ a)) = (succ b)))))
