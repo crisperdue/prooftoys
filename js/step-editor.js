@@ -2009,11 +2009,12 @@ RuleMenu.prototype._update = function() {
       //   block just below.
       const html =
             // \u27ad is a lower-right shadowed rightwards arrow.
-            ` \u27ad <b><br class=resultTerm></b> <span class=description> \
+            ` \u27ad <b class=resultTerm></b> <span class=description> \
                using step ${n}</span>`;
       const $node = $('<span>').append(html);
-      $node.find('br.resultTerm')
-        .replaceWith(eqn.replacementTerm().renderTerm());
+      $node.find('.resultTerm')
+        .append(eqn.replacementTerm().renderTerm());
+      // TODO: Consider presenting subgoal information here also.
       itemInfos.push({ruleName: 'rewriteFrom',
                       ruleArgs: [selStep.original, sitePath,
                                  proofStep.original],
@@ -2068,7 +2069,8 @@ RuleMenu.prototype._update = function() {
       }
       const resultTerm = eqn2.replacementTerm();
       // The special character is a form of white right arrow.
-      let html = ' \u27ad <b class=resultTerm></b>';
+      let html =
+          ' \u27ad <b class=resultTerm></b><span class=subgoals></span>';
       const shorty = statement.shortForm();
       const mainText = Toy.trimParens(shorty.toHtml());
       const blurb = (info.definitional
@@ -2082,13 +2084,12 @@ RuleMenu.prototype._update = function() {
 
       // Computes an array of significant subgoals added to the given
       // step by the given "replacer" in case it is used to replace
-      // some part of the step.  The goal is intended to be a proof
+      // some part of the step.  The goal is intended to be the proof
       // goal.  Any added subgoals that are among its assumptions will
       // not be included in the result array.
       const figureSubgoals = (step, replacer, goal) => {
         const subgoals = [];
         const newAsms = replacer.getAsms();
-        let more = false;
         if (newAsms) {
           const goalAsms = goal ? goal.asmSet() : new TermSet();
           const currentAsms = step.asmSet();
@@ -2096,16 +2097,11 @@ RuleMenu.prototype._update = function() {
             // Ignore asms that were expected (in the goal), or
             // already in the input step.
             if (a.likeSubgoal()) {
-              if (goalAsms.has(a) || currentAsms.has(a)) {
-                more = true;
-              } else {
+              if (!goalAsms.has(a) && !currentAsms.has(a)) {
                 subgoals.push(a);
               }
             }
           });
-        }
-        if (more) {
-          subgoals.push('&hellip;');
         }
         return subgoals;
       };
@@ -2114,10 +2110,9 @@ RuleMenu.prototype._update = function() {
       const render =
             item => item instanceof Expr ? item.renderTerm() : item;
       if (subgoals.length) {
-        $resultTerm.append(' <span class=description>when</span> ',
-                           render(subgoals[0]));
-        for (let i = 1; i < subgoals.length; i++) {
-          $resultTerm.append(', ', render(subgoals[i]));
+        $node.find('.subgoals').append(', also');
+        for (let i = 0; i < subgoals.length; i++) {
+          $node.find('.subgoals').append(' ', render(subgoals[i]));
         }
       }
       if (subgoals.length === 0 || typeof subgoals[0] === 'string') {
