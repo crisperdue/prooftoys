@@ -2109,15 +2109,15 @@ RuleMenu.prototype._update = function() {
             figureSubgoals(thisStep, eqn2, proofEditor.goalStatement);
       const render =
             item => item instanceof Expr ? item.renderTerm() : item;
-      if (subgoals.length) {
-        $node.find('.subgoals').append(', also');
-        for (let i = 0; i < subgoals.length; i++) {
-          $node.find('.subgoals').append(' ', render(subgoals[i]));
-        }
+      const count = subgoals.length;
+      if (count > 0) {
+        const plural = count > 1 ? 's' : '';
+        $node.find('.subgoals')
+          .append(` with ~${count} new subgoal${plural}`);
       }
-      if (subgoals.length === 0 || typeof subgoals[0] === 'string') {
-        // If there are no explicit assumptions, give this rewrite
-        // priority with an extra leading space.
+      if (count === 0) {
+        // If there are no significant new assumptions, give this
+        // rewrite priority with an extra leading space.
         html = ' ' + html;
       }
       var info = {ruleName: 'rewrite',
