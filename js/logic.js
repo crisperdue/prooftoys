@@ -4124,7 +4124,7 @@ declare(
     },
     inputs: {site: 1},
     menuGen: function(ruleName, step, term) {
-      if (step && term && term.isVariable()) {
+      if (step && term) {
         var wff = step.wff;
         var path = wff.prettyPathTo(term);
         var ancestors = wff.ancestors(path);
@@ -4143,7 +4143,6 @@ declare(
         if (!conjunction) {
           return null;
         }
-        var vname = term.name;
         var results = [];
         var terms = new Toy.TermSet();
         function add(term) {
@@ -4156,11 +4155,11 @@ declare(
           // There are multiple conjuncts, so check for possible
           // replacements.
           function check(eqn) {
-            if (eqn.isCall2('=') && eqn.getLeft().isVariable() &&
-                eqn.getLeft().name === vname) {
+            if (eqn.isCall2('=') && eqn.getLeft().sameAs(term)) {
               // TODO: Give each item its own action information.
-              const html = format('replace {1} with {2}',
-                                  term.name, eqn.getRight().toUnicode());
+              const html =
+                    format('replace {1} with {2}',
+                           term.toUnicode(), eqn.getRight().toUnicode());
               const ruleArgs = [step.original, path];
               results.push({ruleName, ruleArgs, html});
             }
