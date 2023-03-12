@@ -2641,6 +2641,7 @@ var unicodeNames = {
   iota: '\u2129',     // Inverted iota
   none: '\u22a5',     // Bottom / "up tack"
   R: '\u211d',        // Real numbers
+  NN: '\u2115',       // Natural numbers
   forall: '\u2200',
   exists: '\u2203',
   exists1: '\u2203!'
