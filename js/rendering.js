@@ -2799,6 +2799,8 @@ Toy.getStepsNode = getStepsNode;
 Toy.getExpr = getExpr;
 Toy.getProofDisplay = getProofDisplay;
 
+  Toy.termDisplay = termDisplay;
+
 // For debugging
 Toy._adjacentSteps = adjacentSteps;
 Toy._effectivePower = effectivePower;

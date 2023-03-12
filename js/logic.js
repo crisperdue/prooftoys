@@ -1578,13 +1578,16 @@ declare(
                   || gasms && gasms.scanConj(match));
      if (asm) {
        const path = step.prettyPathTo(term);
-       return [{ruleName,
-                ruleArgs: [step.original, path, asm],
-                html: `\u27ad <b>${asm.getRight().$$}</b> by assumption`
-               }];
+       return [
+         {ruleName,
+          ruleArgs: [step.original, path, asm],
+          html: `\u27ad <b>${asm.getRight().$$}</b> assuming ${asm.$$}`,
+         }
+       ];
      }
    },
-   description: 'replace {site} using assumption',
+   description: (step =>
+                 `assuming ;;<b>${Toy.termDisplay(step.ruleArgs[2])}</b>`),
   },  
 
   /**
