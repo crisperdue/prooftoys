@@ -421,12 +421,16 @@ Expr.prototype.toUnicode = function(simply) {
 /**
  * Like toUnicode, but allows HTML output.  Currently
  * these are one and the same; toUnicode may disappear.
+ * If trimmed output is requested and there is a leading
+ * open parenthesis, trim it and the closing one.
  */
-Expr.prototype.toHtml = function() {
+Expr.prototype.toHtml = function(trimmed) {
   // Really toUnicode does produce marked-up HTML for
   // e.g. exponentiation.  Since <, >, and & are separated by spaces,
   // this is adequate in practice.
-  return this.toUnicode();
+  const html = this.toUnicode();
+  const result = (trimmed && html[0] === '(') ? html.slice(1, -1) : html;
+  return result;
 };
 
 /**
