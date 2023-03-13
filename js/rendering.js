@@ -2060,9 +2060,8 @@ function expandMarkup(step, markup) {
  * Returns an HTML display of the given term for step descriptions.
  */
 function termDisplay(term) {
-  const html = term.toHtml();
-  const text = (html[0] === '(') ? html.slice(1, -1) : html;
-  return '<span class=term>' + text + '</span>'
+  const html = term.toHtml(true);
+  return '<span class=term>' + html + '</span>'
 }
 
 /**
@@ -2070,8 +2069,9 @@ function termDisplay(term) {
  * This bolds the main part of the fact.
  */
 function factDisplay(bool) {
-  const html = bool.getMain().toHtml();
   const asms = bool.getAsms();
+  // Trim the main HTML if there are no asms.
+  const html = bool.getMain().toHtml(!asms);
   const leftHtml =
     asms ? asms.toHtml() + ' ⇒ ' : '';
   return `<span class=term>${leftHtml}<b>${html}</b></span>`;
