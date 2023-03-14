@@ -3369,7 +3369,13 @@ function checkFnMatch(schema, fn, expr, map, bindings) {
        term = term.fn) {
     path = new Path('fn', path);
   }
-  let reduced = Toy.rules.consider(schema).andThen('instVar', lambdas, name);
+  const reducer =
+        () => Toy.rules.consider(schema).andThen('instVar', lambdas, name);
+  let reduced = Toy.perform(reducer);
+  if (reduced instanceof Error) {
+    console.error(reduced);
+    return null;
+  }
   while (path !== Path.empty) {
     const reducible = reduced.getRight();
     if (reducible.matches(expr, bindings)) {
