@@ -1104,7 +1104,7 @@ declare(
               : null);
     },
     tooltip: ('proof starter'),
-    description: 'start proof of {bool}',
+    description: 'start proof of;; {bool}',
     labels: 'basic',
   },
 
@@ -3729,7 +3729,7 @@ declare(
     form: (''),
     menu: '   remove irrelevant {term}',
     tooltip: 'Drop irrelevant assumption',
-    description: 'drop irrelevant {site};; {in step siteStep}'
+    description: 'drop irrelevant;; {site} {in step siteStep}'
   },
 
   // Removes an irrelevant type assumption at the target site, where v
@@ -3788,7 +3788,7 @@ declare(
     form: (''),
     menu: '  remove irrelevant {term}',
     tooltip: 'Drop irrelevant type assumption',
-    description: 'drop irrelevant {site};; {in step siteStep}'
+    description: 'drop irrelevant;; {site} {in step siteStep}'
   },
 
   // Rule P/Q for a single antecedent (5234).  The schema step must
