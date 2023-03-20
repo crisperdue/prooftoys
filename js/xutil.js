@@ -1888,6 +1888,12 @@ function encodeSteps(steps_arg) {
     for (var i = 0; i < args.length; i++) {
       var arg = args[i];
       if (arg instanceof Path) {
+        // TODO: For assumptions use:
+        //   (path <asm> <str>)
+        //   where <str> is a path relative to the asm.
+        //   Here <asm> needs to be insensitive to policies
+        //   for renaming of variables, or else recompute all
+        //   before changing renaming strategies.
         result.push('(path "' + arg + '")');
       } else if (typeof arg === 'string') {
         result.push(unparseString(arg));
@@ -2049,6 +2055,11 @@ function decodeArg(info, steps) {
     case 't':
       return (value);
     case 'path':
+      // TODO: If there are two "args", decode as
+      //   <asm> and <p>, where <p> is a path relative to the asm.
+      //   The asm needs to be findable under different policies
+      //   for renaming of variables (in preceding steps), or else
+      //   recompute all of these before changing renaming strategies.
       return (Toy.asPath(value._value));
     case 'subst':
     case 'facts':
