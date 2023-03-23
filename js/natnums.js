@@ -69,26 +69,16 @@ Toy.exercise(
            (2 rewriteOnly (s 1) (path "")
              (t (a => (b => c) == (a & b => c))))`},
 
-  // Recursive definition of "+":
+  //
+  // Recursive "definition" of "+":
+  //
+
   {statement: '@NN a => a + 0 = a', axiom: true},
   {statement: '@NN a & NN d => a + succ d = succ (a + d)', axiom: true},
 
-  {definition: '1 = succ 0'},
+  {definition: '1 = succ 0', labels: 'basic'},
 
-  {statement: 'exists NN',
-   proof: function() {
-     return (rules.fact('p x => exists p')
-             .andThen('instMultiVars', {x: '0', 'p': 'NN'})
-             .andThen('simplifySite', ''));
-   }
-  },
-
-  {statement: '@NN n & NN m => (succ m = succ n => m = n)',
-   proof: function() {
-     return (rules.fact('@NN n & NN m & succ m = succ n => m = n')
-             .andThen('extractHyp', 'succ m = succ n'));
-   }
-  },
+  // Tactics
 
   // Tactic.  Target is a boolean term with an individual variable to
   // try induction on.
@@ -152,9 +142,29 @@ Toy.exercise(
    description: 'set up induction',
   },
 
+  // Theorems
+
+  {statement: 'exists NN',
+   proof: function() {
+     return (rules.fact('p x => exists p')
+             .andThen('instMultiVars', {x: '0', 'p': 'NN'})
+             .andThen('simplifySite', ''));
+   }
+  },
+
+  {statement: '@NN n & NN m => (succ m = succ n => m = n)',
+   proof: function() {
+     return (rules.fact('@NN n & NN m & succ m = succ n => m = n')
+             .andThen('extractHyp', 'succ m = succ n'));
+   }
+  },
+
   // The exercises:
 
   {exertion: 'nat0', statement: '0 = 0'},
+
+  {exertion: 'nat0.2',
+   statement: 'f x = y & f y = z => z = f (f x)'},
 
   {exertion: 'nat0.5', statement: '@NN (succ (succ 0))'},
 
@@ -167,7 +177,7 @@ Toy.exercise(
 
   {exertion: 'nat0.8',
    statement:
-   '@NN i & NN j & NN k & succ i = j & succ j = k => k = succ (succ i)'},
+   '@succ i = j & succ j = k => k = succ (succ i)'},
 
   {exertion: 'nat1',
    statement: '0 = x => x = 0'},
@@ -179,31 +189,29 @@ Toy.exercise(
     (2 rewrite (s 1) (path "/left") (t ((x = y) => (((f x) = (f y)) == T))))`},
   {exertion: 'nat2'},
 
-  {statement: '@NN a => a + succ 0 = succ a',
+  {statement: '@NN n => n + succ 0 = succ n',
    proof: `(1 tautologous
-              (t (((NN a) & ((a + (succ 0)) = (succ a)))
-                  => ((a + (succ 0)) = (succ a)))))
+              (t (((NN n) & ((n + (succ 0)) = (succ n)))
+                  => ((n + (succ 0)) = (succ n)))))
            (2 rewrite (s 1) (path "/left/right/left")
-              (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+              (t (((NN n) & (NN d)) => ((n + (succ d)) = (succ (n + d))))))
            (3 rewrite (s 2) (path "/left/left/left/left/arg")
-              (t ((NN a) => ((a + 0) = a))))
+              (t ((NN n) => ((n + 0) = n))))
            (4 rewrite (s 3) (path "/left/left/left") (t ((x = x) == T)))
            (5 rewrite (s 4) (path "/left/left") (t (NN 0)))`},
   {exertion: 'nat4'},
   
-  {statement: '@NN a => 0 + a = a',
-   proof: `(1 tautologous (t (((0 + a) = a) => ((0 + a) = a))))
-           (2 induct (s 1) (path "/left") "a")
-           (3 rewrite (s 2) (path "/left/left/left/right/left")
-             (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
-           (4 rewrite (s 3) (path "/left/left/left/left/left/left")
-             (t ((NN a) => ((a + 0) = a))))
-           (5 rewrite (s 4) (path "/left/left/left/left/left")
-             (t ((x = x) == T)))
-           (6 rewrite (s 5) (path "/left/left/left/left")
-             (t (((x = y) => ((f x) = (f y))) == T)))
-           (7 rewrite (s 6) (path "/left/left/left") (t (NN 0)))
-           (8 removeTypeAsm (s 7) (path "/left/right"))`},
+  {statement: '@NN n => 0 + n = n',
+   proof: `(1 goal (t ((0 + n) = n)))
+           (2 induct (s 1) (path "/left") "n")
+           (3 rewrite (s 2) (path "/left/right/left")
+            (t ((NN a) => ((a + 0) = a))))
+           (4 rewrite (s 3) (path "/left/left/left/left") (t ((x = x) == T)))
+           (5 rewrite (s 4) (path "/left/left/left/right/left")
+            (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+           (6 rewrite (s 5) (path "/left/left/left")
+            (t (((x = y) => ((f x) = (f y))) == T)))
+           (7 rewrite (s 6) (path "/left/left") (t (NN 0)))`},
   {exertion: 'add1'},
 
   {statement: '@NN a & NN b => NN (a + b)',
@@ -218,32 +226,53 @@ Toy.exercise(
            (6 removeTypeAsm (s 5) (path "/left/right"))`},
   {exertion: 'add1.5'},
 
-  {statement: '@NN a & NN b & NN c => (a + b) + c = a + (b + c)',
+  {statement: '@NN x & NN y & NN z => (x + y) + z = x + (y + z)',
    proof:
    `(1 tautologous
-      (t ((((a + b) + c) = (a + (b + c))) => (((a + b) + c) = (a + (b + c))))))
-    (2 induct (s 1) (path "/left") "c")
+      (t ((((x + y) + z) = (x + (y + z))) => (((x + y) + z) = (x + (y + z))))))
+    (2 induct (s 1) (path "/left") "z")
     (3 rewrite (s 2) (path "/left/right/right/right")
-      (t ((NN a) => ((a + 0) = a))))
+      (t ((NN x) => ((x + 0) = x))))
     (4 rewrite (s 3) (path "/left/left/left/left/left")
-      (t ((NN a) => ((a + 0) = a))))
+      (t ((NN x) => ((x + 0) = x))))
     (5 rewrite (s 4) (path "/left/left/left/left/left") (t ((x = x) == T)))
     (6 rewrite (s 5) (path "/left/left/left/left/right/right/right")
-      (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+      (t (((NN x) & (NN d)) => ((x + (succ d)) = (succ (x + d))))))
     (7 rewrite (s 6) (path "/left/left/left/left/left/right/right")
-      (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+      (t (((NN x) & (NN d)) => ((x + (succ d)) = (succ (x + d))))))
     (8 rewrite (s 7) (path "/left/left/left/left/left/left/left/right/left")
-      (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+      (t (((NN x) & (NN d)) => ((x + (succ d)) = (succ (x + d))))))
     (9 rewrite (s 8) (path "/left/left/left/left/left/left/left")
       (t (((x = y) => ((f x) = (f y))) == T)))
     (10 rewrite (s 9) (path "/left/left/left/left/left/right")
-      (t (((NN a) & (NN b)) => (NN (a + b)))))
+      (t (((NN x) & (NN y)) => (NN (x + y)))))
     (11 rewrite (s 10) (path "/left/left/left/left/left")
-      (t (((NN a) & (NN b)) => (NN (a + b)))))
+      (t (((NN x) & (NN y)) => (NN (x + y)))))
     (12 removeTypeAsm (s 11) (path "/left/right"))`},
   {exertion: 'add2'},
 
+  {exertion: 'add3',
+   statement: '@NN x & NN y => succ x + y = succ (x + y)'
+  },
+
+  {exertion: 'add4',
+   statement: '@NN x & NN y => x + y = y + x'
+  },
+
+  // {statement: '1 = succ 0', axiom: true, labels: 'basic'},
+
+  {exertion: 'add5',
+   statement: '@NN n => succ n = n + 1'
+  },
+
+  {exertion: 'add6',
+   statement: '@NN x & NN y & NN z => x + y + z = x + z + y'
+  },
+);
+
 // Define 1 = succ 0
+
+// Addition World levels:  
 
 // 1: 0 + n = n                  (zero_add) (induction on n) add1
 // 2: (a + b) + c = a + (b + c)  (add_assoc) (induction on c) add2
@@ -252,6 +281,22 @@ Toy.exercise(
 // 5: succ n = n + 1          (succ_eq_add_one)
 // 6: a + b + c = a + c + b   (add_right_comm)
 
-);
+// Advanced Addition World levels:
+
+// (1. succ_inj -- axiom for us)
+// 2. succ (succ a) = succ (succ b) => a = b (not interesting)
+// 3. a = b => succ a = succ b (explained in first induction proof)
+// 4. succ a = succ b == a = b (uses biconditional)
+// 5. a + t = b + t => a = b (induction on t)
+// 6. t + a = t + b => a = b (boring?)
+// 7. a + t = b + t == a = b (also boring?)
+// 8. a + b = a => b = 0
+// 9. 0 != succ a (just symmetry)
+// 10. a + b = 0 => b = 0 (probably give some hints, uses cases)
+// 11. a + b = 0 => a = 0 (add_comm)
+// 12. d + 1 = succ d  (just symmetry)
+// 13. n != succ n   (by induction)
+
+// And this is the end of Advanced Addition World!
 
 }();
