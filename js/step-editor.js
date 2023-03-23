@@ -1636,11 +1636,24 @@ function autoSimplify(step) {
  * descriptor of of the StepEditor's current rule.  Currently not
  * picky about the detailed requirements of the various kinds of site
  * and step arguments.  Relies on other components to do these checks.
+ * The length of the array is the max of the "length" of the rule
+ * function and any info.maxArgs.
+ *
+ * Also fills any "ed:" input, so perhaps this could be named
+ * argsFromContext.
  */
 StepEditor.prototype.argsFromSelection = function(ruleName) {
   var rule = Toy.rules[ruleName];
   var nargs = Math.max(rule.length, rule.info.maxArgs || 0);
   var args = new Array(nargs);
+
+  // Some pseudo-rules for proof editing and such need to refer
+  // to the proof editor.
+  const ned = rule.info.inputs.ed;
+  if (ned) {
+    args[ned - 1] = this._proofEditor;
+  }
+
   var step = this.proofDisplay.selection;
   if (!step) {
     return args;

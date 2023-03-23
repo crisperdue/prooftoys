@@ -464,11 +464,11 @@ var rules = {};
 //   If no onFail action is given, a rule with a precheck will
 //   return a strict error on failure of the precheck.
 //
-// inputs: map from type to argument number(s), either a single number
-//   or an array if more than one such argument.  These currently
-//   determine whether a step accepts a selected step or site, also
-//   parsing of items in forms.  Most rules accept arguments in string
-//   form and convert them as needed internally.
+// inputs: object/map from type to argument number(s), either a single
+//   number or an array if more than one such argument.  These
+//   currently determine whether a step accepts a selected step or
+//   site, also parsing of items in forms.  Most rules accept
+//   arguments in string form and convert them as needed internally.
 //
 //   The supported types are:
 //     step: Matches any proof step.
@@ -482,6 +482,8 @@ var rules = {};
 //     site: Term in a step; the rule expects the term's step and path
 //       to the term as inputs.
 //     bindingSite: Matches a variable binding in a step (as in "renameBound").
+//     ed: for pseudo-rules (editing), the proof editor, filled by
+//       argsFromSelection.  
 //
 // TODO: Consider defining a new form of input descriptor.  Every rule
 //   with the new property would be a "fancy" rule whose action
