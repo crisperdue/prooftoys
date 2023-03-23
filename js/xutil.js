@@ -989,13 +989,6 @@ var _parsed = {};
  * Aborts if parsing or type checking fails.  If the input is a
  * string, caches the result on success, and reuses a cached result if
  * one exists.
- *
- * TODO: Consider whether the result should be typed, or whether there
- *   should be a separate function for that.  Typed constants such as
- *   T, and literals, deserve some special treatment.  We should make
- *   fewer copies of monomorphic constants, and perhaps some variables
- *   should also be typed (e.g. by their names); and fewer copies
- *   made.
  */
 function parse(input) {
   if (typeof input == 'string' &&
