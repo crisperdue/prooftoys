@@ -420,33 +420,40 @@ function ProofEditor(options_arg) {
 }
 
 /**
- * Initialize theory and proof editor state for the given exercise.
- * Also may set initialSteps to use in case the editor is cleared.
+ * Initializes proof editor state for the given exercise item, named
+ * as "exercise/item", initializing theory state by calling
+ * prepExercise.  If there is an entry in the database for the
+ * exercise item, sets those up, else if the proof editor has declared
+ * initialSteps, sets those up.
  */
 ProofEditor.prototype._initExercise = function(exName) {
   const self = this;
   const db = Toy.db;
   const info = prepExercise(exName);
-  const stmt = self.goalStatement = Toy.mathParse(info.statement);
+  const stmt = info && info.statement;
+  const statement = stmt && Toy.mathParse(stmt);
   // Set initial steps if appropriate.
-  if (!self._options.steps && info.statement) {
-    self.initialSteps = exerciseInits(stmt);
+  if (!self._options.steps && statement) {
+    self.initialSteps = exerciseInits(statement);
   }
   // Display steps saved in the database or else initial steps.
   db.exercises.get(exName)
     .then(data => {
-        console.log('Exercise in db:', data);
+      console.log('Exercise in db:', data);
       const steps =
             data
             ? Toy.decodeSteps(data.proofState)
             : self.initialSteps;
       self.setSteps(steps);
     });
-  // Display the exercise goal in the editor's header.
-  const $header = self.$node.find('.proofEditorHeader');
-  $header.find('.wksTitle')
-  .replaceWith('<b class=status>Proving:</b> <span class=wff></span>');
-  $header.find('.wff').append(stmt.renderTerm());
+  if (statement) {
+    self.goalStatement = statement;
+    // Display the exercise goal in the editor's header.
+    const $header = self.$node.find('.proofEditorHeader');
+    $header.find('.wksTitle')
+      .replaceWith('<b class=status>Proving:</b> <span class=wff></span>');
+    $header.find('.wff').append(statement.renderTerm());
+  }
 };
 
 /**
@@ -459,11 +466,15 @@ function exerciseInits(stmt) {
 }
 
 /**
- * Adds the declarations to set up the theory state desired for the
- * given exercise name, given as "exercise/item".  In the declarations
- * these are called "exertion"s.  Applies all but the last of them up
- * through the exertion record.  Returns that last, omitting any
- * exertion property and value.
+ * Based on the given "exercise/item" exercise name, adds the
+ * declarations to set up the theory state for that item of that
+ * exercise.  (In the declarations item names are called "exertion"s.)
+ * Applies all of the declarations for that exercise preceding the
+ * desired item's record, and returns that declaration, omitting its
+ * exertion property.
+ *
+ * If the exercise exists, but no such item, applies all declarations
+ * and returns null.
  */
 function prepExercise(name) {
   const matches = name.match(/(.*?)\/(.*)/);
@@ -486,10 +497,13 @@ function prepExercise(name) {
       break;
     }
   }
-  assert(found, `Exercise item ${name} not found`);
-  const result = keepers.pop();
-  keepers.forEach(Toy.addRule);
-  return result;
+  if (found) {
+    const result = keepers.pop();
+    keepers.forEach(Toy.addRule);
+    return result;
+  } else {
+    return null;
+  }
 };
 
 /**
@@ -2701,7 +2715,7 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
   const gen = info.menuGen;
   if (gen) {
     const items = gen(ruleName, step, term, proofEditor);
-    // Check that the menu items are well-formedd.
+    // Check that the menu items are well-formed.
     if (Array.isArray(items)) {
       for (const item of items) {
         if (item.constructor === Object &&
