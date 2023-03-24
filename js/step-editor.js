@@ -204,6 +204,10 @@ function ProofEditor(options_arg) {
     .append(menu.$node);
   this.setEditable(true);
 
+  // Prepare to write out proof state during refresh, so basically
+  // whenever it changes.
+  this._refresher = new Toy.Refresher(() => this.refresh());
+
   if (!options.exercise) {
     // Restore editor state (not document state).
     const state = Toy.getSavedState(self);
@@ -216,72 +220,6 @@ function ProofEditor(options_arg) {
                         // that is greater than one.
                         : this.proofEditorId));
   }
-
-  // Prepare to write out proof state during refresh, so basically
-  // whenever it changes.
-  this._refresher = new Toy.Refresher(function() {
-      self._updateGivens();
-      if (self.isEditable()) {
-        self.saveProofState();
-      }
-      // Set (or clear) the message in the $status box.
-      var steps = mainDisplay.steps;
-      var len = steps.length;
-      if (len > 0) {
-        var step = steps[len - 1];
-
-        // Is the goal proved?
-        const stmt = self.goalStatement;
-        if (stmt) {
-          async function showStatus(solved) {
-            await Toy.sleep(200);
-            const $node = $('.proofEditorHeader .status');
-            $node.empty();
-            if (solved) {
-              for (const ch of '\u2713 Proof complete. '.split('')) {
-                $node.append(ch);
-                await Toy.sleep(20);
-              }
-            } else {
-              $node.append('Proving:');
-            }
-          }
-          showStatus(step.checkSubgoals(stmt) === 0);
-        }
-
-        var message = self.progressMessage(step.original);
-        $statusDisplay.empty();
-        $statusDisplay.append(message || '&nbsp;');
-        $status.toggleClass('empty', !message);
-      } else {
-        $status.toggleClass('empty', true);
-      }
-    });
-
-  // Caution the user in case the same document may be in use in another
-  // tab or window.
-  // TODO: Consider using a BroadcastChannel to communicate this sort
-  //   of information.
-  if (self.docName && Toy.isDocHeldFrom(self.docName, self)) {
-    // Caution the user.  The isDocHeldFrom test seems to be unreliable,
-    // at least during development, so just caution rather than
-    // setting editable to false.
-    //
-    // TODO: Consider actively helping the user avoid problems instead of
-    //   cautioning.  Probably use IndexedDB via idb or idb-keyval to
-    //   store editor state; and either auto-update proofs as needed
-    //   on window focus, or perhaps auto-create new "branches" if
-    //   inconsistent changes are detected, e.g. append -1, -2, ...
-    //   to the document name.
-    //
-    //   All of this would imply ditching the heartbeat mechanism, which
-    //   is inherently unreliable anyway.
-    //
-    //   In the future when there are remote stores it probably makes
-    //   sense to check if a document has changed before writing it
-    //   remotely.  And writing remotely would probably be explicit,
-    //   e.g.  with a "Save" command.
-    Toy.alert('Caution: editing may be in progress in another tab/window');
   }
 
   // Initialize the uxBox state.
@@ -418,6 +356,49 @@ function ProofEditor(options_arg) {
     }
   });
 }
+
+ProofEditor.prototype.refresh = function() {
+  const self = this;
+  const mainDisplay = self.proofDisplay;
+  const $status = self.$status;
+  const $statusDisplay = self.$statusDisplay;
+  self._updateGivens();
+  if (self.isEditable()) {
+    self.saveProofState();
+  }
+  // Set (or clear) the message in the $status box.
+  var steps = mainDisplay.steps;
+  var len = steps.length;
+  if (len > 0) {
+    var step = steps[len - 1];
+
+    // Is the goal proved?
+    const stmt = self.goalStatement;
+    if (stmt) {
+      async function showStatus(solved) {
+        await Toy.sleep(200);
+        const $node = $('.proofEditorHeader .status');
+        $node.empty();
+        if (solved) {
+          for (const ch of '\u2713 Proof complete. '.split('')) {
+            $node.append(ch);
+            await Toy.sleep(20);
+          }
+        } else {
+          $node.append('Proving:');
+        }
+      }
+      showStatus(step.checkSubgoals(stmt) === 0);
+    }
+
+    var message = self.progressMessage(step.original);
+    $statusDisplay.empty();
+    $statusDisplay.append(message || '&nbsp;');
+    $status.toggleClass('empty', !message);
+  } else {
+    $status.toggleClass('empty', true);
+  }
+};
 
 /**
  * Initializes proof editor state for the given exercise item, named
