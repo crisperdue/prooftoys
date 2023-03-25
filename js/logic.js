@@ -1117,9 +1117,17 @@ declare(
     form: 'Desired conclusion: <input name=bool>',
     menuGen: function(ruleName, step, term, proofEditor) {
       // This rule is only available if the proof is currently empty.
-      return (proofEditor.proofDisplay.steps.length == 0
-              ? 'state the goal'
-              : null);
+      const goal = proofEditor.goalStatement;
+      if (goal) {
+        return [{html: 'state the goal',
+                 ruleName: 'goal',
+                 ruleArgs: [goal.getMain()]
+                }];
+      } else {
+        return (proofEditor.proofDisplay.steps.length == 0
+                ? 'state the goal'
+                : null);
+      }
     },
     tooltip: ('proof starter'),
     description: 'start proof of;; {bool}',
