@@ -107,9 +107,6 @@ function ProofEditor(options_arg) {
   assert(proofEditors.size === 0 || options.exercise === null,
          `Exercises permit only one ProofEditor (${options.exercise}).`);
   proofEditors.add(self);
-  if (!options.exercise) {
-    Toy.requireRealNumbers();
-  }
 
   // If the first step of the proof is a "givens" step, this will
   // become a TermSet with all conjuncts of its main part.
@@ -211,15 +208,19 @@ function ProofEditor(options_arg) {
   if (!options.exercise) {
     // Restore editor state (not document state).
     const state = Toy.getSavedState(self);
-    // The (default) document name is the proofEditorId.
+    // This sets self.docName and potentially goalStatement.
     self.syncToDocName(options.docName ||
                        (state
                         ? state.docName
+                        // The (default) document name is the proofEditorId.
                         // By default set the document name according
                         // to the URI path, and the editor number if
                         // that is greater than one.
                         : this.proofEditorId));
-  }
+    if (self.openDoc(self.docName)) {
+      // There is an existing saved document.
+      self.fromDoc = true;
+    }
   }
 
   // Initialize the uxBox state.
@@ -234,7 +235,7 @@ function ProofEditor(options_arg) {
   //   could have any number of proof contexts, often associating
   //   each proof editor with a context.
   if (self.docName) {
-    // TODO: his functionality is currently disabled with "if false".
+    // TODO: this functionality is currently disabled with "if false".
     // Someday replace it with something better.
     const dependencies = () => {
       if (false && nextProofEditorId <= 2) {
@@ -258,10 +259,6 @@ function ProofEditor(options_arg) {
     let names = dependencies();
     for (const nm of names) {
       self.openDoc(nm);
-    }
-    if (self.openDoc(self.docName)) {
-      // There is an existing saved document.
-      self.fromDoc = true;
     }
   }
   // Updates proof editor state for the desired exercise based on
@@ -455,7 +452,7 @@ function exerciseInits(stmt) {
  * exertion property.
  *
  * If the exercise exists, but no such item, applies all declarations
- * and returns null.
+ * and returns null.  An empty part name is allowed.
  */
 function prepExercise(name) {
   const matches = name.match(/(.*?)\/(.*)/);
@@ -478,14 +475,15 @@ function prepExercise(name) {
       break;
     }
   }
-  if (found) {
-    const result = keepers.pop();
-    keepers.forEach(Toy.addRule);
-    return result;
-  } else {
-    return null;
-  }
+  const result = found ? keepers.pop() : null;
+  keepers.forEach(Toy.addRule);
+  Toy.exerciseLoaded = exName;
+  return result;
 };
+
+// If an exercise is set up, value is the exercise name, e.g. "nat",
+// otherwise null.
+Toy.exerciseLoaded = null;
 
 /**
  * Builds and returns an object for the proofButtons DIV of the given
@@ -841,12 +839,10 @@ function buildWksControls(editor) {
       }
     });
   $openersArea.on('click', '.docName', function() {
-    const text = $(this).text();
-    const success = editor.openDoc(text);
-    if (success) {
-      editor.syncToDocName(text);
-    } else {
-      Toy.alert('Could not open worksheet ' + text);
+    const name = $(this).text();
+    const status = editor.openDoc(name);
+    if (status === false) {
+      Toy.alert('Could not open worksheet ' + name);
     }
   });
   $deletersArea.on('click', '.docName', function() {
@@ -938,6 +934,9 @@ ProofEditor.prototype.syncToDocName = function(name) {
     // so that otherwise the document can be edited by other editors.
     // (See Toy.isDocHeldFrom.)
     Toy.noteState(self, {docName: self.docName});
+    const wff = (name.startsWith('(') &&
+                 Toy.perform(() => Toy.parse(name)));
+    self.goalStatement = wff instanceof Expr ? wff : null;
   }
   // Visiting the same page in another tab then will cause its proof
   // editor to visit the same document as this one.
@@ -947,9 +946,39 @@ ProofEditor.prototype.syncToDocName = function(name) {
 /**
  * Attempts to open the named document in this proof editor, setting
  * the editor's document name and loading its proof state.  Returns
- * true iff the document is successfully loaded, else false.
+ * true iff the document is successfully loaded, false for failure,
+ * and null when the current theory needs to be unloaded first.
+ * Initiates unloading by reloading the page.
+ *
+ * If no conflicting theory is loaded, ensures that the real numbers
+ * are set up except if the proof goal indicates NN but not R.  In
+ * that case ensures that NN is set up.
  */
 ProofEditor.prototype.openDoc = function(name) {
+  const goal = Toy.perform(() => Toy.parse(name));
+  let needNN = false;
+  if (goal instanceof Expr) {
+    const names = goal.constantNames();
+    needNN = names.has('NN') && !names.has('R');
+    if (names.has('NN') && names.has('R')) {
+      console.warn('NN and R!?');
+    }
+  }
+  if ((needNN && Toy.realNumbersLoaded) ||
+      (!needNN && Toy.exerciseLoaded)) {
+    // Associate this proof editor with this document across
+    // page loads.
+    this.syncToDocName(name);
+    // Reload and start over.
+    Toy.sleep(0).then(() => location.reload());
+    // Indicate an inconclusive result.
+    return null;
+  }
+  if (needNN) {
+    prepExercise('nat/');
+  } else if (!Toy.realNumbersLoaded) {
+    Toy.requireRealNumbers();
+  }
   const proofData = Toy.readDoc(name);
   // TODO: Check for possible active editing in another tab/window.
   if (proofData) {
