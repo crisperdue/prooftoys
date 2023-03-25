@@ -1110,28 +1110,30 @@ declare(
   },
 
   {name: 'goal',
-    action: function(term) {
-      return rules.assumeExplicitly(term).justify('goal', arguments);
-    },
-    inputs: {bool: 1},
-    form: 'Desired conclusion: <input name=bool>',
-    menuGen: function(ruleName, step, term, proofEditor) {
-      // This rule is only available if the proof is currently empty.
-      const goal = proofEditor.goalStatement;
-      if (goal) {
-        return [{html: 'state the goal',
-                 ruleName: 'goal',
-                 ruleArgs: [goal.getMain()]
-                }];
-      } else {
-        return (proofEditor.proofDisplay.steps.length == 0
-                ? 'state the goal'
-                : null);
-      }
-    },
-    tooltip: ('proof starter'),
-    description: 'start proof of;; {bool}',
-    labels: 'basic',
+   action: function(term) {
+     return rules.assumeExplicitly(term).justify('goal', arguments);
+   },
+   inputs: {bool: 1},
+   form: 'Desired conclusion: <input name=bool>',
+   menuGen: function(ruleName, step, term, proofEditor) {
+     // This rule is only available if the proof is currently empty.
+     if (proofEditor.proofDisplay.steps.length == 0) {
+       const goal = proofEditor.goalStatement;
+       if (goal) {
+         return [{html: 'state the goal',
+                  ruleName: 'goal',
+                  ruleArgs: [goal.getMain()]
+                 }];
+       } else {
+         return 'state the goal';
+       }
+     } else {
+       return null;
+     }
+   },
+   tooltip: ('proof starter'),
+   description: 'start proof of;; {bool}',
+   labels: 'basic',
   },
 
   // Similar to "consider", but uses a selected term.
