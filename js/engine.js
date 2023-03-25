@@ -529,8 +529,8 @@ var rules = {};
 //   application(s) of the rule.  It will be passed the ruleName,
 //   step, selected term or null if none, and the ProofEditor for which
 //   it is generating the menu.  A falsy value indicates no
-//   menu entries; a non-empty string is for one entry.
-//   One or more plain objects give full menu information, with  
+//   menu entries; a non-empty string is for one entry.  An array of
+//   one or more plain objects give full menu information, with  
 //   properties ruleName (string), ruleArgs (Array), html (string),
 //   and optional $node, which overrides the html.
 //   TODO: In the future there may be a sort "key" (Array).
