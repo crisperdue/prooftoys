@@ -1424,7 +1424,12 @@ let pid = '' + Math.floor(Math.random() * 1e15);
  */
 function checkDocName(name) {
   const result = name.match(/^[(].*[)]$|^([a-zA-Z0-9_ /.#-]+)$/);
-  if (!result) {
+  const term = (Toy.parse && name.startsWith('(')
+                ? perform(() => Toy.parse(name))
+                : null);
+  // Note that if parsing is not available, parenthesized but
+  // ill-formed terms are accepted here.
+  if (!result && !(term instanceof Error)) {
     console.warn('Bad document name:', name);
   }
   return !!result;
