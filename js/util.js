@@ -1418,9 +1418,12 @@ let pid = '' + Math.floor(Math.random() * 1e15);
  * Returns true or false depending on whether the given string is a
  * valid document name.  Currently one or more of alphanumeric or
  * "-./_ #".
+ *
+ * Now experimentally allows anything if the entire name begins
+ * with an open parenthesis and ends with a closing one.
  */
 function checkDocName(name) {
-  const result = name.match(/^([a-zA-Z0-9_ /.#-]+)$/);
+  const result = name.match(/^[(].*[)]$|^([a-zA-Z0-9_ /.#-]+)$/);
   if (!result) {
     console.warn('Bad document name:', name);
   }
