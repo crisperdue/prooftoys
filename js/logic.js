@@ -5847,6 +5847,7 @@ declare(
 
    {statement: 'not (a != b) == (a = b)',
     simplifier: true,
+    converse: { labels: 'general' },
     proof: function() {
        return (rules.fact('a != b == not (a = b)')
                .rewrite('', 'a == b == (not a == not b)')
