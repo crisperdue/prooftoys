@@ -1349,6 +1349,7 @@ declare(
         return null;
       }
     },
+    labels: 'primitive',
     tooltip: ('Applies a function, named or not, to one or two arguments'),
     description: '=apply'
   },
