@@ -2686,20 +2686,13 @@ function acceptsSelection(step, ruleName) {
       // or a beta-reducible expression.
       // 
       // TODO: prevent selection of bound variables as terms.
-      return (argInfo.site
-              || (argInfo.term &&
-                  // These checks mean that the selection cannot be
-                  // used as a mere term if the rule needs some kind
-                  // of step as an input.  The user must select the
-                  // step and then enter a term, or copy it from the
-                  // clipboard.
-                  //
-                  // This list must match stepTypes.
-                  !argInfo.step && !argInfo.equation && !argInfo.implication)
-              || (argInfo.bindingSite && expr instanceof Toy.Lambda)
-              || (argInfo.reducible
-                  && expr instanceof Toy.Call
-                  && expr.fn instanceof Toy.Lambda));
+      const result =
+            (argInfo.site
+             || (argInfo.bindingSite && expr instanceof Toy.Lambda)
+             || (argInfo.reducible
+                 && expr instanceof Toy.Call
+                 && expr.fn instanceof Toy.Lambda));
+      return result;
     }
   } else {
     // If the rule needs a site, do not accept just a step.
