@@ -2938,10 +2938,8 @@ declare(
 
   /**
    * The boolean input should be an instance of a tautology.
-   *
-   * TODO: Complete with at least a precheck.  Consider what to do
-   *   in case the argument is not an instance of a tautology.  Something
-   *   like this could be useful as a test.
+   * Like rules.tautology, this returns an Error in case the
+   * input is not a tautology.
    */
   {name: 'tautologous',
     action: function(wff_arg) {
@@ -2980,6 +2978,29 @@ declare(
     },
     tooltip: ('substitute into tautology'),
     description: '=tautInst'
+  },
+
+  {name: 'byTautology',
+   precheck: function(step, path) {
+     return step.get(path).isBoolean();
+   },
+   action: function(step, path) {
+     const target = step.get(path);
+     const taut = rules.tautologous(target);
+     if (Toy.isProved(taut)) {
+       const eqn = rules.rewrite(taut, '', 'a == (a == T)');
+       // TODO: Consider how to make this situation work as inline.
+       //   The issue appears to be that the steps supporting this
+       //   rewrite are not automatically rendered.
+       return (rules.rewriteFrom(step, path, eqn)
+               .justify('byTautology', arguments, [step]));
+     }
+     return null;
+   },
+    inputs: {site: 1},
+    menu: ' {term} true by tautology',
+    description: 'true by tautology;; {in step siteStep}',
+    labels: 'general'
   },
 
   // TODO: Complete this.
