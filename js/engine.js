@@ -475,13 +475,13 @@ var rules = {};
 //     equation: Matches a proof step that is an equation.
 //     implication: Matches a proof step that is a conditional
 //     term: Matches any term.
-//     reducible: Matches a call to anonymous function (lambda)
 //     varName: Name suitable for a variable.
 //     string: Arbitrary nonempty string.
 //     optString: Optionally empty arbitrary string.
 //     site: Term in a step; the rule expects the term's step and path
 //       to the term as inputs.
-//     bindingSite: Matches a variable binding in a step (as in "renameBound").
+//     reducible: Site that matches a call to anonymous function (lambda)
+//     bindingSite: Site matching a variable binding (as in "renameBound").
 //     ed: for pseudo-rules (editing), the proof editor, filled by
 //       argsFromSelection.  
 //
@@ -2220,6 +2220,8 @@ var basicSimpFacts = [
                       'a & a == a',
                       'a | a == a',
                       'a | not a == T',
+                      'a => T == T',
+                      'F => a == T',
                       'not T == F',
                       'not F == T',
                       '(a == T) == a',
@@ -2334,7 +2336,8 @@ function addFact(info) {
     const mainFrees = goal.getMain().freeVarSet();
     const asmExtras = Toy.setDiff(asmFrees, mainFrees);
     if (asmExtras.size) {
-      console.warn(Toy.format('Excess free variables in assumptions: {1}', goal));
+      console.warn(Toy.format('Excess free variables in assumptions: {1}',
+                              goal));
     }
   }
 
