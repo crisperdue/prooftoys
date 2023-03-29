@@ -396,9 +396,7 @@ function makeVideoTips() {
                </video>`;
     },
     placement: 'bottom',
-    delay: [500, 100],
-    trigger: 'mouseenter',
-    hideOnClick: false,
+    trigger: 'click',
     maxWidth: '82vw', 
     allowHTML: true,
     interactive: true,
