@@ -3756,7 +3756,7 @@ declare(
     inputs: {site: 1},
     labels: 'basic',
     form: (''),
-    menu: '   remove irrelevant {term}',
+    menu: '   drop irrelevant {term}',
     tooltip: 'Drop irrelevant assumption',
     description: 'drop irrelevant;; {site} {in step siteStep}'
   },
@@ -3815,7 +3815,7 @@ declare(
     inputs: {site: 1},
     labels: 'basic',
     form: (''),
-    menu: '  remove irrelevant {term}',
+    menu: '  drop irrelevant {term}',
     tooltip: 'Drop irrelevant type assumption',
     description: 'drop irrelevant;; {site} {in step siteStep}'
   },
@@ -4643,7 +4643,7 @@ declare(
     menu: 'primitive rewrite using a fact',
     isRewriter: true,
     description: 'use;; {fact} {&nbsp;in step siteStep}',
-    labels: 'primitive'
+    labels: 'other'
   },
 
   // Variant of rules.rewrite for use from the UI when the equation
