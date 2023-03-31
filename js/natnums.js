@@ -53,7 +53,7 @@ Toy.exercise(
   },
 
   // 4
-  {statement: '@NN n => 0 != succ n', axiom: true,
+  {statement: '@NN n => succ n != 0', axiom: true,
    description: 'axiom: zero is not a successor'
   },
 
@@ -73,7 +73,9 @@ Toy.exercise(
   // Recursive "definition" of "+":
   //
 
-  {statement: '@NN a => a + 0 = a', axiom: true},
+  {statement: '@NN a => a + 0 = a', axiom: true,
+   simplifier: true,
+  },
   {statement: '@NN a & NN d => a + succ d = succ (a + d)', axiom: true},
 
   {definition: '1 = succ 0', labels: 'basic'},
@@ -166,6 +168,10 @@ Toy.exercise(
   {exertion: 'nat0.2',
    statement: 'f x = y & f y = z => z = f (f x)'},
 
+  {exertion: 'nat0.3',
+   statement: 'y = f x & z = f y => z = f (f x)',
+  },
+
   {exertion: 'nat0.5', statement: '@NN (succ (succ 0))'},
 
   {exertion: 'nat0.6',
@@ -211,7 +217,9 @@ Toy.exercise(
             (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
            (6 rewrite (s 5) (path "/left/left/left")
             (t (((x = y) => ((f x) = (f y))) == T)))
-           (7 rewrite (s 6) (path "/left/left") (t (NN 0)))`},
+           (7 rewrite (s 6) (path "/left/left") (t (NN 0)))`,
+   simplifier: true,
+  },
   {exertion: 'add1'},
 
   {statement: '@NN a & NN b => NN (a + b)',
@@ -259,7 +267,7 @@ Toy.exercise(
    statement: '@NN x & NN y => x + y = y + x'
   },
 
-  // {statement: '1 = succ 0', axiom: true, labels: 'basic'},
+  {statement: '1 = succ 0', axiom: true, labels: 'basic'},
 
   {exertion: 'add5',
    statement: '@NN n => succ n = n + 1'
@@ -267,6 +275,25 @@ Toy.exercise(
 
   {exertion: 'add6',
    statement: '@NN x & NN y & NN z => x + y + z = x + z + y'
+  },
+
+  {exertion: 'addx4',
+   statement: '@NN x & NN y => (succ x = succ y == x = y)',
+   proof:
+   `(1 goal (t (((succ x) = (succ y)) == (x = y))))
+    (2 rewrite (s 1) (path "/left") (t ((a == b) == ((a => b) & (b => a)))))
+    (3 rewrite (s 2) (path "/left/left")
+      (t (((NN n) & (NN m)) => (((succ m) = (succ n)) => (m = n)))))
+    (4 rewrite (s 3) (path "/left/left/left")
+      (t (((x = y) => ((f x) = (f y))) == T)))`
+  },
+
+  {exertion: 'addx8',
+   statement: '@NN x & NN y => (x + y = 0 => y = 0)',
+  },
+
+  {exertion: 'addxbonus',
+   statement: '@NN x & NN y => (x + y = 0 == x = 0 & y = 0)'
   },
 );
 
