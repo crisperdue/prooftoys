@@ -118,7 +118,10 @@ function ProofEditor(options_arg) {
   self.showRuleType = 'general';
   self.showRules = [];
   // Exercises often override the default empty value.
-  self.initialSteps = options.steps ? Toy.decodeSteps(options.steps) : [];
+  self.initialSteps = options.steps
+    // TODO: Is there a better way to express this idea?
+    ? Toy.unrenderedDeps(Toy.asProof(options.steps)())
+    : [];
 
   //// Build the DOM structures and connect the parts.
 
