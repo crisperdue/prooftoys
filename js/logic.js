@@ -4314,7 +4314,7 @@ declare(
       const step2 = (target.implies() && equation.implies() &&
                      !target.wff.asPath(path).isEnd()
                      ? (rules.rewriteOnly(step1, '',
-                                          'a => (b => c) == a & b => c')
+                                          'a => (b => c) == b & a => c')
                         .andThen('arrangeAsms'))
                      : step1);
       return step2.justify('replace', arguments, [target, equation]);
