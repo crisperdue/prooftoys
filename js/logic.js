@@ -4306,16 +4306,16 @@ declare(
   /**
    * Replaces the target term using the given equation.  If both
    * inputs are conditionals and this does not replace the entire
-   * step, merges the resulting assumptions with arrangeAsms.
+   * step, merges the resulting assumptions, with the target step
+   * assumptions first.
    */
   {name: 'replace',
     action: function(target, path, equation) {
       const step1 = rules.r2(target, path, equation);
       const step2 = (target.implies() && equation.implies() &&
                      !target.wff.asPath(path).isEnd()
-                     ? (rules.rewriteOnly(step1, '',
-                                          'a => (b => c) == b & a => c')
-                        .andThen('arrangeAsms'))
+                     // The entire step is not being replaced.
+                     ? step1.andThen('mergeAsms')
                      : step1);
       return step2.justify('replace', arguments, [target, equation]);
     },
@@ -4405,7 +4405,8 @@ declare(
   // If the step has the form a => (b => c), moves all conjuncts
   // of "a" to the inner level and finally erasing the outer "=>".
   // The conjuncts of "a" end up following all the conjuncts of "b".
-  {name: 'flattenAsms',
+  // This is a helper for rules.replace.
+  {name: 'mergeAsms',
     action: function(step) {
       let flatter = step;
       const once = Toy.applyMatchingFact;
@@ -4418,11 +4419,12 @@ declare(
           flatter = once(flatter, '',
 		         ['a => (b => c) == (b & a => c)'],
 		         'rewriteOnly');
-          return flatter.justify('flattenAsms', arguments, [step]);
+          return flatter.justify('mergeAsms', arguments, [step]);
         }
         flatter = next;
       }
-    }
+    },
+   description: 'merge new assumptions',
   }
 );
 
@@ -4630,12 +4632,8 @@ declare(
     action: function(step, path_arg, eqn) {
       const path = step.wff.asPath(path_arg);
       const replacement = rules.replacementFor(step, path, eqn);
-      const rewritten = rules.r2(step, path, replacement);
-      let flatter = rewritten;
-      if (step.implies() && eqn.implies() && !path.isEnd()) {
-	flatter = rules.flattenAsms(rewritten);
-      }
-      return flatter.justify('rewriteOnlyFrom', arguments, [step, eqn]);
+      const rewritten = rules.replace(step, path, replacement);
+      return rewritten.justify('rewriteOnlyFrom', arguments, [step, eqn]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite using equation step <input name=equation>'),
@@ -4652,12 +4650,8 @@ declare(
       const path = step.wff.asPath(path_arg);
       const statement = rules.fact(stmt_arg);
       const replacement = rules.replacementFor(step, path, statement, reduce);
-      const rewritten = rules.r2(step, path, replacement);
-      let flatter = rewritten;
-      if (step.implies() && statement.implies() && !path.isEnd()) {
-	flatter = rules.flattenAsms(rewritten);
-      }
-      return flatter.justify('rewriteOnly', arguments, [step]);
+      const rewritten = rules.replace(step, path, replacement);
+      return rewritten.justify('rewriteOnly', arguments, [step]);
     },
     inputs: {site: 1, bool: 3},
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
