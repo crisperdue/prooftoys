@@ -938,7 +938,7 @@ ProofEditor.prototype.syncToDocName = function(name) {
     // (See Toy.isDocHeldFrom.)
     Toy.noteState(self, {docName: self.docName});
     const wff = (name.startsWith('(') &&
-                 Toy.perform(() => Toy.parse(name)));
+                 Toy.catching(() => Toy.parse(name)));
     self.goalStatement = wff instanceof Expr ? wff : null;
   }
   // Visiting the same page in another tab then will cause its proof
@@ -958,7 +958,7 @@ ProofEditor.prototype.syncToDocName = function(name) {
  * that case ensures that NN is set up.
  */
 ProofEditor.prototype.openDoc = function(name) {
-  const goal = Toy.perform(() => Toy.parse(name));
+  const goal = Toy.catching(() => Toy.parse(name));
   let needNN = false;
   if (goal instanceof Expr) {
     const names = goal.constantNames();

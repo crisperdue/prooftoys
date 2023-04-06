@@ -1219,35 +1219,6 @@ function catchAborts(fn) {
 }
 
 /**
- * Stops most stack unwinding like catchAborts, but returns an
- * Error object in case of an abort.  If the abort does not yield
- * an error, this returns a new Error based on the thrown result.
- * (When performing, "The show must go on.")
- */
-function perform(fn) {
-  let success = false;
-  let result = null;
-  // For good measure:
-  Toy.thrown = null;
-  try {
-    result = fn();
-  } finally {
-    if (result) {
-      return result;
-    } else if (exitTarget) {
-      // An exit is in progress, not an abort, so continue unwinding
-      // the stack.
-      unwind();
-    } else {
-      return (Toy.thrown instanceof Error
-              ? Toy.thrown
-              : new Error(`Threw ${Toy.thrown}`));
-    }
-  }
-}
-
-
-/**
  * Truthy iff x is nullish or an Error object.  Use this to
  * test the results of inference steps.
  */
@@ -1425,7 +1396,7 @@ let pid = '' + Math.floor(Math.random() * 1e15);
 function checkDocName(name) {
   const result = name.match(/^[(].*[)]$|^([a-zA-Z0-9_ /.#-]+)$/);
   const term = (Toy.parse && name.startsWith('(')
-                ? perform(() => Toy.parse(name))
+                ? catching(() => Toy.parse(name))
                 : null);
   // Note that if parsing is not available, parenthesized but
   // ill-formed terms are accepted here.
@@ -2808,7 +2779,6 @@ Toy.normalReturn = normalReturn;
 Toy.catching = catching;
 Toy.withExit = withExit;
 Toy.catchAborts = catchAborts;
-Toy.perform = perform;
 Toy.thrown = null;
 
 Toy.NestedTimer = NestedTimer;

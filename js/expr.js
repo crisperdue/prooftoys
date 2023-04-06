@@ -3371,7 +3371,7 @@ function checkFnMatch(schema, fn, expr, map, bindings) {
   }
   const reducer =
         () => Toy.rules.consider(schema).andThen('instVar', lambdas, name);
-  let reduced = Toy.perform(reducer);
+  let reduced = Toy.catching(reducer);
   if (reduced instanceof Error) {
     console.error(reduced);
     return null;
