@@ -3374,20 +3374,40 @@ declare(
     }
   },
 
-  {name: 'r2104a',
-    statement: 'forall {x. p x => q x} => (exists p => exists q)',
+  {name: 'impallall',
+    statement: 'forall {x. p x => q x} & forall p => forall q',
     proof: function() {
-      const contra = 'a => b == not b => not a';
-      return (rules.r2104()
-              .andThen('instMultiVars', {p: 'negate q', q: 'negate p'})
-              // This is an interesting case of a rewrite in the
-              // assumption, within a quantifier.
-              .andThen('rewrite', '/left/arg/body', contra)
-              .andThen('rewrite', '/right', contra)
-              // TODO: Simplify with specific facts.
-              .andThen('simplifySite', ''));
+      const fact = rules.fact('r2104');
+      const step1 = fact.andThen('rewriteOnly', '',
+                                 'a => (b => c) == a & b => c');
+      return step1;
     }
   },
+
+  {name: 'r2104ex',
+   statement: 'forall {x. p x => q x} => (exists p => exists q)',
+   proof: function() {
+     const contra = 'a => b == not b => not a';
+     return (rules.r2104()
+             .andThen('instMultiVars', {p: 'negate q', q: 'negate p'})
+             // This is an interesting case of a rewrite in the
+             // assumption, within a quantifier.
+             .andThen('rewrite', '/left/arg/body', contra)
+             .andThen('rewrite', '/right', contra)
+             // TODO: Simplify with specific facts.
+             .andThen('simplifySite', ''));
+   }
+  },
+
+  {name: 'impexex',
+   statement: 'forall {x. p x => q x} & exists p => exists q',
+   proof: function() {
+     const fact = rules.fact('r2104ex');
+     const step1 = fact.andThen('rewriteOnly', '',
+                                'a => (b => c) == a & b => c');
+     return step1;
+   }
+  },   
 
   // 2121
   {name: 'forallXY',
