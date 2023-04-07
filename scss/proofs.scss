@@ -26,7 +26,7 @@ b[videotip], b[imagetip] {
 }
 
 .expr.hover, .inShadow {
-  background-color: hsl(200deg, 100%, 85%);
+  background-color: hsl(200deg, 100%, 90%);
 }
 
 .expr.unsolved {
@@ -598,10 +598,7 @@ span.ruleName.link {
 
 /* To prevent clicks in rapid succession from highlighting text
    or activating a double click action. */
-span.ruleName.link, .stepAndNum, 
-
-/* This class prevents the user from selecting text. */
-.noselect {
+span.ruleName.link, .noselect {
   /* Including browser-specific versions */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
