@@ -2097,9 +2097,9 @@ function dumpProof(proofEditor) {
  * Coerces a value into a proof (that can be presented to the user).
  * Given a string that is a sequence of step descriptions, optionally
  * enclosed in "(steps ... )", or an array of step description
- * strings, returns an array of ordinary proof steps ready to render
- * into a proof.  If given a function, the function should return an
- * array of proved steps.
+ * strings, returns a function that returns an array of ordinary proof
+ * steps ready to render into a proof.  If given a function, the
+ * function should return an array of proved steps.
  *
  * Adding the elements of the result to a proof editor should be done
  * with addDerivation, to be sure the proof display includes needed
