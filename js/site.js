@@ -391,7 +391,7 @@ function makeVideoTips() {
   tippy('span[videotip], a[videotip], b[videotip]', {
     content: element => {
       const source = element.getAttribute('videotip');
-      return `<video loop muted playsinline style="max-width: 80vw">
+      return `<video muted playsinline style="max-width: 80vw">
                  <source src="${source}" type="video/mp4">
                </video>`;
     },
@@ -403,9 +403,12 @@ function makeVideoTips() {
     arrow: false,
     appendTo: () => document.body,
     onShow(instance) {
-        let video = instance.popper.getElementsByTagName('video')[0];
-        video.currentTime = 0; //start from begining
-        video.play();
+      let video = instance.popper.getElementsByTagName('video')[0];
+      video.currentTime = 0; //start from begining
+      video.play();
+      video.onended = event => {
+        Toy.sleep(1000).then(() => instance.hide());
+      }
     },
   });
 }
