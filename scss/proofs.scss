@@ -519,7 +519,7 @@ span.ruleStats {
   display: inline-block;
     white-space: normal;
     padding-left: .3em;
-    font-family: Roboto, sans-serif;
+    font-family: "Roboto Flex", sans-serif;
     font-size: 90%;
     color: #999;
 
@@ -650,7 +650,9 @@ span.stepRef {
   margin: 0 .1em;
 }
 
-// Text transforms.  
+// Text transforms, e.g. for \u27f9 arrows.
+// Width of the element is not affected by the scaling,
+// so we compensate with negative margins.
 //
 // .expr.ximplies {
 //   display: inline-block;    // Necessary for transforms

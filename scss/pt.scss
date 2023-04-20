@@ -23,7 +23,9 @@
 
    ALSO NOTE that this @import's proofs.css near the bottom, so its
    styles are implicitly within "logicZone" as well, and can override
-   these.
+   these.  Styles here and in proofs.scss do not import from
+   Bootstrap CSS, though our (customized) style.scss uses Bootstrap
+   extensively.
  */
 
 .logicZone {
@@ -94,9 +96,6 @@ dd {
   margin-left: 1.5em;
 }
 
-button {
-    background-color: LightSkyBlue;
-}
 /**
  * Basic hamburger stylings really should include this bit
  * to override the usual button background.
@@ -229,6 +228,12 @@ p.utterances {
     font-weight: 400;
   }
 
+}
+
+.docs-menu ul li {
+  font-size: 1rem;
+  font-family: "Georgia serif";
+  font-style: italic;
 }
 
 /* Customize the styling of blockquotes. */
