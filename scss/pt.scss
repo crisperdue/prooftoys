@@ -3,8 +3,11 @@
 //// overriding the general site theme.
 ////
 
-// Font
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400&family=Roboto:wght@300;400;500;700&display=swap');
+// Fonts: Now using Roboto Flex, a "variable" font that supports
+//   many advanced typographic variations and effects with reduced
+//   download size.
+//
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400&family=Roboto+Flex:wght@300;400;500;700&display=swap');
 
 // Icons
 @import "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css";
