@@ -2002,7 +2002,9 @@ RuleMenu.prototype._update = function() {
     // A term is selected.  Find proof steps that can serve as rewrite
     // rules with the current situation / selection.
 
-    // This searches for steps that can rewrite.
+    //
+    // Search for steps that could rewrite the selection.
+    //
     proofEditor.steps.forEach((proofStep, index) => {
       const submenu = proofEditor.showRuleType;
 
@@ -2063,7 +2065,9 @@ RuleMenu.prototype._update = function() {
                      });
     });
 
-    // Find registered facts that could rewrite the selection.
+    //
+    // Search for registered facts that could rewrite the selection.
+    //
     self.offerableFacts().forEach(function(info) {
       // TODO: Factor out all of this checking and replacement term
       //   computation, then use it here and just above.

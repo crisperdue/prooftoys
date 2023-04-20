@@ -3225,6 +3225,9 @@ declare(
   // Introducing a T wherever desired, then substituting a theorem,
   // with or without assumptions, may be a more effective approach.
   // That appears to be to introduce T then use trueBy0.
+  // TODO: Give this and perhaps makeConjunction their very own
+  //   menuGen, applying only to the selected step and most recent
+  //   one (distinct from it).
   {name: 'and',
     action: function(step1, step2) {
       return (rules.replaceT0(rules.tautology('T & T'), '/right', step2)
@@ -3911,6 +3914,9 @@ declare(
     },
     inputs: {step: 1, bool: 2},
     labels: 'basic',
+    // TODO: Give this a menuGen that applies it to steps and registered
+    //   facts, somewhat like rewriters.  The schema must be a conditional.
+    //   These probably have their very own "forward" menu.
     menu: 'forward chain',
     // TODO: Consider allowing step number input here.
     form: ('Match step <input name=step> with left side of ' +
