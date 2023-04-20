@@ -1399,6 +1399,8 @@ function specialClasses(name) {
     return ['logicOr'];
   case '==':
     return ['equiv'];
+  case '=>':
+    return ['implies'];
   case '*':
     return ['multiply'];
   default:
@@ -1466,21 +1468,22 @@ Atom.prototype.render = function(minPower, isFn) {
 
   // This line says "render without parens if it occurs in function
   // position or is not syntactically an operator".
-  var name = this.toHtml(isFn || !this.isOperator());
-  specialClasses(this.pname).forEach(function(cl) { $expr.addClass(cl); });
+  const html = this.toHtml(isFn || !this.isOperator());
+  const name = this.isEquivOp() ? '==' : this.name;
+  specialClasses(name).forEach(function(cl) { $expr.addClass(cl); });
   if (isFn) {
     // ".fn" nodes cause enclosing expression to highlight by default
     // rather than themselves.
     $expr.addClass('fn');
   }
-  $expr.html(name);
+  $expr.html(html);
   return $expr;
 };
 
 // Private to effectivePower.
 var useParens = {
   '|': new Set(['&']),
-  '=>': new Set(['=>', '=']),
+  '=>': new Set(['=>', '=', '&', '|']),
   '==': new Set(['=>'])
 };
 
