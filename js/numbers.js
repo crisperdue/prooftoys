@@ -1006,14 +1006,12 @@ declare
       var c1 = step.wff.freshVar('c');
       // See addToBoth.
       var fact2 = rules.instVar(fact, term_arg, c1);
-      return (rules.rewrite(step, eqnPath, fact2)
-              .andThen('instVar', term_arg, c1)
-              .justify('divideBoth', arguments, [step]));
+      const step1 = rules.rewrite(step, eqnPath, fact2);
+      const step2 = rules.instVar(step1, term_arg, c1);
+      const step3 = simplifyMulDivBoth(step2, eqnPath);
+      return step3.justify('divideBoth', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
-    autoSimplify: function(step) {
-      return simplifyMulDivBoth(step, step.ruleArgs[1]);
-    },
     toOffer: 'return term.isCall2("=");',
     form: ('Divide both sides of the equation by <input name=term>'),
     menu: 'divide both sides',
@@ -3296,6 +3294,8 @@ declare(
   }
 );
 
+//// Integer powers
+
 declare(
   {statement: 'x ** 1 = x',
    simplifier: true,
@@ -3401,6 +3401,35 @@ declare(
   }
 );
 
+//// Polynomials
+
+declare(
+
+  {statement: '(x + y) * (x - y) = x * x - y * y',
+   proof: `(1 consider (t ((x + y) * (x - y))))
+           (2 rewrite (s 1) (path "/main/right")
+              (t ((((R a) & (R b)) & (R c)) =>
+                   (((a + b) * c) = ((a * c) + (b * c))))))
+            (3 rewrite (s 2) (path "/right/right/left")
+               (t ((((R a) & (R b)) & (R c)) =>
+                    ((a * (b - c)) = ((a * b) - (a * c))))))
+            (4 rewrite (s 3) (path "/right/right/right")
+               (t ((((R a) & (R b)) & (R c)) =>
+                    ((a * (b - c)) = ((a * b) - (a * c))))))
+            (5 flattenSum (s 4) (path "/right/right"))
+            (6 rewrite (s 5) (path "/right/right/left/right")
+               (t (((R x) & (R y)) => ((x * y) = (y * x)))))
+            (7 simplifyFocalPart (s 6))`
+  },
+  {statement: '(x + y) * (x - y) = x ** 2 - y ** 2',
+   proof: `(1 fact "(x + y) * (x - y) = x * x - y * y")
+           (2 rewrite (s 1) (path "/right/right/left")
+              (t ((R x) => ((x * x) = (x ** 2)))))
+           (3 rewrite (s 2) (path "/right/right/right")
+              (t ((R x) => ((x * x) = (x ** 2)))))`
+  },
+);
+
 declare(
 
   {statement: '(x = y == u = v) == (x != y == u != v)',
@@ -3497,7 +3526,45 @@ declare(
 
 );
 
-// MOVING EXPRESSIONS AROUND
+//// Examples
+
+declare(
+
+  {statement: 'F => 2 = 1',
+   name: 'FakeProof21',
+   proof:
+   `(1 assumeExplicitly (t (x = y)))
+    (2 consider (t (x * x)))
+    (3 rewriteFrom (s 2) (path "/main/right/right") (s 1))
+    (4 subtractFromBoth (s 3) (path "/right") (t (y * y)))
+    (5 rewrite (s 4) (path "/right/left")
+       (t (((R x) & (R y)) => (((x * x) - (y * y)) = ((x + y) * (x - y))))))
+    (6 rewrite (s 5) (path "/right/right")
+       (t ((((R a) & (R b)) & (R c)) =>
+            (((a * c) - (b * c)) = ((a - b) * c)))))
+    (7 rewrite (s 6) (path "/right/right")
+       (t (((R x) & (R y)) => ((x * y) = (y * x)))))
+    (8 divideBothByThis (s 7) (path "/right/right/right"))
+    (9 arrangeTerm (s 8) (path "/right/right"))
+    (10 arrangeTerm (s 9) (path "/right/left"))
+    (11 assumedEq (s 10) (path "/right/left/left") (t (x = y)))
+    (12 rewrite (s 11) (path "/right/left")
+        (t ((R a) => ((a + a) = (2 * a)))))
+    (13 divideBothByThis (s 12) (path "/right/right"))
+    (14 arrangeTerm (s 13) (path "/right/right"))
+    (15 arrangeTerm (s 14) (path "/right/left"))
+    (16 simplifySite (s 15) (path "/right/left"))
+    (17 rewrite (s 16) (path "/left/left/left/left/left/left/left")
+        (t ((a != b) == (not (a = b)))))
+    (18 rewrite (s 17) (path "/left/left/left/right/arg")
+        (t (((R a) & (R b)) => (((a - b) = 0) == (a = b)))))
+    (19 assumed (s 18) (path "/left/left/left/right/arg"))
+    (20 simplifySite (s 19) (path "/left"))`
+  }
+);
+
+
+//// MOVING EXPRESSIONS AROUND
 
 declare(
    {statement: 'a = neg b == a + b = 0',

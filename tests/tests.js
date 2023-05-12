@@ -2509,7 +2509,7 @@ var testCase = {
                 rules.subtractFromBoth(eqn, '', x5));
     assertEqual('((((x + 5) != 0) & (R x)) => ((x * (x + 5)) = (x * (x + 5))))',
                 rules.multiplyBoth(eqn, '', x5));
-    assertEqual('((((x + 5) != 0) & (R x)) => ((x / (x + 5)) = (x / (x + 5))))',
+    assertEqual('((((x + 5) != 0) & (R x)) => T)',
                 rules.divideBoth(eqn, '', x5));
   },
 
