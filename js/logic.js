@@ -2417,7 +2417,7 @@ declare(
       return (fact.andThen('instVar', '{x. T}', 'p')
               .andThen('apply', fact.find('p x'))
               .andThen('simplifySite', fact.find('not (p x)'))
-              .andThen('trueBy0', '/left', rules.existsXT())
+              .andThen('rewrite', '/left', 'exists {x. T}')
               .andThen('rewriteOnly', '', 'T == a == a'));
     }
   },
@@ -5762,7 +5762,7 @@ declare(
        var assumed = rules.assume('exists1 p');
        var step1 = rules.fact('the p = if (exists1 p) (the1 p) none');
        var loc1 = step1.wff.find('exists1 p');
-       return (step1.andThen('trueBy1', loc1, assumed)
+       return (step1.andThen('rewriteFrom', loc1, assumed)
                .rewrite('/right/right', 'if T x y = x')
                .andThen('eqnSwap'));
      }

@@ -106,8 +106,8 @@ declare(
                       .andThen('rewrite', '/main/left', 'x + y = y + x'));
        const yType = xType.andThen('instMultiVars', {x: 'y'});
        const result = (rules.rewriteFrom(factY, '/main/left', factX)
-                       .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType)
+                       .andThen('rewriteOnlyFrom', '(R x)', xType)
+                       .andThen('rewriteOnlyFrom', '(R y)', yType)
                        .andThen('eqnSwap'));
        return result;
      }
@@ -126,8 +126,8 @@ declare(
                       .andThen('rewrite', '/main/left', 'x * y = y * x'));
        const yType = xType.andThen('instMultiVars', {x: 'y'});
        const result = (rules.rewriteFrom(factY, '/main/left', factX)
-                       .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType)
+                       .andThen('rewriteOnlyFrom', '(R x)', xType)
+                       .andThen('rewriteOnlyFrom', '(R y)', yType)
                        .andThen('eqnSwap'));
        return result;
      }

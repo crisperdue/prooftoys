@@ -140,10 +140,8 @@ declare(
        return (rules.fact('0 = the1 isAddIdentity')
                .andThen('rewrite', '',
                         'exists1 p => (x = the1 p == p x)')
-               .andThen('trueBy0', '/left',
-                        rules.fact('exists1 isAddIdentity'))
-               .andThen('arrangeAsms'));
-     }
+               .andThen('rewrite', '/left', 'exists1 isAddIdentity'));
+    }
    },
 
    {statement: 'R 0',
@@ -159,9 +157,7 @@ declare(
        return (rules.fact('1 = the1 isMulIdentity')
                .andThen('rewrite', '',
                         'exists1 p => (x = the1 p == p x)')
-               .andThen('trueBy0', '/left',
-                        rules.fact('exists1 isMulIdentity'))
-               .andThen('simplifySite', ''));
+               .andThen('rewrite', '/left', 'exists1 isMulIdentity'));
      }
    },
 
