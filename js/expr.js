@@ -1363,7 +1363,9 @@ Expr.prototype.getAsms = function() {
 
 Expr.prototype.isTypeTest = function() {
   return (this.isCall1() &&
-          (this.fn.name === 'R' || this.fn.name === 'NN'));
+          (this.fn.name === 'R' ||
+           this.fn.name === 'NN' ||
+           this.fn.name === 'ZZ'));
 };
 
 /**
@@ -2857,7 +2859,6 @@ Atom.prototype._asPattern = function(term) {
 Atom.prototype.searchMost = function(fn, path, bindings) {
   return fn(this, path, bindings);
 };
-
 
 
 //// Utilities for Atoms
