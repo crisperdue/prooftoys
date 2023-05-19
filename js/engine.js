@@ -505,7 +505,7 @@ var rules = {};
 // maxArgs: Optional maximum number of args to pass to the rule.
 //   Unless already present, added automatically by addRule when
 //   making a rule, based on the number of declared function
-//   arguments.
+//   arguments for "action".
 //
 // toOffer: function of displayable step and optional term within the
 //   step, or a string containing expression to return from such a
@@ -552,6 +552,15 @@ var rules = {};
 //   are given, effectively a single label "none".  See processLabels
 //   for more details.
 //
+// labels.continues: if present, the action must return a continuation
+//   function on success.  The continuation returns a proved step.
+//   This is not for controlling menus or display.  Add something like
+//   "basic" to ensure that the rule is offered.  When present, this
+//   makes the rule function be a wrapper around the action, calling it,
+//   checking the result, then invoking the continuation and automatically
+//   justifying the result.  The action, aliased as "prep" in this case,
+//   has access to the info as "this".
+//
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
 //
@@ -589,6 +598,8 @@ function addRule(info) {
                  'already declared; ignoring.');
     return;
   }
+
+  info.labels = processLabels(info.labels);
 
   if (info.definition) {
     definition(info.definition);
@@ -700,14 +711,42 @@ function addRule(info) {
       info.description = 'theorem ' + name
     }
   } else {
+    //
     // It is a rule of inference, not an axiom, theorem, or fact.
+    //
     assert(name, 'Inference rule must have a name', info);
     // The action property is the user code to run it.
     main = info.action;
     assert(typeof main === 'function',
            'Rule action must be a function: {1}', name);
+    if (info.maxArgs == null) {
+      info.maxArgs = main.length;
+    }
+    if (info.minArgs == null) {
+      info.minArgs = main.length;
+    }
 
-    if (info.precheck) {
+    if (info.labels && info.labels.continues) {
+      // This makes "prep" an alias for info.action, so it can be called
+      // somewhat like precheck, with clarity about the intent.
+      info.prep = info.action;
+      // If the "prep" phase succeeds, it will return a continuation,
+      // and that will return the result of the rule.  This kind of rule
+      // includes the "justify" step automatically, but you must be
+      // sure not to pass a proved step where a term is needed.
+      rule = function( ...args) {
+        const more = info.prep( ...args);
+        if (!more) {
+          abort(`Rule ${name} prep phase failed.`);
+        }
+        if (more instanceof Error) {
+          abort(`Rule ${name} prep phase failed with error ${more}`);
+        }
+        const result = more();
+        return result.justify(name, args, args.filter(x => Toy.isProved(x)));
+      }
+
+    } else if (info.precheck) {
       // There is a precheck.
       var checker = function(_args) {
         return Toy._actionInfo = info.precheck.apply(main, arguments);
@@ -719,15 +758,12 @@ function addRule(info) {
         checker.apply(null, arguments);
         const checks = Toy._actionInfo;
         return (checks && !(checks instanceof Error)
-                ? main.apply(rule, arguments)
+                ? main.apply(info, arguments)
                 : checks instanceof Error
                 ? checks
                 : info.onFail
                 ? info.onFail.call(rule)
                 : Toy.newError('Rule {1} not applicable', name));
-      }
-      if (info.maxArgs == null) {
-        info.maxArgs = main.length;
       }
       // Set properties on the outer action to give access to the
       // main from the the precheck.
@@ -739,28 +775,12 @@ function addRule(info) {
     }
   }
 
+  assert(!info.data, 'Info.data is obsolete');
+
   // The following code applies to all rules, axioms, theorems and
   // inference rules.
 
-  if (info.data) {
-    // Set the "data" property of the outer action so the main
-    // and precheck can access it.  If it is a function, call it
-    // and use the result.
-    if (typeof info.data === 'function') {
-      info.data = info.data.call();
-    }
-    if (!mainHasThis) {
-      // Make the outer action function available to the main
-      // function as "this".
-      rule = function(_args) {
-        return main.apply(rule, arguments);
-      };
-      mainHasThis = true;
-    }
-    // Also make the data a property of "this".
-    rule.data = info.data;
-  }
-  // Even if there is no wrapping, set up "rule".
+  // If the action function is not wrapped, it becomes the rule itself.
   rule || (rule = main);
 
   // Set up remaining metatadata.
@@ -788,8 +808,6 @@ function addRule(info) {
   if (typeof info.toOffer === 'function') {
     info.toOffer = info.toOffer.bind(rule);
   }
-
-  info.labels = processLabels(info.labels);
 
   // Add all metadata as the function's "info" property.
   rule.info = info;
@@ -1485,17 +1503,6 @@ function searchForMatchingFact(term, info) {
   //
   // TODO: Handle more complicated facts (as needed).
   var pureFacts = null;
-  function isPureFact(fact) {
-    if (typeof fact === 'string' || fact instanceof Expr) {
-      // This next line supports ordinary facts and also tautologies.
-      // It relies on resolveToFact to return a conditional whenever
-      // it is given a statement that has implicit assumptions.
-      var fullFact = resolveToFact(fact) || termify(fact);
-      return fullFact && fullFact.isCall2('=');
-    } else if (fact.constructor === Object && fact.pure) {
-      return true;
-    }
-  }
   searchMethod = searchMethod || 'searchMost';
   function factFinder(term, revPath, isQuantified) {
     if (isQuantified) {
@@ -1516,6 +1523,23 @@ function searchForMatchingFact(term, info) {
   //   and use the proper information rather than a boolean
   //   to control "purity" of facts in each context.
   return term[searchMethod](factFinder, Toy.Path.empty, false);
+}
+
+/**
+ * Returns truthy if the given recorded fact or fact info or tautology
+ * is unconditional and so applicable in all contexts, even within
+ * variable bindings.
+ */
+function isPureFact(fact) {
+  if (typeof fact === 'string' || fact instanceof Expr) {
+    // This next line supports ordinary facts and also tautologies.
+    // It relies on resolveToFact to return a conditional whenever
+    // it is given a statement that has implicit assumptions.
+    var fullFact = resolveToFact(fact) || termify(fact);
+    return fullFact && fullFact.isCall2('=');
+  } else if (fact.constructor === Object && fact.pure) {
+    return true;
+  }
 }
 
 // This finds the fact part to match.  If the fact is not an equation,
@@ -1768,8 +1792,7 @@ function tryReduce(term) {
  * facts apply.  Note: uses rules.rewrite by default; supply
  * a ruleName (fourth arg) if desired.
  */
-function applyMatchingFact(step, path, facts, rule_arg) {
-  const ruleName = rule_arg || 'rewrite';
+function applyMatchingFact(step, path, facts, ruleName='rewrite') {
   const info = findMatchingFact(facts, null, step.get(path));
   return info && rules[ruleName](step, path, info.stmt);
 }
@@ -2667,6 +2690,7 @@ Toy.listFacts = listFacts;
 Toy.transformApplyInvert = transformApplyInvert;
 Toy.matchFactPart = matchFactPart;
 Toy.searchForMatchingFact = searchForMatchingFact;
+Toy.isPureFact = isPureFact;
 Toy.getRuleInfo = getRuleInfo;
 Toy.getStepSite = getStepSite;
 Toy.proofOf = proofOf;
