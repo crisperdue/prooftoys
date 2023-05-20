@@ -561,6 +561,10 @@ var rules = {};
 //   justifying the result.  The action, aliased as "prep" in this case,
 //   has access to the info as "this".
 //
+//   Also creates an "attempt" method that runs the continuation if
+//   a function is returned from "prep"; otherwise returns the result
+//   of the "prep".
+//
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
 //
@@ -730,21 +734,30 @@ function addRule(info) {
       // This makes "prep" an alias for info.action, so it can be called
       // somewhat like precheck, with clarity about the intent.
       info.prep = info.action;
+      // The "attempt" method tries to run the method and
+      // continuation, but if the result from "prep" is not a
+      // function, simply returns that.
+      info.attempt = function( ...args) {
+        const more = info.prep( ...args);
+        if (typeof more === 'function') {
+          return more();
+        } else {
+          return more;
+        }
+      };
       // If the "prep" phase succeeds, it will return a continuation,
       // and that will return the result of the rule.  This kind of rule
       // includes the "justify" step automatically, but you must be
       // sure not to pass a proved step where a term is needed.
       rule = function( ...args) {
         const more = info.prep( ...args);
-        if (!more) {
-          abort(`Rule ${name} prep phase failed.`);
+        if (typeof more === 'function') {
+          const result = more();
+          return result.justify(name, args, args.filter(x => Toy.isProved(x)));
+        } else {
+          abort(`Rule ${name} prep phase failed with: ${more}`);
         }
-        if (more instanceof Error) {
-          abort(`Rule ${name} prep phase failed with error ${more}`);
-        }
-        const result = more();
-        return result.justify(name, args, args.filter(x => Toy.isProved(x)));
-      }
+      };
 
     } else if (info.precheck) {
       // There is a precheck.
