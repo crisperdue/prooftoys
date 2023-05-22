@@ -2033,21 +2033,6 @@ declare(
     labels: 'algebra general'
   },
 
-  {name: 'simplifyUp',
-    action: function(step, path, opt_facts) {
-      const allFacts = opt_facts || basicSimpFacts;
-      const pureFacts = allFacts.filter(Toy.isPureFact);
-      // XXX Remove this rule.
-      var result = rules._simplifySite(step, path, pureFacts);
-      return result.justify('simplifyUp', arguments, [step]);
-    },
-    inputs: {site: 1},
-    minArgs: 2,
-    menu: '  simplify above {term}',
-    description: 'simplify up;; {in step siteStep}',
-    labels: 'other'
-  },
-
   // Repeatedly apply the one fact as in simplifySite, to
   // simplify the target site.
   // 
