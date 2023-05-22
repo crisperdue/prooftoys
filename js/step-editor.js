@@ -10,6 +10,7 @@
 const assert = Toy.assertTrue;
   
 const Expr = Toy.Expr;
+const Step = Toy.Step;  
 
 const abort = Toy.abort;
 const format = Toy.format;
@@ -1528,6 +1529,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     }
     // Applies the rule here.
     result = rule.apply(null, args);
+    assert(result instanceof Step, 'Rule failed: {1}', rule.name);
   });
   if (caught instanceof Error && caught.reportToUser) {
     // If a thrown error is reportable, treat it as the result,
@@ -2561,6 +2563,10 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
   const editor = this.proofEditor;
   const step = editor.proofDisplay.selection;
   const inputs = info.inputs;
+  if (step && info.menuGen) {
+    // Apply the menuGen when there is some form of selection.
+    return true;
+  }
   if (Toy.isEmpty(inputs)) {
     // A rule with no stated inputs is a fact or theorem, but
     // we do not offer it as a rule.  Or perhaps check
