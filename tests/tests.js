@@ -2993,9 +2993,10 @@ $(function() {
 
   QUnit.module('Theorems');
   for (var name in ruleTests) {
-    var prover = rules[name];
-    // Prover is a function and its length is its number of args.
-    if (prover.length == 0) {
+    const prover = rules[name];
+    const info = prover.info;
+    // The action property has the desired length.
+    if (info.action && info.action.length == 0) {
       runTest(name, function(prover, name) {
           // Uncomment this line to see all theorem names.
           // console.log('Testing theorem ' + name);
