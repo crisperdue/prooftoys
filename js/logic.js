@@ -2033,6 +2033,21 @@ declare(
     labels: 'algebra general'
   },
 
+  {name: 'simplifyUp',
+    action: function(step, path, opt_facts) {
+      const allFacts = opt_facts || basicSimpFacts;
+      const pureFacts = allFacts.filter(Toy.isPureFact);
+      // XXX Remove this rule.
+      var result = rules._simplifySite(step, path, pureFacts);
+      return result.justify('simplifyUp', arguments, [step]);
+    },
+    inputs: {site: 1},
+    minArgs: 2,
+    menu: '  simplify above {term}',
+    description: 'simplify up;; {in step siteStep}',
+    labels: 'other'
+  },
+
   // Repeatedly apply the one fact as in simplifySite, to
   // simplify the target site.
   // 
@@ -4783,6 +4798,40 @@ declare(
     isRewriter: true,
     description: 'use;; {fact} {&nbsp;in step siteStep}'
   },
+
+  // Matches the main part of the last step of the proof against the
+  // schema at the given site, substituting into the schema step, and
+  // returns the resulting step.
+  {name: 'instantiate',
+   action: function(step, path, targetStep) {
+     const target = targetStep.getMain();
+     const schema = step.get(path);
+     const map = target.matchSchema(schema);
+     if (map) {
+       return (rules.instMultiVars(step, map, true)
+               .justify('instantiate', arguments, [step, targetStep]));
+     } else {
+       abort('Term {1} does not match schema {2}', target, schema);
+     }
+   },
+   menuGen: function(ruleName, step, term, editor) {
+     if (!term) {
+       return null;
+     }
+     const steps = editor.steps;
+     const last = steps[steps.length - 1];
+     const target = last.getMain();
+     const map = target.matchSchema(term);
+     if (map) {
+       return [{ruleName: 'instantiate',
+                ruleArgs: [step.original,
+                           step.prettyPathTo(term),
+                           last.original],
+                html: 'as {term}'
+               }];
+     }
+   }
+  });
 
   // E-Rule (5244), specified by a step and name.  Checks first for
   // assumptions preceding a boolean term containing the variable,
