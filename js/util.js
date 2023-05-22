@@ -809,7 +809,7 @@ function debugString(o, specials) {
         result += '"' + o[key] + '"';
       } else if (Array.isArray(value)) {
         // Array-like value.
-        vString = o[key].toString();
+        const vString = o[key].toString();
         if (vString.length > 40) {
           result += '[\n';
           for (var i = 0; i < value.length; i++) {
