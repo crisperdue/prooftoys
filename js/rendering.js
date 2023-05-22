@@ -2711,6 +2711,14 @@ var hoverHandlers = {
                    step.getRight(),
                    function(expr) { action(expr.node, 'new'); });
   },
+  chain1: function(step, action) {
+    const args = step.original.ruleArgs;
+    const [inStep, schema] = args;
+    if (schema.isProved()) {
+      const main = inStep.rendering.getRight();
+      action(main.node, 'new');
+    }
+  },
   reduce: function(step, action) {
     const args = step.original.ruleArgs;
     const input = args[0];

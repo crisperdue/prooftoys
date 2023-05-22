@@ -1563,16 +1563,45 @@ declare(
      }
    },
    description: 'assumed',
+  },
+
+  // Finds a substitution to match the selection with
+  // the given term.  Returns falsy if none exists.
+  {name: 'matchTerm',
+   inputs: {site: 1, term: 3},
+   description: 'match;; {site}  with {term}',
+   labels: 'basic continues',
+   action: function(step, path, term) {
+     const schema = step.get(path);
+     const map = term.matchSchema(schema);
+     if (map) {
+       return () => rules.instMultiVars(step, map, true);
      }
+     // Otherwise returns falsy.
+   },
+   // The menu offers this rule in case the selection matches a goal
+   // assumption.
+   //
+   // TODO: Consider the possible utility of matching with
+   //   the goal conclusion.
+   menuGen: function(ruleName, step, term, editor) {
      const goal = editor.goalStatement;
      const gasms = goal && goal.getAsms();
-            ? '\u27ad <b>T</b> assumption'
-            : inGoal
-            ? '\u27ad <b>T</b> (goal assumption)'
-            : '\u27ad <b>T</b> assuming &star;');
-     const path = step.prettyPathTo(term);
+     const items = [];
+     const matcher = gasm => {
+       const map = gasm.matchSchema(term);
+       if (map) {
+         items.push({
+           ruleName,
+           ruleArgs: [step.original, step.prettyPathTo(term), gasm],
+           html: 'match with <input data-arg=2>'
+         });
+       }
+     }
+     gasms && gasms.scanConj(matcher);
+     return items;
    },
-  },  
+  },
 
   /**
    * The given unconditional equation will be assumed and used
@@ -3412,7 +3441,7 @@ declare(
   {name: 'impexex',
    statement: 'forall {x. p x => q x} & exists p => exists q',
    proof: function() {
-     const fact = rules.fact('r2104ex');
+     const fact = rules.theorem('r2104ex');
      const step1 = fact.andThen('rewriteOnly', '',
                                 'a => (b => c) == a & b => c');
      return step1;
@@ -4783,41 +4812,115 @@ declare(
     isRewriter: true,
     description: 'use;; {fact} {&nbsp;in step siteStep}'
   },
+);
 
-  // Matches the main part of the last step of the proof against the
-  // schema at the given site, substituting into the schema step, and
-  // returns the resulting step.
-  {name: 'instantiate',
-   action: function(step, path, targetStep) {
-     const target = targetStep.getMain();
-     const schema = step.get(path);
-     const map = target.matchSchema(schema);
-     if (map) {
-       return (rules.instMultiVars(step, map, true)
-               .justify('instantiate', arguments, [step, targetStep]));
-     } else {
-       abort('Term {1} does not match schema {2}', target, schema);
-     }
+function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
+  if (selTerm && (!selStep.implies() || selTerm !== selStep.getRight())) {
+    return null;
+  }
+  // True if this will set up invocations of chain0.
+  const chain0 = !selTerm;
+  const ruleName = chain0 ? 'chain0' : 'chain1';
+  if (ruleName !== ruleName_arg) {
+    return null;
+  }
+  const step = selStep.original;
+  // This is the term to match against the LHS of the schema conditional.
+  const target = chain0 ? step.wff : step.wff.getRight();
+  const results = [];
+  Toy.eachFact(info => {
+    const goal = info.goal;
+    if (goal.implies()) {
+      const map = target.matchSchema(goal.getLeft());
+      if (map) {
+        results.push({ruleName,
+                      ruleArgs: [step, goal],
+                      html: 'chain with ' + goal.toHtml(),
+                     });
+      }
+    }
+  });
+  editor.steps.forEach((step_arg, index) => {
+    const schemaStep = step_arg.original;
+    const schema = schemaStep.wff;
+    if (schema.implies()) {
+      const map = target.matchSchema(schema.getLeft());
+      if (map) {
+        results.push({ruleName,
+                      ruleArgs: [step, schemaStep],
+                      html: 'chain with step ' + (index + 1),
+                     });
+      }
+    }
+  });
+  return results;
+}
+
+function chainDescription(step) {
+  const [inStep, schema] = step.ruleArgs;
+  if (schema.isProved()) {
+    // const index = schema.rendering.
+    console.log(schema.rendering);
+    const rendering = schema.rendering;
+    return `chain;; from step {step} with step ${rendering.stepNumber}`;
+  } else {
+    console.log(inStep.rendering);
+    return 'chain;; from step {step} with {fact}';
+  }
+}
+
+declare(
+  // Chain a conditional step, matching its main with a conditional
+  // schema.  Available interactively only through menuGen.
+  {name: 'chain1',
+   action: function(step, schema) {
+     assert(schema.implies(), 'Not conditional: {1}', schema);
+     assert(step.implies(), 'Not conditional: {1}', step);
+     const proved = schema.isProved();
+     const target = step.wff.getRight();
+     const map = target.matchSchema(schema.getLeft());
+     assert(map, 'No match');
+     const eqn = rules.rewriteOnly(step, '/right', 'a == (a == T)');
+     const schema2 = proved ? schema : rules.fact(schema);
+     const instance = rules.instMultiVars(schema2, map, true);
+     const result = rules.r2(instance, '/left', eqn);
+     const simpler = rules.rewriteOnly(result, '/right', 'T => a == a');
+     const withAsms = Toy.applyMatchingFact(simpler, '',
+                                            ['a => (b => c) == a & b => c'],
+                                            'rewriteOnly');
+     return (withAsms || simpler)
+       .justify('chain1', arguments,
+                proved ? [step, schema] : [step]);
    },
-   menuGen: function(ruleName, step, term, editor) {
-     if (!term) {
-       return null;
-     }
-     const steps = editor.steps;
-     const last = steps[steps.length - 1];
-     const target = last.getMain();
-     const map = target.matchSchema(term);
-     if (map) {
-       return [{ruleName: 'instantiate',
-                ruleArgs: [step.original,
-                           step.prettyPathTo(term),
-                           last.original],
-                html: 'as {term}'
-               }];
-     }
-   }
+   labels: 'basic',
+   inputs: {step: 1, bool: 2},
+   description: chainDescription,
+   menuGen: chainMenuGen,
+  },
+
+  // Chain an entire step, matching its wff with the schema at the
+  // target path.  Available interactively only through menuGen.
+  {name: 'chain0',
+   action: function(step, schema) {
+     assert(schema.implies(), 'Not conditional: {1}', schema);
+     const target = step.wff;
+     const map = target.matchSchema(schema.getLeft());
+     const proved = schema.isProved();
+     assert(map, 'No match');
+     const eqn = rules.rewriteOnly(step, '', 'a == (a == T)');
+     const schema2 = proved ? schema : rules.fact(schema);
+     const instance = rules.instMultiVars(schema2, map, true);
+     const result = rules.replace(instance, '/left', eqn);
+     return result.justify('chain0', arguments,
+                           proved ? [step, schema] : [step]);
+   },
+   inputs: {step: 1, bool: 2},
+   labels: 'basic',
+   description: chainDescription,
+   menuGen: chainMenuGen,
   });
 
+declare(
   // E-Rule (5244), specified by a step and name.  Checks first for
   // assumptions preceding a boolean term containing the variable,
   // then for a simple conditional with it in the antecedent.
