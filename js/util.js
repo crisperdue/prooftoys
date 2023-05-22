@@ -1947,7 +1947,7 @@ function soonDo(action) {
 }
 
 /**
- * Returns a promise that resolves to null after the given number of
+ * Returns a promise that resolves to undefined after the given number of
  * milliseconds.
  */
 const sleep = millis => new Promise(resolve => setTimeout(resolve, millis));

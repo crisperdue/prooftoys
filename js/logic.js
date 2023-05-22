@@ -1493,10 +1493,14 @@ declare(
   },
 
   /**
-   * A term anywhere in a step that is identical to one of the step's
-   * assumptions can be taken to be true if all of the variables free
-   * within it are also free in its context.  Removes the resulting T
-   * if it is in a conjunction.
+   * A term anywhere in a step that has one of the step's assumptions
+   * as a substitution instance can be taken to be true without adding
+   * a new assumption if all of its locally free variables are free in
+   * its context.  And similarly for goal assumptions. Removes the
+   * resulting T if it is in a conjunction.  
+   * 
+   * This rule does not apply if there is a goal and the substitution
+   * modifies the goal.
    */
   {name: 'assumed',
    // This and "assumedEq" are very similar.
@@ -1515,6 +1519,7 @@ declare(
    // This proof amounts to assuming the term is true, then replacing
    // it with T based on that.
    action: function(step, path_arg) {
+     // TODO: Maybe use applyMatchingFact instead of this.
      const tryRewrite = (step, path, eqn_arg) => {
        const eqn = termify(eqn_arg);
        const result = canRewrite(step, path, eqn);
@@ -1524,8 +1529,6 @@ declare(
      const target = step.get(path);
      const step1 = rules.assume(target);
      const step2 = rules.trueBy1(step, path, step1);
-     // const step3 = rules.instMultiVars(step2, {a: asm});
-     // const step4 = rules.replace(step, path, step3);
      
      let step5 = step2;
      if (!path.isEnd()) {
@@ -2474,7 +2477,8 @@ declare(
   },
 
   // 5221 (one variable), in the given step substitute term A for free
-  // variable v, which may also be given as a string.
+  // variable v, which may also be given as a string.  Does not beta
+  // reduce after substituting.
   {name: 'instVar',
     action: function(step, a, v) {
       a = termify(a);
@@ -2624,8 +2628,7 @@ declare(
   },
 
   // Given P and P => Q, derive Q. (5224)
-  // TODO: Consider replacing all uses of this with trueBy0
-  //   followed by removal of the "T".
+  // TODO: Consider replacing all uses of this with chain0.
   {name: 'modusPonens',
     action: function(a, b) {
       var step1 = rules.eqnSwap(rules.toTIsA(a));
@@ -3222,12 +3225,8 @@ declare(
 declare(
   // Deduces the conjunction of two proved steps.
   //
-  // Introducing a T wherever desired, then substituting a theorem,
-  // with or without assumptions, may be a more effective approach.
-  // That appears to be to introduce T then use trueBy0.
-  // TODO: Give this and perhaps makeConjunction their very own
-  //   menuGen, applying only to the selected step and most recent
-  //   one (distinct from it).
+  // TODO: Consider replacing all uses of this with application
+  //   of chain0 with "a => (b => a & b)".
   {name: 'and',
     action: function(step1, step2) {
       return (rules.replaceT0(rules.tautology('T & T'), '/right', step2)
@@ -4258,7 +4257,8 @@ declare(
   // term in a target step.  Replaces the target as done by r1, and
   // describing the inputs as A => B = C, and D, produces a result
   // that is schematically A => D', where D' is like D, with an
-  // occurrence of B replaced by C.
+  // occurrence of B replaced by C.  In other words, if the equation
+  // has assumptions, they are carried down, and no others.
   //
   // The "replace" rule (below) also merges any assumptions of D with
   // the new assumptions A using arrangeAsms.

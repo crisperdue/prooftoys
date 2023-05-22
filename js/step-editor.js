@@ -61,6 +61,7 @@ var nextProofEditorId = 1;
  * Public properties:
  *
  * proofDisplay: ProofDisplay for the proof being edited.
+ * steps: rendered steps from the proofDisplay.
  * $node: jQuery object for outermost DOM node for the display.
  * $proofButtons: jQuery object for the row of "proof buttons".
  * stepEditor: StepEditor for the proof being edited.
@@ -70,7 +71,8 @@ var nextProofEditorId = 1;
  *   an integer sequence number of the editor within the page.  In
  *   principle an editor could also be assigned an ID explicitly during
  *   editor initialization immediately after creation.
- * fromDoc: boolean, true if the constructor gets state from an existing document.
+ * fromDoc: boolean, true if the constructor gets state from an existing 
+ *   document.
  * initialSteps: array of ordinary steps to display when cleared, or
  *   initially if no state is saved in the database.  From the "steps"
  *   option if given, or from an exercise problem statement; defaults
@@ -2434,8 +2436,8 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
           // Make note of the result, remembering its node.
           if (ruleMenu.hovering === $node[0]) {
             // At this point in time after the rule has run, if this
-            // item is hovered, show the result.  Treat a null result
-            // as failure of the rule.
+            // item is hovered, show the result.  If the result has
+            // no "step" property, treat this as failure of the rule.
             var node = (step
                         ? display.stepSuggestion(step)
                         : display.suggestionMessage('failed'));
@@ -2483,9 +2485,12 @@ RuleMenu.prototype.offerableRuleNames = function() {
 };
 
 /**
- * Policy-based rule offering policy function based on this.showRules
- * and rule labels.  Given a rule name, returns a truthy value iff
+ * Policy-based rule offering policy function based on rule labels,
+ * current editor.showRuleType (current menu name), and
+ * editor.showRules.  Given a rule name, returns a truthy value iff
  * current policy is to show the rule.
+ *
+ * TODO: Clean up this mess.
  */
 RuleMenu.prototype.labelApproved = function(name) {
   const editor = this.proofEditor;

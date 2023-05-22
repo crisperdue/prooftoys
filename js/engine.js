@@ -407,7 +407,12 @@ var rules = {};
 //
 // Properties:
 //
-// action: function implementing the inference rule.
+// action: function implementing the inference rule.  Calling
+//   rules.<ruleName> calls this if there is no precheck and
+//   "continues" is not present to indicate returning a continuation.
+//   If there is a precheck, see information on precheck, below.  If
+//   the "continues" label is present, see information on
+//   labels.continues, below.
 //
 // proof: for a theorem (no args), use this instead of "action".  Do
 //   not call "justify", that is done automatically and the proof is
@@ -440,19 +445,15 @@ var rules = {};
 //   declared action function.  The RuleMenu uses it as well, to rule
 //   out inapplicable rules.
 //
-//   This is expected to return a falsy value if the rule is not
-//   applicable to the arguments, in which case the rule will fail
-//   with Toy.abort.  Otherwise it should return any data useful to the
-//   main action function, which will have access to that result
-//   through the global temporary Toy._actionInfo.
+//   This is expected to return a falsy value or an Error if the rule
+//   is not applicable to the arguments, in which case the rule will
+//   fail with Toy.abort.  Otherwise it should return any data useful
+//   to the main action function, which will have access to that
+//   result through the global temporary Toy._actionInfo.
 //
 //   To call the precheck directly, refer to rules.<rulename>.precheck.
 //   A call to rules.<rulename>.main will automatically receive the
 //   result of the most recent precheck.
-//
-//   TODO: Consider supporting generator functions for a similar
-//   purpose.  The first result is the result of the precheck, the
-//   second and final result is the result of using the full rule.
 //
 // main: If the rule has a precheck, this will have the main action as
 //   its value, and client code may call it after the precheck and
