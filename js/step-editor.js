@@ -2048,17 +2048,25 @@ RuleMenu.prototype._update = function() {
       if (eqn instanceof Error || !Toy.boundVarsOK(selStep, sitePath, eqn)) {
         return;
       }
-      // TODO: Render this info and rewrite _rule_ content
-      //   consistently in both visual style and code, see the code
-      //   block just below.
-      const html =
-            // \u27ad is a lower-right shadowed rightwards arrow.
-            ` \u27ad <b class=resultTerm></b> <span class=description> \
-               using step ${n}</span>`;
+      let html =
+          // \u27ad is a lower-right shadowed rightwards arrow.
+          ` \u27ad <b class=resultTerm></b> <input class=subgoals> \
+           <span class=description>using step ${n}</span>`;
+      const subgoals =
+            addedSubgoals(thisStep, eqn, proofEditor.goalStatement);
+      const count = subgoals.length;
+      if (count === 0) {
+        // If there are no significant new assumptions, give this
+        // rewrite priority with an extra leading space.
+        html = ' ' + html;
+      }
       const $node = $('<span>').append(html);
-      $node.find('.resultTerm')
-        .append(eqn.replacementTerm().renderTerm());
-      // TODO: Consider presenting subgoal information here also.
+      $node.find('.resultTerm').append(eqn.replacementTerm().renderTerm());
+      if (count > 0) {
+        const plural = count > 1 ? 's' : '';
+        $node.find('.subgoals')
+          .append(` with ~${count} new subgoal${plural}`);
+      }
       itemInfos.push({ruleName: 'rewriteFrom',
                       ruleArgs: [selStep.original, sitePath,
                                  proofStep.original],
@@ -2116,7 +2124,7 @@ RuleMenu.prototype._update = function() {
       const resultTerm = eqn2.replacementTerm();
       // The special character is a form of white right arrow.
       let html =
-          ' \u27ad <b class=resultTerm></b><span class=subgoals></span>';
+          ' \u27ad <b class=resultTerm></b><input class=subgoals>';
       const shorty = statement.shortForm();
       const mainText = Toy.trimParens(shorty.toHtml());
       const blurb = (info.definitional
@@ -2127,34 +2135,8 @@ RuleMenu.prototype._update = function() {
       const $resultTerm = $node.find('.resultTerm');
       $resultTerm.append(resultTerm.renderTerm());
 
-
-      // Computes an array of significant subgoals added to the given
-      // step by the given "replacer" in case it is used to replace
-      // some part of the step.  The goal is intended to be the proof
-      // goal.  Any added subgoals that are among its assumptions will
-      // not be included in the result array.
-      const figureSubgoals = (step, replacer, goal) => {
-        const subgoals = [];
-        const newAsms = replacer.getAsms();
-        if (newAsms) {
-          const goalAsms = goal ? goal.asmSet() : new TermSet();
-          const currentAsms = step.asmSet();
-          newAsms.scanConj(a => {
-            // Ignore asms that were expected (in the goal), or
-            // already in the input step.
-            if (a.likeSubgoal()) {
-              if (!goalAsms.has(a) && !currentAsms.has(a)) {
-                subgoals.push(a);
-              }
-            }
-          });
-        }
-        return subgoals;
-      };
       const subgoals =
-            figureSubgoals(thisStep, eqn2, proofEditor.goalStatement);
-      const render =
-            item => item instanceof Expr ? item.renderTerm() : item;
+            addedSubgoals(thisStep, eqn2, proofEditor.goalStatement);
       const count = subgoals.length;
       if (count > 0) {
         const plural = count > 1 ? 's' : '';
@@ -2241,6 +2223,13 @@ RuleMenu.prototype._update = function() {
     $item.append(info.$node || info.html);
     $item.data('ruleName', info.ruleName);
     $item.data('ruleArgs', info.ruleArgs);
+    // For any "input" elements, append the rendering of the ruleArg
+    // term or step at index "i" through the data-arg attribute with
+    // value "i".
+    $item.find('input').replaceWith(function() {
+      const index = this.dataset.arg;
+      return index ? info.ruleArgs[index].renderTerm() : [];
+    });
     return $item
   });
   self.length = items.length;
@@ -2254,12 +2243,34 @@ RuleMenu.prototype._update = function() {
     // var $term = $(selection.renderTerm());
     $items.find('.menuSelected').append('&star;');
     var rightTerm = Toy.getRightNeighbor(selStep, selection);
-    var $right = '?';
-    if (rightTerm) {
-      var $right = $(rightTerm.renderTerm());
-    }
+    var $right = rightTerm ? $(rightTerm.renderTerm()) : '?';
     $items.find('.menuRightNeighbor').append($right);
   }
+};
+
+// Computes an array of significant subgoals added to the given step
+// by the given "replacer" in case it is used to replace some part of
+// the step.  The goal is intended to be the proof goal, or may be
+// nullish.  Any assumptions of the replacer that are not among either
+// the step's assumptions or the goal's assumptions will be in the
+// result array.
+const addedSubgoals = (step, replacer, goal) => {
+  const subgoals = [];
+  const newAsms = replacer.getAsms();
+  if (newAsms) {
+    const goalAsms = goal ? goal.asmSet() : new TermSet();
+    const currentAsms = step.asmSet();
+    newAsms.scanConj(a => {
+      // Ignore asms that were expected (in the goal), or
+      // already in the input step.
+      if (a.likeSubgoal()) {
+        if (!goalAsms.has(a) && !currentAsms.has(a)) {
+          subgoals.push(a);
+        }
+      }
+    });
+  }
+  return subgoals;
 };
 
 /**
@@ -2552,7 +2563,8 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
   const inputs = info.inputs;
   if (Toy.isEmpty(inputs)) {
     // A rule with no stated inputs is a fact or theorem, but
-    // we do not offer it as a rule.
+    // we do not offer it as a rule.  Or perhaps check
+    // rule.length.
     return false;
   }
   if (step) {
@@ -2739,6 +2751,13 @@ function acceptsSelection(step, ruleName) {
  * right-hand neighbor when there is one.
  */
 function ruleMenuInfo(ruleName, step, term, proofEditor) {
+  // Set up convenient substitutions for occurrences of {term} and
+  // {right} using Toy.format.  These support deferral of the
+  // rendering and insertion of the rendering of the term and right
+  // neighbor to the RuleMenu._update code where it is more convenient
+  // and the HTML has been converted to DOM structure.
+  const formatArgs = {term: '<span class=menuSelected></span>',
+                      right: '<span class=menuRightNeighbor></span>'};
   const info = Toy.rules[ruleName].info;
   const gen = info.menuGen;
   if (gen) {
@@ -2750,7 +2769,7 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
             (typeof item.ruleName === 'string') &&
             (item.ruleArgs == null || Array.isArray(item.ruleArgs)) &&
             typeof item.html === 'string') {
-          continue;
+          item.html = Toy.format(item.html, formatArgs);
         } else {
           console.error('Bad rule menu item:', item);
           debugger;
@@ -2782,13 +2801,6 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
   } else {
     // The rule takes inputs.
     if (info.menu) {
-      // Use info.menu as the HTML, substituting suitable empty spans
-      // for occurrences of {term} and {right} there.  This defers the
-      // rendering and insertion of the rendering of the term and
-      // right neighbor to the RuleMenu code where it is more
-      // convenient and the HTML has been converted to DOM structure.
-      var formatArgs = {term: '<span class=menuSelected></span>',
-                        right: '<span class=menuRightNeighbor></span>'};
       return Toy.format(info.menu, formatArgs);
     } else {
       const tip = info.basicTooltip;

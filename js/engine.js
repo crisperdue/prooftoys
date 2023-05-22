@@ -522,18 +522,24 @@ var rules = {};
 //   property, at least an empty one.
 //   TODO: Separate out this kind of non-offerability.
 //
-// menu: plain text for the rule's menu item (may become HTML in the future),
-//   as a template allowing {term} for the selected term or {right}
-//   for a possible term to its right ("group with").
+// menu: plain text for the rule's menu item (may become HTML in the
+//   future), as a template allowing {term} for the selected term or
+//   {right} for a possible term to its right ("group with"); <input
+//   class=data-arg=n> for a display of the nth ruleArg that is an
+//   Expr.
 //
 // menuGen: function to return zero or more menu entries for
 //   application(s) of the rule.  It will be passed the ruleName,
-//   step, selected term or null if none, and the ProofEditor for which
-//   it is generating the menu.  A falsy value indicates no
-//   menu entries; a non-empty string is for one entry.  An array of
-//   one or more plain objects give full menu information, with  
-//   properties ruleName (string), ruleArgs (Array), html (string),
-//   and optional $node, which overrides the html.
+//   step, selected term or null if none, and the ProofEditor for
+//   which it is generating the menu.  A falsy value indicates no menu
+//   entries; a non-empty string is for one entry.  An array of one or
+//   more plain objects give full menu information, with properties
+//   ruleName (string), ruleArgs (Array), html (string), and optional
+//   $node, which overrides the html for controlling the menu item
+//   display.  (In this case the html still controls sorting.)  The
+//   html property has the effect and format of the plain "menu"
+//   property described above.
+//
 //   TODO: In the future there may be a sort "key" (Array).
 //
 // tooltip: plain text to become the title attribute of mentions of the
@@ -774,9 +780,13 @@ function addRule(info) {
         return (checks && !(checks instanceof Error)
                 ? main.apply(info, arguments)
                 : checks instanceof Error
+                // TODO: Should this abort?  See TODOs just below here.
                 ? checks
+                // TODO: Consider removing support for obsolete onFail.
                 : info.onFail
+                // The onFail only applies if precheck result is falsy.
                 ? info.onFail.call(rule)
+                // TODO: Match spec that says this aborts?
                 : Toy.newError('Rule {1} not applicable', name));
       }
       // Set properties on the outer action to give access to the
@@ -1564,6 +1574,21 @@ function schemaPart(fact) {
           ? main.getLeft()
           : main);
 }
+
+// Converts a main part of the form a == T back to just A, useful for
+// presentation of a rewrite rule.  Currently unused.
+Expr.prototype.withoutEqT = function() {
+  const infix = Toy.infixCall;
+  const main = this.getMain();
+  const map = main.matchSchema('a == T');
+  if (map) {
+    return (this.implies()
+            ? infix(this.getLeft(), '=>', map.a)
+            : map.a);
+  } else {
+    return this;
+  }
+};
 
 /**
  * Searches the given pattern list for one whose "schema part" matches
