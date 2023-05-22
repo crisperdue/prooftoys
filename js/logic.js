@@ -1542,28 +1542,36 @@ declare(
    inputs: {site: 1},
    labels: 'basic',
    menuGen: function(ruleName, step, term, editor) {
-     const asms = step.wff.getAsms();
-     if (asms && asms.scanConj(a => a == term)) {
-       // Don't offer to assume an existing assumption.
-       return false;
+     if (term) {
+       const asms = step.wff.getAsms();
+       const goal = editor.goalStatement;
+       const gasms = goal && goal.getAsms();
+       const match = a => a.sameAs(term);
+       const isAsm = (asms && !asms.scanConj(a => a == term) &&
+                      asms.scanConj(match));
+       const inGoal = gasms && gasms.scanConj(match);
+       const html =
+             (isAsm
+              ? '\u27ad <b>T</b> assumption'
+              : inGoal
+              ? '\u27ad <b>T</b> (goal assumption)'
+              : '\u27ad <b>T</b> assuming &star;');
+       const path = step.prettyPathTo(term);
+       return [{html, ruleName,
+                ruleArgs: [step.original, path]
+               }];
+     }
+   },
+   description: 'assumed',
      }
      const goal = editor.goalStatement;
      const gasms = goal && goal.getAsms();
-     const match = a => a.sameAs(term);
-     const isAsm = asms && asms.scanConj(match);
-     const inGoal = gasms && gasms.scanConj(match);
-     const html =
-           (isAsm
             ? '\u27ad <b>T</b> assumption'
             : inGoal
             ? '\u27ad <b>T</b> (goal assumption)'
             : '\u27ad <b>T</b> assuming &star;');
      const path = step.prettyPathTo(term);
-     return [{html, ruleName,
-              ruleArgs: [step.original, path]
-             }];
    },
-   description: 'assumed',
   },  
 
   /**
