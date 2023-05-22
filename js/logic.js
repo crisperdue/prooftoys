@@ -5511,8 +5511,8 @@ declare(
   // "eta conversion".
   {name: 'eta',
     statement: '{x. p x} = p',
-    labels: 'higherOrder',
-    converse: {labels: 'higherOrder'},
+    labels: 'higherOrder basic',
+    converse: {labels: 'higherOrder basic'},
     proof: function() {
       // fact1 is: forall {x. {x. p x} x = p x}
       var fact1 = rules.axiom4('{x. p x} x').andThen('toForall0', 'x');
