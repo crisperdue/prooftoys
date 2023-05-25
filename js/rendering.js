@@ -2714,7 +2714,7 @@ var hoverHandlers = {
   chain1: function(step, action) {
     const args = step.original.ruleArgs;
     const [inStep, schema] = args;
-    if (schema.isProved()) {
+    if (inStep.isProved()) {
       const main = inStep.rendering.getRight();
       action(main.node, 'new');
     }
