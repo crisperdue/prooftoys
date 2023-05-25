@@ -86,20 +86,22 @@ Toy.exercise(
   // try induction on.
   {name: 'induct',
    menuGen: function(ruleName, step, term, proofEditor) {
-     const path = step.prettyPathTo(term);
-     const localFrees = term.freeVarSet();
-     const items = [];
-     for (const name of localFrees) {
-       if (rules.induct.precheck(step.original, path, name)) {
-         // TODO: Consider checking with the editor whether the goal
-         //   says the variable could be NN.
-         items.push({ruleName: ruleName,
-                     ruleArgs: [step.original, path, name],
-                     html: `  induction on ${name}`
-                    });
+     if (term) {
+       const path = step.prettyPathTo(term);
+       const localFrees = term.freeVarSet();
+       const items = [];
+       for (const name of localFrees) {
+         if (rules.induct.precheck(step.original, path, name)) {
+           // TODO: Consider checking with the editor whether the goal
+           //   says the variable could be NN.
+           items.push({ruleName: ruleName,
+                       ruleArgs: [step.original, path, name],
+                       html: `  induction on ${name}`
+                      });
+         }
        }
+       return items;
      }
-     return items;
    },
    // The term must be a boolean Call, the variable occurring free in
    // the term and globally free in the step.

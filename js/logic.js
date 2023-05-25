@@ -1254,7 +1254,9 @@ declare(
     inputs: {reducible: 1},
     isRewriter: true,
     menuGen: function(ruleName, step, term) {
-      return Toy.format('apply function of {1}', term.fn.bound);
+      if (term) {
+        return Toy.format('apply function of {1}', term.fn.bound);
+      }
     },
     tooltip: ('Applies a lambda to its argument'),
     description: '=reduce',
@@ -1585,21 +1587,23 @@ declare(
    // TODO: Consider the possible utility of matching with
    //   the goal conclusion.
    menuGen: function(ruleName, step, term, editor) {
-     const goal = editor.goalStatement;
-     const gasms = goal && goal.getAsms();
-     const items = [];
-     const matcher = gasm => {
-       const map = gasm.matchSchema(term);
-       if (map) {
-         items.push({
-           ruleName,
-           ruleArgs: [step.original, step.prettyPathTo(term), gasm],
-           html: 'match with <input data-arg=2>'
-         });
+     if (term) {
+       const goal = editor.goalStatement;
+       const gasms = goal && goal.getAsms();
+       const items = [];
+       const matcher = gasm => {
+         const map = gasm.matchSchema(term);
+         if (map) {
+           items.push({
+             ruleName,
+             ruleArgs: [step.original, step.prettyPathTo(term), gasm],
+             html: 'match with goal <input data-arg=2>'
+           });
+         }
        }
+       gasms && gasms.scanConj(matcher);
+       return items;
      }
-     gasms && gasms.scanConj(matcher);
-     return items;
    },
   },
 
@@ -1638,21 +1642,25 @@ declare(
    inputs: {site: 1, bool: 3},
    labels: 'basic',
    form: 'Assuming: <input name=bool>',
+   // Offers equational assumptions in the target step, with
+   // LHS same as the given term.
    menuGen: function(ruleName, step, term, editor) {
-     const match = a => a.isCall2('=') && a.getLeft().sameAs(term) && a;
-     const asms = step.original.wff.getAsms();
-     const goal = editor.goalStatement;
-     const gasms = goal && goal.getAsms();
-     const asm = (asms && asms.scanConj(match)
-                  || gasms && gasms.scanConj(match));
-     if (asm) {
-       const path = step.prettyPathTo(term);
-       return [
-         {ruleName,
-          ruleArgs: [step.original, path, asm],
-          html: `\u27ad <b>${asm.getRight().$$}</b> assuming ${asm.$$}`,
-         }
-       ];
+     if (term) {
+       const match = a => a.isCall2('=') && a.getLeft().sameAs(term) && a;
+       const asms = step.original.wff.getAsms();
+       const goal = editor.goalStatement;
+       const gasms = goal && goal.getAsms();
+       const asm = (asms && asms.scanConj(match)
+                    || gasms && gasms.scanConj(match));
+       if (asm) {
+         const path = step.prettyPathTo(term);
+         return [
+           {ruleName,
+            ruleArgs: [step.original, path, asm],
+            html: `\u27ad <b>${asm.getRight().$$}</b> assuming ${asm.$$}`,
+           }
+         ];
+       }
      }
    },
    description: (step =>
@@ -3838,7 +3846,7 @@ declare(
     form: (''),
     menu: '   drop irrelevant {term}',
     tooltip: 'Drop irrelevant assumption',
-    description: 'drop irrelevant;; {site} {in step siteStep}'
+    description: 'drop irrelevant {site};; {in step siteStep}'
   },
 
   // Removes an irrelevant type assumption at the target site, where v
@@ -3897,7 +3905,7 @@ declare(
     form: (''),
     menu: '  drop irrelevant {term}',
     tooltip: 'Drop irrelevant type assumption',
-    description: 'drop irrelevant;; {site} {in step siteStep}'
+    description: 'drop irrelevant {site};; {in step siteStep}'
   },
 
   // Rule P/Q for a single antecedent (5234).  The schema step must
@@ -4869,6 +4877,10 @@ function chainDescription(step) {
   }
 }
 
+// Chaining is a generalization of modus ponens.  The "step" argument
+// proves that an instance of the LHS of the (conditional) schema
+// is true, substituting into the schema fact or step to make them
+// match.  
 declare(
   // Chain a conditional step, matching its main with a conditional
   // schema.  Available interactively only through menuGen.
@@ -4898,8 +4910,8 @@ declare(
    menuGen: chainMenuGen,
   },
 
-  // Chain an entire step, matching its wff with the schema at the
-  // target path.  Available interactively only through menuGen.
+  // Chain an entire step, matching its wff with the entire schema
+  // step or fact.  Available interactively only through menuGen.
   {name: 'chain0',
    action: function(step, schema) {
      assert(schema.implies(), 'Not conditional: {1}', schema);
@@ -4918,7 +4930,8 @@ declare(
    labels: 'basic',
    description: chainDescription,
    menuGen: chainMenuGen,
-  });
+  }
+);
 
 declare(
   // E-Rule (5244), specified by a step and name.  Checks first for
@@ -5172,6 +5185,7 @@ declare(
   },
 
   // Converts a => (b => c) to a & b => c.
+  // TODO: Replace with just the fact.
   {name: 'asAssumption',
     precheck: function(step, path_arg) {
       const path = step.asPath(path_arg);
