@@ -4922,7 +4922,8 @@ declare(
      const eqn = rules.rewriteOnly(step, '', 'a == (a == T)');
      const schema2 = proved ? schema : rules.fact(schema);
      const instance = rules.instMultiVars(schema2, map, true);
-     const result = rules.replace(instance, '/left', eqn);
+     const replaced = rules.replace(instance, '/left', eqn);
+     const result = rules.rewrite(replaced, '', 'T => a == a');
      return result.justify('chain0', arguments,
                            proved ? [step, schema] : [step]);
    },
