@@ -17,19 +17,21 @@ const FunctionType = Toy.FunctionType;
 const Bindings = Toy.Bindings;
 const findBinding = Toy.findBinding;
 
-// Given bindings of names to terms, a variable name, and a term,
-// returns true iff the term is a type variable and the name matches
-// it after applying the bindings zero or more times.  This
-// indicates that the current bindings are sufficient to match the
-// variable with the term.  Otherwise the result is false.
+// Given a Map from type variable names to type terms, a variable
+// name, and a term, returns true iff the term is a (type) variable
+// and repeated application of the map yields that term.  Otherwise
+// the result is false.
 //
-// If the term is composite, this applies the bindings to its parts
-// recursively, and if it ever reaches the same variable, it fails by
-// returning null (the "occurs" check); else false as stated above.
+// If the term is composite, this applies the map to its parts
+// recursively, and if it ever reaches a variable of the same name, it
+// fails by returning null (the "occurs" check); else false as stated
+// above.
 //
-// In typical use, a value of true indicates a trivial match; false
+// So we say that a value of true indicates a "trivial" match; false
 // indicates matching is not trivial; and null is a unification
 // failure (cycle).
+//
+// Note that all recursive calls here supply the same Map and name.
 function checkTriv(map, name, term) {
   if (term instanceof TypeVariable) {
     const n2 = term.name;
@@ -37,6 +39,8 @@ function checkTriv(map, name, term) {
       return true;
     } else {
       const to = map.get(n2)
+      // This is a tail call that follows chains of bindings
+      // from names to _variables_.
       return !!to && checkTriv(map, name, to);
     }
   } else if (term instanceof FunctionType) {
@@ -68,9 +72,10 @@ function justCheckTriv(map, name, term) {
   return false;
 }
 
-// Consider an additional pair to be unified in the context of the
-// given map of bindings and array of pairs still to be unified.
-// Returns falsy if unification fails, else truthy.
+// Considers an additional pair to be unified in the context of the
+// given map of bindings and array of pairs still to be unified,
+// updating the map if needed so it can be resolved into a successful
+// unifier.  Returns falsy if unification fails, else truthy.
 function andUnifTypes(type1, type2, map, pairs) {
   const c1 = type1.constructor;
   const c2 = type2.constructor;
