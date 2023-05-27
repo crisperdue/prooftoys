@@ -2280,7 +2280,9 @@ var msgMethods = {
 
   /**
    * Internal method invoked as the onmessage handler for replies from
-   * the worker.
+   * the worker.  If the message wrapper has isError: true then reject
+   * info.promise, indicating an unhandled error during remote
+   * execution.
    */
   _handleReply: function(event) {
     var wrapper = event.data;
@@ -2462,7 +2464,7 @@ function FakeRpcWorker(receiver) {
  * object with properties: "channelType" with value "RPC"; "id" with
  * the same RPC call ID passed in, "result" with the
  * application-specific result value, and boolean "isError" true
- * if the result is to be considered a failure.
+ * if the RPC resulted in an uncaught error.
  *
  * Starts the worker with a short delay to promote prompt repainting.
  * The worker's reply notification is also asynchronous, but has no
@@ -2485,7 +2487,8 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
   function workerMessageHandler() {
     if (wrapper.channelType === 'RPC') {
       // Handle (thrown) errors without catching them, so the debugger
-      // can take control at the point of the error.
+      // can take control at the point of the error.  This code
+      // returns the error as the result of the relevant RPC.
       function handleError(msg, url, line, col, error) {
         // Restore the old error handler here ASAP.
         window.onerror = oldHandler;
