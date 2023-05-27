@@ -374,10 +374,7 @@ declare(
           return result2;
         }
       }
-      var justified = result.justify('r', [equation, target, path],
-                                     [target, equation], true);
-      justified.details = null;
-      return justified;
+      return () => result;
     },
     inputs: {equation: 1, site: 2},
     // Currently not offered in forms; use "replace".
@@ -385,7 +382,7 @@ declare(
     tooltip: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
     description: 'replace term;; {in step siteStep} {using step equation}',
-    labels: 'primitive'
+    labels: 'primitive continues'
   },
 
   /* Rule R with arguments in the standard order; currently inline. */
@@ -627,7 +624,6 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
                     targex, target, lhs);
   }
   const result = replaced(target, path);
-  // const subst1 = new Map();
   if (!Toy.unifTypesList(typeMap, pairs)) {
     const pair = pairs[0];
     const error =
