@@ -338,7 +338,7 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
                 ? term : new Lambda(term.bound, newBody)._typeFrom(term));
       }
     } else {
-      abort('Bad input');
+      abort('Not a term type: {1}', term);
     }
   }
   return subst(body);
@@ -521,7 +521,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
       level--;
       return result;
     } else {
-      abort('');
+      abort('Not a term type: {1}', x);
     }
   };
 
@@ -626,11 +626,8 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
   const result = replaced(target, path);
   if (!Toy.unifTypesList(typeMap, pairs)) {
     const pair = pairs[0];
-    const error =
-      Toy.error('Types cannot match:\n{1} in {2},\n{3} in {4}',
-                target.get(path), target, eqn.getLeft(), eqn);
-    error.reportToUser = true;
-    abort(error);
+    abort('Types cannot match:\n{1} in {2},\n{3} in {4}',
+          target.get(path), target, eqn.getLeft(), eqn);
   }
   const subst = Toy.resolve(typeMap);
   // Remember, replaceTypes usually modifies types in result.
