@@ -412,8 +412,20 @@ var rules = {};
 //   rules.<ruleName> calls this if there is no precheck and
 //   "continues" is not present to indicate returning a continuation.
 //   If there is a precheck, see information on precheck, below.  If
-//   the "continues" label is present, see information on
-//   labels.continues, below.
+//   action2 is present, see information on it below.
+//
+// action2: if present, the action must return a continuation
+//   function on success.  The continuation returns a proved step.
+//   This is not for controlling menus or display.  Add something like
+//   "basic" to ensure that the rule is offered.  When present, this
+//   makes the rule function be a wrapper around the action, calling it,
+//   checking the result, then invoking the continuation and automatically
+//   justifying the result.  The action, aliased as "prep" in this case,
+//   has access to the info as "this".
+//
+//   Also creates an "attempt" method that runs the continuation if
+//   a function is returned from "prep"; otherwise returns the result
+//   of the "prep".
 //
 // proof: for a theorem (no args), use this instead of "action".  Do
 //   not call "justify", that is done automatically and the proof is
@@ -446,7 +458,7 @@ var rules = {};
 //   declared action function.  The RuleMenu uses it as well, to rule
 //   out inapplicable rules.
 //
-//   This is expected to return a falsy value or an Error if the rule
+//   This is expected to return a falsy value if the rule
 //   is not applicable to the arguments, in which case the rule will
 //   fail with Toy.abort.  Otherwise it should return any data useful
 //   to the main action function, which will have access to that
@@ -560,19 +572,6 @@ var rules = {};
 //   are given, effectively a single label "none".  See processLabels
 //   for more details.
 //
-// labels.continues: if present, the action must return a continuation
-//   function on success.  The continuation returns a proved step.
-//   This is not for controlling menus or display.  Add something like
-//   "basic" to ensure that the rule is offered.  When present, this
-//   makes the rule function be a wrapper around the action, calling it,
-//   checking the result, then invoking the continuation and automatically
-//   justifying the result.  The action, aliased as "prep" in this case,
-//   has access to the info as "this".
-//
-//   Also creates an "attempt" method that runs the continuation if
-//   a function is returned from "prep"; otherwise returns the result
-//   of the "prep".
-//
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
 //
@@ -622,7 +621,7 @@ function addRule(info) {
     console.warn('Fact has both statement and goal', info.goal.toString());
   }
 
-  // This will become the "rule object":
+  // This will become the "rule object", a function:
   var rule;
   // True iff the main function has access to the rule object as "this".
   var mainHasThis = false;
@@ -727,8 +726,9 @@ function addRule(info) {
     // It is a rule of inference, not an axiom, theorem, or fact.
     //
     assert(name, 'Inference rule must have a name', info);
+    assert(!(info.action && info.action2), 'Action and action2 are exclusive.');
     // The action property is the user code to run it.
-    main = info.action;
+    main = info.action || info.action2;
     assert(typeof main === 'function',
            'Rule action must be a function: {1}', name);
     if (info.maxArgs == null) {
@@ -738,10 +738,10 @@ function addRule(info) {
       info.minArgs = main.length;
     }
 
-    if (info.labels && info.labels.continues) {
+    if (info.action2) {
       // This makes "prep" an alias for info.action, so it can be called
       // somewhat like precheck, with clarity about the intent.
-      info.prep = info.action;
+      info.prep = info.action2;
       // The "attempt" method tries to run the method and
       // continuation, but if the result from "prep" is not a
       // function, simply returns that.
@@ -763,7 +763,7 @@ function addRule(info) {
           const result = more();
           return result.justify(name, args, args.filter(x => Toy.isProved(x)));
         } else {
-          abort(`Rule ${name} prep phase failed with: ${more}`);
+          abort(`Rule ${name} check failed`);
         }
       };
 
@@ -782,12 +782,16 @@ function addRule(info) {
                 ? main.apply(info, arguments)
                 : checks instanceof Error
                 // TODO: Should this abort?  See TODOs just below here.
-                ? checks
+                ? Toy.let_(() => {
+                    console.error(checks); debugger; return checks;
+                  })
                 // TODO: Consider removing support for obsolete onFail.
                 : info.onFail
                 // The onFail only applies if precheck result is falsy.
                 ? info.onFail.call(rule)
-                // TODO: Match spec that says this aborts?
+                // Here checks is falsy.
+                // TODO: when runRule is fixed to return an Error,
+                //   fix this line to abort rather than returning.
                 : Toy.newError('Rule {1} not applicable', name));
       }
       // Set properties on the outer action to give access to the
@@ -797,7 +801,7 @@ function addRule(info) {
       // Assert that the main code has access to data and metadata
       // through "this".
       mainHasThis = true;
-    }
+    } // end info.precheck
   }
 
   assert(!info.data, 'Info.data is obsolete');

@@ -357,7 +357,7 @@ declare(
    * If any of this fails, returns an Error.
    */
   {name: 'r',
-    action: function(equation, target, path_arg) {
+    action2: function(equation, target, path_arg) {
       let result;
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
@@ -382,7 +382,7 @@ declare(
     tooltip: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
     description: 'replace term;; {in step siteStep} {using step equation}',
-    labels: 'primitive continues'
+    labels: 'primitive'
   },
 
   /* Rule R with arguments in the standard order; currently inline. */
@@ -1565,8 +1565,8 @@ declare(
   {name: 'matchTerm',
    inputs: {site: 1, term: 3},
    description: 'match;; {site}  with {term}',
-   labels: 'basic continues',
-   action: function(step, path, term) {
+   labels: 'basic',
+   action2: function(step, path, term) {
      const schema = step.get(path);
      const map = term.matchSchema(schema);
      if (map) {
