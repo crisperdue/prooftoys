@@ -1466,13 +1466,12 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 StepEditor.prototype.tryRuleFromForm = function() {
   // TODO: Get it together on failure reporting here.
   var ruleName = this.ruleName;
-  var rule = Toy.rules[ruleName];
   var minArgs = rule.info.minArgs;
   var args = this.argsFromSelection(ruleName);
   if (this.fillFromForm(ruleName, args) &&
       this.checkArgs(args, minArgs, true)) {
     this.hideForm();
-    tryRuleSoon(this, rule, args);
+    tryRuleSoon(this, ruleName, args);
   }
 };
 
@@ -1480,7 +1479,7 @@ StepEditor.prototype.tryRuleFromForm = function() {
  * Requests running the rule with the given args as soon as the UI has
  * opportunity to repaint, and indicates that the prover is working.
  */
-function tryRuleSoon(stepEditor, rule, args) {
+function tryRuleSoon(stepEditor, ruleName, args) {
   args.forEach(function(arg) {
       if (Toy.isProved(arg) && arg.isRendered()) {
         // Really all step arguments to all steps everywhere should be
@@ -1493,7 +1492,7 @@ function tryRuleSoon(stepEditor, rule, args) {
   // Do not respond to menu mouse events until the rule has actually run.
   stepEditor._proofEditor.ruleMenu.suppressing = true;
   // Try running the rule once the UI shows that the prover is working.
-  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
+  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, ruleName, args));
 }
 
 /**
@@ -1506,12 +1505,12 @@ function tryRuleSoon(stepEditor, rule, args) {
  *
  * Use this only in tryRuleSoon.
  */
-StepEditor.prototype._tryRule = function(rule, args) {
+StepEditor.prototype._tryRule = function(ruleName, args) {
   var self = this;
-  var result = null;
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
   const editor = this._proofEditor;
+  const rule = Toy.rules[ruleName];  
 
   // Set to true in case of possible (deferred) autoSimplify.
   let deferCleanup = false;
@@ -1521,24 +1520,17 @@ StepEditor.prototype._tryRule = function(rule, args) {
     editor.$node.removeClass('waitingForProver');
     editor.ruleMenu.suppressing = false;
   }
-
-  const caught = Toy.catchAborts(() => {
-    if (Toy.profileName) {
-      // Collect CPU profiling information.
-      console.profile(Toy.profileName);
-    }
-    // Applies the rule here.
-    result = rule.apply(null, args);
-    assert(result instanceof Step, 'Rule failed: {1}', rule.name);
-  });
-  if (caught instanceof Error && caught.reportToUser) {
-    // If a thrown error is reportable, treat it as the result,
-    // reporting it to the user.
-    result = caught;
+  if (Toy.profileName) {
+    // Collect CPU profiling information.
+    console.profile(Toy.profileName);
   }
-  // These UI actions could even be done before running the rule,
-  // because the user doesn't see them until this method completes.
-  // this.hideForm();
+
+  // Rule wrappers abort in case of abort or error return
+  // from the main part of the rule.  If the precheck or first
+  // phase fails, they return falsy (but not undefined), or
+  // an Error.
+  const result = Toy.value(() => rule( ...args));
+  // const thrown = Toy.thrown; // This could give the thrown value.
 
   if (Toy.profileName) {
     console.profileEnd();
@@ -1561,10 +1553,10 @@ StepEditor.prototype._tryRule = function(rule, args) {
   // statement.
   if (result === true) {
     // Do nothing.
-  } else if (result instanceof Error || !(result instanceof Toy.Step)) {
+  } else if (!(result instanceof Toy.Step)) {
     // It is possible to display more information about thrown
     // errors (aborts), but it may not be helpful to the user.
-    const message = result ? result.message : 'Rule does not apply';
+    const message = 'Rule failed:' + ruleName;
     this.report(message);
   } else if (result.rendering) {
       // If there is already a rendering, Expr.justify must have found
@@ -2313,7 +2305,7 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
   if (rule) {
     var args = ruleArgs || stepEditor.argsFromSelection(ruleName);
     if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
-      tryRuleSoon(stepEditor, rule, args);
+      tryRuleSoon(stepEditor, ruleName, args);
       return;
     }
 
@@ -2361,7 +2353,7 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
       stepEditor.error('No selected site');
     }
     tryRuleSoon(stepEditor,
-                 Toy.rules.rewrite,
+                 'rewrite',
                  [siteStep.original,
                   siteStep.prettyPathTo(siteStep.selection),
                   // Parsing here will cause the wff to be taken literally
