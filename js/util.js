@@ -1197,6 +1197,8 @@ function withExit(fn) {
  * "return" or "break" right in the block.  For example this can be
  * used in a form such as if (catchAborts(...)) { <actions> }, where
  * the actions execute in case of an abort.
+ *
+ * TODO: Rename to "aborted".
  */
 function catchAborts(fn) {
   let success = false;
@@ -1246,10 +1248,37 @@ function normalReturn(fn, ...args) {
 }
 
 /**
+ * Calls the given function, catching any aborts during the call.
+ * Returns the function value, or undefined if aborted.
+ */
+function value(fn) {
+  let normalValue;
+  if (catchAborts(() => normalValue = fn())) {
+    return undefined;
+  } else {
+    return normalValue;
+  }
+}
+
+/**
+ * Calls the given function, catching any aborts during the call.
+ * Returns the function value, or the thrown value if aborted.
+ */
+function try_(fn) {
+  let value;
+  const failed = catchAborts(() => value = fn());
+  if (failed) {
+    return Toy.thrown;
+  } else {
+    return value;
+  }
+}
+
+/**
  * Returns the value of calling the given function with the given
  * arguments, unless a throw occurs during its execution.  In that
- * case returns the error.  This does not interfere with exits, i.e.
- * continues the unwinding process.
+ * case returns the thrown value.  This does not interfere with exits,
+ * i.e.  continues the unwinding process.
  *
  * By using "catch" internally, this suppresses debugging when the
  * developer tools are open, so this is intended for catching errors
@@ -2774,6 +2803,7 @@ Toy.sortMap = sortMap;
 Toy.rebind = rebind;
 Toy.abort = abort;
 Toy.bind = bind;
+Toy.let_ = bind;
 Toy.invoker = invoker;
 Toy.error = error;
 Toy.newError = newError;
@@ -2782,6 +2812,8 @@ Toy.normalReturn = normalReturn;
 Toy.catching = catching;
 Toy.withExit = withExit;
 Toy.catchAborts = catchAborts;
+Toy.value = value;
+Toy.try_ = try_;
 Toy.thrown = null;
 
 Toy.NestedTimer = NestedTimer;
