@@ -2434,24 +2434,27 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
       //   references to the appropriate rule argument.
       $node.data('promise', promise);
       promise.then(function(info) {
-          // The rule has successfully run.
           // First tidy up a little.
           $node.removeData('promise');
-          var step = info.result.step;
+          // If the rule runner throws, the onerror handler will
+          // return an Error as info.result, so the value will
+          // be undefined, which is OK here.
+          var value = info.result.value;
           // Make note of the result, remembering its node.
           if (ruleMenu.hovering === $node[0]) {
             // At this point in time after the rule has run, if this
-            // item is hovered, show the result.  If the result has
-            // no "step" property, treat this as failure of the rule.
-            var node = (step
-                        ? display.stepSuggestion(step)
+            // item is hovered, show the result.
+            var node = (value instanceof Step
+                        ? display.stepSuggestion(value)
                         : display.suggestionMessage('failed'));
             $node.data('suggestion', node);
             display.suggest(node);
           }
         })
         .catch(function(info) {
-            // If the "then" throws an error, that becomes the info.
+            // Uncaught worker errors invoke this with result info.
+            // If the "then" throws an error, the error becomes the info.
+            // Note that .catch sets up a "catch" around the .then code.
             $node.removeData('promise');
             var messageNode = display.suggestionMessage('oops, not applicable');
             $node.data('suggestion', messageNode);
@@ -2825,11 +2828,9 @@ function sendRule(name, args) {
 $(function () {
     var receiver = {
       actions: {
-        // The "rule" action returns a resulting step as its "step"
-        // property, or standard error information in case of error.
         runRule: function(message) {
-          var step = Toy.rules[message.name].apply(null, message.args);
-          return {step: step};
+          const value = Toy.rules[message.name].attempt( ...message.args);
+          return {value};
         }
       }
     };
