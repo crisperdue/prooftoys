@@ -1012,7 +1012,7 @@ function sortMap(object, comparator) {
 function abort(msg, ...args) {
   // TODO: Interpret options??
   function _abort(options, msg, ...args) {
-    const e = new Error(Toy.format(msg, ...args));
+    const e = new Error(Toy.format(msg || 'Oops', ...args));
     let step;
     // Find a step argument if there is one.
     for (var i = 0; i < args.length; i++) {
@@ -1064,6 +1064,17 @@ function error(options, msg, ...args) {
     }
     return e;
   }
+}
+
+/**
+ * Returns an Error.  If the error argument is an Error,
+ * then that, else a new Error by formatting the message
+ * and message args.
+ */
+function errify(error, msg, ...args) {
+  return (error instanceof Error
+          ? error
+          : new Error(Toy.format(msg, ...args)));
 }
 
 /**
@@ -2806,6 +2817,7 @@ Toy.bind = bind;
 Toy.let_ = bind;
 Toy.invoker = invoker;
 Toy.error = error;
+Toy.errify = errify;
 Toy.newError = newError;
 Toy.isError = isError;
 Toy.normalReturn = normalReturn;
