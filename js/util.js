@@ -1008,8 +1008,24 @@ function sortMap(object, comparator) {
  *
  * In this case the remaining arguments then are as for a call without
  * options.
+ *
+ * The value of Toy.proceeding influences interaction of this with the
+ * debugger.  A truthy value results in a different code path intended
+ * to not make the debugger pause here.
  */
 function abort(msg, ...args) {
+  const thrower = e => {
+    Toy.thrown = e;
+    // The two code paths here enable us to suppress debugging when an
+    // abort occurs with Toy.proceeding on.  (For this, in the
+    // debugger request a pseudo-breakpoint that never pauses.)
+    if (Toy.proceeding) {
+      console.warn('Proceeding');
+      throw e;  // You may ask the debugger not to pause here.
+    } else {
+      throw e;
+    }
+  };
   // TODO: Interpret options??
   function _abort(options, msg, ...args) {
     const e = new Error(Toy.format(msg || 'Oops', ...args));
@@ -1024,13 +1040,12 @@ function abort(msg, ...args) {
       }
     }
     e.step = step;
-    Toy.thrown = e;
-    throw e;
+    thrower(e);
   }
   if (msg instanceof Error) {
     const error = msg;
     Toy.thrown = error;
-    throw error;
+    thrower(error);
   } else if (typeof msg === 'string') {
     _abort({}, msg, ...args);
   } else {
@@ -1151,10 +1166,10 @@ let exitValue = undefined;
 // targets.
 let targetID = 1;
 
-// Unwind the stack (for exits). This is not an error situation, so
-// you may want to tell the debugger to "Never Pause" here:
+// Unwind the stack.  You may want to tell the debugger to "Never
+// Pause" here:
 function unwind() {
-  throw undefined;
+  throw e;  // You may ask the debugger not to pause here.
 }
 
 /**
@@ -1205,6 +1220,10 @@ function withExit(fn) {
  * falsy, e.g. undefined, returns true.  This catches aborts, but not
  * exits.  If the function returns normally this returns false.
  *
+ * The optional second argument, defaulting to false, rebinds
+ * Toy.truthy, which influences interaction of "abort" with the
+ * debugger.
+ *
  * This design has an advantage over passing a "catcher" function in
  * that the actions here can do local flow of control actions such as
  * "return" or "break" right in the block.  For example this can be
@@ -1213,12 +1232,12 @@ function withExit(fn) {
  *
  * TODO: Rename to "aborted".
  */
-function catchAborts(fn) {
+function catchAborts(fn, proceed=false) {
   let success = false;
   // For good measure:
   Toy.thrown = null;
   try {
-    fn();
+    Toy.rebind('proceeding', proceed, fn);
     success = true;
   } finally {
     if (success) {
