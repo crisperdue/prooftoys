@@ -58,7 +58,7 @@ if (!window._paq) {
 // TODO: Consider removing dependencies here on jQuery.
 // They look questionable anyway.
 
-//// General use
+//// MISCELLANEOUS
 
 // TODO: Someday in the distant future, capture and analyze
 // exception reports from user's browsers, and use that as
@@ -172,7 +172,7 @@ Toy.escapeHtml = function(str) {
 };
 
 
-//// Property access
+//// PROPERTY ACCESS
 
 var ownProperty = Object.prototype.hasOwnProperty;
 
@@ -267,7 +267,7 @@ function isIterable (value) {
   return Symbol.iterator in Object(value);
 }
 
-//// JavaScript Sets
+//// JAVASCRIPT SETS
 
 /**
  * Coerces the given plain object to a Set, or if it is a Set, just
@@ -359,7 +359,7 @@ function equalSets(arg1, arg2) {
   return true
 }
 
-//// Sorting
+//// SORTING
 
 /**
  * Dexie/IndexedDb comparison, currently only supporting numbers,
@@ -434,7 +434,7 @@ function dexCompare(a, b) {
 }
 
 
-//// Stricter property access
+//// STRICTER PROPERTY ACCESS
 
 /**
  * Creates a proxy for the given object that allows no access to
@@ -992,7 +992,7 @@ function sortMap(object, comparator) {
   return list.sort(comparator);
 }
 
-//// Control flow
+//// ABORTS AND ERRORS
 
 /**
  * Unconditionally throws an Error (used by assert).  Convenient, and
@@ -1101,6 +1101,8 @@ function newError(...args) {
   return strict(error(...args));
 }
 
+//// VARIABLE BINDING
+
 /**
  * Designed to be called with an arrow function as its argument, one
  * with one or more default parameters, as in:
@@ -1131,7 +1133,7 @@ function rebind(name, value, fn) {
   }
 }
 
-//// Exit target information.
+//// EXITS
 
 // A stack of "exit target" objects currently available for use.
 // Entry to withExit pushes one onto the stack, and exit from it
@@ -1231,6 +1233,8 @@ function catchAborts(fn) {
   }
 }
 
+//// ERRORS
+
 /**
  * Truthy iff x is nullish or an Error object.  Use this to
  * test the results of inference steps.
@@ -1291,9 +1295,10 @@ function try_(fn) {
  * case returns the thrown value.  This does not interfere with exits,
  * i.e.  continues the unwinding process.
  *
- * By using "catch" internally, this suppresses debugging when the
- * developer tools are open, so this is intended for catching errors
- * that are expected as part of normal operation.
+ * By using "catch" internally, this suppresses the usual debugging of
+ * uncaught errors when the developer tools are open, so this is
+ * intended for catching errors that are expected as part of normal
+ * operation.
  */
 function catching(fn, ...args) {
   try {
