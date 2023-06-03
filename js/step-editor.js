@@ -1998,6 +1998,20 @@ RuleMenu.prototype._update = function() {
     // A term is selected.  Find proof steps that can serve as rewrite
     // rules with the current situation / selection.
 
+    // Check a couple of characteristics of the schema.
+    const checkSchema = schema => {
+      if (!Toy.coreUnifTypes(selection.type, schema.type)) {
+        return false;
+      }
+      if (selection.isCall2('=') && schema.isCall2('=') &&
+          !Toy.coreUnifTypes(selection.getBinOp().type,
+                             schema.getBinOp().type)) {
+        return false;
+      }
+      return true;
+    };
+           
+
     //
     // Search for steps that could rewrite the selection.
     //
@@ -2029,13 +2043,16 @@ RuleMenu.prototype._update = function() {
           !schema.matches(selection)) {
         return;
       }
-      if (!Toy.coreUnifTypes(selection.type, schema.type)) {
+
+      if (!checkSchema(schema)) {
         return;
       }
+
       const map = selection.matchSchema(schema);
       if (!map) {
         return;
       }
+
       // Try to do the substitution, which can fail.
       const eqn = Toy.catching(
         () => proofStep.andThen('instMultiVars', map, true));
@@ -2077,8 +2094,8 @@ RuleMenu.prototype._update = function() {
       //   computation, then use it here and just above.
       const fact = info.goal;
       const schema = fact.matchPart();
-      // Check that unification will go OK.
-      if (!Toy.coreUnifTypes(selection.type, schema.type)) {
+
+      if (!checkSchema(schema)) {
         return;
       }
       const subst = selection.matchSchema(schema);
