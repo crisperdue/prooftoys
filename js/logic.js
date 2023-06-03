@@ -1665,8 +1665,9 @@ declare(
        }
      }
    },
-   description: (step =>
-                 `assuming ;;<b>${Toy.termDisplay(step.ruleArgs[2])}</b>`),
+   description:
+   (step =>
+    `assumed equation ;;<b>${Toy.termDisplay(step.ruleArgs[2])}</b>`),
   },  
 
   /**
