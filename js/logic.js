@@ -488,6 +488,8 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
   // This is the current depth of nesting within lambdas during
   // executions of "match", below.
   let level = 0;
+  let uGood = true;
+  const unify = Toy.andUnifTypes;
 
   // Checks if terms x and y are the same up to renamings of bound
   // variables, returning a boolean value.  Types of corresponding
@@ -502,7 +504,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
     }
     if (ct === Atom) {
       return (namesMatch(x.name, y.name) &&
-              Toy.andUnifTypes(x.type, y.type, typeMap, pairs));
+              (uGood &&= unify(x.type, y.type, typeMap, pairs)));
     } else if (ct === Call) {
       return match(x.fn, y.fn) && match(x.arg, y.arg);
     } else if (ct === Lambda) {
@@ -514,7 +516,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
       xLevels.set(xnm, level);
       yLevels.set(ynm, level);
       const result =
-            (Toy.andUnifTypes(x.bound.type, y.bound.type, typeMap, pairs) &&
+            (uGood &&= unify(x.bound.type, y.bound.type, typeMap, pairs) &&
              match(x.body, y.body));
       xLevels.set(xnm, outerx);
       yLevels.set(ynm, outery);
@@ -619,15 +621,21 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
     term._checkSegment(path);
   };
   const targex = target.get(path);
-  if (!match(lhs, targex)) {
-    return newError('In Rule R subexpression {1} of {2} must match {3}',
-                    targex, target, lhs);
-  }
+
+  const m = match(lhs, targex);
   const result = replaced(target, path);
-  if (!Toy.unifTypesList(typeMap, pairs)) {
-    const pair = pairs[0];
-    abort('Types cannot match:\n{1} in {2},\n{3} in {4}',
-          target.get(path), target, eqn.getLeft(), eqn);
+  if (m) {
+    uGood &&= Toy.unifTypesList(typeMap, pairs);
+  }
+
+  // Type unification can fail either during matching or in
+  // unifTypesList.
+  if (!uGood) {
+    return newError('Rule R, mismatched types:\n{2} and\n{3}',
+                    target, targex, lhs);
+  } else if (!m) {
+    return newError('Rule R, not matched:\n{2} and\n{3}',
+                    target, targex, lhs);
   }
   const subst = Toy.resolve(typeMap);
   // Remember, replaceTypes usually modifies types in result.
