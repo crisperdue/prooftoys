@@ -12,6 +12,7 @@ const assert = Toy.assertTrue;
 const abort = Toy.abort;
 const assertEqn = Toy.assertEqn;
 const newError = Toy.newError;
+const ok = Toy.ok;
 
 const varify = Toy.varify;
 const constify = Toy.constify;
@@ -4656,37 +4657,28 @@ declare(
   //   it was introduced and the formula (e.g. step) it came from.
   //
 
-  // Inline utility for all of the rewriters.  If the equation step
+  // Utility for all of the rewriters.  If the equation step
   // argument "A" is not an equation, rewrites it to A == T.
   // Performs the needed substitution, with higher-order matching,
   // and returns the result of that.
-  {name: '_replacementFor',
-   action: function(step, path, eqn_arg, reduce=true) {
+  {name: 'replacementFor',
+   action2: function(step, path, eqn_arg, reduce=true) {
      const target = step.get(path);
      const schema = Toy.schemaPart(eqn_arg);
      let map = target.matchSchema(schema);
      if (!map) {
-       abort('Fact not applicable: {1}', eqn_arg);
+       return newError('Fact not applicable: {1}', eqn_arg);
      }
-     // Convert to an actual equation if necessary.
-     const equation = (eqn_arg.isEquation()
-                       ? eqn_arg
-                       // Coerce to an equation.
-                       : eqn_arg.andThen('rewriteOnly',
+     return () => {
+       // Convert to an actual equation if necessary.
+       const equation = (eqn_arg.isEquation()
+                         ? eqn_arg
+                         // Coerce to an equation.
+                         : eqn_arg.andThen('rewriteOnly',
                                            '/main', 'a == (a == T)'));
-      const result = rules.instMultiVars(equation, map, reduce);
-      return result;
-    }
-  },
-
-  // Out of line version of _replacementFor.
-  //
-  // TODO: Tentatively use this in place of _replacementFor, otherwise
-  //   perhaps remove this.
-  {name: 'replacementFor',
-   action: function(step, path, eqn, reduce=true) {
-     return (rules._replacementFor(step, path, eqn, reduce)
-             .justify('replacementFor', arguments, [step, eqn]));
+       const result = rules.instMultiVars(equation, map, reduce);
+       return result;
+     };
    },
    inputs: {site: 1, equation: 3},
    form: ('Equation to rewrite the site using step <input name=equation>'),
@@ -4701,11 +4693,11 @@ declare(
   // assumptions to any existing ones; does not deduplicate or arrange
   // them.
   {name: 'rewriteOnlyFrom',
-    action: function(step, path_arg, eqn) {
+    action2: function(step, path_arg, eqn) {
       const path = step.wff.asPath(path_arg);
-      const replacement = rules.replacementFor(step, path, eqn);
-      const rewritten = rules.replace(step, path, replacement);
-      return rewritten.justify('rewriteOnlyFrom', arguments, [step, eqn]);
+      const replacement = rules.replacementFor.attempt0(step, path, eqn);
+      return ok(replacement, () =>
+                rules.replace(step, path, replacement));
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite using equation step <input name=equation>'),
@@ -4718,12 +4710,13 @@ declare(
   // Minimal rewriter with no simplification; like rewriteOnlyFrom
   // except takes a fact statement rather than a step.
   {name: 'rewriteOnly',
-   action: function(step, path_arg, stmt_arg, reduce=true) {
-      const path = step.wff.asPath(path_arg);
-      const statement = rules.fact(stmt_arg);
-      const replacement = rules.replacementFor(step, path, statement, reduce);
-      const rewritten = rules.replace(step, path, replacement);
-      return rewritten.justify('rewriteOnly', arguments, [step]);
+   action2: function(step, path_arg, stmt_arg, reduce=true) {
+     const path = step.wff.asPath(path_arg);
+     const fact = rules.fact(stmt_arg);
+     const replacement =
+           rules.replacementFor.attempt0(step, path, fact, reduce);
+     return ok(replacement, () =>
+               rules.replace(step, path, replacement));
     },
     inputs: {site: 1, bool: 3},
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
@@ -4740,12 +4733,12 @@ declare(
   // TODO: Render (programmatic) calls to this and "rewrite" according to
   //   whether the equation is a statement or a step.
   {name: 'rewriteFrom',
-    action: function(step, path, equation) {
-      // Can throw; tryRule will report any problem.
-      const step2 = rules.replacementFor(step, path, equation);
-      const step3 = rules.replace(step, path, step2);
-      const simpler = rules.simplifyAsms(step3);
-      return simpler.justify('rewriteFrom', arguments, [step, equation]);
+    action2: function(step, path, equation) {
+      const step2 = rules.replacementFor.attempt0(step, path, equation);
+      return ok(step2, () => {
+        const step3 = rules.replace(step, path, step2);
+        return rules.simplifyAsms(step3);
+      });
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using step <input name=equation>'),
@@ -4767,28 +4760,18 @@ declare(
   // TODO: Modify all of these rewrite* rules to return Error objects
   //   in case preconditions are not met.
   {name: 'rewrite',
-   /**
-    // Omitting this precheck for now, because several tests fail
-    // for undetermined reasons.
-    precheck: function(step, path, eqn) {
-      // Rewrite uses rules.fact, which uses mathParse.
-      let result = canRewrite(step, path, mathParse(eqn));
-      return result;
-    },
-    */
-    action: function(step, path_arg, statement) {
+    action2: function(step, path_arg, statement) {
       // Be careful to convert a possible search pattern into
       // an ordinary path _before_ replacing the target term.
       const path = step.asPath(path_arg);
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      const replacement0 = rules.replacementFor(step, path, fact);
-      const replacement = rules.simplifyAsms(replacement0);
-      const step2 = rules.replace(step, path, replacement);
-      var simpler = rules.simplifyAsms(step2);
-      // Does not include the fact as a dependency, so it will not
-      // display as a separate step.
-      return simpler.justify('rewrite', arguments, [step]);
+      const replacement0 = rules.replacementFor.attempt0(step, path, fact);
+      return ok(replacement0, () => {
+        const replacement = rules.simplifyAsms(replacement0);
+        const step2 = rules.replace(step, path, replacement);
+        return rules.simplifyAsms(step2);
+      });
     },
     autoSimplify: function(step) {
       const inStep = step.ruleArgs[0];

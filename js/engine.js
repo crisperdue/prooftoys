@@ -422,9 +422,9 @@ var rules = {};
 //   automatically justifying the result.  The action, aliased as
 //   "prep" in this case, has access to the info as "this".
 //
-//   Also creates an "attempt" method that runs the continuation if
-//   a function is returned from "prep"; otherwise returns the result
-//   of the "prep".
+//   Also creates "attempt" and "attempt0" methods that run the
+//   continuation if a function is returned from "prep"; otherwise
+//   returns the result of the "prep".
 //
 // proof: for a theorem (no args), use this instead of "action".  Do
 //   not call "justify", that is done automatically and the proof is
@@ -598,8 +598,8 @@ var rules = {};
 // check: prep or precheck as appropriate.
 // attempt: check, and if that succeeds tries the rest of the rule.
 //   If check fails, returns its result value.
-// Toy.ok function returns truthy for success of check (or precheck or
-//   prep).
+//
+// Toy.ok and Toy.ok2 functions for testing precheck and prep results.
 
 // Rule definitions that have statements (and are thus theorems)
 // support the same properties as facts, specifically: simplifier,
@@ -758,7 +758,7 @@ function addRule(info) {
           const result = more();
           return result.justify(name, args, args.filter(x => Toy.isProved(x)));
         } else {
-          abort(`Rule ${name} prep failed`);
+          abort(Toy.errify(more, `Rule ${name} prep failed`));
         }
       };
       // Set rule.prep to the "prep phase".
@@ -769,6 +769,17 @@ function addRule(info) {
       // continuation, but if the result from "prep" is not a
       // function, simply returns that value.
       rule.attempt = function( ...args) {
+        const more = rule.prep.apply(info, args);
+        if (typeof more === 'function') {
+          const result = more();
+          return result.justify(name, args, args.filter(x => Toy.isProved(x)));
+        } else {
+          return more;
+        }
+      };
+
+      // The attempt0 method runs the rule inline; no auto-justification.
+      rule.attempt0 = function( ...args) {
         const more = rule.prep.apply(info, args);
         if (typeof more === 'function') {
           return more();
@@ -886,9 +897,17 @@ function declare(...declarations) {
  * Returns truthy iff the given result (of a rule check)
  * is truthy and not an Error.  Useful utility for tactics
  * to test applicability of rules.
+ *
+ * If a "more" continuation is given, if the result is a success
+ * returns the result of calling it, else the failure result.
  */
-function ok(result) {
-  return result && !(result instanceof Error);
+function ok(status, more) {
+  if (more) {
+    // const success = typeof status == 'function';
+    return ok(status) ? more : status;
+  } else {
+    return status && !(status instanceof Error);
+  }
 }
 
 //// Exercises
