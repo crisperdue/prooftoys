@@ -1806,8 +1806,8 @@ var testCase = {
     });
     // The identity function, problematic for some algorithms.
     var type = Toy.parse('{x. x}').type;
-    assert(type instanceof Toy.FunctionType, 'Not a FunctionType');
-    assert(type.fromType instanceof Toy.TypeVariable, 'Not a TypeVariable');
+    assert(type instanceof Toy.FunctionType);
+    assert(type.fromType instanceof Toy.TypeVariable);
     assertEqual(type.fromType, type.toType);
     assertEqual('o', rules.axiom1().type.toString());
     assertEqual('o', rules.axiom2().type.toString());
