@@ -163,6 +163,14 @@ Toy.exercise(
    }
   },
 
+  {statement: '@NN n => (succ n = 0 == F)',
+   proof: function() {
+     return (rules.fact('@NN n => succ n != 0')
+             .andThen('rewrite', '/main', 'x != y == not (x = y)')
+             .andThen('rewrite', '/main', 'not a == (a == F)'));
+   }
+  },
+
   // The exercises:
 
   {exertion: 'nat0', statement: '0 = 0'},
@@ -292,6 +300,19 @@ Toy.exercise(
 
   {exertion: 'addx8',
    statement: '@NN x & NN y => (x + y = 0 => y = 0)',
+   proof:
+   `(1 goal (t (((x + y) = 0) => (y = 0))))
+    (2 induct (s 1) (path "/left") "y")
+    (3 rewrite (s 2) (path "/left/right/right") (t ((x = x) == T)))
+    (4 simplifySite (s 3) (path "/left/left/left"))
+    (5 rewrite (s 4) (path "/left/left/right/right/left/left")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (6 rewrite (s 5) (path "/left/left/left/left/right/left")
+       (t ((NN n) => (((succ n) = 0) == F))))
+    (7 simplifySite (s 6) (path "/left/left/left/left"))
+    (8 rewrite (s 7) (path "/left/left/left/left")
+       (t (((NN a) & (NN b)) => (NN (a + b)))))
+    (9 removeTypeAsm (s 8) (path "/left/left/left"))`,
   },
 
   {exertion: 'addxbonus',
