@@ -1465,9 +1465,10 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  */
 StepEditor.prototype.tryRuleFromForm = function() {
   // TODO: Get it together on failure reporting here.
-  var ruleName = this.ruleName;
-  var minArgs = rule.info.minArgs;
-  var args = this.argsFromSelection(ruleName);
+  const ruleName = this.ruleName;
+  const rule = Toy.rules[ruleName];
+  const minArgs = rule.info.minArgs;
+  const args = this.argsFromSelection(ruleName);
   if (this.fillFromForm(ruleName, args) &&
       this.checkArgs(args, minArgs, true)) {
     this.hideForm();
