@@ -2073,6 +2073,20 @@ declare(
     labels: 'algebra general'
   },
 
+  // Simplifies site and asms.
+  {name: 'simplifySitePlus',
+    action: function(step, path, opt_facts) {
+      var result = (rules._simplifySite(step, path, opt_facts)
+                    .andThen('simplifyAsms'));
+      return result.justify('simplifySite', arguments, [step]);
+    },
+    inputs: {site: 1},
+    minArgs: 2,
+    menu: '  simplify {term}',
+    description: 'simplify;; {in step siteStep}',
+    labels: 'algebra general'
+  },
+
   // Repeatedly apply the one fact as in simplifySite, to
   // simplify the target site.
   // 
@@ -2108,7 +2122,8 @@ declare(
       if (eqn.sameAs(simpler)) {
         return step;
       } else {
-        return rules.replace(step, path, simpler);
+        return (rules.replace(step, path, simpler)
+                .andThen('simplifyAsms'));
       }
     }
   },
