@@ -3824,7 +3824,7 @@ declare(
       if (vName in val.freeVars()) {
         return false;
       }
-      var step1 = rules.extractHypAt(step, path);
+      var step1 = rules.extractHyp(step, term);
       // This check is adequate.
       var map = step1.matchSchema('a => (b => c)');
       if (map) {
@@ -3883,7 +3883,7 @@ declare(
       if (!term.isTypeTest() || !term.arg.isVariable()) {
         return false;
       }
-      var step1 = rules.extractHypAt(step, path);
+      var step1 = rules.extractHyp(step, term);
       var map = step1.matchSchema('a => (b => c)');
       var vName = term.arg.name;
       if (map) {
