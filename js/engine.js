@@ -2117,7 +2117,7 @@ function traceRule(name) {
     }
     var t = new Toy.NestedTimer(name);
     t.start();
-    var result = rule.apply(rules, arguments);
+    var result = rule.apply(rule.info, arguments);
     var elapsed = t.end();
     console.log('=', result + '');
     console.log('Exit', name, elapsed, 'ms');

@@ -2004,7 +2004,7 @@ function decodeSteps(input) {
       return e;
     };
     if (rule) {
-      if (Toy.catchAborts(() => { result = rule.apply(Toy.rules, args); })) {
+      if (Toy.catchAborts(() => { result = rule.apply(rule.info, args); })) {
         err = Toy.thrown;
       }
       if (result instanceof Error) {
