@@ -487,9 +487,11 @@ Expr.prototype._locateFree = function(name, path, paths) {
  * for the optional "andTypes" argument, if both are fully typed, this
  * also checks that the types are the same.  Since the user has very
  * little control over type variable names, these may differ provided
- * that the types are equivalent.
+ * that the types are equivalent.  If the further optional argument
+ * is truthy, the types must be identical, as when the compared terms
+ * are parts of the same top-level wff.
  */
-Expr.prototype.sameAs = function(other, andTypes) {
+Expr.prototype.sameAs = function(other, andTypes=false, exact=false) {
   // Based on the assumption that typed inputs are properly typed,
   // this only checks types of Atoms, because the types of the Atoms
   // determines all other types in the term.
@@ -506,7 +508,8 @@ Expr.prototype.sameAs = function(other, andTypes) {
         // match.  This satisfies the specification.
         const t1 = a.hasType();
         const t2 = b.hasType();
-        return !andTypes || !t1 || !t2 || t1.equiv(t2);
+        return (!andTypes || !t1 || !t2 ||
+                (exact ? t1.equal(t2) : t1.equiv(t2, map)));
       }
     } else if (c === Call) {
       return same(a.fn, b.fn) && same(a.arg, b.arg);
@@ -2347,6 +2350,10 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // handling of functions of more than one argument or infix operators.
 // A simple text format not dependent on styling options, usable for
 // keys in maps with Expr values.
+//
+// OOPS, this does not dump any type information, so it may conflate
+// terms that are not really the same.  It is not relied on by
+// deduction, so the flaw is non-fatal.
 // 
 //
 // subst(Expr replacement, String name)
@@ -2684,6 +2691,8 @@ Atom.prototype.toHtml = function() {
           : text);
 };
 
+// TODO: Consider whetheer it is worth fixing this to include type
+// information.
 Atom.prototype.dump = function() {
   return this.name;
 };
