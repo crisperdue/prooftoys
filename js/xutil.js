@@ -68,11 +68,11 @@ TypeEx.prototype.clone = function() {
 };
 
 /**
- * Tests if this type expression is the same as the given
- * other one, after possible renamings.  The second argument
- * if given is a Map of additional renamings to be honored.
- * Any name correspondences encountered here are added to
- * that optional Map argument.
+ * Tests if this type expression is the same as the given other one,
+ * after possible variable renamings.  The second argument if given is
+ * a Map of additional renamings to be honored, defaulting to a new
+ * empty Map.  Any name correspondences encountered here are added to
+ * the Map.
  */
 TypeEx.prototype.equiv = function(other, map) {
   const renames = map || new Map();
