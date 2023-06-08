@@ -985,11 +985,14 @@ function trimParens(text) {
  * desired ordering.
  */
 function sortMap(object, comparator) {
-  var list = [];
-  for (var key in object) {
-    list.push({key: key, value: object[key]});
+  // This method guarantees retention of insertion order
+  // of the object keys in ES6+.
+  const a = Object.getOwnPropertyNames(object);
+  for (let i=0; i < a.length; i++) {
+    const k = a[i];
+    a[i] = {key: k, value: object[k]};
   }
-  return list.sort(comparator);
+  return a.sort(comparator);
 }
 
 //// ABORTS AND ERRORS
