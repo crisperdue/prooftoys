@@ -574,11 +574,6 @@ var rules = {};
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
 //
-// using: if present, normally the equation or implication used for
-//   the rule, as for rewriters.  The equation may have conditions.
-//   When working forward the left side of the main equation must
-//   match the site to be operated on.
-//
 // inputSide: may be 'right' to indicate that the rule uses
 //   the converse equality (rewrites matching the right side of the
 //   equation rather than the left side).
