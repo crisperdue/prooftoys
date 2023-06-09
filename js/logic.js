@@ -1551,11 +1551,11 @@ declare(
        const goal = editor.goalStatement;
        const gasms = goal && goal.getAsms();
        const match = a => a.sameAs(term);
-       const isAsm = (asms && !asms.scanConj(a => a == term) &&
+       const likeAsm = (asms && !asms.scanConj(a => a == term) &&
                       asms.scanConj(match));
        const inGoal = gasms && gasms.scanConj(match);
        const html =
-             (isAsm
+             (likeAsm
               ? '\u27ad <b>T</b> assumption'
               : inGoal
               ? '\u27ad <b>T</b> (goal assumption)'
