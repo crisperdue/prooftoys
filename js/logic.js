@@ -3789,6 +3789,7 @@ declare(
   // where the variable does not occur in the term nor elsewhere in
   // the step.  The arguments are a step and path to the assumption.
   //
+  // Inline version of removeLet.
   // TODO: Require an instance of the asm rather than a path.
   //
   // TODO: Probably generalize this to support assumptions of the
@@ -3803,7 +3804,8 @@ declare(
   //   such a predicate and x = <term> serving as the patten.
   //   Subsume removeLet and removeTypeAsm with that rule.
   {name: 'removeLet',
-    precheck: function(step, path_arg) {
+   precheck: function(step, path_arg) {
+     const let_ = Toy.let_;
       var path = Toy.asPath(path_arg);
       const term = step.get(path);
       // This check is a little loose because it does not compare
@@ -3870,8 +3872,10 @@ declare(
   // Removes an irrelevant type assumption at the target site, where v
   // is a variable.
   //
-  // TODO: Merge this into removeLet and rename as e.g. "removeIrrelevant".
+  // Inline version of removeTypeAsm.
   // TODO: Modify this to use a term rather than a path.
+  //
+  // TODO: Merge this into removeLet and rename as e.g. "removeIrrelevant".
   {name: 'removeTypeAsm',
     precheck: function(step, path_arg) {
       var path = Toy.asPath(path_arg);
@@ -4681,7 +4685,7 @@ declare(
    action2: function(step, path, eqn_arg, reduce=true) {
      const target = step.get(path);
      const schema = Toy.schemaPart(eqn_arg);
-     let map = target.matchSchema(schema);
+     const map = target.matchSchema(schema);
      if (!map) {
        return newError('Fact not applicable: {1}', eqn_arg);
      }
@@ -5211,6 +5215,8 @@ declare(
   // the F case is proved by breaking down the chain into smaller
   // chains until the occurrence of "c" is found.
   //
+  // Currently(?) has tests but no users.
+  //
   // TODO: At least simplify this to prove (and remember?) the
   // underlying tautology, and apply the tautology using tautInst.
   // Or generalize to lists of optionally negated disjuncts.
@@ -5286,6 +5292,8 @@ declare(
     action: function(conj, comparator) {
       var map = new Toy.TermMap();
       var infix = Toy.infixCall;
+      // This traverses a tree of conjunctions, inserting entries into
+      // the TermMap in left-to-right textual order.
       function transform(term) {
         if (term.isCall2('&')) {
           return infix(transform(term.getLeft()), '&',
@@ -5304,6 +5312,8 @@ declare(
       // the terms themselves.
       
       function compare(a, b) {
+        // Uncomment this line to prevent sorting of asms.
+        // return 0;
         return comparator(a.value, b.value);
       }
       var keepTermsInfo = Toy.sortMap(map.subst, compare);
@@ -5339,7 +5349,15 @@ declare(
       // which is not exactly desired, but convenient to do there.
       // See TODOs there for some ideas.
       var deduper =
-        rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
+          rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
+      /*
+      Around 60% of calls to this are no-ops ("Toy.same").
+      if (deduper.getLeft().sameAs(deduper.getRight())) {
+        Toy.same = (Toy.same || 0) + 1;
+      } else {
+        Toy.diffr = (Toy.diffr || 0) + 1;
+      }
+      */
       const deduped = rules.r1(step, '/left', deduper);
       const result = (deduped.getLeft().isConst('T')
                       ? rules.rewriteOnly(deduped, '', '(T => a) == a')

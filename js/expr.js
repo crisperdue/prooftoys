@@ -1941,7 +1941,8 @@ Expr.prototype.parentEqn = function(path) {
 /**
  * Returns an array of all of the operands of a chain of calls to a
  * binary operator.  If the current term is not a call to a binary
- * operator there are no such operands and this returns null.
+ * operator there are no such operands and this returns an empty
+ * array.
  *
  * If it is a binop call, this returns all operands of the chain of
  * calls to the same operator, from right to left, so always at least
@@ -1970,6 +1971,11 @@ Expr.prototype.chainTerms = function(chainOp) {
   return result;
 };
 
+/**
+ * Returns an array of Paths from this Expr to each of the operands of
+ * a chain of calls to the given chainOp, as for chainTerms, but
+ * returning paths rather than terms.
+ */
 Expr.prototype.chainPaths = function(chainOp) {
   const result = [];
   let node = this;
