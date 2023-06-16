@@ -2027,10 +2027,10 @@ function getTheorem(name) {
 //// UTILITY FUNCTIONS
 
 /**
- * Searches the list of equational facts in order for one that matches
- * a subexpression of the given step.  In particular, the part of the
- * step at path must match with the variable in the LHS of the fact
- * having the given name, which should occur exactly once in the
+ * Searches the given list of equational facts in order for one that
+ * matches a subexpression of the given step.  In particular, the part
+ * of the step at path must match with the variable in the LHS of the
+ * fact having the given name, which should occur exactly once in the
  * fact's LHS.
  *
  * If this finds such a fact it returns a function of no arguments
@@ -2046,12 +2046,16 @@ function getTheorem(name) {
  */
 function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
-    var schema = factExpansion(fact_arg).getMain().getLeft();
-    var info = step.matchSchemaPart(path, schema, name);
-    if (info) {
-      return function() {
-        return rules.rewrite(step, info.path, fact_arg);
-      };
+      const expn = (factExpansion(fact_arg) ||
+                    rules.tautology(fact_arg));
+      if (expn && !(expn instanceof Error)) {
+      var schema = expn.getMain().getLeft();
+      var info = step.matchSchemaPart(path, schema, name);
+      if (info) {
+        return function() {
+          return rules.rewrite(step, info.path, fact_arg);
+        };
+      }
     }
   });
 }
@@ -2435,8 +2439,9 @@ function addFact(info) {
     const mainFrees = goal.getMain().freeVarSet();
     const asmExtras = Toy.setDiff(asmFrees, mainFrees);
     if (asmExtras.size) {
-      console.warn(Toy.format('Excess free variables in assumptions: {1}',
-                              goal));
+      const warn = (template, goal) =>
+            console.warn(Toy.format(template, goal));
+      warn('Assumptions have free vars not in conclusion: {1}', goal);
     }
   }
 
@@ -2630,7 +2635,7 @@ function asFactProver(prover, goal) {
         // that could still be reconciled, but we are not that
         // ambitious at present.
         var proved = (rules.instMultiVars(result, subst2)
-                       .andThen('arrangeAsms'));
+                       .andThen('arrangeAsms'));  // XXX
         if (proved.matches(goal)) {
           return proved;
         }
