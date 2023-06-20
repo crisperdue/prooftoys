@@ -424,11 +424,13 @@ ProofEditor.prototype._initExercise = function(exName) {
   db.exercises.get(exName)
     .then(data => {
       console.log('Exercise in db:', data);
-      const steps =
-            data
-            ? Toy.decodeSteps(data.proofState)
-            : self.initialSteps;
-      self.setSteps(steps);
+      const decoded = data && Toy.decodeSteps(data.proofState);
+      if (decoded instanceof Error) {
+        self.stepEditor.report(decoded);
+        self.setSteps(self.initialSteps);
+      } else {
+        self.setSteps(decoded || self.initialSteps);
+      }
     });
   if (statement) {
     self.goalStatement = statement;
@@ -989,9 +991,22 @@ ProofEditor.prototype.openDoc = function(name) {
   // TODO: Check for possible active editing in another tab/window.
   if (proofData) {
     this.setEditable(true);
-    this.syncToDocName(name);
-    this.setSteps(Toy.decodeSteps(proofData.proofState));
-    return true;
+    const steps = Toy.decodeSteps(proofData.proofState);
+    if (steps instanceof Error) {
+      // Associate this proof editor with a new document
+      // with ".err" in the name.
+      const names = Toy.lsDocs();
+      const name = Toy.genDocName(`${name}.err`);
+      this.syncToDocName(name);
+      // TODO: Consider including the truncated list of steps in
+      //   the proof editor as well as reporting the error.
+      this.stepEditor.report(steps);
+      return false;
+    } else {
+      this.syncToDocName(name);
+      this.setSteps(steps);
+      return true;
+    }
   } else {
     return false;
   }
@@ -2040,7 +2055,7 @@ RuleMenu.prototype._update = function() {
       // variable.  This occurs very often when solving an algebra
       // problem.
       if (schema.isVariable() &&
-          schema.name.startsWith('$') &&
+          // schema.name.startsWith('$') &&
           !schema.matches(selection)) {
         return;
       }

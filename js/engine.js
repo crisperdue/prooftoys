@@ -607,6 +607,8 @@ var rules = {};
  * can be called before any theorems are proved.
  */
 function addRule(info) {
+  const fmt = Toy.format;
+
   var name = info.name;
   if (name && rules[name]) {
     console.warn('Inference rule with name', name,
@@ -705,7 +707,13 @@ function addRule(info) {
       if (rule.result instanceof Error) {
         // Abort if there is no statement!
         assert(statement, 'Failed to prove {1}');
-        console.error(Toy.format('Failed to prove {1}, asserting instead'));
+        if (name) {
+          console.error(fmt('Failed to prove {1}: {2}, asserting instead',
+                            name, statement));
+        } else {
+          console.error(fmt('Failed to prove {1}, asserting instead',
+                            statement));
+        }
         // Assert it on every use.
         return rules.assert(statement);
       }
@@ -1414,7 +1422,7 @@ function getResult(statement, mustProve) {
     info.inProgress = false;
   } finally {
     if (info.inProgress) {
-      console.error(new Error('Proof of fact failed' + statement));
+      console.error('Proof of fact failed: ' + statement);
       // Ensure that the proof is not in progress upon completion.
       info.inProgress = false;
     }
@@ -2618,6 +2626,13 @@ function asFactProver(prover, goal) {
       return rules.assert(goal);
     }
     var result = prover();
+    if (result instanceof Error) {
+      if (Toy.assertOnFailure) {
+        return rules.assert(goal);
+      } else {
+        abort('Failed to prove {1}.\nGot: {2}', goal, result);
+      }
+    }
     // Seek a substitution into the result that yields the goal.
     var subst = result.alphaMatch(goal);
     // TODO: Check that substitutions exist, but don't actually do
@@ -2733,6 +2748,10 @@ Toy.assertFacts = false;
 // This can be temporarily set to true to work around failures
 // of proofs that might obscure other bugs that need to be fixed.
 Toy.assertOnMismatch = false;
+
+// Set to true to assert facts whose proofs fail with an error.
+// The purpose is somewhat like assertOnMismatch.
+Toy.assertOnFailure = false;
 
 Toy.getStepCounter = getStepCounter;
 Toy.noSimplify = noSimplify;

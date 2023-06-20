@@ -1990,33 +1990,26 @@ function decodeSteps(input) {
                    : !result
                    ? fmt('No result from rule {1} with args {2}',
                          ruleName, args)
-                   : fmt('decodeSteps failed on rule {1} with args {2}',
+                   : fmt('Rule {1} failed with args: {2}',
                          ruleName, args));
-      console.log('Proof failed on step', i+',', 'status:');
+      console.error('Proof failed at', '' + stepTerm);
       outSteps.forEach((s, i) => console.log((i+1)+':', s.toString()));
       const e = Toy.newError({with: {steps: outSteps,
-                                   input: input,
-                                   cause: err}},
-                           '{1}', msg);
-      console.error(e.self || e);
+                                     input: input,
+                                     cause: err}},
+                             '{1}', msg);
+      // console.error(e.self || e);
       // This can be a good point to stop and debug.
-      debugger;
+      // debugger;
       return e;
     };
     if (rule) {
-      if (Toy.catchAborts(() => { result = rule.apply(rule.info, args); })) {
-        err = Toy.thrown;
-      }
-      if (result instanceof Error) {
-        err = result;
-      }
-      if (result && !err) {
+      result = Toy.try_(() => rule.apply(rule.info, args));
+      if (result instanceof Toy.Step) {
         outSteps.push(result);
+        continue;
       } else {
-        var done = false;
-        console.warn('To truncate the proof, set done = true');
-        debugger;
-        return done ? outSteps : errOut();
+        return errOut();
       }
     } else {
       return errOut()
@@ -2118,9 +2111,10 @@ function asProof(info) {
       const fullSteps =
             info.startsWith('(steps') ? info : `(steps ${info})`;
       const decoded = decodeSteps(fullSteps);
-      return (decoded instanceof Error
-              ? decoded
-              : decoded[decoded.length - 1]);
+      // Checking "instanceof Error" is hitting a JS VM bug here.
+      return (decoded instanceof Array
+              ? decoded[decoded.length - 1]
+              : decoded);
     }
   } else if (Array.isArray(info)) {
     return asProof(['(steps '].concat(info, ')').join('\n'));

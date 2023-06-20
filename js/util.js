@@ -64,6 +64,10 @@ if (!window._paq) {
 // exception reports from user's browsers, and use that as
 // a realistic basis for warning the user.  
 
+// In Chrome this sets the maximum depth of reported stack traces.
+// The default value has been 10.
+Error.stackTraceLimit = 100;
+
 // These browsers are known to be incompatible with Prooftoys.
 Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
 
@@ -1523,6 +1527,22 @@ function lsDocs() {
 }
 
 /**
+ * Generates and returns a document name not already in use,
+ * starting with the given base, followed by {base}.1, {base}.2,
+ * and so on.
+ */
+function genDocName(base) {
+  const names = lsDocs();
+  let n = 0;
+  let name;
+  do {
+    name = base + (n ? '.' + n : '');
+    n++;
+  } while (names.includes(name));
+  return name;
+}
+
+/**
  * Developer tool that searches through all Mathtoys docs in localStorage,
  * searching for the given regex pattern in the document proof state.
  * Returns an array of names of docs containing the pattern.
@@ -2866,6 +2886,7 @@ Toy.readDoc = readDoc;
 Toy.writeDoc = writeDoc;
 Toy.rmDoc = rmDoc;
 Toy.lsDocs = lsDocs;
+Toy.genDocName = genDocName;
 Toy.grepDocs = grepDocs;
 
 Toy.getSavedState = getSavedState;
