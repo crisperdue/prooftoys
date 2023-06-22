@@ -2153,8 +2153,9 @@ declare(
   // assumptions, e.g. "is real", "is integer", etc..  This also
   // differs from other simplifiers in that it also simplifies any
   // assumptions introduced by conditional facts in the facts list.
-  // Ensures the result has its assumptions arranged, and if the
-  // assumptions reduce to T, removes the assumptions entirely.
+  // Ensures the result has its assumptions arranged with arrangeAsms,
+  // and if the assumptions reduce to T, removes the assumptions
+  // entirely.
   {name: 'simplifyAsms',
     action: function(step, facts_arg) {
       const facts = facts_arg || Toy.asmSimplifiers;
@@ -5271,7 +5272,9 @@ declare(
   // Treats conj as a tree of conjunctions.  Equates it with a
   // deduplicated and "linearized" version, omitting occurrences of T.
   // The result will conform to the ordering of terms defined by the
-  // Array.sort comparator.
+  // Array.sort comparator, breaking ties with left-to-right textual
+  // order (translates into order of insertion into the TermMap
+  // and its subst.
   {name: 'conjunctionArranger',
     // Implemented by building an appropriate equivalence tautology,
     // proving it with rules.tautology, and instantiating.
@@ -5305,6 +5308,10 @@ declare(
           return map.addTerm(term);
         }
       }
+      // The schema is a tree of conjuncts where each conjunct is the
+      // variable for the term at the same location in conj, or T if
+      // the term in conj is T.  The result of applying map.subst to
+      // the schema will be exactly conj.
       var schema = transform(conj);
 
       // Create a list of the variables for terms that will go into the
@@ -5317,7 +5324,10 @@ declare(
         return comparator(a.value, b.value);
       }
       var keepTermsInfo = Toy.sortMap(map.subst, compare);
-      // The desired list of variables:
+      // This is the desired list of variables.  If the comparator
+      // is a no-op, it is in order of insertion into map.subst,
+      // so that substituting the terms back in keeps the original
+      // order of the first occurrence of each term.
       var keepTerms = keepTermsInfo.map(function(pair) { return pair.key; });
       var rewriter = Toy.infixCall(schema, '==',
                                    Toy.chainCall('&', keepTerms, T));
@@ -5327,11 +5337,11 @@ declare(
   },
 
   // Derives a step with assumptions deduplicated and ordered as by
-  // asmComparator, including removal of occurrences of T.  In some
-  // cases this can remove all assumptions and a top-level
-  // conditional, and in that case the meanings of /main paths into
-  // the step may not be as expected if the resulting step remains
-  // conditional, though this is an exceptional case.
+  // conjunctionArranger given Toy.asmComparator, including removal of
+  // occurrences of T.  In some cases this can remove all assumptions
+  // and a top-level conditional, and in that case the meanings of
+  // /main paths into the step may not be as expected if the resulting
+  // step remains conditional, though this is an exceptional case.
   //
   // TODO: Attempt to eliminate T by some other means where
   //   appropriate.

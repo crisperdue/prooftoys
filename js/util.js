@@ -986,7 +986,8 @@ function trimParens(text) {
  * Sort a map (object), returning a list of objects with key and value
  * properties.  The comparator should accept two plain objects with
  * key and value properties, returning numbers as appropriate to their
- * desired ordering.
+ * desired ordering.  The items passed to "sort" have their "key"
+ * properties in the same order as their insertion into the object.
  */
 function sortMap(object, comparator) {
   // This method guarantees retention of insertion order
