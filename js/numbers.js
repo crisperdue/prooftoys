@@ -259,8 +259,8 @@ declare(
      '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => c))))',
      '(3 assume (t (y = (minv x))))',
      '(4 rewriteFrom (s 2) (path "/right/arg") (s 3))',
-     '(5 rewrite (s 4) (path "/left/left/left/right") (t ((x = y) == (y = x))))',
-     '(6 removeLet (s 5) (path "/left/left/right"))'
+     '(5 rewrite (s 4) (path "/left/left/right") (t ((x = y) == (y = x))))',
+     '(6 removeLet (s 5) (path "/left/right"))'
      ]
    },
 
@@ -274,7 +274,7 @@ declare(
      '(5 display (s 3))',
      '(6 rewriteFrom (s 5) (path "/right/left/right") (s 4))',
      '(7 display (s 6))',
-     '(8 removeLet (s 7) (path "/left/left/right"))'
+     '(8 removeLet (s 7) (path "/left/right"))'
      ]
    },
 
@@ -473,11 +473,11 @@ declare(
        '(9 rewrite (s 8) (path "/right/right/left") (t (((x != 0) & (R x)) => ((x * (minv x)) = 1))))',
        '(10 rewrite (s 9) (path "/right/right") (t ((R a) => ((1 * a) = a))))',
        '(11 display (s 10))',
-       '(12 trueBy1 (s 11) (path "/left/left/left/right") (s 3))',
-       '(13 rewrite (s 12) (path "/left/left/left/left") (t ((x != y) == (not (x = y)))))',
+       '(12 trueBy1 (s 11) (path "/left/right") (s 3))',
+       '(13 rewrite (s 12) (path "/left/left/left/right") (t ((x != y) == (not (x = y)))))',
        // TODO: Disallow selection of asms by their location.
        '(14 rewrite (s 13) (path "") (t (((((p & (not q)) & a) & b) => r) == (((p & a) & b) => (q | r)))))',
-       '(15 rewrite (s 14) (path "/left/left/left") (t ((x = y) == (y = x))))',
+       '(15 rewrite (s 14) (path "/left/left/right") (t ((x = y) == (y = x))))',
        '(16 assume (t (x = 0)))',
        '(17 rewrite (s 16) (path "/right") (t ((x = y) == (y = x))))',
        '(18 fact "0*y=0")',
@@ -524,8 +524,8 @@ declare(
        '(20 instantiateVar (s 18) (path "/right/left/left/arg") (t z))',
        '(21 instantiateVar (s 20) (path "/right/left/right/arg") (t x))',
        '(22 instantiateVar (s 21) (path "/right/left/left/arg") (t y))',
-       '(23 rewrite (s 22) (path "/left") (t ((a & b) == (b & a))))',
-       '(24 p2 (s 19) (s 23) (t (((a => (p => q)) & (a => (q => p))) => (a => (p == q)))))'
+       // '(23 rewrite (s 22) (path "/left") (t ((a & b) == (b & a))))',
+       '(23 p2 (s 19) (s 22) (t (((a => (p => q)) & (a => (q => p))) => (a => (p == q)))))'
        ]
      },
 
@@ -2363,7 +2363,7 @@ declare(
      '(5 display (s 3))',
      '(6 rewriteFrom (s 5) (path "/right/left/right") (s 4))',
      '(7 display (s 6))',
-     '(8 removeLet (s 7) (path "/left/left"))'
+     '(8 removeLet (s 7) (path "/left/right"))'
      ]
    },
 
@@ -3547,11 +3547,11 @@ declare(
     (9 assumedEq (s 8) (path "/right/left/left") (t (x = y)))
     (10 rewrite (s 9) (path "/right/left") (t ((R a) => ((a + a) = (2 * a)))))
     (11 divideBothByThis (s 10) (path "/right/right"))
-    (12 rewrite (s 11) (path "/left/left/left/left/left")
+    (12 rewrite (s 11) (path "/left/left/right")
         (t ((a != b) == (not (a = b)))))
-    (13 rewrite (s 12) (path "/left/left/left/right/arg")
+    (13 rewrite (s 12) (path "/left/left/right/arg")
         (t (((R a) & (R b)) => (((a - b) = 0) == (a = b)))))
-    (14 assumed (s 13) (path "/left/left/left/right/arg"))
+    (14 assumed (s 13) (path "/left/left/right/arg"))
     (15 simplifySite (s 14) (path "/left"))`
   }
 );
@@ -3824,8 +3824,8 @@ declare
         (3 fact "(((y = x) & (R y)) => (not (y < x)))")
         (4 and (s 1) (s 3))
         (5 and (s 4) (s 2))
-        (6 rewrite (s 5) (path "/main/left/right/left/left") (t ((x = y) == (y = x))))
-        (7 tautologous (t ((((((R x) & (R y)) => (((x < y) | (y < x)) | (x = y))) & (((x = y) & (R y)) => (not (y < x)))) & ((((x < y) & (R x)) & (R y)) => (not (y < x)))) => (((R x) & (R y)) => (((x < y) | (x = y)) == (not (y < x)))))))
+        (6 rewrite (s 5) (path "/main/left/right/left/right") (t ((x = y) == (y = x))))
+        (7 tautologous (t ((((((R x) & (R y)) => (((x < y) | (y < x)) | (x = y))) & (((R y) & (x = y)) => (not (y < x)))) & ((((x < y) & (R x)) & (R y)) => (not (y < x)))) => (((R x) & (R y)) => (((x < y) | (x = y)) == (not (y < x)))))))
         (8 forwardChain (s 6) (s 7))
         (9 rewrite (s 8) (path "/right/left") (t (((x < y) | (x = y)) == (x <= y))))
         (10 rewrite (s 9) (path "/right/right/arg") (t ((y < x) == (x > y))))`

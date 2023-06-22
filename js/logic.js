@@ -5319,9 +5319,8 @@ declare(
       // the terms themselves.
       
       function compare(a, b) {
-        // Uncomment this line to prevent sorting of asms.
-        // return 0;
-        return comparator(a.value, b.value);
+        // TODO: Remove the sorting here altogether.
+        return 0;
       }
       var keepTermsInfo = Toy.sortMap(map.subst, compare);
       // This is the desired list of variables.  If the comparator
@@ -5901,10 +5900,11 @@ declare(
       '(2 instantiateVar (s 1) (path "/right/right/left") (t y))',
       '(3 assume (t ((the1 p) = (f x))))',
       '(4 rewriteFrom (s 2) (path "/right/right/right") (s 3))',
-      '(5 rewrite (s 4) (path "/left/left") (t ((x = y) == (y = x))))',
+      '(5 rewrite (s 4) (path "/left/right") (t ((x = y) == (y = x))))',
       '(6 rewrite (s 5) (path "/right/right") (t ((x = y) == (y = x))))',
       '(7 display (s 6))',
-      '(8 instantiateVar (s 7) (path "/left/left/right/arg") (t (p x)))'
+      '(8 instantiateVar (s 7) (path "/left/right/right/arg") (t (p x)))',
+      '(9 rewriteOnly (s 8) (path "/left") (t (a & b == b & a)))'
     ]
    },
 

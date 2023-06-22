@@ -2439,7 +2439,7 @@ var testCase = {
     function rule(term) {
       return rules.conjunctionArranger(term, Toy.asmComparator);
     }
-    checkRewriter('((R x) & (R y))', '(R y) & (R x)', rule);
+    checkRewriter('((R y) & (R x))', '(R y) & (R x)', rule);
     checkRewriter('(R x)', '(R x) & (R x)', rule);
     checkRewriter('(R x)', 'R x & T', rule);
     checkRewriter('((R x) & (R y))', 'R x & R y & R x', rule);
@@ -2507,7 +2507,7 @@ var testCase = {
                 rules.addToBoth(eqn, '', x5));
     assertEqual('((R x) => ((x - (x + 5)) = (x - (x + 5))))',
                 rules.subtractFromBoth(eqn, '', x5));
-    assertEqual('((((x + 5) != 0) & (R x)) => ((x * (x + 5)) = (x * (x + 5))))',
+    assertEqual('(((R x) & ((x + 5) != 0)) => ((x * (x + 5)) = (x * (x + 5))))',
                 rules.multiplyBoth(eqn, '', x5));
     assertEqual('((((x + 5) != 0) & (R x)) => T)',
                 rules.divideBoth(eqn, '', x5));
