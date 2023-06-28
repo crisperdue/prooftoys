@@ -2087,18 +2087,19 @@ function dumpProof(proofEditor) {
 }
 
 /**
- * Coerces a value into a proof (that can be presented to the user).
- * Given a string that is a sequence of step descriptions, optionally
- * enclosed in "(steps ... )", or an array of step description
- * strings, returns a function that returns an array of ordinary proof
- * steps ready to render into a proof.  If given a function, the
- * function should return an array of proved steps.
+ * Coerces a value into a proof function.  Given a string that is a
+ * sequence of step descriptions, optionally enclosed in "(steps
+ * ... )", or an array of step description strings, returns a function
+ * that returns an ordinary proof step ready to render into a proof.
+ * In case of an Error return from decodeSteps, the function will
+ * return that error.  If given a function, the function should return
+ * an ordinary proved step (or an Error).
  *
- * Adding the elements of the result to a proof editor should be done
- * with addDerivation, to be sure the proof display includes needed
+ * Adding the result to a proof editor should be done with
+ * addDerivation, to be sure the proof display includes needed
  * dependencies.
  *
- * In case of an Error return from decodeSteps, returns that error.
+ * This does not set up caching of the proof result.
  */
 function asProof(info) {
   const type = typeof info;

@@ -3795,7 +3795,7 @@ function neverWhenBound(rule) {
 
 // Methods.
 
-// The result of this method is very similar to to toString, but this
+// The result of this method is very similar to toString, but this
 // uses the "name" property, so aliases are treated as the same thing.
 // Intended for use in identifying facts that match terms in steps.
 Expr.prototype.toKey = function() {

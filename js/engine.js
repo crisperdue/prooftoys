@@ -1211,13 +1211,14 @@ var _factsByKey = new Map();
 // with an empty set of assumptions.
 //
 // A reference resolves to a recorded fact if and only if there is
-// exactly one such fact for which: 1) the consequent of the reference
-// exactly matches the consequent of the fact, and 2) the assumptions
-// of the reference, taken as a set, are a subset or equal to the set
-// of assumptions of the fact that is referred to.  The matching
-// allows for changes of variable names between the recorded fact and
-// the reference, provided that all free variables in the assumptions
-// are also free in the consequent.
+// exactly one fact for which: 1) the consequent of the reference
+// exactly matches the consequent of the fact after standardizing
+// names of the free variables of each, and 2) the assumptions of the
+// reference, taken as a set, are a subset or equal to the set of
+// assumptions of the fact that is referred to.  This matching allows
+// for changes of variable names between the recorded fact and the
+// reference, provided that all free variables in the assumptions are
+// also free in the consequent.
 
 /**
  * Map from string identifying the main part of a statement to an
@@ -1470,10 +1471,11 @@ const noTerms = new Toy.TermSet();
  * "stmt" with the exact given statement, and one more property
  * internal to factExpansion.
  *
- * The standardVars is a wff with standardized variables, with the
- * main part first if the input is a conditional.  The asmSet is a
- * TermSet of the standardized wff's assumptions, the key is its "fact
- * key", and the stmt is the wff statement it comes from.
+ * The standardVars property is the stmt wff with standardized
+ * variables, but with the main part first if the input is a
+ * conditional.  The asmSet is a TermSet of the standardized wff's
+ * assumptions, the key is its "fact key", and the stmt is the wff
+ * statement it comes from.
  *
  * A fact key is a string that represents the main body of the wff,
  * with all variables of that part replaced with standard variables so
