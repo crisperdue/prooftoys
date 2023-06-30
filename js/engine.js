@@ -887,8 +887,8 @@ function addRule(info) {
  * Takes an arbitrary number of arguments, each in the form
  * accepted by addRule, and performs addRule on each.
  *
- * Prefer this over addRule, addRules, addFact, or addFactsMap for
- * adding new facts, rules, and definitions.
+ * Prefer this over addRule, addRules, or addFact for adding new
+ * facts, rules, and definitions.
  */
 function declare(...declarations) {
   for (const decl of declarations) {
@@ -2357,24 +2357,6 @@ var basicSimpFacts = [
 
 //// Support for adding facts
 
-/**
- * Treats each key in the map as a synopsis of a mathematical
- * statement, and treats its value as a function to prove the
- * statement.  Uses addRule to add each statement and its proof
- * function to the internal database of provable facts.  Applies
- * mathParse to the statement.
- *
- * TODO: Eventually support processing of the synopsis by other than
- *   mathParse, e.g. based on an additional property in the info.
- */
-function addFactsMap(map) {
-  for (var synopsis in map) {
-    var info = map[synopsis];
-    info.statement = Toy.mathParse(synopsis);
-    addRule(info);
-  }
-}
-
 // Object / set of property names supported in fact info data, used
 // for validation of fact properties.  See addFact.
 var factProperties = {
@@ -2401,10 +2383,10 @@ var factProperties = {
  * already added to the info as a synopsis property.  Can use the
  * synopsis property to generate a goal and the proof property as the
  * prover.  Top-level code, as in files of theorems, definitions, and
- * inference rules, should use addRule (or addFactsMap) as they
- * support rules of inference,and do additional useful work such as
- * automatically adding appropriate swapped facts.  The goal as stored
- * in the database has type information.
+ * inference rules, should use addRule as it supports rules of
+ * inference,and do additional useful work such as automatically
+ * adding appropriate swapped facts.  The goal as stored in the
+ * database has type information.
  *
  * Returns the fully-processed "info".
  *
@@ -2779,7 +2761,6 @@ Toy.addDefnFacts = addDefnFacts;
 Toy.resolveToFactInfo = resolveToFactInfo;
 Toy.resolveToFact = resolveToFact;
 Toy.addFact = addFact;
-Toy.addFactsMap = addFactsMap;
 Toy.isRecordedFact = isRecordedFact;
 Toy.proveResult = proveResult;
 Toy.getResult = getResult;
