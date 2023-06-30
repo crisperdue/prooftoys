@@ -2598,7 +2598,8 @@ declare(
                   .andThen('simplifySite', '/main/right')
                   .andThen('extractHyp', 'a - c = b - c'))
       var conj = rules.makeConjunction(forward, back);
-      return rules.rewriteOnly(conj, '/main', '(p => q) & (q => p) == (p == q)');
+      return rules.rewriteOnly(conj, '/main',
+                               '(p => q) & (q => p) == (p == q)');
     }
   },
 
@@ -2618,13 +2619,13 @@ declare(
     }
   },
 
-   {statement: 'c != 0 => (a = b == a * c = b * c)',
-    desimplifier: true,
+   {statement: 'c != 0 => (a * c = b * c == a = b)',
+    simplifier: true,
     proof: function() {
-      var forward = (rules.assume('a = b')
+      var forward = rules.fact('c != 0 => (a * c = b * c => a = b)');
+      var back = (rules.assume('a = b')
                      .andThen('applyToBothWith', '*', 'c')
                      .andThen('rewriteOnly', '', 'a == T => a'));
-      var back = rules.fact('c != 0 => (a * c = b * c => a = b)');
       var conj = rules.makeConjunction(forward, back);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
       var result = rules.rewriteOnly(conj, '/main', taut);
