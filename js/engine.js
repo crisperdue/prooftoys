@@ -1406,25 +1406,33 @@ function getResult(statement, mustProve) {
   }
   var info = resolveToFactInfo(statement);
   assert(info, 'Not a recorded fact: {1}', statement);
+  return getResult0(info, mustProve);
+}
+
+/**
+ * Same as getResult, but the argument is a factInfo.
+ */
+function getResult0(info, mustProve) {
   // TODO: Consider more precise checking of the result of the lookup.
   if (info.proved) {
     return info.proved;
   }
+  const goal = info.goal;
   var prover = info.prover;
   if (Toy.assertFacts && !mustProve) {
-    var result = rules.assert(info.goal);
+    var result = rules.assert(goal);
     return result;
   }
+  assert(!info.inProgress, 'Circularity proving {1}', info.goal);
   try {
     info.inProgress = true;
     // Get the proved result of the fact.
     info.proved = prover();
-    assert(info.proved.isProved(), 'Proof failed: {1}', statement);
+    assert(info.proved.isProved(),
+           'Proof of {1} failed;\n  got {2}', goal, info.proved);
     info.inProgress = false;
   } finally {
     if (info.inProgress) {
-      console.error('Proof of fact failed: ' + statement);
-      // Ensure that the proof is not in progress upon completion.
       info.inProgress = false;
     }
   }
