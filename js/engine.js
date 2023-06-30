@@ -1503,8 +1503,8 @@ function getResInfo(stmt) {
       // Uncomment this line to get the warnings back.
       // console.warn('Deprecated: resInfo of string:', stmt);
     }
-    // TODO: Fix higher-level code to do the parsing, so different
-    //   type assumptions and such can be inserted at that level.
+    // TODO: Do the parsing in client code so different
+    //   type assumptions and such can be inserted there.
     const wff = mathParse(stmt);
     const main = wff.getMain();
     const hasAsms = wff.isCall2('=>');
@@ -1521,8 +1521,6 @@ function getResInfo(stmt) {
     const asmSet = (hasAsms
                     ? Toy.makeConjunctionSet(standard.getRight())
                     : noTerms);
-    // Uses toKey so that aliases, in particular "==" for "=", are
-    // treated the same.
     const key = (hasAsms ? standard.getLeft() : standard).toKey();
     const info = {key: key, asmSet: asmSet,
                   // TODO: Consider flipping this back to a conditional
