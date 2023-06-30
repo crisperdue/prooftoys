@@ -1256,7 +1256,7 @@ declare(
     inputs: {reducible: 1},
     isRewriter: true,
     menuGen: function(ruleName, step, term) {
-      if (term) {
+      if (term && term instanceof Call && term.fn instanceof Lambda) {
         return Toy.format('apply function of {1}', term.fn.bound);
       }
     },
