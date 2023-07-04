@@ -2594,6 +2594,9 @@ declare(
     action: function(b, map, reduceFns) {
       assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
+      if (Toy.isEmpty(map)) {
+        return b.justify('instMultiVars', arguments, [b]);
+      }
       var isEqn = b.isCall2('=');
       // Ensure that the step is a (pure) equation.
       var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
@@ -5605,11 +5608,9 @@ declare(
         // Behavior of "fact" is inline.
         return synopsis;
       }
-      // Currently rules.fact parses any string synopsis
-      // with mathParse.
       const wff = mathParse(synopsis);
       const factInfo = resolveToFactInfo(wff);
-      // Try ordinary proved facts.
+      // Try ordinary registered facts.
       if (factInfo) {
         var fact = Toy.getResult(factInfo.goal);
         // TODO: Try to compute the map more efficiently by
@@ -6309,5 +6310,6 @@ const tautologyCounts = Toy.tautologyCounts = new Map();
 Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
 Toy.simplifyStep = simplifyStep;
 Toy.canRewrite = canRewrite;
+Toy._factMap = _factMap;
 
 }();
