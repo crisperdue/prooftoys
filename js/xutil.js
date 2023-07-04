@@ -2119,10 +2119,8 @@ function asProof(info) {
     }
   } else if (Array.isArray(info)) {
     return asProof(['(steps '].concat(info, ')').join('\n'));
-  } else if (typeof info === 'function') {
-    return info();
   } else {
-    return new Error(`Not a proof: ${info}`);
+    abort(`Not a proof: ${info}`);
   }
 }
 
