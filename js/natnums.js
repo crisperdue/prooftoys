@@ -220,27 +220,26 @@ Toy.exercise(
   {statement: '@NN n => 0 + n = n',
    proof: `(1 goal (t ((0 + n) = n)))
            (2 induct (s 1) (path "/left") "n")
-           (3 rewrite (s 2) (path "/left/right/left")
-            (t ((NN a) => ((a + 0) = a))))
-           (4 rewrite (s 3) (path "/left/left/left/left") (t ((x = x) == T)))
-           (5 rewrite (s 4) (path "/left/left/left/right/left")
-            (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
-           (6 rewrite (s 5) (path "/left/left/left")
-            (t (((x = y) => ((f x) = (f y))) == T)))
-           (7 rewrite (s 6) (path "/left/left") (t (NN 0)))`,
+           (3 simplifySite (s 2) (path "/left/right"))
+           (4 rewrite (s 3) (path "/left/right") (t (NN 0)))
+           (5 rewrite (s 4) (path "/left/right/right/left")
+              (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+           (6 rewrite (s 5) (path "/left/left/right")
+              (t (((x = y) => ((f x) = (f y))) == T)))
+           (7 rewrite (s 6) (path "/left/right") (t (NN 0)))`,
    simplifier: true,
   },
   {exertion: 'add1'},
 
   {statement: '@NN a & NN b => NN (a + b)',
-   proof: `(1 tautologous (t ((NN (a + b)) => (NN (a + b)))))
+   proof: `(1 goal (t (NN (a + b))))
            (2 induct (s 1) (path "/left") "b")
-           (3 rewrite (s 2) (path "/left/left/left/right/arg")
-             (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
-           (4 rewrite (s 3) (path "/left/left/left/left/right/arg")
-             (t ((NN a) => ((a + 0) = a))))
-           (5 rewrite (s 4) (path "/left/left/left/left")
-             (t (((NN n) => (NN (succ n))) == T)))
+           (3 rewrite (s 2) (path "/left/left/right/right/arg")
+              (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+           (4 rewrite (s 3) (path "/left/left/left/left/right")
+              (t (((NN n) => (NN (succ n))) == T)))
+           (5 rewrite (s 4) (path "/left/left/left/right/arg")
+              (t ((NN a) => ((a + 0) = a))))
            (6 removeTypeAsm (s 5) (path "/left/right"))`},
   {exertion: 'add1.5'},
 
@@ -303,23 +302,64 @@ Toy.exercise(
    proof:
    `(1 goal (t (((x + y) = 0) => (y = 0))))
     (2 induct (s 1) (path "/left") "y")
-    (3 rewrite (s 2) (path "/left/right/right") (t ((x = x) == T)))
-    (4 simplifySite (s 3) (path "/left/left/left"))
-    (5 rewrite (s 4) (path "/left/left/right/right/left/left")
+    (3 rewrite (s 2) (path "/left/left/right/right/left/left")
        (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
-    (6 rewrite (s 5) (path "/left/left/left/left/right/left")
+    (4 rewrite (s 3) (path "/left/left/left/left/right/right/left")
        (t ((NN n) => (((succ n) = 0) == F))))
-    (7 simplifySite (s 6) (path "/left/left/left/left"))
-    (8 rewrite (s 7) (path "/left/left/left/left")
+    (5 simplifySite (s 4) (path "/left"))
+    (6 rewrite (s 5) (path "/left/right")
        (t (((NN a) & (NN b)) => (NN (a + b)))))
-    (9 removeTypeAsm (s 8) (path "/left/left/left"))`,
+    (7 removeTypeAsm (s 6) (path "/left/left/right"))`
   },
 
   {exertion: 'addxbonus',
    statement: '@NN x & NN y => (x + y = 0 == x = 0 & y = 0)'
   },
+
+  {exertion: 'CountryMusic',
+   statement:
+   'forall {x. Rock x | Country x} & exists {x. not (Rock x)} \
+     => exists {x. Country x}',
+   proof:
+   `(1 goal (t (exists {x. (Country x)})))
+    (2 rewrite (s 1) (path "/left")
+       (t (((forall {x. ((p x) => (q x))}) & (exists p)) => (exists q))))
+    (3 matchTerm (s 2) (path "/left/left")
+       (t (exists {x. (not (Rock x))})))
+    (4 rewrite (s 3) (path "/left/right/arg/body")
+       (t (((not a) => b) == (a | b))))`,
+  },
 );
 
+  /*
+(steps
+(1 goal (t (((x + y) = 0) == ((x = 0) & (y = 0)))))
+(2 rewrite (s 1) (path "/left") (t ((a == b) == ((a => b) & (b => a)))))
+(3 assumePart (s 2) (path "/left/left/right"))
+(4 assumePart (s 2) (path "/left/left/left/left"))
+(5 rewriteFrom (s 3) (path "/left/left/left") (s 4))
+(6 rewriteFrom (s 5) (path "/left/left/left/right") (s 4))
+(7 simplifySite (s 6) (path "/left/left/left"))
+(8 rewrite (s 7) (path "/left/right") (t (NN 0)))
+(9 rewrite (s 8) (path "") (t (a == (a == T))))
+(10 rewriteFrom (s 2) (path "/left/left") (s 9))
+(11 assumePart (s 10) (path "/left/right"))
+(12 fact "@NN x & NN y => (x + y = 0 => y = 0)")
+(13 andAssume (s 12) (t ((x + y) = 0)))
+(14 assumed (s 13) (path "/right/left"))
+(15 simplifySite (s 14) (path "/right"))
+(16 rewrite (s 15) (path "/right") (t (a == (a == T))))
+(17 display (s 16))
+(18 rewriteFrom (s 11) (path "/left/right") (s 17))
+(19 rewrite (s 17) (path "") (t (a == (a == T))))
+(20 assumeExplicitly (t (((((y + x) = 0) & (NN y)) & (NN x)) => ((x = 0) == T))))
+(21 rewriteFrom (s 20) (path "/left") (s 19))
+(22 rewriteFrom (s 18) (path "/left/left/left/right") (s 21))
+(23 rewrite (s 22) (path "/left/left/left/right/left") (t (((NN x) & (NN y)) => ((x + y) = (y + x)))))
+(24 extractHyp (s 23) (t ((x + y) = 0)))
+(25 rewriteFrom (s 10) (path "/left") (s 24))
+)
+*/
 // Define 1 = succ 0
 
 // Addition World levels:  
