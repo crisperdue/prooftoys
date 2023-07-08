@@ -227,6 +227,18 @@ function asMap(object) {
 }
 
 /**
+ * Converts an array of keys and an array of values into a Map
+ * from key to value
+ */
+function mapify(keys, values) {
+  const map = new Map();
+  for (let i = 0; i < keys.length; i++) {
+    map.set(keys[i], values[i]);
+  }
+  return map;
+}
+
+/**
  * Builds and returns an object with no prototype and properties taken
  * from the arguments, an alternating sequence of string keys and
  * values.  The argument list length must be even.
@@ -2840,6 +2852,7 @@ Toy.isEmpty = isEmpty;
 Toy.mapSize = mapSize;
 Toy.configure = configure;
 Toy.asMap = asMap;
+Toy.mapify = mapify;
 Toy.ownProperties = ownProperties;
 Toy.object0 = object0;
 Toy.removeAll = removeAll;
