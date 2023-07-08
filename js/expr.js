@@ -61,8 +61,12 @@ function assertEqn(expr) {
 /**
  * TermSet and TermMap identify terms by their "dump"
  * as a string.
+ *
+ * TODO: Dump does not distinguish terms by type.
+ *   Consider making it do so.
  */
 function identifyTerm(term) {
+  // TODO: Eliminate term.memos in favor of a WeakMap.
   var ident = term.memos.ident;
   if (ident) {
     return ident;
@@ -982,12 +986,11 @@ Expr.prototype.unmappedVars = function(map) {
  * substitution ("alpha conversion") that maps free variable names in
  * this to Atom objects in the Expr.  Applying the substitution to this
  * Expr results in an Expr that "matches" the Expr argument of this
- * method.
+ * method.  This does not attempt to match types.
  */
 Expr.prototype.alphaMatch = function(expr_arg) {
   var expr = termify(expr_arg);
   var subst = expr.matchSchema(this);
-  var result = false;
   if (!subst) {
     return false;
   }
@@ -2360,6 +2363,8 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // OOPS, this does not dump any type information, so it may conflate
 // terms that are not really the same.  It is not relied on by
 // deduction, so the flaw is non-fatal.
+//
+// Internal calls accept a Bindings object as an argument.
 // 
 //
 // subst(Expr replacement, String name)
