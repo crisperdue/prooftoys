@@ -1006,7 +1006,7 @@ Expr.prototype.reIndent = function(depth, portWidth) {
     // The approximate padding calculation here could be replaced by
     // insertion of invisible text that is the prefix needed before
     // any additional indentation.
-    const $span = $('<span class=linebreak>').css({paddingRight: depth + 'ch'});
+    const $span = $('<span class=linebreak>').css({paddingRight: depth + 'em'});
     $(term.node).before('<br class=linebreak>', $span);
   };
   const pw = portWidth;
