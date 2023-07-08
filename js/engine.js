@@ -618,10 +618,12 @@ function addRule(info) {
 
   info.labels = processLabels(info.labels);
 
+  // DEFINITIONS
   if (info.definition) {
     definition(info.definition);
     return;
   }
+
   var statement = info.statement || info.goal;
   if (info.statement && info.goal) {
     console.warn('Fact has both statement and goal', info.goal.toString());
@@ -635,16 +637,21 @@ function addRule(info) {
   // provably true), coerce the statement to an Expr if given as a
   // string.
   if (typeof statement === 'string') {
+    // TODO: Try to avoid using mathParse here.
     statement = info.statement = Toy.mathParse(statement);
   }
+
   let proof;
   if (info.proof) {
     assert(!info.action, 'Both proof and action for {1}', name);
     proof = check(Toy.asProof(info.proof));
   }
+
   if (statement) {
+    // A statement or goal was given.
     if (!proof) {
-      // If there is a statement but no proof, just assert the statement.
+      // If there is a statement but no proof, set up a proof that
+      // asserts the statement.
       proof = function() {
         return rules.assert(statement);
       }
@@ -652,7 +659,10 @@ function addRule(info) {
         console.warn('No proof for', name || statement.toUnicode());
       }
     }
-    
+
+    // Now statement and proof are both initialized.
+    // We will now add a fact and potentially a swapped fact.
+
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
     //
@@ -679,19 +689,15 @@ function addRule(info) {
     if (!properties.noSwap) {
       addSwappedFact(properties);
     }
-    // There is a proof but no name, so we are done.
+    // There is no name, so we are done.
     if (!name) {
       return;
     }
   }
-  // This will become the "main function" -- the action or proof property
-  // with user-written code.
+
   let main = proof;
+
   if (proof) {
-    // There is a proof _and_ a name.
-    // 
-    // TODO: Merge the proof code here with the similar code
-    //   in factProverWrapper.
     rule = function() { 
       if (rule.result === undefined) {
         const info = resolveToFactInfo(statement);
@@ -2600,7 +2606,8 @@ function addSwappedFact(info) {
  * with the goal, and raises an error if it cannot make the main part
  * match exactly.
  *
- * Internal to addFact.
+ * This supports rules.fact and rules like rewrite that accept a fact
+ * statement.  Internal to addFact.
  */
 function asFactProver(prover, goal) {
   assert(!prover || typeof prover === 'function',
@@ -2633,6 +2640,8 @@ function asFactProver(prover, goal) {
     } else {
       // Try matching the main parts of the result and goal.
       // Reorder any assumptions as needed.
+      //
+      // TODO: Review this bit of code!!
       var subst2 = result.getMain().alphaMatch(goal.getMain());
       if (subst2) {
         // The main parts match up to change of variables.
