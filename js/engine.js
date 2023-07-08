@@ -643,7 +643,11 @@ function addRule(info) {
 
   let proof;
   if (info.proof) {
-    assert(!info.action, 'Both proof and action for {1}', name);
+    // There is a proof.
+    assert(statement, 'Rule {1} has proof, needs statement.', name);
+    assert(!info.action && !info.action2,
+           'Both proof and action for {1}', name);
+    // Coerce the proof to a proof function.
     proof = check(Toy.asProof(info.proof));
   }
 
@@ -656,7 +660,7 @@ function addRule(info) {
         return rules.assert(statement);
       }
       if (!info.axiom) {
-        console.warn('No proof for', name || statement.toUnicode());
+        console.warn('No proof, asserting', name || statement.toUnicode());
       }
     }
 
@@ -722,6 +726,7 @@ function addRule(info) {
         }
         // Assert it on every use.
         return rules.assert(statement);
+
       }
       // TODO: Handle mismatches here as in asFactProver.
       if (statement && !rule.result.matches(statement)) {
@@ -734,11 +739,13 @@ function addRule(info) {
       }
       return rule.result.justify(name, []);
     };
+    
     // Describe theorems as "theorem" by default.
     // The theorem name will be added as ruleName into the tooltip.
     if (!('description' in info)) {
       info.description = 'theorem ' + name
     }
+
   } else {
     //
     // It is a rule of inference, not an axiom, theorem, or fact.
@@ -805,15 +812,15 @@ function addRule(info) {
       // TODO: Consider communicating through the "this" argument
       //   to the main rule instead of the global variable, e.g.
       //   this.precheck.
-      rule = function(_args) {
-        checker.apply(null, arguments);
+      rule = function( ...args) {
+        checker.apply(null, args);
         const checked = Toy._actionInfo;
         return (checked && !(checked instanceof Error)
-                ? main.apply(info, arguments)
+                ? main.apply(info, args)
                 : checked instanceof Error
                 ? abort(checked)
                 // Here checked is falsy.
-                : abort('Rule {1} not applicable', name));
+                : abort('Rule {1} not applicable to {2}', name, args.$$));
       }
       // Set properties on the outer action to give access to the
       // main from the the precheck.
@@ -2444,9 +2451,7 @@ function addFact(info) {
     const mainFrees = goal.getMain().freeVarSet();
     const asmExtras = Toy.setDiff(asmFrees, mainFrees);
     if (asmExtras.size) {
-      const warn = (template, goal) =>
-            console.warn(Toy.format(template, goal));
-      warn('Assumptions have free vars not in conclusion: {1}', goal);
+      console.log('Goal asms have extra free vars in', goal.$$);
     }
   }
 
@@ -2498,7 +2503,7 @@ function addFact(info) {
   computeMenuCategories(info);
 
   if (isRecordedFact(info.goal)) {
-    console.info('Fact', info.goal.$$, 'already recorded, skipping.');
+    console.warn('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
     if (info.simplifier) {
       // This puts a string onto basicSimpFacts for fast cached
@@ -2512,19 +2517,13 @@ function addFact(info) {
 }
 
 /**
- * Record the given fact information; private to addFact.  See
+ * Records the (new) given fact information; private to addFact.  See
  * comments on _factsByKey and fact management functions for the
  * expectations on the argument.
- *
- * Returns truthy for success, falsy if the new fact statement is not
- * allowable: either already recorded or alters the meaning of a
- * statement already referring to a different fact.
  */
 function setFactInfo(info) {
-  if (isRecordedFact(info.goal)) {
-    console.log('Already recorded fact:', info.goal.toString());
-    return false;
-  }
+  assert(!isRecordedFact(info.goal),
+         'Already recorded fact: {1}', info.goal);
   const key = getResInfo(info.goal).key;
   const facts = _factsByKey.get(key) || [];
   // Ensure that the key has an array of facts.
