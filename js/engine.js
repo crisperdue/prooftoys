@@ -2068,14 +2068,15 @@ function getTheorem(name) {
  */
 function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
-      const expn = (factExpansion(fact_arg) ||
-                    rules.tautology(fact_arg));
+      const stmt = mathParse(fact_arg);
+      const expn = (factExpansion(stmt) ||
+                    rules.tautology(stmt));
       if (expn && !(expn instanceof Error)) {
       var schema = expn.getMain().getLeft();
       var info = step.matchSchemaPart(path, schema, name);
       if (info) {
         return function() {
-          return rules.rewrite(step, info.path, fact_arg);
+          return rules.rewrite(step, info.path, stmt);
         };
       }
     }
