@@ -973,9 +973,13 @@ Expr.prototype.indentTree = function() {
 /**
  * Redoes the indentation of the given rendered term.
  *
- * Removes any previously-inserted line breaks, then recomputes
- * and inserts line breaks to avoid horizontal overflow if possible.
- * The relevant tree here is based on Expr.formatTerm, which determines
+ * Removes any previously-inserted line breaks, then recomputes and
+ * inserts line breaks between terms to attempt to satisfy two
+ * constraints: first, to avoid horizontal overflow if possible; and
+ * second, to prevent terms from occupying more horizontal space than
+ * a chosen constant, not counting indentation.  (There should not be
+ * excess line breaks not needed to satisfy these constraints.)  The
+ * relevant tree here is based on Expr.formatTerm, which determines
  * depth of nesting of indentation of subterms of this.
  *
  * The first pass inserts breaks before top-level terms of that tree.
@@ -994,69 +998,93 @@ Expr.prototype.reIndent = function(depth, portWidth) {
     return;
   }
 
+  // Returns truthy iff the term is an infix operator.
   const isInfix = term => {
     return term.node && term.node.classList.contains('infix');
   }
-  const offset = term => term.node.offsetLeft + term.node.offsetWidth;
-  const breakBefore = term => {
-    // The linebreak class is not intended to affect styling.  It just
-    // serves as a way to find all inserted linebreaks when needed.
-    //
-    // The "ch" unit approximates the width of an average character.
-    // The approximate padding calculation here could be replaced by
-    // insertion of invisible text that is the prefix needed before
-    // any additional indentation.
-    const $span = $('<span class=linebreak>').css({paddingRight: depth + 'em'});
-    $(term.node).before('<br class=linebreak>', $span);
-  };
-  const pw = portWidth;
-  portWidth = portWidth || top.node.offsetParent.clientWidth - 10;
-  const $step = $(top.node)
-        .closest('.proofDisplay.editable .proofStep');
 
+  // Returns the offset of the right edge.
+  const offsetRight = term => term.node.offsetLeft + term.node.offsetWidth;
+
+  // Inserts a linebreak before the node of the given term by
+  // inserting a BR element and a SPAN with padding of <depth>em
+  // before it.
+  const breakBefore = term => {
+    // The linebreak class does not affect styling.  It just serves as
+    // a way to find all inserted linebreaks, for example when
+    // recalculating linebreaks.
+    const $term = $(term.node);
+    if (!$term.prev().is('.linebreak')) {
+      const $span =
+            $('<span class=linebreak>').css({paddingRight: depth + 'em'});
+      $term.before('<br class=linebreak>', $span);
+    }
+  };
+
+  // Here "atomic" means it is an atom, and fairly short.
+  const atomic =
+        term => term instanceof Atom && term.toUnicode().length < 10;
+
+  const isWide = term => term.node.offsetWidth > 200;
+
+  const pw = portWidth;
+  // The offsetParent is intended to the "viewport" element.
+  portWidth = portWidth || top.node.offsetParent.clientWidth - 10;
   pw || log('Port:', portWidth);
   log('Indenting', this.$$);
 
-  // Remove all linebreak elements (inserted by breakBefore).
+  const $step = $(top.node)
+        .closest('.proofDisplay.editable .proofStep');
+  // First remove any preexisting line breaks.
   depth === 1 && $step.find('.linebreak').remove();
 
   // Get indenting info and apply it to insert linebreaks.
   const a = top.formatTerm();
   if (a instanceof Array) {
     // In other words, "this" is a Call.
-    for (let i = 1; i < a.length; i++) {
+
+    const breakers =
+          a.map((term, i) =>
+                i === 0
+                ? null
+                : Toy.let_((prev=a[i - 1]) =>
+                           isInfix(prev) ? prev : term));
+  
+    // If an item overflows or is wide, move it down along
+    //   with any preceding infix operator.
+    // It the item is wide, also move down any following item,
+    //   even if that is an infix operator.
+
+    for (let i = 0; i < a.length; i++) {
       const term = a[i];
       if (term.node) {
-        const right = offset(term);
-        // The term overflows the port width.
-        if (right > portWidth && !isInfix(term)) {
-          log('Right over:', right);
-          // Move the term or preceding infix operator to the left
-          // by inserting a linebreak before it.
-          const j =
-            (i > 0 && a[i - 1] instanceof Expr && isInfix(a[i - 1])
-             ? i - 1
-             : i);
-          if (j > 0) {
-            const prev = a[j - 1];
-            if (prev &&
-                !(prev instanceof Atom && prev.toUnicode().length < 4)) {
-              log('Break at:', a[j].$$);
-              // Things that overflow their space get moved to the
-              // left with a linebreak before them.  This is the first
-              // priority for fitting expressions into the horizontal
-              // space available.
-              breakBefore(a[j]);
-            }
+        const overflow = offsetRight(term) > portWidth;
+        const wide = isWide(term);
+        if (wide) {
+          // The term is wide, so break before whatever follows it.
+          const next = a[i + 1];
+          if (next) {
+            breakBefore(next);
           }
+        }
+        if ((overflow || wide) && !(i === 1 && atomic(a[0]))) {
+          // The term is wide or overflows the port width,
+          // so break before it -- unless it is the first
+          // argument to a function constant or variable with
+          // a reasonably short name.
+          log('Right over:', offsetRight(term));
+          breakers[i] && breakBefore(breakers[i]);
         }
       }
     }
+    // Go back through the list and re-indent the _contents_ of any
+    // terms that still do not meet the constraints.
     a.forEach((e, i) => {
       if (e.node) {
-        const right = offset(e);
+        const right = offsetRight(e);
+        const wide = isWide(e);
         log('e:', right, e.$$);
-        if (right > portWidth) {
+        if (wide || right > portWidth) {
           log('Right:', right);
           // If a term still overflows, try to re-indent it.
           e.reIndent(depth + 1, portWidth);
