@@ -392,7 +392,7 @@ declare(
 declare(
      // Lay 11.1a
      {name: 'abcPlus',
-      statement: '@x + z = y + z & R x & R y & R z => x = y',
+      statement: '@x + z = y + z & R z & R x & R y => x = y',
       proof:
       [
        '(1 assume (t ((x + z) = (y + z))))',
