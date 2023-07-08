@@ -379,12 +379,15 @@ Expr.prototype.findUntyped = function() {
 /**
  * If this already has a type, return it without making a copy.
  * Otherwise makes and returns a well-typed copy of this, ignoring any
- * type information already present.
+ * type information already present.  The result is a deep copy,
+ * except that all occurrences of the semantically same variable are
+ * represented by the same Atom, and occurrences of monomorphic
+ * constants may also be shared, even with other formulas.
  *
  * A side job of this method is to remove aliased constant names,
- * keeping their stated types.  The new Atom has the plain name
- * as its pname, but picks up the type stated for the pname.
- * This is currently just "==".
+ * keeping their stated types.  The new Atom has the plain name of the
+ * original, * with no alias, but picks up the type specified for the
+ * original's pname.  This currently applies only to "==".
  *
  * TODO: Document how and why this approach is (I think) adequate.
  *   Consider for example that a subterm may contain type information
@@ -412,9 +415,10 @@ Expr.prototype.typedCopy = function(mustCopy) {
   const unifier = new Map();
   // Recursive function that does all the work:
   const copy = x => {
-    // Makes a copy with all-new nodes (except potentially monomorphic
-    // constants).  If full resolution of type information mutates
-    // types in the copy, no part of the input will be affected.
+    // Makes a copy with all-new nodes with the possible exception of
+    // monomorphic constants).  Consequently if full resolution of
+    // type information mutates types in the copy, no part of the
+    // input will be affected.
     if (x.isVariable()) {
       const xnm = x.name;
       const bound = boundVars.find(y => y.name === xnm);
@@ -1282,6 +1286,10 @@ var _mathParsed = new Map();
  *
  * With a string input, caches a sucessful result and uses any cached
  * item.  Given an Expr, simply returns it.
+ *
+ * TODO: Hopefully eliminate this entirely, using special-case
+ *   syntax for fact statements if desired, and factExpansion
+ *   for references to facts.
  *
  * TODO: Eventually modify this to use type declarations for
  *   variables, such as "x is real".  It will then need an extra
