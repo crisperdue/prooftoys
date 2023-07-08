@@ -702,42 +702,21 @@ function addRule(info) {
   let main = proof;
 
   if (proof) {
-    rule = function() { 
-      if (rule.result === undefined) {
-        const info = resolveToFactInfo(statement);
-        // Just execute the proof on first use, but re-justify on each
-        // use so the result will have its own ordinal.
-        try {
-          info.inProgress = true;
-          rule.result = proof();
-        } finally {
-          info.inProgress = false;
-        }
-      }
-      if (rule.result instanceof Error) {
-        // Abort if there is no statement!
-        assert(statement, 'Failed to prove {1}');
-        if (name) {
-          console.error(fmt('Failed to prove {1}: {2}, asserting instead',
-                            name, statement));
-        } else {
-          console.error(fmt('Failed to prove {1}, asserting instead',
-                            statement));
-        }
-        // Assert it on every use.
-        return rules.assert(statement);
 
+    rule = function() {
+      if (rule.result) {
+        return rule.result;
       }
-      // TODO: Handle mismatches here as in asFactProver.
-      if (statement && !rule.result.matches(statement)) {
-        console.error(Toy.format(
-          'Failed to prove {1},\n  instead proved {2},\n  asserting instead',
-          statement, rule.result));
-        debugger;
-        // Assert it on every use.
-        return rules.assert(statement);
+      // TODO: Prevent circularity as for facts.
+      const result = rule.result = proof();
+      if (!result.matches(statement)) {
+        console.warn('Caution: proof differs from goal.',
+                     '\nProved:', result.toString(),
+                     '\nStated:', statement.toString());
       }
-      return rule.result.justify(name, []);
+      // Re-justify on each request so each request has its
+      // own proof line.
+      return result.justify(name, []);
     };
     
     // Describe theorems as "theorem" by default.
@@ -2530,31 +2509,6 @@ function setFactInfo(info) {
   facts.length > 0 || _factsByKey.set(key, facts);
   // Tentatively add the fact to the list.
   facts.push(info);
-  const resolutions = _resolutionsByKey.get(key);
-  // If foundRef becomes non-null, this will become an array of the
-  // facts that it could refer to.
-  var extFacts;
-  if (resolutions) {
-    // If found, this is a ref whose statement would refer to a
-    // different fact in the presence of the tentative new fact.
-    const foundRef = resolutions.find(function(rec) {
-        extFacts = factsExtending(rec.resInfo);
-        return (extFacts.length != 1 ||
-                extFacts[0].factInfo != rec.factInfo);
-      });
-    if (foundRef) {
-      // There was an issue.  Immediately remove the fact from the list.
-      facts.pop();
-      // Then complain and return false.
-      console.error('New fact', info.goal.toString());
-      // TODO: Make available info to improve the following message.
-      //   Reference to the stated fact reference would be helpful.
-      console.log('  would confound references to',
-                  foundRef.resInfo.stmt.toString(),
-                  'info:', foundRef.resInfo);
-      return false;
-    }
-  }
   return true;
 }
 
