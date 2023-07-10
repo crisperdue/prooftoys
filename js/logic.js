@@ -4502,6 +4502,7 @@ declare(
   // If the step has the form a => (b => c), moves all conjuncts
   // of "a" to the inner level and finally erasing the outer "=>".
   // The conjuncts of "a" end up following all the conjuncts of "b".
+  // Also deduplicates the assumptions.
   // This is a helper for rules.replace.
   {name: 'mergeAsms',
     action: function(step) {
@@ -4516,7 +4517,9 @@ declare(
           flatter = once(flatter, '',
 		         ['a => (b => c) == (b & a => c)'],
 		         'rewriteOnly');
-          return flatter.justify('mergeAsms', arguments, [step]);
+          // TODO: Consider ways to deduplicate more efficiently.
+          const deduped = rules.arrangeAsms(flatter);
+          return deduped.justify('mergeAsms', arguments, [step]);
         }
         flatter = next;
       }
