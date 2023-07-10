@@ -2646,8 +2646,7 @@ declare(
       var step1 = rules.theorem('r5212');
       var step2 = rules.rewriteFrom(step1, '/left', stepa);
       var step3 = rules.rewriteFrom(step2, '/main/right', stepb);
-      // TODO: Consider whether this really needs to arrangeAsms
-      //   explicitly.
+      // TODO: Try removing as no-op.
       return (step3.andThen('arrangeAsms')
               .justify('makeConjunction', arguments, [a, b]));
     },
@@ -3862,6 +3861,7 @@ declare(
       var exists = (rules.fact('exists {y. y = x}')
                     .andThen('instVar', asm.getRight(), 'x'));
       var step5 = rules.trueBy0(step4, '/left', exists);
+      // Probably step5 is just T => <whatever>.
       var step6 = rules.arrangeAsms(step5);
       return step6.justify('removeLet', arguments, [step]);
     },

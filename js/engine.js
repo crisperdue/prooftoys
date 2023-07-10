@@ -2595,7 +2595,8 @@ function asFactProver(prover, goal) {
       // Try matching the main parts of the result and goal.
       // Reorder any assumptions as needed.
       //
-      // TODO: Review this bit of code!!
+      // TODO: Review this bit of code!!  There are some fine points
+      //   of design not fully resolved, e.g. "arrangeAsms".
       var subst2 = result.getMain().alphaMatch(goal.getMain());
       if (subst2) {
         // The main parts match up to change of variables.
@@ -2603,7 +2604,7 @@ function asFactProver(prover, goal) {
         // that could still be reconciled, but we are not that
         // ambitious at present.
         var proved = (rules.instMultiVars(result, subst2)
-                       .andThen('arrangeAsms'));  // XXX
+                       .andThen('arrangeAsms'));
         if (proved.matches(goal)) {
           return proved;
         }
