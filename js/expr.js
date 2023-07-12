@@ -1163,6 +1163,15 @@ Expr.prototype.pathToFocalPart = function() {
                     : '/main');
 };
 
+
+/**
+ * Returns truthy iff this is a conditional and the path is on its
+ * assumptions side.  Usually "this" is a whole step.
+ */
+Expr.prototype.isAsmPath = function(path) {
+  return !(this.implies() && path.isLeft());
+};
+
 var _assertionCounter = 1;
 
 
