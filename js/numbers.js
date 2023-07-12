@@ -3554,15 +3554,21 @@ declare(
     (7 rewrite (s 6) (path "/right/right")
        (t (((R x) & (R y)) => ((x * y) = (y * x)))))
     (8 divideBothByThis (s 7) (path "/right/right/right"))
-    (9 assumedEq (s 8) (path "/right/left/left") (t (x = y)))
-    (10 rewrite (s 9) (path "/right/left") (t ((R a) => ((a + a) = (2 * a)))))
-    (11 divideBothByThis (s 10) (path "/right/right"))
-    (12 rewrite (s 11) (path "/left/left/right")
+    (9 rewrite (s 8) (path "/right/left")
+       (t ((((b != 0) & (R b)) & (R a)) => (((a * b) / b) = a))))
+    (10 simplifyFocalPart (s 9))
+    (11 assumedEq (s 10) (path "/right/left/left") (t (x = y)))
+    (12 rewrite (s 11) (path "/right/left")
+        (t ((R a) => ((a + a) = (2 * a)))))
+    (13 divideBothByThis (s 12) (path "/right/right"))
+    (14 simplifyProducts (s 13) (path "/right"))
+    (15 display (s 14))
+    (16 rewrite (s 15) (path "/left/left/right")
         (t ((a != b) == (not (a = b)))))
-    (13 rewrite (s 12) (path "/left/left/right/arg")
+    (17 rewrite (s 16) (path "/left/left/right/arg")
         (t (((R a) & (R b)) => (((a - b) = 0) == (a = b)))))
-    (14 assumed (s 13) (path "/left/left/right/arg"))
-    (15 simplifySite (s 14) (path "/left"))`
+    (18 assumed (s 17) (path "/left/left/right/arg"))
+    (19 simplifySite (s 18) (path "/left"))`
   }
 );
 
