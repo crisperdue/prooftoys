@@ -2038,9 +2038,9 @@ declare(
 // Managing numeric type assumptions
 
 declare(
-  // Simplifies repeatedly using basicSimpFacts.  If the visible part
-  // of the step is an equation, simplify each side, otherwise the
-  // entire expression.
+  // Simplifies repeatedly using basicSimpFacts.  If the main part
+  // of the step is an equation, simplifies its right side, otherwise the
+  // entire main part.
   {name: 'simplifyFocalPart',
    action: function(step) {
       var visPath = step.pathToFocalPart();
@@ -3326,7 +3326,8 @@ declare(
     description: 'consequence;; of step {step1} and step {step2} using {bool}'
   },
 
-  // Adds an assumption to the given step and deduplicates it.
+  // Adds an assumption to the given step and deduplicates it, or a
+  // set of assumptions given as a conjunction, not necessarily flat.
   {name: 'andAssume',
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
@@ -5339,12 +5340,13 @@ declare(
     }
   },
 
-  // Derives a step with assumptions deduplicated and ordered as by
-  // conjunctionArranger given Toy.asmComparator, including removal of
-  // occurrences of T.  In some cases this can remove all assumptions
-  // and a top-level conditional, and in that case the meanings of
-  // /main paths into the step may not be as expected if the resulting
-  // step remains conditional, though this is an exceptional case.
+  // Derives a step with assumptions flattened, deduplicated and
+  // ordered as by conjunctionArranger given Toy.asmComparator,
+  // including removal of occurrences of T.  In some cases this can
+  // remove all assumptions and a top-level conditional, and in that
+  // case the meanings of /main paths into the step may not be as
+  // expected if the resulting step remains conditional, though this
+  // is an exceptional case.
   //
   // TODO: Attempt to eliminate T by some other means where
   //   appropriate.
