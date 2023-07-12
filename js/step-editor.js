@@ -995,9 +995,8 @@ ProofEditor.prototype.openDoc = function(name) {
     if (steps instanceof Error) {
       // Associate this proof editor with a new document
       // with ".err" in the name.
-      const names = Toy.lsDocs();
-      const name = Toy.genDocName(`${name}.err`);
-      this.syncToDocName(name);
+      const errName = Toy.genDocName(`${name}.err`);
+      this.syncToDocName(errName);
       // TODO: Consider including the truncated list of steps in
       //   the proof editor as well as reporting the error.
       this.stepEditor.report(steps);
