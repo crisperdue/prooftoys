@@ -1179,10 +1179,11 @@ function addDefnFacts(definition) {
 // conditional, and otherwise the full fact.  In either case the
 // fact's (unique) fact properties object is the stored value.  This
 // maps from fact key to an array of fact property objects as
-// described above.  Private to factsExtending, setFactInfo, and
+// described above.  Private to factInfoMatching, setFactInfo, and
 // eachFact (but see also factSquish).
 //
-// This structure be eliminated, using _resolutionsByKey in its place.
+// TODO: Consider eliminating this structure, using _resolutionsByKey
+//   in its place.
 //
 // TODO: Part of a proof context.
 var _factsByKey = new Map();
@@ -1238,21 +1239,34 @@ var _factsByKey = new Map();
 const _resolutionsByKey = new Map();
 
 /**
- * This returns an array of fact information objects of recorded facts
- * that match the given resInfo.  The facts extend the resInfo in that
- * they have the same key ("main part") with the same assumptions and
- * possibly more.
+ * This returns a fact information object of the recorded fact that
+ * matches the given resInfo.  If there is exactly one with the same
+ * main part and the same collection of assumptions, that is the
+ * result, otherwise if exactly one has the same main part and a
+ * superset of the resInfo's assumptions, that is the result,
+ * otherwise null.
  *
  * TODO: See TODO for resolveToFactInfo.
  */
-function factsExtending(resInfo) {
+function factInfoMatching(resInfo) {
   const factPropsList = _factsByKey.get(resInfo.key) || [];
-  const results = factPropsList.filter(function(factProps) {
-      const stmtInfo = getResInfo(factProps.goal);
-      return (stmtInfo.key == resInfo.key &&
-              stmtInfo.asmSet.superset(resInfo.asmSet));
-    });
-  return results;
+  let extender = null;
+  for (const factProps of factPropsList) {
+    const stmtInfo = getResInfo(factProps.goal);
+    if (stmtInfo.key == resInfo.key &&
+        stmtInfo.asmSet.superset(resInfo.asmSet)) {
+      if (resInfo.asmSet.superset(stmtInfo.asmSet)) {
+        return factProps;
+      } else if (extender) {
+        // Multiple extenders were found, so fail.
+        return null;
+      } else {
+        // This one is an extender, so the tentative resolution.
+        extender = factProps;
+      }
+    }
+  }
+  return extender;
 }
 
 /**
@@ -1284,16 +1298,8 @@ function factExpansion(stmt) {
 
 /**
  * This returns information about the recorded fact the given (full)
- * statement wff is considered to refer to.
- *
- * A statement is considered to properly refer to a fact iff there is
- * exactly one fact such that the fact's main part exactly matches the
- * statement's main part and the assumptions of the fact are a
- * superset of the assumptions of the statement, both of these
- * allowing for renaming of variables.
- *
- * Returns the desired fact info, or null if there is no such fact or
- * the reference is ambiguous.
+ * statement wff is considered to properly refer to, as defined
+ * by factInfoMatching, or null if there is none.
  *
  * If the fact has in its assumptions any free variables that are not
  * also free in the consequent, and if a fact reference also has the
@@ -1301,9 +1307,10 @@ function factExpansion(stmt) {
  *
  * TODO: Consider strengthened support for references to facts that
  *   have free variables that occur in the assumptions but not the
- *   consequent.  That requires more detailed matching of assumptions
- *   in factsExtending.
+ *   consequent.  That requires more effort in matching assumptions in
+ *   factInfoMatching.
  */
+// TODO: Rename to resolveFactRef.
 function resolveToFactInfo(stmt) {
   // The resInfo is "fact resolution information" for the statemement.
   const resInfo = getResInfo(stmt);
@@ -1321,11 +1328,12 @@ function resolveToFactInfo(stmt) {
   if (resolvent) {
     return resolvent.factInfo;
   }
-  const candidates = factsExtending(resInfo);
-  if (candidates.length == 1) {
+  // No resolution is already in _resolutionsByKey.
+  const resolved = factInfoMatching(resInfo);
+  if (resolved) {
     resolutions.length === 0 && _resolutionsByKey.set(resInfo.key, resolutions);
-    resolutions.push({resInfo: resInfo, factInfo: candidates[0]});
-    return candidates[0];
+    resolutions.push({resInfo: resInfo, factInfo: resolved});
+    return resolved;
   }
   return null;
 }
@@ -1341,11 +1349,9 @@ function resolveToFact(stmt) {
 }
 
 /**
- * Returns true iff the given wff exactly matches a recorded fact in
- * the sense that, when its variables are renamed to be the standard
- * variables, its main part exactly matches a recorded fact and its
- * set of assumptions is equal to the set of assumptions of the result
- * of standardizing the variables of the recorded fact.
+ * Returns true iff the given wff refers to a specific recorded fact
+ * and has the same set of assumptions as in that fact, except that
+ * variable names may differ.
  *
  * NOTE: In the unlikely event that the recorded fact has multiple
  * variables that are free only in its assumptions, the result could
@@ -1432,9 +1438,10 @@ function getResult0(info, mustProve) {
 }
 
 /**
- * Returns true iff a proof of this statement is underway but not
- * completed.  Can be used to prevent infinite regress, as in the case
- * of simplifiers that might be skipped during their own proof.
+ * Returns true iff a proof of the referenced (recorded) fact is
+ * underway but not completed.  Can be used to prevent infinite
+ * regress, as in the case of simplifiers that might be skipped during
+ * their own proof.
  */
 function isInProgress(stmt) {
   if (!resolveToFactInfo(stmt)) {
@@ -2688,7 +2695,7 @@ $(function() {
 Toy.rules = rules;
 Toy._factsByKey = _factsByKey;
 
-Toy.factsExtending = factsExtending;
+Toy.factInfoMatching = factInfoMatching;
 Toy.factExpansion = factExpansion;
 
 // Settable variables, export right here:
