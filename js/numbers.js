@@ -1725,7 +1725,7 @@ declare
                           // trouble if recursion reaches here.
                           // TODO: Decide at the start whether to multiply
                           //   by -1 / -1 and skip this whole condition.
-                          .andThen('arrangeRational', path));
+                          .andThen('arrangeRational', path, false));
             } else {
               // Flatten the denominator.
               resulted = rules.flattenTerm(arithmetized, '/main/right/right');
@@ -1852,9 +1852,9 @@ declare
   },
 
   /**
-   * Arrange a rational expression into "coefficient" form, with a leading
-   * numeric coefficient where possible.  This form is useful as preparation
-   * for gathering like terms.
+   * Arrange a rational expression into "coefficient" form, with a
+   * leading coefficient that is a number or fraction where possible.
+   * This form is useful as preparation for gathering like terms.
    *
    * TODO: Complete the implementation, or perhaps implement a rule
    *   that converts the "ratio" form above into coefficient form.
