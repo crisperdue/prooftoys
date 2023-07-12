@@ -1444,10 +1444,6 @@ function getResult0(info, mustProve) {
  * their own proof.
  */
 function isInProgress(stmt) {
-  if (!resolveToFactInfo(stmt)) {
-    // It could be a tautology, but not a recorded fact.
-    return false;
-  }
   const info = resolveToFactInfo(stmt);
   return info && info.inProgress;
 }
