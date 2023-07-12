@@ -2082,7 +2082,6 @@ declare(
     },
     inputs: {site: 1},
     minArgs: 2,
-    menu: '  simplify {term}',
     description: 'simplify;; {in step siteStep}',
     labels: 'algebra general'
   },
