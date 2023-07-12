@@ -2042,7 +2042,7 @@ declare(
   // of the step is an equation, simplify each side, otherwise the
   // entire expression.
   {name: 'simplifyFocalPart',
-    action: function(step) {
+   action: function(step) {
       var visPath = step.pathToFocalPart();
       var result = rules._simplifySite(step, visPath);
       return result.justify('simplifyFocalPart', arguments, [step]);
@@ -4809,12 +4809,10 @@ declare(
         const simp = info.autoSimplify;
         return simp(step);
       } else {
-        if (Toy.isDistribFact && Toy.isDistribFact(stmt)) {
-          var step1 = rules.arrangeTerm(step, path.concat('/right'));
-          var step2 = rules.arrangeTerm(step1, path.concat('/left'));
-          var step3 = rules.simplifyFocalPart(step2);
-          return step3;
-        } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
+        if (Toy.isDistribFact && Toy.isDistribFact(stmt) &&
+            !step.isAsmPath(path)) {
+          return rules.simplifyProducts(step, path);
+        } else if (!step.isAsmPath(path)) {
           // The left part may already be transformed,
           // and the target may not even exist.
           const info = resolveToFactInfo(stmt);
