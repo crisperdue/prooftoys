@@ -946,7 +946,7 @@ declare
     },
     inputs: {site: 1, term: 3},
     autoSimplify: function(step) {
-      return simplifyAddSubBoth(step, step.ruleArgs[1]);
+      return rules.simplifySums(step, step.ruleArgs[1]);
     },
     toOffer: 'return term.isCall2("=");',
     form: ('Add <input name=term> to both sides of the equation'),
@@ -968,7 +968,7 @@ declare
     },
     inputs: {site: 1, term: 3},
     autoSimplify: function(step) {
-      return simplifyAddSubBoth(step, step.ruleArgs[1]);
+      return rules.simplifySums(step, step.ruleArgs[1]);
     },
     toOffer: 'return term.isCall2("=");',
     form: ('Subtract <input name=term> from both sides of the equation'),
@@ -990,7 +990,7 @@ declare
     },
     inputs: {site: 1, term: 3},
     autoSimplify: function(step) {
-      return simplifyMulDivBoth(step, step.ruleArgs[1]);
+      return rules.simplifyProducts(step, step.ruleArgs[1]);
     },
     toOffer: 'return term.isCall2("=");',
     form: ('Multiply both sides of the equation by <input name=term>'),
@@ -1008,10 +1008,12 @@ declare
       var fact2 = rules.instVar(fact, term_arg, c1);
       const step1 = rules.rewrite(step, eqnPath, fact2);
       const step2 = rules.instVar(step1, term_arg, c1);
-      const step3 = simplifyMulDivBoth(step2, eqnPath);
-      return step3.justify('divideBoth', arguments, [step]);
+      return step2.justify('divideBoth', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
+    autoSimplify: function(step) {
+      return rules.simplifyProducts(step, step.ruleArgs[1]);
+    },
     toOffer: 'return term.isCall2("=");',
     form: ('Divide both sides of the equation by <input name=term>'),
     menu: 'divide both sides',
@@ -1035,7 +1037,7 @@ declare
     inputs: {site: 1},
     autoSimplify: function(step) {
       var path = step.ruleArgs[1];
-      return simplifyAddSubBoth(step, step.wff.parentEqn(path)); 
+      return rules.simplifySums(step, step.wff.parentEqn(path)); 
     },
     toOffer: 'return term.isReal();',
     menu: ' add {term} to both sides',
@@ -1056,7 +1058,7 @@ declare
     inputs: {site: 1},
     autoSimplify: function(step) {
       var path = step.ruleArgs[1];
-      return simplifyAddSubBoth(step, step.wff.parentEqn(path));
+      return rules.simplifySums(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
     menu: ' subtract {term} from both sides',
@@ -1077,7 +1079,7 @@ declare
     inputs: {site: 1},
     autoSimplify: function(step) {
       var path = step.ruleArgs[1];
-      return simplifyMulDivBoth(step, step.wff.parentEqn(path));
+      return rules.simplifyProducts(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
     menu: ' multiply both sides by {term}',
@@ -1098,7 +1100,7 @@ declare
     inputs: {site: 1},
     autoSimplify: function(step) {
       var path = step.ruleArgs[1];
-      return simplifyMulDivBoth(step, step.wff.parentEqn(path));
+      return rules.simplifyProducts(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
     menu: ' divide both sides by {term}',
@@ -1193,38 +1195,43 @@ var regroupingFacts = [
   'a / b / c = a / (b * c)'
 ];
 
-/**
- * Arrange the terms on each side of the equation input.  Also
- * appropriate when dividing.
- */
-function simplifyMulDivBoth(step, eqnPath) {
-  // This and the next function avoid simplifying the entire
-  // equation because that is liable to simply undo an intentional
-  // addition or multiplication "to both".
-  const right = eqnPath.concat('/right');
-  const left = eqnPath.concat('/left');
-  const step1 = (rules.arrangeTerm(step, right)
-                 .andThen('simplifySitePlus', right));
-  const step2 = (rules.arrangeTerm(step1, left)
-                 .andThen('simplifySitePlus', left));
-  return step2;
-}
+declare(
+  {name: 'simplifyProducts',
+   action2: function(step, path) {
+     if (step.get(path).isCall2()) {
+       return () => {
+         // This and the next function avoid simplifying the entire
+         // equation because that is liable to simply undo an intentional
+         // addition or multiplication "to both".
+         const right = path.concat('/right');
+         const left = path.concat('/left');
+         const step1 = (rules.arrangeTerm(step, right)
+                        .andThen('simplifySitePlus', right));
+         const step2 = (rules.arrangeTerm(step1, left)
+                        .andThen('simplifySitePlus', left));
+         return step2;
+       }
+     }
+   }
+  },
 
-/**
- * This does the auto-simplification for add/subtract both sides.  It
- * tries regrouping and then possible simplification.
- *
- */
-function simplifyAddSubBoth(step, eqnPath) {
-  // See above.
-  const right = eqnPath.concat('/right');
-  const left = eqnPath.concat('/left');
-  const step1 = (rules.arrangeSum(step, right)
-                 .andThen('simplifySitePlus', right));
-  const step2 = (rules.arrangeSum(step1, left)
-                 .andThen('simplifySitePlus', left));
-  return step2;
-}
+  {name: 'simplifySums',
+   action2: function(step, path) {
+     if (step.get(path).isCall2()) {
+       return () => {
+         // See above.
+         const right = path.concat('/right');
+         const left = path.concat('/left');
+         const step1 = (rules.arrangeSum(step, right)
+                        .andThen('simplifySitePlus', right));
+         const step2 = (rules.arrangeSum(step1, left)
+                        .andThen('simplifySitePlus', left));
+         return step2;
+       }
+     }
+   }
+  }
+);
 
 declare(
   // Move all negations in past additions and multiplications;
@@ -2493,6 +2500,8 @@ declare.apply(null, distribFacts);
 
 // Private to isDistribFact.  A mapping from statement key to value
 // that is truthy iff the statement is in distribFacts.
+// TODO: Replace this and isDistribFact with a property in the
+//   fact info, like "props: 'distributive'".
 const _distribFacts = new Set();
 for (const obj of distribFacts) {
   _distribFacts.add(Toy.resolveToFact(obj.statement));
