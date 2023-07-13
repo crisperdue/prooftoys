@@ -47,7 +47,7 @@ const tryReduce = Toy.tryReduce;
 
 const noSimplify = Toy.noSimplify;
 
-const resolveToFactInfo = Toy.resolveToFactInfo;
+const resolveFactRef = Toy.resolveFactRef;
 const basicSimpFacts = Toy.basicSimpFacts;
 const _tautologies = Toy._tautologies;
 
@@ -4804,7 +4804,7 @@ declare(
       const inStep = step.ruleArgs[0];
       const path = step.ruleArgs[1];
       const stmt = step.ruleArgs[2];
-      const info = resolveToFactInfo(stmt);
+      const info = resolveFactRef(stmt);
       if (info && info.autoSimplify) {
         const simp = info.autoSimplify;
         return simp(step);
@@ -4815,7 +4815,7 @@ declare(
         } else if (!step.isAsmPath(path)) {
           // The left part may already be transformed,
           // and the target may not even exist.
-          const info = resolveToFactInfo(stmt);
+          const info = resolveFactRef(stmt);
           return (info && info.desimplifier
                   ? step
                   : rules.simplifyFocalPart(step));
@@ -5589,7 +5589,7 @@ declare(
       // fact with suitable variable names.
       //
       // TODO: Consider upgrading _factMap to an actual Map, or using
-      //   mathParse and resolveToFactInfo here, then removing it.
+      //   mathParse and resolveFactRef here, then removing it.
       if (typeof synopsis === 'string') {
         if (Toy.isIdentifier(synopsis)) {
           const result = Toy.getTheorem(synopsis);
@@ -5611,7 +5611,7 @@ declare(
         return synopsis;
       }
       const wff = mathParse(synopsis);
-      const factInfo = resolveToFactInfo(wff);
+      const factInfo = resolveFactRef(wff);
       // Try ordinary registered facts.
       if (factInfo) {
         var fact = Toy.getResult(factInfo.goal);
@@ -5648,7 +5648,7 @@ declare(
     menu: 'look up a fact',
     tooltip: (''),
     description: function(step) {
-      var info = resolveToFactInfo(step.ruleArgs[0]);
+      var info = resolveFactRef(step.ruleArgs[0]);
       var d = info && info.description;
       return d || 'fact';
     },

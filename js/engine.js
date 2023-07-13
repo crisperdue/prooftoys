@@ -1246,7 +1246,7 @@ const _resolutionsByKey = new Map();
  * superset of the resInfo's assumptions, that is the result,
  * otherwise null.
  *
- * TODO: See TODO for resolveToFactInfo.
+ * TODO: See TODO for resolveFactRef.
  */
 function factInfoMatching(resInfo) {
   const factPropsList = _factsByKey.get(resInfo.key) || [];
@@ -1281,7 +1281,7 @@ function factExpansion(stmt) {
   if (expanded) {
     return expanded;
   }
-  const factInfo = resolveToFactInfo(stmt);
+  const factInfo = resolveFactRef(stmt);
   if (factInfo) {
     // TODO: Catch renamings needed in the assumptions!
     const asStated = factInfo.goal.getMain();
@@ -1310,8 +1310,7 @@ function factExpansion(stmt) {
  *   consequent.  That requires more effort in matching assumptions in
  *   factInfoMatching.
  */
-// TODO: Rename to resolveFactRef.
-function resolveToFactInfo(stmt) {
+function resolveFactRef(stmt) {
   // The resInfo is "fact resolution information" for the statemement.
   const resInfo = getResInfo(stmt);
   const resolutions = _resolutionsByKey.get(resInfo.key) || [];
@@ -1340,11 +1339,11 @@ function resolveToFactInfo(stmt) {
 
 /**
  * Resolves the given statement wff to a full fact statement if
- * possible, otherwise returns null.  Like resolveToFactInfo, but
+ * possible, otherwise returns null.  Like resolveFactRef, but
  * returns just the goal.
  */
 function resolveToFact(stmt) {
-  const info = resolveToFactInfo(stmt);
+  const info = resolveFactRef(stmt);
   return info ? info.goal : null;
 }
 
@@ -1362,7 +1361,7 @@ function resolveToFact(stmt) {
  */
 function isRecordedFact(stmt) {
   // First check that the statement resolves to a specific fact.
-  const factInfo = resolveToFactInfo(stmt);
+  const factInfo = resolveFactRef(stmt);
   if (factInfo) {
     // Then verify that the statement and the fact are indeed
     // equivalent.
@@ -1402,7 +1401,7 @@ function getResult(statement, mustProve) {
   if (Toy.isProved(statement)) {
     return statement;
   }
-  var info = resolveToFactInfo(statement);
+  var info = resolveFactRef(statement);
   assert(info, 'Not a recorded fact: {1}', statement);
   return getResult0(info, mustProve);
 }
@@ -1444,7 +1443,7 @@ function getResult0(info, mustProve) {
  * their own proof.
  */
 function isInProgress(stmt) {
-  const info = resolveToFactInfo(stmt);
+  const info = resolveFactRef(stmt);
   return info && info.inProgress;
 }
 
@@ -1794,7 +1793,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
                      factMatcher);
         return null;
       }
-      const factInfo = resolveToFactInfo(stmt);
+      const factInfo = resolveFactRef(stmt);
       if (!factInfo) {
         console.error('No such fact:', ''+stmt);
         return null;
@@ -2723,7 +2722,7 @@ Toy.definition = definition;
 Toy.deferredDefnFacts = deferredDefnFacts;
 Toy.enableDefnFacts = enableDefnFacts;
 Toy.addDefnFacts = addDefnFacts;
-Toy.resolveToFactInfo = resolveToFactInfo;
+Toy.resolveFactRef = resolveFactRef;
 Toy.resolveToFact = resolveToFact;
 Toy.addFact = addFact;
 Toy.isRecordedFact = isRecordedFact;
