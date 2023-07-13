@@ -56,6 +56,7 @@ var nextProofEditorId = 1;
  *   Also has the effect of oneDoc.  This is for tutorials and problem
  *   sets (really lists).  If given, this must be the only proof
  *   editor within this page.
+ * noload: if present, do not load theories for this proof editor.
  * steps: encoding of initial steps; only applies if no document
  *   matching the computed workspace name already exists.
  *
@@ -964,6 +965,7 @@ ProofEditor.prototype.syncToDocName = function(name) {
  */
 ProofEditor.prototype.openDoc = function(name) {
   const goal = Toy.catching(() => Toy.parse(name));
+  if (!'noload' in this._options) {
   let needNN = false;
   if (goal instanceof Expr) {
     const names = goal.constantNames();
@@ -983,9 +985,11 @@ ProofEditor.prototype.openDoc = function(name) {
     return null;
   }
   if (needNN) {
+        // This loads all natural numbers theorems.
     prepExercise('nat/');
   } else if (!Toy.realNumbersLoaded) {
     Toy.requireRealNumbers();
+  }
   }
   const proofData = Toy.readDoc(name);
   // TODO: Check for possible active editing in another tab/window.
