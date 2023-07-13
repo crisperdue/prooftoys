@@ -1169,7 +1169,7 @@ Expr.prototype.pathToFocalPart = function() {
  * assumptions side.  Usually "this" is a whole step.
  */
 Expr.prototype.isAsmPath = function(path) {
-  return !(this.implies() && path.isLeft());
+  return this.implies() && path.isLeft();
 };
 
 var _assertionCounter = 1;
