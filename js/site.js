@@ -126,6 +126,8 @@ Toy.mathMarkup0 = function(text, title) {
         return '&in;';
       case 'notin':
         return '&notin;';
+      case 'pi':
+        return '&pi;';
       case 'inter':
         return '&#x2229;';
       case 'union':
