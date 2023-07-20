@@ -2012,6 +2012,80 @@ Expr.prototype.chainPaths = function(chainOp) {
   return result;
 };
 
+// TODO: Probably remove this and nearestChain.
+var chainMap = new Map();
+{
+  const ops=[['+', '-'], ['*', '/'], ['&'], ['|']];
+  ops.forEach(a => a.forEach(op => chainMap.set(op, a)));
+}
+
+/**
+ * Returns the innermost chain, if any, that this term belongs to.  A
+ * chain is a leftward sequence of terms with connected by binary
+ * operators compatible with a binop parent term.  Left operands are
+ * not members of the chain unless they are "leftmost", i.e. not a
+ * call with compatible binop.
+ *
+ * This descends through the path, 
+ */
+Expr.prototype.nearestChain = function(path) {
+  let p = Toy.asPath(path);
+  if (p.isEnd()) {
+    return null;
+  }
+
+  let chain = null;
+  // If this is non-null at the target term, it is the chain of which
+  // the target term is an element.  Top and continuation terms of a
+  // chain (e.g. any "+" term within a chain of "+ terms) are not
+  // elements of it.
+  let parent = null;
+  // This is an array of binary operations that participate in the current
+  // chain (or an empty array if no chain).
+  let chops = [];
+  let term = this;
+
+  // Inside the loop, "segment" is the segment that brought us to the
+  // current term.  It is significant that it is initially null.
+  let segment = null;
+
+  // If the term is a named binary operator, returns the name, else falsy.
+  const bopName = term => term.isCall2() ? term.getBinOp().name : null;
+
+  // The term starts a new chain.  It could be an element of the
+  // previous current chain.
+  const newChain = () => {
+    const nm = term.getBinOp().name;
+    parent = chain;
+    chain = term;
+    chops = chainMap.get(nm) || [];
+  };
+
+  // The term does not continue a chain nor start a new one.
+  // It could be an element of the previous current chain.
+  const noChain = () => {
+    parent = chain;
+    chain = null;
+    chops = [];
+  };
+  while (true) {
+    const nm = bopName(term);
+    if (segment === 'left' && chops.includes(nm)) {
+      // The term continues a chain, do nothing.
+    } else if (chainMap.has(nm)) {
+      newChain();
+    } else {
+      noChain();
+    }
+    if (p.isEnd()) {
+      return parent;
+    }
+    segment = p.segment;
+    term = term.descend(segment);
+    p = p.rest;
+  }
+};
+
 /**
  * Returns a description of the movement of a variable in this
  * equational Expr, which may be conditional.  Each side of the
