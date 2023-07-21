@@ -96,19 +96,17 @@ var nextProofEditorId = 1;
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
  */
-function ProofEditor(options_arg) {
+  function ProofEditor(options_arg={}) {
 
   //// Initialize properties.
 
   const self = this;
-  const options = self._options =
-    Object.assign({oneDoc: false, exercise: null},
-                  options_arg);
+  const options = self._options = options_arg;
   
   // This is set up by a later part of the constructor.
   // It stays null for exercises.
   self.docName = null;
-  assert(proofEditors.size === 0 || options.exercise === null,
+  assert(proofEditors.size === 0 || !options.exercise,
          `Exercises permit only one ProofEditor (${options.exercise}).`);
   proofEditors.add(self);
 
@@ -141,8 +139,8 @@ function ProofEditor(options_arg) {
   const $node = this.$node =
     $('<div class="proofEditor logicZone"></div>');
 
-  // Style the editor as "stable" if requested.
-  if (options.oneDoc || options.exercise) {
+  // Maybe lock the editor to the document.
+  if ('oneDoc' in options || options.exercise) {
     $node.addClass('oneDoc');
   }
 
@@ -227,6 +225,8 @@ function ProofEditor(options_arg) {
     if (self.openDoc(self.docName)) {
       // There is an existing saved document.
       self.fromDoc = true;
+    } else if (self.initialSteps) {
+      self.setSteps(self.initialSteps);
     }
   }
 
@@ -965,31 +965,31 @@ ProofEditor.prototype.syncToDocName = function(name) {
  */
 ProofEditor.prototype.openDoc = function(name) {
   const goal = Toy.catching(() => Toy.parse(name));
-  if (!'noload' in this._options) {
-  let needNN = false;
-  if (goal instanceof Expr) {
-    const names = goal.constantNames();
-    needNN = names.has('NN') && !names.has('R');
-    if (names.has('NN') && names.has('R')) {
-      console.warn('NN and R!?');
+  if (!('noload' in this._options)) {
+    let needNN = false;
+    if (goal instanceof Expr) {
+      const names = goal.constantNames();
+      needNN = names.has('NN') && !names.has('R');
+      if (names.has('NN') && names.has('R')) {
+        console.warn('NN and R!?');
+      }
     }
-  }
-  if ((needNN && Toy.realNumbersLoaded) ||
-      (!needNN && Toy.exerciseLoaded)) {
-    // Associate this proof editor with this document across
-    // page loads.
-    this.syncToDocName(name);
-    // Reload and start over.
-    Toy.sleep(0).then(() => location.reload());
-    // Indicate an inconclusive result.
-    return null;
-  }
-  if (needNN) {
-        // This loads all natural numbers theorems.
-    prepExercise('nat/');
-  } else if (!Toy.realNumbersLoaded) {
-    Toy.requireRealNumbers();
-  }
+    if ((needNN && Toy.realNumbersLoaded) ||
+        (!needNN && Toy.exerciseLoaded)) {
+      // Associate this proof editor with this document across
+      // page loads.
+      this.syncToDocName(name);
+      // Reload and start over.
+      Toy.sleep(0).then(() => location.reload());
+      // Indicate an inconclusive result.
+      return null;
+    }
+    if (needNN) {
+      // This loads all natural numbers theorems.
+      prepExercise('nat/');
+    } else if (!Toy.realNumbersLoaded) {
+      Toy.requireRealNumbers();
+    }
   }
   const proofData = Toy.readDoc(name);
   // TODO: Check for possible active editing in another tab/window.
