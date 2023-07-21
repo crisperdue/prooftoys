@@ -1325,8 +1325,8 @@ declare
     toOffer: function(step, term) {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
-    menu: 'flatten {term}',
-    description: 'flatten term;; {in step siteStep}',
+    menu: 'flatten sum {term}',
+    description: 'flatten sum;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1894,7 +1894,7 @@ declare
   // Regrouping, but just for additions.
   // TODO: When there is a more suitable regrouping rule, remove this.
    {name: 'regroupAdditions',
-    action: function(step) {
+    action: function(step, path) {
       function applyTo(eqn, facts) {
         return Toy.applyFactsWithinRhs(eqn, {facts: facts,
                                              searchMethod: 'searchTerms'});
@@ -1937,22 +1937,13 @@ declare
                      ];
         return applyTo(eqn2a, facts3);
       }
-      var visPath = step.pathToFocalPart();
-      if (step.get(visPath).isCall2('=')) {
-        var step1 =
-          convert(step, visPath.concat('/right'), converter);
-        var result =
-          convert(step1, visPath.concat('/left'), converter);
-      } else {        
-        var result = convert(step, visPath, converter);
-      }
+      const result = convert(step, path, converter);
       return result.justify('regroupAdditions', arguments, [step]);
     },
-    inputs: {step: 1},
-    form: 'Regroup additive terms in step <input name=step>',
-    menu: 'regroup additive terms',
-    description: 'regroup additive terms',
-    labels: '?'
+    inputs: {site: 1},
+    menu: 'regroup sum',
+    description: 'regroup sum',
+    labels: 'algebra'
   },
 
   /**
@@ -1962,15 +1953,15 @@ declare
    *   subtraction.
    */
    {name: 'regroup',
-    action: function(step) {
+    action: function(step, path) {
       return rules.removeSubtraction(step)
-      .andThen('regroupAdditions')
-      .justify('regroup', arguments, [step]);
+        .andThen('regroupAdditions', path)
+        .justify('regroup', arguments, [step]);
     },
-    inputs: {step: 1},
+    inputs: {site: 1},
     form: 'Regroup terms in step <input name=step>',
-    menu: 'regroup terms',
-    description: 'regroup terms',
+    menu: 'regroup sum',
+    description: 'regroup sum',
     labels: 'algebra'
    }
 );
