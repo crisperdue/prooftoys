@@ -810,7 +810,7 @@ function debugString(o, specials) {
     var result = '{';
     var keys = Object.getOwnPropertyNames(o);
     keys.sort();
-    for (var i = 0; i < keys.length; i++) {
+    for (let i = 0; i < keys.length; i++) {
       var key = keys[i];
       if (result.length > 1) {
         result += ', ';
@@ -828,7 +828,7 @@ function debugString(o, specials) {
         const vString = o[key].toString();
         if (vString.length > 40) {
           result += '[\n';
-          for (var i = 0; i < value.length; i++) {
+          for (let i = 0; i < value.length; i++) {
             result += value[i] + '\n';
           }
           result += ']\n';
