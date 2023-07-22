@@ -1894,7 +1894,7 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
  * of this referenced by the path, starting with this and including
  * the one at the end of the path.  Returns exactly one ancestor per
  * segment in the path, plus this.  Note that the expression at the end
- * of the path is ancestors[ancestors.length - 1].
+ * of the path is the last element of the array.
  *
  * This traces through the path exactly as given, so if the path uses
  * segments such as /left or /binOp, it will skip terms in the result.

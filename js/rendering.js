@@ -243,6 +243,8 @@ function ProofDisplay(properties) {
       });
       self.savedWidth = width;
       // On resize we currently scroll to the bottom.
+      // Attempting to defer the scrolling does not
+      // seeem to accomplish anything.
       $(this.stepsNode).scrollTop(1e9);
     }
   });
