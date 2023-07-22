@@ -1710,7 +1710,6 @@ var testCase = {
       propEqual(v, desired);
     };
     const eq = termify('R x & R y & R c => (x = y == x + c = y + c)');
-    console.log('BABY');
     check('c = c', '', eq,
           {x: null, y: null}, {c: 'c_10'});
     check('{a. T} = {a. T}', '/left/body', 'T == T | a',
@@ -3039,7 +3038,7 @@ $(function() {
   if (toTest) {
     toTest.forEach(function(key) {
         if (!Toy.isIdentifier(key)) {
-          var info = Toy.resolveToFactInfo(key);
+          var info = Toy.resolveFactRef(key);
           if (info) {
             testFact(info);
           }
