@@ -1138,7 +1138,6 @@ ProofEditor.prototype.setSteps = function(steps) {
   } else {
     setTheSteps(steps);
     this.toggleClass('proofLoadError', false);
-    Toy.soonDo(() => this.$node.find('.proofSteps').scrollTop(1e9));
   }
 };
 
@@ -1618,9 +1617,6 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
                         ? result
                         : trial);
       self.proofDisplay.addDerivation(simplified);
-      // Scroll the proof steps DIV all the way to the bottom
-      // so the new step(s) are visible.
-      editor.$node.find('.proofSteps').scrollTop(1e9)
     });
   }
   if (!deferCleanup) {

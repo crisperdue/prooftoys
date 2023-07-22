@@ -242,6 +242,8 @@ function ProofDisplay(properties) {
         step.wff.reIndent();
       });
       self.savedWidth = width;
+      // On resize we currently scroll to the bottom.
+      $(this.stepsNode).scrollTop(1e9);
     }
   });
 }
@@ -354,7 +356,7 @@ ProofDisplay.prototype.suggestionMessage = function(message) {
  */
 ProofDisplay.prototype.suggest = function(node) {
   this.hideSuggestion();
-  $(this.stepsNode).append(node).scrollTop(1e9);
+  $(this.stepsNode).append(node);
   this.suggesting = node;
 };
 
@@ -415,6 +417,9 @@ ProofDisplay.prototype.renderStep = function(step) {
   // Reindent when inserted into the DOM:
   node.oninsert = function() {
     copy.wff.reIndent();
+    // All insertions of a rendered step immediately scroll the window
+    // to the very bottom.
+    $(self.stepsNode).scrollTop(1e9);
   }
   return $(node).data('proofStep');
 };
