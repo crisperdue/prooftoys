@@ -1764,6 +1764,22 @@ function isProved(x) {
 }
 
 /**
+ * Coerces this Expr to one that is the same, but not proved by making
+ * a very shallow copy.  Carries over any type information.
+ */
+Expr.prototype.asWff = function() {
+  if (this.isProved()) {
+    return (this instanceof Call
+            ? new Call(this.fn, this.arg)._typeFrom(this)
+            : this instanceof Atom
+            ? new Atom(this.name)._typeFrom(this)
+            : abort());
+  } else {
+    return this;
+  }
+};
+
+/**
  * Searches for a subexpression of this that passes the test, given as
  * a boolean function of one argument.  Returns a (non-pretty) path
  * from this to the occurrence, or null if none found.  Tests this
