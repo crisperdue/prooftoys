@@ -1189,7 +1189,7 @@ let targetID = 1;
 // Unwind the stack.  You may want to tell the debugger to "Never
 // Pause" here:
 function unwind() {
-  throw e;  // You may ask the debugger not to pause here.
+  throw undefined;  // You may ask the debugger not to pause here.
 }
 
 /**
