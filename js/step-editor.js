@@ -1110,6 +1110,22 @@ ProofEditor.prototype.getStateString = function() {
 };
 
 /**
+ * Returns an array of string forms of the steps
+ * of this proof editor, usable as JSON.
+ */
+ProofEditor.prototype.getStepWffs = function() {
+  return this.steps.map(s => s.wff.toString());
+};
+
+ProofEditor.prototype.getJSONState = function() {
+  const v = {
+    proofState: this.getStateString(),
+    stepWffs: this.getStepWffs(),
+  };
+  return v;
+};
+
+/**
  * Sets the state of the proof from a string as returned by
  * getStateString.
  */
@@ -2602,7 +2618,7 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
   }
   if (step) {
     // Something is selected.
-    var precheck = rule.precheck;
+    var precheck = rule.precheck || rule.prep;
     var term = step.selection;
     // See if the rule has a precheck that can "rule it out".
     if (precheck && Toy.mapSize(info.inputs) == 1 &&
