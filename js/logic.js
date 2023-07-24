@@ -5386,41 +5386,60 @@ declare(
     description: 'arrange assumptions;; in step {step}',
     labels: 'uncommon'
   },
+);
 
-  // The menuGen is the interesting part here.  Searches for
-  // a moverFact whose LHS matches the appropriate parent of
-  // the target term.  Implementation is as a rewrite.
-  {name: 'moveRight',
-   action2: function(step, path_arg) {
-     initMovers();
-     const data = Toy.moverFacts.right;
-     const path = step.prettifyPath(path_arg);
-     const checkMatch = (parent, schema, info) => {
-       if (parent && parent.matchSchema(schema.eqnLeft())) {
-         const rwPath = path.upTo(info.before);
-         return rwPath && (() =>
-                           rules.rewrite(step.original, rwPath, schema));
-       }
-     };
-     const parents = step.ancestors(path);
-     parents.pop();
-     // This is the first parent (a op b) or undefined.
-     const p1 = parents.pop();
-     // This is the second parent (a op1 b op2 c) or undefined.
-     const p2 = parents.pop();
+/**
+ * This function factors out the commonality of moving right
+ * and left, for use as an "action2".
+ */
+function moverAction(where, step, path_arg) {
+   initMovers();
+   const data = Toy.moverFacts[where];
+   const path = step.prettifyPath(path_arg);
+   const checkMatch = (parent, schema, info) => {
+     if (parent && parent.matchSchema(schema.eqnLeft())) {
+       const rwPath = path.upTo(info.before);
+       return rwPath && (() =>
+                         rules.rewrite(step.original, rwPath, schema));
+     }
+   };
+   const parents = step.ancestors(path);
+   parents.pop();
+   // This is the first parent (a op b) or undefined.
+   const p1 = parents.pop();
+   // This is the second parent (a op1 b op2 c) or undefined.
+   const p2 = parents.pop();
 
-     for (const [i, info] of data.entries()) {
-       for (const fact of info.facts) {
-         const result = checkMatch(i === 0 ? p1 : p2, fact, info);
-         if (result) {
-           return result;
-         }
+   for (const [i, info] of data.entries()) {
+     for (const fact of info.facts) {
+       const result = checkMatch(i === 0 ? p1 : p2, fact, info);
+       if (result) {
+         return result;
        }
      }
+   }
+}
+
+declare(
+  // Searches for a moverFact whose LHS matches the appropriate parent
+  // of the target term and uses it to rewrite.
+  {name: 'moveRight',
+   action2: function(step, path) {
+     return moverAction('right', step, path);
    },
    inputs: {site: 1},
-   menu: '   move {term} right',
+   menu: '   move term {term} right',
    description: 'move to the right',
+   labels: 'general',
+  },
+
+  {name: 'moveLeft',
+   action2: function(step, path) {
+     return moverAction('left', step, path);
+   },
+   inputs: {site: 1},
+   menu: '   move term {term} left',
+   description: 'move to the left',
    labels: 'general',
   },
 
@@ -5784,12 +5803,14 @@ function initMovers() {
       }
     }
     [
+      'neg a + b = b - a',
       'a + b = b + a',
       'a - b = neg b + a',
       rules.tautology('a & b == b & a'),
     ].forEach(process.bind(null, 0));
 
     [
+      // No registered fact: 'a + neg b + c = a + c - b',
       'a + b + c = a + c + b',
       'a - b + c = a + c - b',
       'a + b - c = a - c + b',
