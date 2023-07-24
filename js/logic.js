@@ -13,6 +13,7 @@ const abort = Toy.abort;
 const assertEqn = Toy.assertEqn;
 const newError = Toy.newError;
 const ok = Toy.ok;
+const let_ = Toy.let_;
 
 const varify = Toy.varify;
 const constify = Toy.constify;
@@ -1569,8 +1570,9 @@ declare(
    description: 'assumed',
   },
 
-  // Finds a substitution to match the selection with
-  // the given term.  Returns falsy if none exists.
+  // Finds a substitution to match the selection with the given term.
+  // Returns falsy if none exists.  The menu suggests this when the
+  // selection can match a goal assumption.
   {name: 'matchTerm',
    inputs: {site: 1, term: 3},
    description: 'match;; {site}  with {term}',
@@ -5385,6 +5387,52 @@ declare(
     labels: 'uncommon'
   },
 
+  // The menuGen is the interesting part here.  Searches for
+  // a moverFact whose LHS matches the appropriate parent of
+  // the target term.  Implementation is as a rewrite.
+  {name: 'moveRight',
+   action: function(step, path) {},
+   inputs: {site: 1},
+   menuGen: function(ruleName, step, term, editor) {
+     initMovers();
+     const data = Toy.moverFacts.right;
+     const path = step.prettyPathTo(term);
+     const checkMatch = (parent, schema, info) => {
+       if (parent && parent.matchSchema(schema.eqnLeft())) {
+         const rwPath = path.upTo(info.before);
+         if (rwPath) {
+           return [
+             {ruleName: 'rewrite',
+              ruleArgs: [step.original, rwPath, schema],
+              html: '   move {term} right',
+             }
+           ];
+         }
+       } else {
+         return null;
+       }
+     };
+     const parents = step.ancestors(path);
+     parents.pop();
+     // This is the first parent (a op b) or undefined.
+     const p1 = parents.pop();
+     // This is the second parent (a op1 b op2 c) or undefined.
+     const p2 = parents.pop();
+
+     for (const [i, info] of data.entries()) {
+       for (const fact of info.facts) {
+         const result = checkMatch(i === 0 ? p1 : p2, fact, info);
+         if (result) {
+           return result;
+         }
+       }
+     }
+   },
+   labels: 'general',
+  },
+
+  // name: 'moveRightmost'
+
   // A simplifier that removes all lambda calls.
   {name: 'reduceAll',
    toOffer: function(step, term) {
@@ -5705,6 +5753,68 @@ declare(
   },
 
 );
+
+/**
+ * Lists of facts that move a term to the right or left.  The "r"
+ * facts move to the right, "l" facts to the left.  The "1" indicates
+ * moving a term at depth 1, a left or right operand; for right
+ * movers, "2" moves the middle of three operands to the right, and
+ * left movers reverse this effect.  This will also have r1, r2, l1,
+ * and l2 "Paths" properties.
+ */
+var moverFacts = {right: [{facts: [], before: '/left', after: '/right'},
+                          {facts: [], before: '/left/right', after: '/right'},
+                         ],
+                  left: [{facts: [], before: '/right', after: '/left'},
+                         {facts: [], before: '/right', after: '/left/right'},
+                        ],
+                 };
+                       
+
+/**
+ * Initialize the data for moveRight, moveLeft, et cetera.
+ */
+function initMovers() {
+  const info = Toy.moverFacts;
+  if (!info.ready) {
+    const add = (which, term) => info[which].push(term);
+
+    const process = (n, term) => {
+      const fact = (Toy.isProved(term)
+                    ? term.asWff()
+                    : Toy.resolveToFact(term));
+      if (fact) {
+        info.right[n].facts.push(fact);
+        info.left[n].facts.push(Toy.commuteEqn(fact));
+      } else {
+        console.warn('No mover fact:', term);
+      }
+    }
+    [
+      'a + b = b + a',
+      'a - b = neg b + a',
+      rules.tautology('a & b == b & a'),
+    ].forEach(process.bind(null, 0));
+
+    [
+      'a + b + c = a + c + b',
+      'a - b + c = a + c - b',
+      'a + b - c = a - c + b',
+      'a - b - c = a - c - b',
+    ].forEach(process.bind(null, 1));
+
+    /*
+    const path = Toy.asPath;
+    info.r1Paths = {before: path('/left'), after: path('/right')};
+    info.r2Paths = {before: path('/left/right'), after: path('/right')};
+    info.l1Paths = {before: path('/right'), after: path('/left')};
+    info.l2Paths = {before: path('/right'), after: path('/left/right')};
+    */
+
+    info.ready = true;
+ }
+}
+
 
 // This fact states the truth table for ==.  At present the
 // proof display for it shows proofs of facts for rows in the truth
@@ -6313,5 +6423,7 @@ Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
 Toy.simplifyStep = simplifyStep;
 Toy.canRewrite = canRewrite;
 Toy._factMap = _factMap;
+Toy.moverFacts = moverFacts;
+
 
 }();
