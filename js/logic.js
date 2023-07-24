@@ -5391,25 +5391,15 @@ declare(
   // a moverFact whose LHS matches the appropriate parent of
   // the target term.  Implementation is as a rewrite.
   {name: 'moveRight',
-   action: function(step, path) {},
-   inputs: {site: 1},
-   menuGen: function(ruleName, step, term, editor) {
+   action2: function(step, path_arg) {
      initMovers();
      const data = Toy.moverFacts.right;
-     const path = step.prettyPathTo(term);
+     const path = step.prettifyPath(path_arg);
      const checkMatch = (parent, schema, info) => {
        if (parent && parent.matchSchema(schema.eqnLeft())) {
          const rwPath = path.upTo(info.before);
-         if (rwPath) {
-           return [
-             {ruleName: 'rewrite',
-              ruleArgs: [step.original, rwPath, schema],
-              html: '   move {term} right',
-             }
-           ];
-         }
-       } else {
-         return null;
+         return rwPath && (() =>
+                           rules.rewrite(step.original, rwPath, schema));
        }
      };
      const parents = step.ancestors(path);
@@ -5428,6 +5418,9 @@ declare(
        }
      }
    },
+   inputs: {site: 1},
+   menu: '   move {term} right',
+   description: 'move to the right',
    labels: 'general',
   },
 
