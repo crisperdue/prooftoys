@@ -5393,39 +5393,49 @@ declare(
  * and left, for use as an "action2".
  */
 function moverAction(where, step, path_arg) {
-   initMovers();
-   const data = Toy.moverFacts[where];
-   const path = step.prettifyPath(path_arg);
-   const checkMatch = (parent, schema, info) => {
-     if (parent && parent.matchSchema(schema.eqnLeft())) {
-       const rwPath = path.upTo(info.before);
-       return rwPath && (() =>
-                         rules.rewrite(step.original, rwPath, schema));
-     }
-   };
-   const parents = step.ancestors(path);
-   parents.pop();
-   // This is the first parent (a op b) or undefined.
-   const p1 = parents.pop();
-   // This is the second parent (a op1 b op2 c) or undefined.
-   const p2 = parents.pop();
+  initMovers();
+  const data = Toy.moverFacts[where];
+  const path = step.prettifyPath(path_arg);
+  const checkMatch = (parent, schema, info) => {
+    if (parent && parent.matchSchema(schema.eqnLeft())) {
+      const rwPath = path.upTo(info.before);
+      return rwPath && (() =>
+                        rules.rewrite(step.original, rwPath, schema));
+    }
+  };
+  const parents = step.ancestors(path);
+  // Ignore the target term.
+  parents.pop();
+  // This is the first parent (a op b) or undefined.
+  const p1 = parents.pop();
+  // This is the second parent (a op1 b op2 c) or undefined.
+  const p2 = parents.pop();
 
-   for (const [i, info] of data.entries()) {
-     for (const fact of info.facts) {
-       const result = checkMatch(i === 0 ? p1 : p2, fact, info);
-       if (result) {
-         return result;
-       }
-     }
-   }
+  const choices = where === 'left' ? [p2, p1] : [p1, p2];
+
+  for (const [i, info] of data.entries()) {
+    for (const fact of info.facts) {
+      const completer = checkMatch(choices[i], fact, info);
+      const p = path;
+      if (completer) {
+        const path = p.upTo(info.before).concat(info.after);
+        assert(path);
+        return {completer, path};
+      }
+    }
+  }
+  return {};
 }
 
 declare(
   // Searches for a moverFact whose LHS matches the appropriate parent
   // of the target term and uses it to rewrite.
   {name: 'moveRight',
-   action2: function(step, path) {
-     return moverAction('right', step, path);
+   action2: function(step, path_arg, location=false) {
+     const {completer, path} = moverAction('right', step, path_arg);
+     return (location
+             ? {completer, path}
+             : completer);
    },
    inputs: {site: 1},
    menu: '   move term {term} right',
@@ -5434,8 +5444,11 @@ declare(
   },
 
   {name: 'moveLeft',
-   action2: function(step, path) {
-     return moverAction('left', step, path);
+   action2: function(step, path_arg, location=false) {
+     const {completer, path} = moverAction('left', step, path_arg);
+     return (location
+             ? {completer, path}
+             : completer);
    },
    inputs: {site: 1},
    menu: '   move term {term} left',
@@ -5443,7 +5456,26 @@ declare(
    labels: 'general',
   },
 
-  // name: 'moveRightmost'
+  {name: 'moveRightmost',
+   action2: function(step, path_arg) {
+     let path = path_arg;
+     let righter = step;
+     let completer;
+     while (true) {
+       ({completer, path} = rules.moveRight.prep(righter, path, true));
+       if (completer) {
+         righter = completer();
+       } else {
+         return righter == step ? null : () => righter;
+       }
+     }
+     return null;
+   },
+   inputs: {site: 1},
+   menu: '   move term {term} rightmost',
+   description: 'move to rightmost',
+   labels: 'general',
+  },
 
   // A simplifier that removes all lambda calls.
   {name: 'reduceAll',
