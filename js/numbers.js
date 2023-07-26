@@ -730,6 +730,21 @@ declare
     }
   },
 
+  {statement: 'a / b = a * (1 / b)',
+   proof: function() {
+     return rules.fact('a / b = a * recip b')
+       .andThen('rewrite', '/main/right/right', '@ recip x = 1 / x');
+   },
+  },
+
+  {statement: 'b != 0 => a / b = 1 / b * a',
+   proof: function() {
+     const step1 = rules.fact('a / b = a * (1 / b)');
+     const step2 = rules.rewrite(step1, '/main/right', 'a * b = b * a');
+     return step2;
+   }
+  },
+
   {name: 'divByZero',
     statement: '@R x => x / 0 = none',
     simplifier: true,
