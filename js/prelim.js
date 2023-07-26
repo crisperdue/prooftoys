@@ -242,6 +242,17 @@ Path.prototype.nth = function(n) {
 };
 
 /**
+ * Returns the number of segments in this path.
+ */
+Path.prototype.length = function() {
+  let i = 0;
+  for (let tail = this; !tail.isEnd(); tail = tail.rest) {
+    i++;
+  }
+  return i;
+};
+
+/**
  * Returns a path with the first N segments of this path.
  */
 Path.prototype.firstN = function(n) {
