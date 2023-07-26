@@ -329,6 +329,12 @@ Toy.exercise(
     (4 rewrite (s 3) (path "/left/right/arg/body")
        (t (((not a) => b) == (a | b))))`,
   },
+
+  {exertion: 'CountryForward',
+   statement:
+   'forall {x. Rock x | Country x} & exists {x. not (Rock x)} \
+     => exists {x. Country x}'
+  },
 );
 
   /*
