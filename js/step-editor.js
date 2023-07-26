@@ -1003,6 +1003,7 @@ ProofEditor.prototype.openDoc = function(name) {
       this.syncToDocName(errName);
       // TODO: Consider including the truncated list of steps in
       //   the proof editor as well as reporting the error.
+      this.setSteps(steps.steps);
       this.stepEditor.report(steps);
       return false;
     } else {
