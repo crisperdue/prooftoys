@@ -4309,7 +4309,7 @@ declare(
             if (eqn.isCall2('=') && eqn.getLeft().sameAs(term)) {
               // TODO: Give each item its own action information.
               const html =
-                    format('replace {1} with {2}',
+                    format('   replace {1} with {2}',
                            term.toUnicode(), eqn.getRight().toUnicode());
               const ruleArgs = [step.original, path];
               results.push({ruleName, ruleArgs, html});
@@ -5389,33 +5389,37 @@ declare(
 );
 
 /**
- * This function factors out the commonality of moving right
- * and left, for use as an "action2".
+ * This function implements the commonality of moving right and left,
+ * for use as an "action2".
  */
 function moverAction(where, step, path_arg) {
   initMovers();
   const data = Toy.moverFacts[where];
   const path = step.prettifyPath(path_arg);
   const checkMatch = (parent, schema, info) => {
+    if (parent) {
+      console.log('parent:', parent.$$);
+      console.log('schema:', schema.eqnLeft().$$);
+    }
     if (parent && parent.matchSchema(schema.eqnLeft())) {
+      console.log('yes');
       const rwPath = path.upTo(info.before);
+      if (rwPath) {
+        console.log('par::', parent.$$);
+        console.log('pa2::', step.original.get(rwPath).$$);
+        console.log('sch::', schema.eqnLeft().$$);
+        console.log('');
+      }
       return rwPath && (() =>
                         rules.rewrite(step.original, rwPath, schema));
     }
   };
-  const parents = step.ancestors(path);
-  // Ignore the target term.
-  parents.pop();
-  // This is the first parent (a op b) or undefined.
-  const p1 = parents.pop();
-  // This is the second parent (a op1 b op2 c) or undefined.
-  const p2 = parents.pop();
-
-  const choices = where === 'left' ? [p2, p1] : [p1, p2];
-
-  for (const [i, info] of data.entries()) {
+  // Element 0 is the target, 1 is first parent, and so on.
+  // For index out of range, the parent is a falsy value.
+  const parents = step.ancestors(path).reverse();
+  for (const info of data) {
     for (const fact of info.facts) {
-      const completer = checkMatch(choices[i], fact, info);
+      const completer = checkMatch(parents[info.up], fact, info);
       const p = path;
       if (completer) {
         const path = p.upTo(info.before).concat(info.after);
@@ -5474,6 +5478,27 @@ declare(
    inputs: {site: 1},
    menu: '   move term {term} rightmost',
    description: 'move to rightmost',
+   labels: 'general',
+  },
+
+  {name: 'moveLeftmost',
+   action2: function(step, path_arg) {
+     let path = path_arg;
+     let lefter = step;
+     let completer;
+     while (true) {
+       ({completer, path} = rules.moveLeft.prep(lefter, path, true));
+       if (completer) {
+         lefter = completer();
+       } else {
+         return lefter == step ? null : () => lefter;
+       }
+     }
+     return null;
+   },
+   inputs: {site: 1},
+   menu: '   move term {term} leftmost',
+   description: 'move to leftmost',
    labels: 'general',
   },
 
@@ -5799,18 +5824,25 @@ declare(
 );
 
 /**
- * Lists of facts that move a term to the right or left.  The "r"
- * facts move to the right, "l" facts to the left.  The "1" indicates
- * moving a term at depth 1, a left or right operand; for right
- * movers, "2" moves the middle of three operands to the right, and
- * left movers reverse this effect.  This will also have r1, r2, l1,
- * and l2 "Paths" properties.
+ * Lists of facts that move a term to the right or left.  The facts
+ * for right and left are the same, but the equation sides are
+ * swapped.  The first list of facts for each applies to operations
+ * with two operands, e.g. commutativity.  The second list is for
+ * "chains" with two operators.
+ *
+ * Caution: initMovers reverses the "left" array after filling
+ * everything in, because left movers use the 2 operator facts if
+ * applicable, so they need to be first.
  */
-var moverFacts = {right: [{facts: [], before: '/left', after: '/right'},
-                          {facts: [], before: '/left/right', after: '/right'},
+var moverFacts = {right: [{facts: [], up: 1,
+                           before: '/left', after: '/right'},
+                          {facts: [], up: 2,
+                           before: '/left/right', after: '/right'},
                          ],
-                  left: [{facts: [], before: '/right', after: '/left'},
-                         {facts: [], before: '/right', after: '/left/right'},
+                  left: [{facts: [], up: 1,
+                          before: '/right', after: '/left'},
+                         {facts: [], up: 1,
+                          before: '/right', after: '/left/right'},
                         ],
                  };
                        
@@ -5838,28 +5870,32 @@ function initMovers() {
       'neg a + b = b - a',
       'a + b = b + a',
       'a - b = neg b + a',
+      'a * b = b * a',
+      'a / b = 1 / b * a',
       rules.tautology('a & b == b & a'),
     ].forEach(process.bind(null, 0));
 
     [
-      // No registered fact: 'a + neg b + c = a + c - b',
       'a + b + c = a + c + b',
       'a - b + c = a + c - b',
       'a + b - c = a - c + b',
       'a - b - c = a - c - b',
+      'a * b * c = a * c * b',
+      'a / b * c = a * c / b',
+      'a * b / c = a / c * b',
     ].forEach(process.bind(null, 1));
 
-    /*
-    const path = Toy.asPath;
-    info.r1Paths = {before: path('/left'), after: path('/right')};
-    info.r2Paths = {before: path('/left/right'), after: path('/right')};
-    info.l1Paths = {before: path('/right'), after: path('/left')};
-    info.l2Paths = {before: path('/right'), after: path('/left/right')};
-    */
+    info.left.reverse();
 
     info.ready = true;
  }
 }
+
+// For debugging this logs Toy.moverFacts to the console.
+Toy.dbgMovers = () => {
+  const cvt = (k, v) => v instanceof Expr ? v.$$ : v;
+  console.log(JSON.stringify(Toy.moverFacts, cvt, 1));
+};
 
 
 // This fact states the truth table for ==.  At present the
