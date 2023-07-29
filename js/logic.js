@@ -4888,13 +4888,22 @@ function chainDescription(step) {
   }
 }
 
-// Chaining is a generalization of modus ponens.  The "step" argument
-// proves that an instance of the LHS of the (conditional) schema
-// is true, substituting into the schema fact or step to make them
-// match.  
+// Chaining is a generalization of modus ponens that works with a step
+// and a conditional schema.  The step argument proves that an
+// instance of the LHS of the conditional schema is true, and chaining
+// substitutes into the schema fact or step to make them match.
+// Chain0 matches the schema antecedent against the entire step, and
+// chain1 matches the schema antecedent against only the conclusion of
+// the (conditional) step.
+//  
+// With chain0, the result is an instance of the conclusion of the
+// schema.  The result of chain1 is also an instance of the schema's
+// conclusion, but with the assumptions of the step carried over to
+// the result.
 declare(
-  // Chain a conditional step, matching its main with a conditional
-  // schema.  Available interactively only through menuGen.
+  // Chain a conditional step, matching its conclusion with the left
+  // side of a conditional schema.  Available interactively only
+  // through menuGen.
   {name: 'chain1',
    action: function(step, schema) {
      assert(schema.implies(), 'Not conditional: {1}', schema);
@@ -4921,8 +4930,10 @@ declare(
    menuGen: chainMenuGen,
   },
 
-  // Chain an entire step, matching its wff with the entire schema
-  // step or fact.  Available interactively only through menuGen.
+  // Chain from a proved step, matching all of it with the left side
+  // of the conditional schema step or fact statement.  This proves an
+  // instance of the conclusion of the schema.  Available
+  // interactively only through menuGen.
   {name: 'chain0',
    action: function(step, schema) {
      assert(schema.implies(), 'Not conditional: {1}', schema);
@@ -5147,8 +5158,6 @@ declare(
   //
   // This rule is an inline version of extractHyp.
   //
-  // TODO: Use this only from the UI.  Use of paths to assumptions
-  //   is unreliable.
   {name: 'extractHypAt',
     precheck: function(step, path_arg) {
       const path = Toy.asPath(path_arg);

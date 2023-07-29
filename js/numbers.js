@@ -763,12 +763,14 @@ declare
   // End of interim axioms.
 
   // Evaluates arithmetic expressions with operators: +, -, *, /, div,
-  // mod, neg, =, !=, >, >=, <, <=, and the type operator "R".  Checks
-  // that inputs are all numeric (exact integers by construction) and
-  // that the result can be guaranteed to be a boolean or an exact
-  // integer.
+  // mod, neg, =, !=, >, >=, <, <=, and the type operator "R".  Given
+  // an arithmetic term with numerals as operands, produces an
+  // equation whose right side is the exact result of the operation.
+  // Checks that inputs are all numeric (exact integers by
+  // construction) and that the result can be guaranteed to be a
+  // boolean or an exact integer.
   //
-  // Prefer rules.arithmetic to this in client code.
+  // Prefer rules.arithmetic or rules.arithFact to this in client code.
   //
   // Result is always an equation (or biconditional) with the given
   // term as the LHS, and the boolean or integer result as the RHS.
@@ -886,8 +888,12 @@ declare
     tooltip: 'arithmetic',
     labels: 'algebra'
   },
-  // A rule just for arithmetic facts, currently inline.
-  // Returns null if the input is not an arithmetic fact.
+
+  // A rule that proves arithmetic facts given their statements,
+  // currently inline.  Given an equation, checks that it is the
+  // result of applying the axiom of arithmetic to its LHS; otherwise
+  // checks that applying the axiom of arithmetic yields T as the
+  // value.  Returns null if the input is not an arithmetic fact.
   {name: 'arithFact',
    action: function(wff) {
      if (wff.isEquation()) {
@@ -907,7 +913,7 @@ declare
      return null;
    }
   },
-  );
+);
 
 
 // definition('isQuotient = {x. {y. {z. R x & R y & R z & x = y * z}}}');
@@ -1492,6 +1498,7 @@ declare
     },
 
     // This moves a factor to the right within a chain of multiplications.
+    // TODO: Remove.
     {name: 'factorToRightmost',
      precheck: function(step_arg, path_arg) {
        const wff = step_arg.wff;
