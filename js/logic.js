@@ -5453,7 +5453,7 @@ declare(
    inputs: {site: 1},
    menu: '   move term {term} right',
    description: 'move to the right',
-   labels: 'general',
+   labels: 'algebra',
   },
 
   {name: 'moveLeft',
@@ -5466,7 +5466,7 @@ declare(
    inputs: {site: 1},
    menu: '   move term {term} left',
    description: 'move to the left',
-   labels: 'general',
+   labels: 'algebra',
   },
 
   {name: 'moveRightmost',
@@ -5487,7 +5487,7 @@ declare(
    inputs: {site: 1},
    menu: '   move term {term} rightmost',
    description: 'move to rightmost',
-   labels: 'general',
+   labels: 'algebra',
   },
 
   {name: 'moveLeftmost',
@@ -5508,7 +5508,7 @@ declare(
    inputs: {site: 1},
    menu: '   move term {term} leftmost',
    description: 'move to leftmost',
-   labels: 'general',
+   labels: 'algebra',
   },
 
   // A simplifier that removes all lambda calls.
