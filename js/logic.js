@@ -6204,9 +6204,21 @@ declare(
      }
    },
 
+  {statement: 'a & b => a',
+   proof: function() {
+     return rules.tautology('a & b => a');
+   }
+  },
+
   {statement: 'a => (b => a & b)',
    proof: function() {
      return rules.tautology('a => (b => a & b)');
+   }
+  },
+
+  {statement: 'a => (b => c) == b => (a => c)',
+   proof: function() {
+     return rules.tautology('a => (b => c) == b => (a => c)');
    }
   },
 
