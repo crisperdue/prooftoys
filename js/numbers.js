@@ -358,12 +358,19 @@ declare(
    // Also like Wikibooks Real Analysis axiom.
    {statement: 'x < y & 0 < z => x * z < y * z', axiom: true,
     description: 'ordering of reals and multiplication'
-   }
+   },
    // Similar to Wikipedia: "Real number"
    //
    // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
    //  description: 'ordering of reals and multiplication'
-   // }
+   // },
+
+  // The null value does not participate in orderings.
+  // TODO: Consider introducing a "domain" concept and
+  //   decree that "none" is not part of any domain.
+  {statement: 'not (x < none)', axiom: true},
+  {statement: 'not (none < x)', axiom: true},
+  
 );
 
 declare(
@@ -1448,7 +1455,7 @@ declare
                parts: {a: 'flatteners'}}}
            ]}),
     inputs: {site: 1},
-    menu: 'flatten {term}',
+    menu: 'flatten product {term}',
     description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
    },
