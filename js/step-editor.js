@@ -2197,54 +2197,6 @@ RuleMenu.prototype._update = function() {
                   $node: $node};
       itemInfos.push(info);
     });
-
-  } else {  // End if (selection)
-
-    if (selStep) {
-
-      if (mode === 'general') {
-
-        // Find registered facts for narrowing
-        Toy.eachFact(function(info) {
-          const statement = info.goal;
-          const step = selStep.original;
-          const wff = step.wff;
-          if (statement.implies()) {
-            const subst = wff.matchSchema(statement.getLeft());
-            if (subst) {
-              const stmt = Toy.trimParens(statement.toHtml());
-              const info = {ruleName: 'forwardChain',
-                            ruleArgs: [selStep.original, statement],
-                            html: `consequence of ${stmt}`,
-                           };
-              itemInfos.push(info);
-            }
-          }
-        });
-
-        // Find steps to use for narrowing
-        proofEditor.steps.forEach((proofStep, index) => {
-          const n = index + 1;
-          const statement = proofStep.original.wff;
-          const step = selStep.original;
-          const wff = step.wff;
-          if (statement.implies()) {
-            const subst = wff.matchSchema(statement.getLeft());
-            if (subst) {
-              const stmt = Toy.trimParens(statement.toHtml());
-              const info = {ruleName: 'forwardChain',
-                            ruleArgs: [selStep.original, proofStep.original],
-                            html: `consequence of step ${n}:\u00a0 ${stmt}`,
-                           };
-              itemInfos.push(info);
-            }
-          }
-        });
-
-      }  // end "general"
-
-    }  // end "selStep"
-
   }
 
   // Sort the itemInfos.
