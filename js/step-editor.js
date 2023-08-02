@@ -1594,11 +1594,13 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
     const message = 'Rule failed:' + ruleName;
     this.report(message);
   } else if (result.rendering) {
-      // If there is already a rendering, Expr.justify must have found
-      // that the "new" step was identical to one of its dependencies,
-      // so don't try to add it.  The implementation only currently
-      // supports one render per step anyway.
-    this.report('nothing done');
+    // If there is already a rendering, Expr.justify must have found
+    // that the "new" step was identical to one of its dependencies,
+    // so don't try to add it.  The implementation only currently
+    // supports one render per step anyway.
+    // This should have been reported to the user at suggestion time.
+    // TODO: Consider not running the rule at all.
+    console.log('no change');
   } else {
     // Success!
     // TODO: Trigger an event and let the proofDisplay show the step,
@@ -2498,8 +2500,6 @@ RuleMenu.prototype.offerableRuleNames = function() {
  * current editor.showRuleType (current menu name), and
  * editor.showRules.  Given a rule name, returns a truthy value iff
  * current policy is to show the rule.
- *
- * TODO: Clean up this mess.
  */
 RuleMenu.prototype.labelApproved = function(name) {
   const editor = this.proofEditor;
@@ -2508,12 +2508,8 @@ RuleMenu.prototype.labelApproved = function(name) {
     return true;
   }
   const selStep = editor.proofDisplay.selection;
-  const okAlgebra = () => {
-    const expr = selStep && selStep.selection;
-    return (expr && !expr.isReal()
-            ? false
-            : labels.algebra);
-  };
+  const okAlgebra = () =>
+        labels.algebra || labels.tactic;
   const okGeneral = () =>
         labels.general || labels.basic || labels.none;
   switch (editor.showRuleType) {
@@ -2522,8 +2518,7 @@ RuleMenu.prototype.labelApproved = function(name) {
   case 'algebra':
     return okAlgebra();
   case 'general':
-    // Any rule specifically labeled "general" is OK here.
-    return labels.general || (okGeneral() && !okAlgebra());
+    return okGeneral();
   case 'other':
     return !okAlgebra() && !okGeneral() && !labels.primitive;
   default:
