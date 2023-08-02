@@ -3329,6 +3329,7 @@ declare(
 
   // Adds an assumption to the given step and deduplicates it, or a
   // set of assumptions given as a conjunction, not necessarily flat.
+  // If no existing asms, adds them as-is.
   {name: 'andAssume',
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
@@ -3337,14 +3338,15 @@ declare(
         var map = {p: step.getLeft(), q: step.getRight(), a: expr};
         var step1 = rules.tautInst(taut, map);
         var step2 = rules.modusPonens(step, step1);
+        var result = rules.arrangeAsms(step2);
       } else {
         var taut = rules.tautology('p => (a => p)');
         var map = {p: step, a: expr};
         var step1 = rules.tautInst(taut, map);
-        var step2 = rules.modusPonens(step, step1);
+        var result = rules.modusPonens(step, step1);
+        // Does not arrange.  Suppose a == T for example.
       }
-      var step3 = rules.arrangeAsms(step2);
-      return step3.justify('andAssume', arguments, [step]);
+      return result.justify('andAssume', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
     form: ('Add assumption <input name=bool> in step <input name=step>'),
