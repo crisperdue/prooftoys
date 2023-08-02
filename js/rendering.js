@@ -324,7 +324,7 @@ ProofDisplay.prototype.stepSuggestion = function(step) {
   // quick hack way to detect that.  Suggested steps have a rendering,
   // but it is not attached to the document.
   if (step.rendering && document.contains(step.rendering.stepNode)) {
-    return this.suggestionMessage('nothing to do');
+    return this.suggestionMessage('no change');
   }
   var rendered = step.rendering || this.renderStep(step);
   if (rendered) {
@@ -358,7 +358,7 @@ ProofDisplay.prototype.suggestionMessage = function(message) {
  */
 ProofDisplay.prototype.suggest = function(node) {
   this.hideSuggestion();
-  $(this.stepsNode).append(node);
+  $(this.stepsNode).append(node).scrollTop(1e9);
   this.suggesting = node;
 };
 
@@ -1023,7 +1023,7 @@ Expr.prototype.reIndent = function(depth, portWidth) {
     const $term = $(term.node);
     if (!$term.prev().is('.linebreak')) {
       const $span =
-            $('<span class=linebreak>').css({paddingRight: depth + 'em'});
+            $('<span class=linebreak>').css({paddingRight: (1.5 * depth) + 'em'});
       $term.before('<br class=linebreak>', $span);
     }
   };
