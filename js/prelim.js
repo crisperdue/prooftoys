@@ -266,6 +266,16 @@ Path.prototype.firstN = function(n) {
 };
 
 /**
+ * Given n not greater than the length of this path, returns a prefix
+ * of this path with n fewer elements, where n defaults to 1.
+ */
+Path.prototype.above = function(n=1) {
+  const len = this.length();
+  assert(len >= n);
+  return this.firstN(len - n);
+};
+
+/**
  * Returns the prefix of this path preceding the given tail.  If the
  * given tail is not actually a tail of this path, returns null.  No
  * conversion between pretty and non-pretty paths is done, each must
