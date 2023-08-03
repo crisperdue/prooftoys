@@ -5487,8 +5487,9 @@ function rightChain(step, path) {
 
 /**
  * The term is taken as a "chain parent" term, with a chainable binary
- * operator.  This finds its leftmost chain element by descending into
- * it, and returns a pretty path to it from the given term.
+ * operator.  If it is not, returns null.  If it is, this finds its
+ * leftmost chain element by descending into it, and returns a pretty
+ * path to it from the given term.
  *
  * The result path segments all turn out to be "left".
  */
@@ -5498,7 +5499,9 @@ function leftmost(term_arg) {
   let rpath = Toy.Path.empty;
   let term = term_arg;
   const chops = chainTypes.find(a => a.includes(bop(term)));
-  assert(chops);
+  if (!chops) {
+    return null;
+  }
   while (true) {
     // If bop returns falsy, chops will not include it.
     if (!chops.includes(bop(term))) {
@@ -5523,6 +5526,9 @@ function leftChain(step, path) {
   const above = path.above();
   const term = step.get(above);
   const lpath = leftmost(term);
+  if (!lpath) {
+    return [];
+  }
   const all = rightChain(step, above.concat(lpath));
   all.unshift(term.get(lpath));
   const rights = rightChain(step, path);
