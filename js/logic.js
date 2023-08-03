@@ -6336,6 +6336,14 @@ declare(
    }
   },
 
+  {statement: '(a == b & c) => (a => b)',
+   proof: () => rules.tautology('(a == b & c) => (a => b)')
+  },
+
+  {statement: '(a => b & c) => (a => b)',
+   proof: () => rules.tautology('(a => b & c) => (a => b)')
+  },
+
   {statement: 'a => (b => c) == b => (a => c)',
    proof: function() {
      return rules.tautology('a => (b => c) == b => (a => c)');
@@ -6630,6 +6638,40 @@ declare(
             ]
    }
 );
+
+//// Strictness
+
+declare(
+  {statement: 'strict2 f => f x none = none',
+   proof:
+   `(1 consider (t (strict2 f)))
+    (2 rewrite (s 1) (path "/main/right")
+       (t ((strict2 f) ==
+           ((forall {x. ((f x none) = none)}) &
+            (forall {x. ((f none x) = none)})))))
+    (3 chain0 (s 2) (t ((a == (b & c)) => (a => b))))
+    (4 rewrite (s 3) (path "")
+       (t ((p => (forall q)) == (forall {x. (p => (q x))}))))
+    (5 chain0 (s 4) (t ((forall p) => (p x))))`,
+  },
+
+  {statement: 'strict2 f => f none x = none',
+   proof:
+  `(1 consider (t (strict2 f)))
+   (2 rewrite (s 1) (path "/main/right")
+      (t ((strict2 f) ==
+          ((forall {x. ((f x none) = none)}) &
+           (forall {x. ((f none x) = none)})))))
+   (3 moveLeft (s 2) (path "/main/right/right"))
+   (4 chain0 (s 3) (t ((a == (b & c)) => (a => b))))
+   (5 rewrite (s 4) (path "")
+      (t ((p => (forall q)) == (forall {x. (p => (q x))}))))
+   (6 chain0 (s 5) (t ((forall p) => (p x))))`,
+  },
+
+);
+
+
 
 // Intersection of a set of sets -- "big intersection"
 definition('Intersect = {p. {x. forall {q. p q => q x}}}');
