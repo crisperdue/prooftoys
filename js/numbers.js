@@ -58,7 +58,32 @@ if (!Toy.deeperFieldAxioms) {
      {statement: '@ strict2 (+)', axiom: true,
       description: 'real addition is strict'},
      {statement: '@ strict2 (*)', axiom: true,
-      description: 'real multiplication is strict'}
+      description: 'real multiplication is strict'},
+
+    {statement: '@ x + none = none',
+     proof: function() {
+       return (rules.fact('strict2 (+)')
+               .andThen('chain0', 'strict2 f => f x none = none'));
+     },
+    },
+    {statement: '@ none + x = none',
+     proof: function() {
+       return (rules.fact('strict2 (+)')
+               .andThen('chain0', 'strict2 f => f none x = none'));
+     },
+    },
+    {statement: '@ x * none = none',
+     proof: function() {
+       return (rules.fact('strict2 (*)')
+               .andThen('chain0', 'strict2 f => f x none = none'));
+     },
+    },
+    {statement: '@ none * x = none',
+     proof: function() {
+       return (rules.fact('strict2 (*)')
+               .andThen('chain0', 'strict2 f => f none x = none'));
+     },
+    },
   );
 
   definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
