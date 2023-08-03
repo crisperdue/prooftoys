@@ -564,10 +564,14 @@ ProofDisplay.prototype.removeStep = function(step) {
   var self = this;
   var index = self.steps.indexOf(step);
   var followers = self.steps.slice(index + 1);
-  var top = $(window).scrollTop();
+  const ed = this.proofEditor;
+  const $node = $(this.stepsNode);
+  var top = $node.scrollTop();
   self.removeStepAndFollowing(step);
   followers.forEach(function(s) { return self.addStep(s.original)});
-  $(window).scrollTop(top);
+  // The insertions cause scrolling to bottom, and this hack
+  // overrides that with a later scroll back to previous top.
+  Toy.afterRepaint(() => $node.scrollTop(top));
 };
 
 /**
