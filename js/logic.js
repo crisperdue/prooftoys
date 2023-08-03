@@ -191,7 +191,7 @@ declare(
   {name: 'axiom3',
     statement: '(f = g) == forall {x. f x = g x}', axiom: true,
     labels: 'higherOrder',
-    desimplifier: true,
+    desimplifier: true,  // TODO: Remove this (the simplify side is bad)
     converse: {labels: 'higherOrder'},
     inputs: {},
     tooltip: ('extensionality: functions are equal based on equal results'
@@ -4879,13 +4879,10 @@ function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
 
 function chainDescription(step) {
   const [inStep, schema] = step.ruleArgs;
-  if (schema.isProved()) {
-    // const index = schema.rendering.
-    console.log(schema.rendering);
+  if (Toy.isProved(schema)) {
     const rendering = schema.rendering;
     return `chain;; from step {step} with step ${rendering.stepNumber}`;
   } else {
-    console.log(inStep.rendering);
     return 'chain;; from step {step} with {fact}';
   }
 }
@@ -4907,7 +4904,8 @@ declare(
   // side of a conditional schema.  Available interactively only
   // through menuGen.
   {name: 'chain1',
-   action: function(step, schema) {
+   action: function(step, schema_arg) {
+     const schema = termify(schema_arg);
      assert(schema.implies(), 'Not conditional: {1}', schema);
      assert(step.implies(), 'Not conditional: {1}', step);
      const proved = schema.isProved();
@@ -4922,7 +4920,7 @@ declare(
      const withAsms = Toy.applyMatchingFact(simpler, '',
                                             ['a => (b => c) == a & b => c'],
                                             'rewriteOnly');
-     return (withAsms || simpler)
+     return (/* withAsms || */ simpler)
        .justify('chain1', arguments,
                 proved ? [step, schema] : [step]);
    },
@@ -4937,7 +4935,8 @@ declare(
   // instance of the conclusion of the schema.  Available
   // interactively only through menuGen.
   {name: 'chain0',
-   action: function(step, schema) {
+   action: function(step, schema_arg) {
+     const schema = termify(schema_arg);
      assert(schema.implies(), 'Not conditional: {1}', schema);
      const target = step.wff;
      const map = target.matchSchema(schema.getLeft());
@@ -4947,7 +4946,7 @@ declare(
      const schema2 = proved ? schema : rules.fact(schema);
      const instance = rules.instMultiVars(schema2, map, true);
      const replaced = rules.replace(instance, '/left', eqn);
-     const result = rules.rewrite(replaced, '', 'T => a == a');
+     const result = rules.rewriteOnly(replaced, '', 'T => a == a');
      return result.justify('chain0', arguments,
                            proved ? [step, schema] : [step]);
    },
