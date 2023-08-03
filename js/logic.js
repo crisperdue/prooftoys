@@ -5152,9 +5152,9 @@ declare(
   },    
 
   // Given a proof step of the form [a => b] and a path that refers to
-  // an element "e" of a taken as a conjunction chain, derives a step
-  // of the form [a' => (e => b)] where e is the referenced element,
-  // and a' is a with all occurrences of "e" removed.
+  // an element "e" of "a" taken as a conjunction chain, derives a
+  // step of the form [a' => (e => b)] where e is the referenced
+  // element, and a' is a with all occurrences of "e" removed.
   //
   // If e is a, returns its input (or a copy?).
   //
@@ -5401,32 +5401,25 @@ declare(
 
 /**
  * This function implements the commonality of moving right and left,
- * for use as an "action2".
+ * for use as an "action2".  The "where" value is either "left" for
+ * leftward movers or "right" for rightward movers.  The step and path
+ * refer to a term to be moved.
  */
 function moverAction(where, step, path_arg) {
   initMovers();
   const data = Toy.moverFacts[where];
   const path = step.prettifyPath(path_arg);
+
   const checkMatch = (parent, schema, info) => {
-    if (parent) {
-      console.log('parent:', parent.$$);
-      console.log('schema:', schema.eqnLeft().$$);
-    }
     if (parent && parent.matchSchema(schema.eqnLeft())) {
-      console.log('yes');
       const rwPath = path.upTo(info.before);
-      if (rwPath) {
-        console.log('par::', parent.$$);
-        console.log('pa2::', step.original.get(rwPath).$$);
-        console.log('sch::', schema.eqnLeft().$$);
-        console.log('');
-      }
       return rwPath && (() =>
                         rules.rewrite(step.original, rwPath, schema));
     }
   };
+
   // Element 0 is the target, 1 is first parent, and so on.
-  // For index out of range, the parent is a falsy value.
+  // For indexes out of range, the value is falsy.
   const parents = step.ancestors(path).reverse();
   for (const info of data) {
     for (const fact of info.facts) {
@@ -5440,6 +5433,100 @@ function moverAction(where, step, path_arg) {
     }
   }
   return {};
+}
+
+const chainTypes = [['+', '-'], ['*', '/'], ['&'], ['|']];
+const chainOps = [].concat( ...chainTypes);
+
+/**
+ * All of the terms in the result array occupy chain slots
+ * to the right of the given target term.  The array elements are
+ * ancestor terms of the target with a binary operator compatible with
+ * the binary operator of the parent of the target.  The path must be
+ * pretty.
+ *
+ * If the target term is not part of a chain, the result is an empty
+ * array.
+ */
+function rightChain(step, path) {
+  const bop = term => term.isCall2() && term.getBinOp().name;
+
+  const chain = [];
+  let rpath = path.reverse();
+  const parents = step.wff.ancestors(path).reverse();
+  assert(step.get(path) === parents[0]);
+  // Skip the target term, start with its parent.
+  parents.shift();
+  // On the first iteration any chainable op is OK.
+  let chops = chainOps;
+  let first = true;
+  while (parents.length) {
+    const up = parents.shift();
+    const op = bop(up);
+    if (!chops.includes(op)) {
+      break;
+    }
+    if (first) {
+      first = false;
+      // All other terms must have an operator compatible with the
+      // first.
+      chops = chainTypes.find(a => a.includes(op));
+    }
+    // This segment leads from "up" to a child of it.
+    if (rpath.segment === 'left') {
+      chain.push(up.getRight());
+    }
+    rpath = rpath.rest;
+    // This segment leads to "up".  
+    if (rpath.segment !== 'left') {
+      break;
+    }
+  }
+  return chain;
+}
+
+/**
+ * The term is taken as a "chain parent" term, with a chainable binary
+ * operator.  This finds its leftmost chain element by descending into
+ * it, and returns a pretty path to it from the given term.
+ *
+ * The result path segments all turn out to be "left".
+ */
+function leftmost(term_arg) {
+  const bop = term => term.isCall2() && term.getBinOp().name;
+
+  let rpath = Toy.Path.empty;
+  let term = term_arg;
+  const chops = chainTypes.find(a => a.includes(bop(term)));
+  assert(chops);
+  while (true) {
+    // If bop returns falsy, chops will not include it.
+    if (!chops.includes(bop(term))) {
+      return rpath.reverse();
+    }
+    term = term.getLeft();
+    rpath = new Toy.Path('left', rpath);
+  }
+  assert(false);
+}
+
+/**
+ * Returns an array of terms within the step similarly to rightChain.
+ * The terms are all operands of a chain compatible with the binary
+ * operator of the parent of the target term, and all to the left of
+ * the target.
+ */
+function leftChain(step, path) {
+  if (path.isEnd()) {
+    return [];
+  }
+  const above = path.above();
+  const term = step.get(above);
+  const lpath = leftmost(term);
+  const all = rightChain(step, above.concat(lpath));
+  all.unshift(term.get(lpath));
+  const rights = rightChain(step, path);
+  return all.slice(0, all.length - rights.length - 1);
 }
 
 declare(
@@ -5473,20 +5560,35 @@ declare(
 
   {name: 'moveRightmost',
    action2: function(step, path_arg) {
-     let path = path_arg;
-     let righter = step;
-     let completer;
-     while (true) {
-       ({completer, path} = rules.moveRight.prep(righter, path, true));
-       if (completer) {
-         righter = completer();
-       } else {
-         return righter == step ? null : () => righter;
+     const mover = () => {
+       // Consider the entire step, so adding assumptions will not
+       // change the target paths.
+       let righter = rules.consider(step).andThen('andAssume', 'T');
+       // Adjust the target path accordingly.
+       let path = Toy.asPath('/main/right').concat(step.asPath(path_arg));
+       let completer;
+       while (true) {
+         ({completer, path} = rules.moveRight.prep(righter, path, true));
+         if (completer) {
+           // If we can move right, do so.
+           righter = completer();
+         } else {
+           // Otherwise replace the entire step with the updated right
+           // side.
+           return rules.replace(step, '', righter);
+         }
        }
-     }
-     return null;
+     };
+     // This rule can apply if there is at least one chain term
+     // to the right, but see toOffer below here.
+     return rightChain(step, path_arg).length > 0 ? mover : null;
    },
    inputs: {site: 1},
+   toOffer: function(step, term) {
+     const path = step.prettyPathTo(term);
+     const chain = rightChain(step, path);
+     return chain.length > 1;
+   },
    menu: '   move term {term} rightmost',
    description: 'move to rightmost',
    labels: 'algebra',
@@ -5494,20 +5596,30 @@ declare(
 
   {name: 'moveLeftmost',
    action2: function(step, path_arg) {
-     let path = path_arg;
-     let lefter = step;
-     let completer;
-     while (true) {
-       ({completer, path} = rules.moveLeft.prep(lefter, path, true));
-       if (completer) {
-         lefter = completer();
-       } else {
-         return lefter == step ? null : () => lefter;
+     // Implementation is very much like moveRightmost.
+     const mover = () => {
+       let lefter = rules.consider(step).andThen('andAssume', 'T');
+       let path = Toy.asPath('/main/right').concat(step.asPath(path_arg));
+       let completer;
+       while (true) {
+         ({completer, path} = rules.moveLeft.prep(lefter, path, true));
+         if (completer) {
+           lefter = completer();
+         } else {
+           return rules.replace(step, '', lefter);
+         }
        }
-     }
-     return null;
+     };
+     // This rule can apply if there is at least one chain term
+     // to the left, but see toOffer below here.
+     return leftChain(step, path_arg).length > 0 ? mover : null;
    },
    inputs: {site: 1},
+   toOffer: function(step, term) {
+     const path = step.prettyPathTo(term);
+     const chain = leftChain(step, path);
+     return chain.length > 1;
+   },
    menu: '   move term {term} leftmost',
    description: 'move to leftmost',
    labels: 'algebra',
@@ -5884,6 +5996,7 @@ function initMovers() {
       'a * b = b * a',
       'a / b = 1 / b * a',
       rules.tautology('a & b == b & a'),
+      rules.tautology('a | b == b | a'),
     ].forEach(process.bind(null, 0));
 
     [
@@ -5894,6 +6007,8 @@ function initMovers() {
       'a * b * c = a * c * b',
       'a / b * c = a * c / b',
       'a * b / c = a / c * b',
+      rules.tautology('a & b & c == a & c & b'),
+      rules.tautology('a | b | c == a | c | b'),
     ].forEach(process.bind(null, 1));
 
     info.left.reverse();
@@ -5902,7 +6017,7 @@ function initMovers() {
  }
 }
 
-// For debugging this logs Toy.moverFacts to the console.
+// This is just for debugging.  It logs Toy.moverFacts to the console.
 Toy.dbgMovers = () => {
   const cvt = (k, v) => v instanceof Expr ? v.$$ : v;
   console.log(JSON.stringify(Toy.moverFacts, cvt, 1));
@@ -6529,6 +6644,7 @@ Toy.simplifyStep = simplifyStep;
 Toy.canRewrite = canRewrite;
 Toy._factMap = _factMap;
 Toy.moverFacts = moverFacts;
-
+Toy.rightChain = rightChain;
+Toy.leftChain = leftChain;
 
 }();
