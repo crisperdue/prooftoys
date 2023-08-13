@@ -4509,9 +4509,9 @@ declare(
   // Also deduplicates the assumptions.
   // This is a helper for rules.replace.
   {name: 'mergeAsms',
-    action: function(step) {
-      let flatter = step;
+   action: function(step) {
       const once = Toy.applyMatchingFact;
+      let flatter = step;
       const mover = ['a1 & a2 => (b => c) == (a1 => (b & a2 => c))'];
       // This loop flattens out the assumptions.
       while (true) {

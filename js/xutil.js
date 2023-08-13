@@ -1638,10 +1638,9 @@ Expr.prototype.matchPath = function() {
 };
 
 /**
- * Treating this term as the equation in a replacement,
- * returns the replacement part.  To support rewrite rules
- * that are implicitly equivalent to T, returns T in case
- * this is not equational.
+ * Returns the part of this term that would become the replacement
+ * term if given to rules.replace.  To support rewrite rules that
+ * implicitly rewrite to T, returns T in case this is not equational.
  */
 Expr.prototype.replacementTerm = function() {
   return (this.isEquation()
