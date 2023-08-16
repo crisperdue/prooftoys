@@ -1966,11 +1966,17 @@ function encodeSteps(steps_arg) {
 /**
  * From the given input expression or string to be parsed, computes
  * and returns an array of steps, empty in case of failure.
+ * The string may be a sequence of steps or "(steps <seq>)".
  *
  * Returns a (strict) Error in case of failure.
  */
 function decodeSteps(input) {
-  const parsed = typeof input == 'string' ? justParse(input) : input;
+  const parsed =
+        (typeof input == 'string'
+         ? justParse(input.trim().startsWith('(steps')
+                     ? input
+                     : `(steps ${input})`)
+         : input);
   const descriptions = parsed.asArray();
   const outSteps = [];
   for (let i = 1; i < descriptions.length; i++) {
@@ -2116,9 +2122,7 @@ function asProof(info) {
     return info;
   } else if (type === 'string') {
     return () => {
-      const fullSteps =
-            info.startsWith('(steps') ? info : `(steps ${info})`;
-      const decoded = decodeSteps(fullSteps);
+      const decoded = decodeSteps(info);
       // Checking "instanceof Error" is hitting a JS VM bug here.
       return (decoded instanceof Array
               ? decoded[decoded.length - 1]
