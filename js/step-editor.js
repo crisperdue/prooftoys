@@ -2049,7 +2049,7 @@ RuleMenu.prototype._update = function() {
     //
     // Search for steps that could rewrite the selection.
     //
-    proofEditor.steps.forEach((proofStep, index) => {
+    proofEditor.steps.forEach((schemaStep, index) => {
       const submenu = proofEditor.showRuleType;
 
       // Rewriting with steps applies only to the "general" menu.
@@ -2059,7 +2059,9 @@ RuleMenu.prototype._update = function() {
 
       // This is the step number to report.
       const n = index + 1;
-      const schema = proofStep.matchPart();
+      // This is the part of the schema to match against the selection.
+      const schema = schemaStep.matchPart();
+
       if (proofEditor.goalStatement) {
         const goalSchema = proofEditor.goalStatement.matchPart();
         if (schema.sameAs(goalSchema)) {
@@ -2067,15 +2069,6 @@ RuleMenu.prototype._update = function() {
           // That seems counterproductive.
           return;
         }
-      }
-
-      // Experimentally omit matching schemas that are just a "$"
-      // variable.  This occurs very often when solving an algebra
-      // problem.
-      if (schema.isVariable() &&
-          // schema.name.startsWith('$') &&
-          !schema.matches(selection)) {
-        return;
       }
 
       if (!checkSchema(schema)) {
@@ -2089,10 +2082,20 @@ RuleMenu.prototype._update = function() {
 
       // Try to do the substitution, which can fail.
       const eqn = Toy.catching(
-        () => proofStep.andThen('instMultiVars', map, true));
+        () => schemaStep.andThen('instMultiVars', map, true));
       if (eqn instanceof Error || !Toy.boundVarsOK(selStep, sitePath, eqn)) {
         return;
       }
+      // Substitute into the replacement term part of the schema to
+      // get the actual replacement term.
+      const r1 = schemaStep.replacementTerm();
+      const repl = Toy.catching(
+        () => (rules.consider(r1)
+               .andThen('instMultiVars', map, true).getRight()));
+      if (repl instanceof Error) {
+        return;
+      }
+
       let html =
           // \u27ad is a lower-right shadowed rightwards arrow.
           ` \u27ad <b class=resultTerm></b> <input class=subgoals> \
@@ -2106,7 +2109,7 @@ RuleMenu.prototype._update = function() {
         html = ' ' + html;
       }
       const $node = $('<span>').append(html);
-      $node.find('.resultTerm').append(eqn.replacementTerm().renderTerm());
+      $node.find('.resultTerm').append(repl.renderTerm());
       if (count > 0) {
         const plural = count > 1 ? 's' : '';
         $node.find('.subgoals')
@@ -2114,7 +2117,7 @@ RuleMenu.prototype._update = function() {
       }
       itemInfos.push({ruleName: 'rewriteFrom',
                       ruleArgs: [selStep.original, sitePath,
-                                 proofStep.original],
+                                 schemaStep.original],
                       html: html,
                       $node: $node
                      });
