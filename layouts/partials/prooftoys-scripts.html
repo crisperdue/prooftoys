@@ -26,6 +26,6 @@
   {{ end }}
 
 <script type=module>
-import Dexie from 'https://unpkg.com/dexie@latest/dist/modern/dexie.mjs';
+import Dexie from '{{ .Site.Params.dexie_url }}';
 window.Dexie = Dexie;
 </script>
