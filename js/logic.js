@@ -1553,7 +1553,7 @@ declare(
        const gasms = goal && goal.getAsms();
        const match = a => a.sameAs(term);
        const likeAsm = (asms && !asms.scanConj(a => a == term) &&
-                      asms.scanConj(match));
+                        asms.scanConj(match));
        const inGoal = gasms && gasms.scanConj(match);
        const html =
              (likeAsm
@@ -2364,6 +2364,7 @@ declare(
   // step with [a == (a == T)], then rewriting the target term
   // with [a == T].
   {name: 'trueBy0',
+   // TODO: Clean up this implementation, probably like trueBy1.
    action: function(target, path, step) {
      const term = target.get(path);
      const wff = step.wff;
@@ -4406,7 +4407,8 @@ declare(
    * Replaces the target term using the given equation.  If both
    * inputs are conditionals and this does not replace the entire
    * step, merges the resulting assumptions, with the target step
-   * assumptions first.
+   * assumptions first.  The equation assumptions unfortunately
+   * are reversed in the result.  See TODO for mergeAsms.
    */
   {name: 'replace',
     action: function(target, path, equation) {
@@ -4501,11 +4503,16 @@ declare(
     labels: 'uncommon'
   },
 
-  // If the step has the form a => (b => c), moves all conjuncts
-  // of "a" to the inner level and finally erasing the outer "=>".
-  // The conjuncts of "a" end up following all the conjuncts of "b".
-  // Also deduplicates the assumptions.
-  // This is a helper for rules.replace.
+  // If the step has the form a => (b => c), moves all conjuncts of
+  // "a" to the inner level and finally erasing the outer "=>".  The
+  // conjuncts of "a" end up following all the conjuncts of "b".  Also
+  // deduplicates the assumptions.  This is a helper for
+  // rules.replace, in which "a" is the assumptions of the input
+  // equation.
+  //
+  // TODO: Consider retaining the original order of the "a"
+  //   assumptions, perhaps by just calling arrangeAsms, which it
+  //   already does internally after merging.
   {name: 'mergeAsms',
    action: function(step) {
       const once = Toy.applyMatchingFact;
@@ -5285,10 +5292,6 @@ declare(
 
   // Treats conj as a tree of conjunctions.  Equates it with a
   // deduplicated and "linearized" version, omitting occurrences of T.
-  // The result will conform to the ordering of terms defined by the
-  // Array.sort comparator, breaking ties with left-to-right textual
-  // order (translates into order of insertion into the TermMap
-  // and its subst.
   {name: 'conjunctionArranger',
     // Implemented by building an appropriate equivalence tautology,
     // proving it with rules.tautology, and instantiating.
