@@ -2369,7 +2369,7 @@ declare(
      const wff = step.wff;
      const map = term.matchSchema(wff);
      if (map) {
-       const step1 = step.rewrite('', 'a == (a == T)');
+       const step1 = rules.rewriteOnly(step, '', 'a == (a == T)');
        const step2 = rules.instMultiVars(step1, map, true);
        const step3 = rules.replace(target, path, step2);
        return step3.justify('trueBy0', arguments, [target, step]);
@@ -2389,13 +2389,11 @@ declare(
   // Checks that the target site is an instance of the main part of
   // the given step.  If so, converts the main part to [main == T] and
   // uses it to rewrite the target site.
-  //
-  // TODO: Decide on a version of rewriting to use here and in trueBy0.
   {name: 'trueBy1',
     action: function(target, path, step) {
       const term = target.get(path);
       const step2 = rules.rewriteOnly(step, '/main', 'p == (p == T)');
-      const result = rules.rewrite(target, path, step2);
+      const result = rules.rewriteOnlyFrom(target, path, step2);
       return result.justify('trueBy1', arguments, [target, step]);
     },
     inputs: {site: 1, step: 3},
