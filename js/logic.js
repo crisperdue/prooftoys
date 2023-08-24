@@ -1421,7 +1421,6 @@ declare(
     tooltip: ('Makes each side of an equation into a function'
               + ' of the variable you choose.'),
     description: '[a = b] to [{v. a} = {v. b}]',
-    labels: 'primitive'
   },
 
   /**
