@@ -1497,17 +1497,17 @@ declare(
   },
 
   /**
-   * A term anywhere in a step that has one of the step's assumptions
-   * as a substitution instance can be taken to be true without adding
-   * a new assumption if all of its locally free variables are free in
-   * its context.  And similarly for goal assumptions. Removes the
-   * resulting T if it is in a conjunction.  
-   * 
-   * This rule does not apply if there is a goal and the substitution
-   * modifies the goal.
+   * An occurrence of an assumption of the step can be taken to be
+   * true without adding a new assumption if all of its locally free
+   * variables are free in the context, and similarly for goal
+   * assumptions. This removes the resulting T if it is in a
+   * conjunction.
    */
   {name: 'assumed',
    // This and "assumedEq" are very similar.
+   //
+   // The precheck just tests the free variables condition.  Note that
+   // there are no bound variables in the context of an assumption.
    precheck: function(step, path) {
      const target = step.get(path);
      if (target.isBoolean()) {
@@ -1520,20 +1520,21 @@ declare(
      }
      return false;
    },
-   // This proof amounts to assuming the term is true, then replacing
-   // it with T based on that.
+   // The action simply assumes the target term and rewrites the
+   // occurrence to be T, removing the T if in a conjunction.
+   // It is not strictly necessary for it to be the same as
+   // an assumption.
    action: function(step, path_arg) {
+     const path = step.asPath(path_arg);
+     const target = step.get(path);
      // TODO: Maybe use applyMatchingFact instead of this.
      const tryRewrite = (step, path, eqn_arg) => {
        const eqn = termify(eqn_arg);
        const result = canRewrite(step, path, eqn);
        return result && rules.rewrite(step, path, eqn);
      };
-     const path = step.asPath(path_arg);
-     const target = step.get(path);
      const step1 = rules.assume(target);
      const step2 = rules.trueBy1(step, path, step1);
-     
      let step5 = step2;
      if (!path.isEnd()) {
        const parentPath = step.prettifyPath(path).parent();
@@ -1546,7 +1547,8 @@ declare(
    inputs: {site: 1},
    labels: 'basic',
    menuGen: function(ruleName, step, term, editor) {
-     if (term) {
+     const path = term && step.prettyPathTo(term);
+     if (term && rules.assumed.precheck(step, path)) {
        const asms = step.wff.getAsms();
        const goal = editor.goalStatement;
        const gasms = goal && goal.getAsms();
@@ -1560,7 +1562,6 @@ declare(
               : inGoal
               ? '\u27ad <b>T</b> (goal assumption)'
               : '\u27ad <b>T</b> assuming &star;');
-       const path = step.prettyPathTo(term);
        return [{html, ruleName,
                 ruleArgs: [step.original, path]
                }];
