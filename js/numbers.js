@@ -65,24 +65,28 @@ if (!Toy.deeperFieldAxioms) {
        return (rules.fact('strict2 (+)')
                .andThen('chain0', 'strict2 f => f x none = none'));
      },
+     simplifier: true,
     },
     {statement: '@ none + x = none',
      proof: function() {
        return (rules.fact('strict2 (+)')
                .andThen('chain0', 'strict2 f => f none x = none'));
      },
+     simplifier: true,
     },
     {statement: '@ x * none = none',
      proof: function() {
        return (rules.fact('strict2 (*)')
                .andThen('chain0', 'strict2 f => f x none = none'));
      },
+     simplifier: true,
     },
     {statement: '@ none * x = none',
      proof: function() {
        return (rules.fact('strict2 (*)')
                .andThen('chain0', 'strict2 f => f none x = none'));
      },
+     simplifier: true,
     },
   );
 
@@ -224,6 +228,25 @@ definition('minv = {x. the1 (mulInverses x)}');
 //   axioms.
 
 declare(
+    {statement: '@ strict neg', axiom: true,
+     description: 'negative is a strict function'},
+
+  {statement: '@ neg none = none',
+   proof:
+   `(1 consider (t (neg none)))
+    (2 rewrite (s 1) (path "/main/right") (t ((neg x) = (the1 (addInverses x)))))
+    (3 rewrite (s 2) (path "/main/right/arg/fn")
+       (t (addInverses = {x. {y. (((R x) & (R y)) & ((x + y) = 0))}})))
+    (4 reduceAll (s 3) (path "/main/right/arg"))
+    (5 rewrite (s 4) (path "/main/right/arg/body/left/left")
+       (t (a == (not (not a)))))
+    (6 rewrite (s 5) (path "/main/right/arg/body/left/left/arg")
+       (t (not (R none))))
+    (7 simplifySite (s 6) (path "/main/right"))`,
+   simplifier: true,
+  },
+
+
    {name: 'negFact',
     statement: '@ R x & R y & x + y = 0 == R x & neg x = y',
     // TODO: Replace this proof as shown below.
