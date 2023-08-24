@@ -1717,7 +1717,11 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   //   fact statements here that are not interpreted as relating to real
   //   numbers.
   function interpret(stmt) {
-    return mathParse(stmt);
+    if (typeof stmt === 'string' && Toy.isIdentifier(stmt)) {
+      return Toy.getTheoremStatement(stmt);
+    } else {
+      return mathParse(stmt);
+    }
   }
   function apply$(expr, $) {
     if (typeof expr === 'function') {
