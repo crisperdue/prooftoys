@@ -2033,6 +2033,15 @@ function getTheorem(name) {
   return action();
 }
 
+/**
+ * Returns the statement of a named theorem.
+ */
+function getTheoremStatement(name) {
+  const fn = rules[name];
+  // If the rule takes arguments it will have no statement.
+  return fn && fn.info.statement;
+}    
+
 
 //// UTILITY FUNCTIONS
 
@@ -2730,6 +2739,7 @@ Toy.proveResult = proveResult;
 Toy.getResult = getResult;
 Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
+Toy.getTheoremStatement = getTheoremStatement;
 Toy.getResInfo = getResInfo;
 Toy.convert = convert;
 Toy.schemaPart = schemaPart;
