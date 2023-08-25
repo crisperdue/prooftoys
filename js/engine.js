@@ -751,7 +751,12 @@ function addRule(info) {
         const more = main.apply(info, args);
         if (typeof more === 'function') {
           const result = more();
-          return result.justify(name, args, args.filter(x => Toy.isProved(x)));
+          if (result) {
+            return result.justify(name, args, args.filter(x => Toy.isProved(x)));
+          } else {
+            // TODO: Consider how to better handle a falsy result.
+            abort('Falsy result from rule ${1}', name);
+          }
         } else {
           abort(Toy.errify(more, `Rule ${name} prep failed`));
         }
@@ -767,7 +772,11 @@ function addRule(info) {
         const more = rule.prep.apply(info, args);
         if (typeof more === 'function') {
           const result = more();
-          return result.justify(name, args, args.filter(x => Toy.isProved(x)));
+          if (result) {
+            return result.justify(name, args, args.filter(x => Toy.isProved(x)));
+          } else {
+            return result;
+          }
         } else {
           return more;
         }
