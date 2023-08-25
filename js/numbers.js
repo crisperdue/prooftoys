@@ -2423,7 +2423,7 @@ declare(
        return (rules.fact('not (R none)')
                .andThen('rewriteFrom', '/arg/arg', rules.eqnSwap(asm))
                .andThen('rewriteOnly', '', 'a => not b == b => not a')
-               .andThen('simplifySite', '/right'));
+               .andThen('simplifySite', '/right', ['not (a = b) == a != b']));
      }
    },
 
@@ -3519,7 +3519,7 @@ declare(
    proof: function() {
      return (rules.consider('x = y == u = v')
              .rewrite('/right', 'a == b == (not a == not b)')
-             .andThen('simplifySite', '/right'));
+             .andThen('simplifySite', '/right', ['not (x = y) == x != y']));
    }
   },
 
