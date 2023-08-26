@@ -677,8 +677,7 @@ declare(
 // Real numbers
 // 
 
-declare
-  (
+declare(
    {name: 'plusZero',
     statement: '@R x => x + 0 = x',
     simplifier: true,
@@ -833,23 +832,25 @@ declare
 
   // End of interim axioms.
 
-  // Evaluates arithmetic expressions with operators: +, -, *, /, div,
-  // mod, neg, =, !=, >, >=, <, <=, and the type operator "R".  Given
-  // an arithmetic term with numerals as operands, produces an
-  // equation whose right side is the exact result of the operation.
-  // Checks that inputs are all numeric (exact integers by
+  // Core for evaluating arithmetic expressions with operators: +, -,
+  // *, /, div, mod, neg, =, !=, >, >=, <, <=, and the type operator
+  // "R".  Given an arithmetic term with numerals as operands,
+  // produces an equation whose right side is the exact result of the
+  // operation.  Checks that inputs are all numeric (exact integers by
   // construction) and that the result can be guaranteed to be a
   // boolean or an exact integer.
   //
-  // Prefer rules.arithmetic or rules.arithFact to this in client code.
+  // Prefer rules.arithmetic or rules.arithSimpler to this in client
+  // code.
   //
   // Result is always an equation (or biconditional) with the given
   // term as the LHS, and the boolean or integer result as the RHS.
   // Returns null if the result is not boolean or an integer.
   //
   // TODO: Move handling of inequalities from here to rules.arithmetic
-  // except "<", so others can be defined in terms of it; and division
-  // by zero there also, to return "none".
+  //   or perhaps arithSimpler (except "<"), so others can be defined
+  //   in terms of it; and division by zero there also, to return
+  //   "none".
   {name: 'axiomArithmetic',
     // This precheck does not guarantee success if it passes.
     precheck: function(term_arg) {
@@ -930,10 +931,50 @@ declare
   // Inference rules for real numbers
   //
 
+  // This functions like axiomArithmetic, with extensions.  Generates
+  // facts about lack of equality between numbers and "none".  Applies
+  // the definition of != given args that are numeric or "none".
+  // (That case gives a direct result that is not simpler, but
+  // can be further simplified.)
+  //
+  // TODO: Handle inequalities other than "<" in terms of "<".
+  {name: 'arithSimpler',
+   action2: function(term_arg) {
+     const term = termify(term_arg);
+     if (Toy.isArithmetic(term, true)) {
+       return () => {
+         if (term.isCall2('=')) {
+           const left = term.getLeft();
+           const right = term.getRight();
+           if (left.isConst('none') && right.isNumeral()) {
+             const reversed = rules.arithSimpler(Toy.commuteEqn(term));
+             return rules.rewriteOnly(reversed, '/left', 'a = b == b = a');
+           } else if (left.isNumeral() && right.isConst('none')) {
+             const s0 = (rules.axiomArithmetic(Toy.call('R', left))
+                         .andThen('rewriteOnly', '', 'a == T == a'));
+             const s1 = rules.chain0(s0, 'R a => a != none');
+             const s2 = rules.rewriteOnly(s1, '', 'a != b == (a = b == F)');
+             return s2;
+           }
+         } else if (term.isCall2('!=')) {
+           return (rules.consider(term)
+                   .andThen('arithmetic', '/right'));
+                   // .andThen('rewriteOnly', '/right', 'a != b == not (a = b)'));
+         }
+         return rules.axiomArithmetic(term);
+       };
+     }
+   },
+   inputs: {term: 1},
+   menu: 'simplify arithmetic',
+   form: 'Arithmetic term: <input name=term>',
+   tooltip: 'simplifier for arithmetic expression',
+   description: 'arithmetic simplifier',
+   autoSimplify: noSimplify,
+  },
+
   // Rewrites a simple arithmetic expression to its value.
-  // Handles !=.
-  // TODO: Handle other inequalities here also, except "<",
-  //   in terms of "<".
+  // Guaranteed to make n != m simpler when both are numerals.
   {name: 'arithmetic',
     action: function(step, path) {
       var term = step.get(path);
@@ -945,7 +986,7 @@ declare
         result = rules.simplifySite(step1, path);
       } else {
         try {
-          var equation = rules.axiomArithmetic(term);
+          var equation = rules.arithSimpler(term);
           result = rules.r(equation, step, path);
         } catch(e) {  // Probably OK, scope is fairly narrow.
           abort('Not an arithmetic expression: {1}', term);
@@ -1269,7 +1310,7 @@ Toy.asmSimplifiers.push
    'x ** 5 != 0 == x != 0',
    {apply: function(term, cxt) {
        return (isArithmetic(term) &&
-               rules.axiomArithmetic(term));
+               rules.arithSimpler.attempt(term));
      }
    }
    );
@@ -3704,16 +3745,20 @@ window.Numtest = function(x) {
 
 /**
  * Returns a truthy value iff the term has the form of an arithmetic
- * expression suitable for rules.axiomArithmetic.  This does not do
- * range checks on the values of numeric inputs.  On the other hand it
- * is faster and does not use exceptions.
+ * expression suitable for rules.axiomArithmetic, in other words
+ * an arithmetic operator with numeric operands.  If the optional
+ * okNone argument is truthy, allows "none" as well as numerals.
+ *
+ * This does not do range checks on the values of numeric inputs.  On
+ * the other hand it is faster and does not use exceptions.
  */
-function isArithmetic(term) {
+  function isArithmetic(term, okNone=false) {
   if (term.isInfixCall()) {
     var left = term.getLeft();
     var right = term.getRight();
-    if (!left.isNumeral() ||
-        !right.isNumeral()) {
+    const okArith =
+          term => term.isNumeral() || (okNone && term.isConst('none'));
+    if (!okArith(left) || !okArith(right)) {
       return false;
     }
     var op = term.getBinOp().name;
@@ -4133,8 +4178,8 @@ basicSimpFacts.push
     where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
    {apply:
     function(term, cxt) {
-      return (Toy.isArithmetic(term) &&
-              rules.axiomArithmetic(term));
+      return (Toy.isArithmetic(term, true) &&
+              rules.arithSimpler.attempt(term));
     }
    },
    {apply: arithRight},
