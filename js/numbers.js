@@ -350,6 +350,23 @@ declare(
 
 definition('x - y = x + neg y');
 
+declare(
+  {statement: '@ strict2 (-)', axiom: true},  // TODO: Prove this.
+  {statement: '@ x - none = none',
+   proof: function() {
+     return (rules.fact('strict2 (-)')
+             .andThen('chain0', 'strict2 f => f x none = none'));
+   },
+   simplifier: true,
+  },
+  {statement: '@ none - x = none',
+   proof: function() {
+     return (rules.fact('strict2 (-)')
+             .andThen('chain0', 'strict2 f => f none x = none'));
+   },
+   simplifier: true,
+  },
+);
 
 //// Facts about fields
 
