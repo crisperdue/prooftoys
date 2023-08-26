@@ -6304,6 +6304,15 @@ declare(
      }
    },
 
+  {statement: 'a != b == (a = b == F)',
+   proof: function() {
+     const s1 = rules.fact('a != b == not (a = b)');
+     const s2 = rules.rewriteOnly(s1, '/right',
+                                  'not a == (a == F)');
+     return s2;
+   }
+  },
+
    // Somewhat useful fact to stick at the end of the list.
    {statement: 'not F',
     proof: function() {
