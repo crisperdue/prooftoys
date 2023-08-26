@@ -706,7 +706,7 @@ declare(
    inputs: {step: 1},
    menu: 'copy step',
    description: 'copy;; {of step step}',
-   labels: 'basic edit'
+   labels: 'basic edit display'
   },
 
   /**

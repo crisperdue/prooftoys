@@ -1243,7 +1243,7 @@ function wantLeftElision(step) {
   // So-called left elision is currently disabled by the following
   // line of code. Comment it out to get previous behavior:
   return false;
-  if (step.ruleName == 'display') {
+  if (['display', 'copy'].includes(step.ruleName)) {
     return false;
   }
   var prev = prevRenderedStep(step);
@@ -1263,8 +1263,7 @@ function wantLeftElision(step) {
 function renderWff(step) {
   var wff = step.wff;
   var $wff;
-  if (step.ruleName === 'display' ||
-      step.ruleName === 'addTheorem') {
+  if (['display', 'copy', 'addTheorem'].includes(step.ruleName)) {
     // Just render everything in a couple of special cases.
     return dom(wff.renderTopConj(0));
 
