@@ -755,7 +755,7 @@ function addRule(info) {
             return result.justify(name, args, args.filter(x => Toy.isProved(x)));
           } else {
             // TODO: Consider how to better handle a falsy result.
-            abort('Falsy result from rule ${1}', name);
+            abort('Falsy result from rule {1}', name);
           }
         } else {
           abort(Toy.errify(more, `Rule ${name} prep failed`));
@@ -2367,7 +2367,6 @@ var basicSimpFacts = [
                       'if T x y = x',
                       'if F x y = y',
                       ];
-
 
 //// Support for adding facts
 
