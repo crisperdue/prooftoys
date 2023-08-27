@@ -3985,54 +3985,31 @@ declare
     },
    );
 
-declare
-  (
-   {statement: '0 < pi', axiom: true,
-    description: 'Pi is a positive number'},
+declare(
+  {statement: 'R pi', axiom: true,
+   description: 'Pi is a real number'},
 
-   {statement: '0 != pi',
-    proof: function() {
-       return (rules.fact('@R x & x < y => x != y')
-               .andThen('instMultiVars', {x: '0', y: 'pi'})
-               .andThen('rewrite', '0 < pi', '0 < pi'));
-     }
-   },
+  {statement: '0 < pi', axiom: true,
+   description: 'Pi is a positive number'},
 
-   {statement: 'pi != 0',
-    proof: function() {
-       return (rules.fact('0 != pi')
-               .andThen('rewrite', '0 != pi', 'x != y == y != x'));
-     }
-   },
-  );
-
-
-declare
-  (
-   {statement: 'R pi', axiom: true,
-    description: 'Pi is a real number'},
-
-   {statement: '0 < pi', axiom: true,
-    description: 'Pi is a positive number'},
-
-   {statement: '0 != pi',
-    proof: function() {
-       return (rules.fact('@R x & x < y => x != y')
-               .andThen('instMultiVars', {x: '0', y: 'pi'})
-               .andThen('rewrite', '0 < pi', '0 < pi'));
-     }
-   },
-
-   {statement: 'pi != 0',
-    proof: function() {
-       return (rules.fact('0 != pi')
-               .andThen('rewrite', '0 != pi', 'x != y == y != x'));
-     }
+  {statement: '0 != pi',
+   proof: function() {
+     return (rules.fact('@R x & x < y => x != y')
+             .andThen('instMultiVars', {x: '0', y: 'pi'})
+             .andThen('rewrite', '0 < pi', '0 < pi'));
    }
-  );
+  },
+
+  {statement: 'pi != 0',
+   proof: function() {
+     return (rules.fact('0 != pi')
+             .andThen('rewrite', '0 != pi', 'x != y == y != x'));
+   }
+  },
+);
+
 
 //// Integers and floor
-
 
 definition('ifReal x v = if (R x) v none');
 
