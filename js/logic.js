@@ -704,7 +704,7 @@ declare(
      return step.justify('copy', arguments, [step], true);
    },
    inputs: {step: 1},
-   menu: 'copy step',
+   menu: ' copy step',
    description: 'copy;; {of step step}',
    labels: 'basic edit display'
   },
@@ -1148,7 +1148,7 @@ declare(
     inputs: {site: 1},
     menu: ' consider {term} in isolation',
     tooltip: ('prepare to transform term'),
-    description: 'term equal to itself',
+    description: 'consider term in isolation',
     labels: 'general algebra'
   },
 
@@ -1509,16 +1509,8 @@ declare(
    // The precheck just tests the free variables condition.  Note that
    // there are no bound variables in the context of an assumption.
    precheck: function(step, path) {
-     const target = step.get(path);
-     if (target.isBoolean()) {
-       const freeHere = target.freeVarSet();
-       const boundHere = Toy.asSet(step.wff.boundNames(path));
-       if (Toy.equalSets(freeHere, Toy.setDiff(freeHere, boundHere))) {
-         // No locally-free variables are bound in context.
-         return true;
-       }
-     }
-     return false;
+     return (step.get(path).isBoolean() &&
+             step.wff.freeBound(path).size === 0);
    },
    // The action simply assumes the target term and rewrites the
    // occurrence to be T, removing the T if in a conjunction.
@@ -1569,6 +1561,25 @@ declare(
    },
    description: 'assumed',
   },
+
+/*
+  {name: 'assumedNot',
+   // Like "assumed".
+   action2: function(step, path) {
+     if (step.get(path).isBoolean() &&
+         step.wff.freeBound(path).size === 0) {
+       const s2 = rules.rewrite(step, path, 'a == not (not a)');
+       const path2 = path.concat('/arg');
+       const result = rules.assumed.attempt(s2, path2);
+       if (result) {
+         return () => result;
+       }
+     }
+   },
+   inputs: {site: 1},
+   labels: 'basic',
+  },
+*/
 
   // Finds a substitution to match the selection with the given term.
   // Returns falsy if none exists.  The menu suggests this when the
@@ -1668,6 +1679,7 @@ declare(
      }
    },
    description:
+   // TODO: include "in step <n>".
    (step =>
     `assumed equation ;;<b>${Toy.termDisplay(step.ruleArgs[2])}</b>`),
   },  
@@ -5176,7 +5188,7 @@ declare(
       return rules.extractHyp(step, hyp);
     },
     inputs: {site: 1},
-    menu: 'extract {term} from assumptions',
+    menu: ' extract {term} from assumptions',
     description: 'extract assumption;; {in step siteStep}',
     labels: 'basic'
   },
