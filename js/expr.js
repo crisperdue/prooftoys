@@ -1320,6 +1320,19 @@ Expr.prototype.boundNames = function(path) {
 };
 
 /**
+ * Returns a set of the names of variables that are free
+ * in the term at the given path, but bound in that context.
+ */
+Expr.prototype.freeBound = function(path) {
+  const target = this.get(path);
+  if (target.isBoolean()) {
+    const freeHere = target.freeVarSet();
+    const boundHere = Toy.asSet(this.boundNames(path));
+    return Toy.intersection(freeHere, boundHere);
+  }
+};
+
+/**
  * Finds and returns an object/map with all names occurring in this
  * expression as the keys, with values of "true".
  */
