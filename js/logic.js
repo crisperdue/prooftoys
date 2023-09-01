@@ -6128,6 +6128,9 @@ declare(
    },
 
    // 5304
+
+  // This triggers a warning about duplicate fact just because
+  // it is already generated from the definition of exists1.
    {name: 'exists1b',
     statement: 'exists1 p == exists {x. p = {y. y = x}}',
     proof: function() {
@@ -6390,6 +6393,7 @@ declare(
    }
   },
 
+  // Same as above, relativized to "a".
   {statement: 'a => (b => c) => (a => (c => b) => (a => (b == c)))',
    proof: function() {
      return rules.tautology(
@@ -6411,7 +6415,7 @@ declare(
   },
 
   TODO: Consider automatically using the tautology
-    b => c => (a => b => (a => c)) to relativize
+    a => c => (a => b => (a => c)) to relativize
     conditionals to a consistent set of assumptions.
   */
 
@@ -6459,15 +6463,6 @@ declare(
     desimplifier: true,
     proof: function() {
        return rules.eqT('x');
-     }
-   },
-
-   {statement: 'ident x = x',
-    simplifier: true,
-    proof: function() {
-       return (rules.eqSelf('ident x')
-               .andThen('useDefinition', '/right/fn')
-               .andThen('reduce', '/right'));
      }
    },
 
