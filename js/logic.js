@@ -6349,6 +6349,31 @@ declare(
      }
    },
 
+  {statement: '(a == F) == not a',
+   proof: function() {
+     return rules.tautology('(a == F) == not a');
+   }
+  },
+
+  {statement: 'not (not a) == a',
+   proof: function() {
+     return rules.tautology('not (not a) == a');
+   },
+   simplifier: true,
+  },
+
+  {statement: '(not a => a) => a',
+   proof: function() {
+     return rules.tautology('(not a => a) => a');
+   },
+  },
+
+  {statement: '(a => not a) => not a',
+   proof: function() {
+     return rules.tautology('(a => not a) => not a');
+   },
+  },
+
   {statement: 'a & b => a',
    proof: function() {
      return rules.tautology('a & b => a');
@@ -6372,6 +6397,18 @@ declare(
   {statement: 'a => (b => c) == b => (a => c)',
    proof: function() {
      return rules.tautology('a => (b => c) == b => (a => c)');
+   }
+  },
+
+  {statement: 'a => (b => c) == a & b => c',
+   proof: function() {
+     return rules.tautology('a => (b => c) == a & b => c');
+   }
+  },
+
+  {statement: 'a => b == not b => not a',
+   proof: function() {
+     return rules.tautology('a => b == not b => not a');
    }
   },
 
@@ -6399,6 +6436,34 @@ declare(
      return rules.tautology(
        'a => (b => c) => (a => (c => b) => (a => (b == c)))'
      );
+   }
+  },
+
+  // Simple version of proof by cases.
+  {statement: '((a => b) => (((not a) => b) => b))',
+   proof: function() {
+     return rules.tautology(
+       '((a => b) => (((not a) => b) => b))');
+   },
+  },
+
+  // General form of classic proof by cases; also useful transformer.
+  {statement: '(((a => c) & (b => c)) == ((a | b) => c))',
+   proof: () => rules.tautology('(((a => c) & (b => c)) == ((a | b) => c))'),
+  },
+
+  // Working with conditional equivalences:
+  {statement: 'a => (b == c) == (a & b == a & c)',
+   proof: function() {
+     return rules.tautology('a => (b == c) == (a & b == a & c)');
+   },
+  },
+
+  // Solving equations with variables in denominator.
+  {statement: '(((a => (b == c)) & (z => (b == d))) => (((a | z) & b) == ((a & c) | (z & d))))',
+   proof: function() {
+     return rules.tautology(
+       '(((a => (b == c)) & (z => (b == d))) => (((a | z) & b) == ((a & c) | (z & d))))');
    }
   },
 
