@@ -6418,6 +6418,11 @@ declare(
    }
   },
 
+  // Eliminating conjuncts that are subsumed by another conjunct.
+  {statement: 'a => b == (a & b == a)',
+   proof: () => rules.tautology('a => b == (a & b == a)'),
+  },
+
   {statement: '(a => b) & (b => a) == (a == b)',
    proof: function() {
      return rules.tautology('(a => b) & (b => a) == (a == b)');
@@ -6460,11 +6465,11 @@ declare(
   },
 
   // Solving equations with variables in denominator.
-  {statement: '(((a => (b == c)) & (z => (b == d))) => (((a | z) & b) == ((a & c) | (z & d))))',
+  {statement: '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))',
    proof: function() {
      return rules.tautology(
-       '(((a => (b == c)) & (z => (b == d))) => (((a | z) & b) == ((a & c) | (z & d))))');
-   }
+       '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))');
+   },
   },
 
   // Eliminate side condition "not a", e.g. x != 0
