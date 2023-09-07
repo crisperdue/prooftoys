@@ -101,7 +101,6 @@ if (!Toy.deeperFieldAxioms) {
      {statement: '(x + y) + z = x + (y + z)', axiom: true,
       description: 'associativity of addition',
       labels: 'algebra',
-      converse: { labels: 'algebra2' }
      },
      {statement: 'x + y = y + x', axiom: true,
       description: 'commutativity of addition',
@@ -122,7 +121,6 @@ if (!Toy.deeperFieldAxioms) {
      {statement: '(x * y) * z = x * (y * z)', axiom: true,
       description: 'associativity of multiplication',
       labels: 'algebra',
-      converse: { labels: 'algebra2' }
      },
      {statement: 'x * y = y * x', axiom: true,
       description: 'commutativity of multiplication',
@@ -3054,7 +3052,7 @@ declare(
       .rewrite('/main/right', 'a + b + c = a + (b + c)')
       .rewrite('/main/right/right', '@a + neg b = a - b');
     },
-    labels: 'algebra2',
+    labels: 'algebra',
     converse: { labels: 'algebra' }
   },
    {statement: 'a - (b + c) = a - b - c',
@@ -3069,7 +3067,6 @@ declare(
       return step;
     },
     labels: 'algebra',
-    converse: { labels: 'algebra2' }
   },  
    {statement: 'a - b - c = a - c - b',
     proof: function() {
@@ -3090,7 +3087,6 @@ declare(
       .rewrite('/main/right/left', '@a + neg b = a - b');
     },
     labels: 'algebra',
-    converse: { labels: 'algebra2' }
   },
 
   // Simplification
