@@ -1880,7 +1880,7 @@ function RuleMenu(proofEditor) {
   self.$modeList = $modeList;
   $modeList.append('<div class="mode selected" data-mode=general>' +
                    'Basic</div>',
-                   '<div class=mode data-mode=algebra>Algebra</div>',
+                   '<div class=mode data-mode=algebra>Tactics</div>',
                    '<div class=mode data-mode=other>More</div>',
                    '<div class=mode data-mode=descriptors>Descriptions</div>',
                    '<div class=mode data-mode=edit>Edit</div>',
@@ -1978,8 +1978,8 @@ RuleMenu.prototype._update = function() {
   const stepEditor = proofEditor.stepEditor;
 
   const blurbs = {
-    algebra: 'Actions for basic algebra:',
     general: 'Rewrites and other often-used actions:',
+    algebra: 'Combinations, some for basic algebra:',
     descriptors: 'Unique existence and such:',
     other: 'Advanced or less common:',
   };
@@ -2519,6 +2519,7 @@ RuleMenu.prototype.labelApproved = function(name) {
   case 'edit':
     return labels.edit || labels.display;
   case 'algebra':
+    // The "algebra" value is really for tactics these days.
     return okAlgebra();
   case 'general':
     return okGeneral();
