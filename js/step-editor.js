@@ -997,12 +997,11 @@ ProofEditor.prototype.openDoc = function(name) {
     this.setEditable(true);
     const steps = Toy.decodeSteps(proofData.proofState);
     if (steps instanceof Error) {
-      // Associate this proof editor with a new document
-      // with ".err" in the name.
+      // Write the problematic proof to a new document with ".err" in
+      // the name.
       const errName = Toy.genDocName(`${name}.err`);
-      this.syncToDocName(errName);
-      // TODO: Consider including the truncated list of steps in
-      //   the proof editor as well as reporting the error.
+      Toy.writeDoc(errName, {proofState: editor.getStateString()});
+      // Show the truncated list of steps in the proof editor.
       this.setSteps(steps.steps);
       this.stepEditor.report(steps);
       return false;
