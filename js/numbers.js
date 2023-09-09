@@ -2345,7 +2345,7 @@ declare
       }
     },
     inputs: {site: 1},
-    menu: 'reduce fraction {term}',
+    menu: '  reduce fraction {term}',
     description: 'reduce fraction',
     labels: 'algebra'
   },
@@ -2379,14 +2379,15 @@ declare
         if (l.isNumeral() && r.isNumeral()) {
           var lv = l.getNumValue();
           var rv = r.getNumValue();
-          // This enusres that lv and rv are both nonzero.
+          // This ensures that lv and rv are both nonzero.
           return lv != 1 && rv != 1 && (lv % rv === 0 || rv % lv === 0);
         }
       }
     },
     inputs: {site: 1},
     description: 'divide out fraction',
-    menu: 'divide out {term}',
+    // TODO: Remove this entirely in favor of reduceFraction.
+    // menu: 'divide out {term}',
     labels: 'algebra'
   },
 
@@ -2402,14 +2403,14 @@ declare
                  expr.matchSchema('a / d1 - b / d2'));
       return (map && map.d1.isNumeral() && map.d2.isNumeral());
     },
-    action: function(step, path, num) {
-      var n = num.getNumValue();
+    action: function(step, path) {
       var expr = step.get(path);
       var map = (expr.matchSchema('a / d1 + b / d2') ||
                  expr.matchSchema('a / d1 - b / d2'));
       assert(map, 'Not sum/diff of fractions: {1}', expr);
       var d1 = map.d1.getNumValue();
       var d2 = map.d2.getNumValue();
+      var n = Toy.lcm(d1, d2);
       assert(n % d1 == 0 && n % d2 == 0, 'Not a multiple: {1}', n);
       var k1 = n / d1;
       var k2 = n / d2;
@@ -2418,11 +2419,14 @@ declare
       var step1 = step.rewrite(path.concat('/left'), fact1);
       var fact2 = rules.instVar(fact, Toy.numify(k2), 'c');
       return (step1.rewrite(path.concat('/right'), fact2)
+              .andThen('arithmetic', path.concat('/right/right'))
+              .andThen('arithmetic', path.concat('/left/right'))
               .justify('commonDenominator', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
     form: 'Use denominator <input name=term>',
-    menu: 'use common denominator',
+    menu: '  common denominator',
+    autoSimplify: noSimplify,
     labels: 'algebra'
   },
 
