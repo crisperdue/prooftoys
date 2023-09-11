@@ -172,22 +172,24 @@ function ProofEditor(options_arg={}) {
   self.$status = $status;
   self.$statusDisplay = $statusDisplay;
 
-  // The equations.html page "Try a different problem" button goes
-  // at the end of this $header div.
   let $header =
     ($('<div class=proofEditorHeader>')
      .append('&nbsp;<b class=wksTitle>Worksheet \
              "<span class=wksName></span>"</b>'));
   const $clearWork = $('<input type=button class=clearWork value="Clear work">');
-  const css = {float: 'right',
-               border: '1px solid red',
+  const css = {border: '1px solid red',
                color: '#d9534f',
                fontWeight: 'bold',
                backgroundColor: 'white'
   };
   $clearWork.css(css);
-  const $headerRight = $('<span>');
-  $headerRight.append($clearWork);
+  // Add "Solve" button next to "Clear work", but with class "hidden".
+  // Use its "solveProblem" class to find it.
+  const $solve =
+        $('<input type=button class="solveProblem hidden" value="Solve">')
+        .css({fontWeight: 'bold'});
+  const $headerRight = $('<span>').css({float: 'right'});
+  $headerRight.append($solve, $clearWork);
   $header.append($headerRight);
 
   let $readOnly =
@@ -212,6 +214,7 @@ function ProofEditor(options_arg={}) {
   // whenever it changes.
   this._refresher = new Toy.Refresher(() => this.refresh());
 
+  let proofData = null;
   if (!options.exercise) {
     // Restore editor state (not document state).
     const state = Toy.getSavedState(self);
@@ -224,6 +227,12 @@ function ProofEditor(options_arg={}) {
                         // to the URI path, and the editor number if
                         // that is greater than one.
                         : this.proofEditorId));
+    // If there is a canned solution, show the "Solve" button.
+    proofData = Toy.findProofData(self.docName);
+    if (proofData) {
+      $solve.removeClass('hidden');
+    }
+    // Initialize editor content.
     if (self.openDoc(self.docName)) {
       // There is an existing saved document.
       self.fromDoc = true;
@@ -307,6 +316,12 @@ function ProofEditor(options_arg={}) {
     if (window.confirm('Do you really want to clear your work?')) {
       self.clear();
       self.setEditable(true);
+    }
+  });
+
+  $solve.on('click', function() {
+    if (window.confirm('Replace contents with a pre-made solution?')) {
+      self.setSteps(Toy.unrenderedDeps(Toy.asProof(proofData.proof)()));
     }
   });
 
