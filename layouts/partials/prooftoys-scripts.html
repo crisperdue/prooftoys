@@ -13,7 +13,8 @@
   {{ $st := resources.Get "/pt/js/step-editor.js" }}
   {{ $re := resources.Get "/pt/js/rendering.js" }}
   {{ $so := resources.Get "/pt/js/solution-status.js" }}
-  {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nu $nn $st $re $so }}
+  {{ $pd := resources.Get "/pt/js/proof-data.js" }}
+  {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nu $nn $st $re $so $pd }}
   {{ $allJS := resources.Concat "/js/all.js" $all }}
   {{ if $.Site.IsServer }}
     {{ range $all }}
