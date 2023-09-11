@@ -1567,6 +1567,51 @@ function grepDocs(pattern) {
     });
 }
 
+/**
+ * Returns an array of strings of the steps of the proof in the named
+ * document.
+ *
+ * TODO: Consider replacing double quotes within steps with single
+ * quotes and converting back when reading.
+ */
+function docSteps(name) {
+  const doc = readDoc(name);
+  const steps = doc.proofState.split('\n').slice(1, -2);
+  return steps;
+}
+
+function proofData(regexes) {
+  const docs = lsDocs().sort();
+  const data = [];
+  for (const docName of docs) {
+    if (regexes.some(exp => docName.match(exp))) {
+      data.push({doc: docName, proof: docSteps(docName)});
+    }
+  }
+  return data;
+}
+
+/**
+ * This dumps out JSON to the console for proofs in worksheets with
+ * selected names.  Include this output in a file to build a database
+ * of proofs that can be loaded to solve problems.  Unlike official
+ * "exercises", these do not have order or dependencies.
+ */
+function dumpProofData() {
+  const data = proofData([/\/equations[0-9/#]*$/]);
+  console.log('Toy.proofData =\n' +
+              JSON.stringify(data, null, 1) + ';\n');
+}
+
+/**
+ * Returns a proofData record for the document with the given name,
+ * or a falsy value if none is found.
+ */
+function findProofData(docName) {
+  return Toy.proofData.find(x => x.doc === docName);
+}
+
+
 //// Proof editor state, by proofEditorId
 
 // This is persistent state, document name per editor ID.
@@ -2902,6 +2947,10 @@ Toy.rmDoc = rmDoc;
 Toy.lsDocs = lsDocs;
 Toy.genDocName = genDocName;
 Toy.grepDocs = grepDocs;
+Toy.docSteps = docSteps;
+Toy.proofData = proofData;
+Toy.dumpProofData = dumpProofData;  
+Toy.findProofData = findProofData;
 
 Toy.getSavedState = getSavedState;
 Toy.saveState = saveState;
