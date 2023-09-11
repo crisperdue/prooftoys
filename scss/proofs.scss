@@ -885,6 +885,11 @@ input.varName, input.step, input.equation, input.implication {
     margin: .8em 0;
 }
 
+// .wksTitle is hidden if oneDoc.
+.proofEditor.oneDoc .wksTitle {
+  display: none;
+}
+
 .proofPreview {
     position: absolute;
     left: .5em;

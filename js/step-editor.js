@@ -50,7 +50,9 @@ var nextProofEditorId = 1;
  *   ignored if an exercise is given.
  * oneDoc: if true, the editor cannot switch to work on any
  *   document other than the initial one.  Currently implemented
- *   by hiding the worksheets button.
+ *   by hiding the worksheets button.  Also hides the worksheet
+ *   name display, and if no docName is given, prefixes the default
+ *   name to hide it from lists.
  * exercise: name of an exercise set and part to set up, in the format
  *   exercise/part.  Suppresses automatic loading of real numbers.
  *   Also has the effect of oneDoc.  This is for tutorials and problem
@@ -96,7 +98,7 @@ var nextProofEditorId = 1;
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
  */
-  function ProofEditor(options_arg={}) {
+function ProofEditor(options_arg={}) {
 
   //// Initialize properties.
 
@@ -140,7 +142,7 @@ var nextProofEditorId = 1;
     $('<div class="proofEditor logicZone"></div>');
 
   // Maybe lock the editor to the document.
-  if ('oneDoc' in options || options.exercise) {
+  if (options.oneDoc || options.exercise) {
     $node.addClass('oneDoc');
   }
 
