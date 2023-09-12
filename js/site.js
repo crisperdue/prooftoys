@@ -303,8 +303,6 @@ $(function() {
     // priority.
     $('div.proof-editor').each(function() {
       const options = this.dataset;
-      // Value is automatically true if present; not a string.
-      options.oneDoc = 'oneDoc' in options;
       const editor = new Toy.ProofEditor(options);
       $(this).append(editor.$node);
       window.proofEditor = editor;

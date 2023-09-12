@@ -48,7 +48,7 @@ var nextProofEditorId = 1;
  * 
  * docName: if given, overrides the default workspace name.  This is
  *   ignored if an exercise is given.
- * oneDoc: if true, the editor cannot switch to work on any
+ * oneDoc: if present, the editor cannot switch to work on any
  *   document other than the initial one.  Currently implemented
  *   by hiding the worksheets button.  Also hides the worksheet
  *   name display, and if no docName is given, prefixes the default
@@ -142,7 +142,7 @@ function ProofEditor(options_arg={}) {
     $('<div class="proofEditor logicZone"></div>');
 
   // Maybe lock the editor to the document.
-  if (options.oneDoc || options.exercise) {
+  if ('oneDoc' in options || options.exercise) {
     $node.addClass('oneDoc');
   }
 
