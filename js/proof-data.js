@@ -343,6 +343,30 @@ Toy.proofData =
   ]
  },
  {
+  "doc": "/fake-proof/",
+  "proof": [
+   "(1 assumeExplicitly (t (x = y)))",
+   "(2 consider (t (x * x)))",
+   "(3 rewriteFrom (s 2) (path \"/main/right/right\") (s 1))",
+   "(4 subtractFromBoth (s 3) (path \"/right\") (t (y * y)))",
+   "(5 rewrite (s 4) (path \"/right/left\") (t (((R x) & (R y)) => (((x * x) - (y * y)) = ((x + y) * (x - y))))))",
+   "(6 rewrite (s 5) (path \"/right/right\") (t ((((R a) & (R b)) & (R c)) => (((a * c) - (b * c)) = ((a - b) * c)))))",
+   "(7 rewrite (s 6) (path \"/right/right\") (t (((R x) & (R y)) => ((x * y) = (y * x)))))",
+   "(8 divideBothByThis (s 7) (path \"/right/right/right\"))",
+   "(9 rewrite (s 8) (path \"/right/left\") (t ((((b != 0) & (R b)) & (R a)) => (((a * b) / b) = a))))",
+   "(10 simplifyFocalPart (s 9))",
+   "(11 assumedEq (s 10) (path \"/right/left/left\") (t (x = y)))",
+   "(12 rewrite (s 11) (path \"/right/left\") (t ((R a) => ((a + a) = (2 * a)))))",
+   "(13 divideBothByThis (s 12) (path \"/right/right\"))",
+   "(14 simplifyProducts (s 13) (path \"/right\"))",
+   "(15 display (s 14))",
+   "(16 rewrite (s 15) (path \"/left/left/right\") (t ((a != b) == (not (a = b)))))",
+   "(17 rewrite (s 16) (path \"/left/left/right/arg\") (t (((R a) & (R b)) => (((a - b) = 0) == (a = b)))))",
+   "(18 assumed (s 17) (path \"/left/left/right/arg\"))",
+   "(19 simplifySite (s 18) (path \"/left\"))"
+  ]
+ },
+ {
   "doc": "/lunar/",
   "proof": [
    "(1 assumeExplicitly (t (A == (((4 * pi) * (r ** 2)) = (((4 / 3) * pi) * (r ** 3))))))",
