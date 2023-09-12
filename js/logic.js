@@ -6429,10 +6429,16 @@ declare(
    }
   },
 
+  // Equivalence by proving a conditional in both directions.
   {statement: 'a => b => ((b => a) => (a == b))',
    proof: function() {
      return rules.tautology('(a => b) => ((b => a) => (a == b))');
    }
+  },
+
+  // Alternate strategy for proving equivalence from conditionals.
+  {statement: 'a => b => ((not a => not b) => (a == b))',
+   proof: () => rules.tautology('a => b => ((not a => not b) => (a == b))'),
   },
 
   // Same as above, relativized to "a".
