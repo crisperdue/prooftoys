@@ -341,5 +341,26 @@ Toy.proofData =
   "proof": [
    "(1 consider (t ((((x + (14 / (x - 2))) - ((7 * x) / (x - 2))) - 1) = 0)))"
   ]
- }
-];
+ },
+ {
+  "doc": "/lunar/",
+  "proof": [
+   "(1 assumeExplicitly (t (A == (((4 * pi) * (r ** 2)) = (((4 / 3) * pi) * (r ** 3))))))",
+   "(2 subtractThisFromBoth (s 1) (path \"/right/right/right\"))",
+   "(3 simplifySums (s 2) (path \"/right/right\"))",
+   "(4 rewrite (s 3) (path \"/right/right/left/right/right\") (t ((R x) => ((x ** 3) = ((x ** 2) * x)))))",
+   "(5 rewrite (s 4) (path \"/right/right/left/right/right\") (t (((R x) & (R y)) => ((x * y) = (y * x)))))",
+   "(6 flattenTerm (s 5) (path \"/right/right/left/right\"))",
+   "(7 rewrite (s 6) (path \"/right/right/left\") (t ((((R a) & (R b)) & (R c)) => (((a * c) - (b * c)) = ((a - b) * c)))))",
+   "(8 rewrite (s 7) (path \"/right/right\") (t (((R x) & (R y)) => (((x * y) = 0) == ((x = 0) | (y = 0))))))",
+   "(9 simplifyFocalPart (s 8))",
+   "(10 multiplyBoth (s 9) (path \"/right/right/left\") (t 3))",
+   "(11 simplifyProducts (s 10) (path \"/right/right/left\"))",
+   "(12 rewrite (s 11) (path \"/right/right/left/left\") (t ((((R a) & (R b)) & (R c)) => ((a * (b - c)) = ((a * b) - (a * c))))))",
+   "(13 simplifyProducts (s 12) (path \"/right/right/left/left\"))",
+   "(14 rewrite (s 13) (path \"/right/right/left/left/right\") (t ((((((b != 0) & (c != 0)) & (R b)) & (R c)) & (R a)) => (((a * c) / b) = (a / (b / c))))))",
+   "(15 rewrite (s 14) (path \"/right/right/left/left/right\") (t (((((c != 0) & (R c)) & (R a)) & (R b)) => (((a * b) / c) = ((a / c) * b)))))",
+   "(16 rewrite (s 15) (path \"/right/right/left/left/right/left\") (t ((((((b != 0) & (c != 0)) & (R b)) & (R c)) & (R a)) => ((a / (b / c)) = ((a / b) * c)))))",
+   "(17 simplifyFocalPart (s 16))"
+  ]
+ }];

@@ -1598,7 +1598,7 @@ function proofData(regexes) {
  * "exercises", these do not have order or dependencies.
  */
 function dumpProofData() {
-  const data = proofData([/\/equations[0-9/#]*$/]);
+  const data = proofData([/^\/equations[0-9/#]*$/, /^\/lunar\/$/]);
   console.log('Toy.proofData =\n' +
               JSON.stringify(data, null, 1) + ';\n');
 }
