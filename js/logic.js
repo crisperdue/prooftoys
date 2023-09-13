@@ -2643,7 +2643,8 @@ declare(
       return step.justify('instMultiVars', arguments, [b]);
     },
     inputs: {step: 1},
-    menu: 'substitute for multiple variables',
+    // There is no suitable form for entering the arguments for
+    // this rule, so it is not offerable in any menu.
     tooltip: ('For each variable in the map substitute its value in the map'),
     description: '=instMultiVars'
   },
