@@ -6413,6 +6413,11 @@ declare(
    }
   },
 
+  // Relationship between "implies" and "or"
+  {statement: 'a => b == not a | b',
+   proof: () => rules.tautology('a => b == not a | b'),
+  },
+
   {statement: 'a => b => (c => (a => b & c))',
    proof: function() {
      return rules.tautology('a => b => (c => (a => b & c))');
