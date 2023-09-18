@@ -5,7 +5,7 @@
   $.fn.tableofcontents = function (options) {
     const settings = $.extend({
       // Elements to exclude
-      exclude: $(),
+      exclude: ({}),
     }, options);
     // Use this to assign a unique name to each anchor created.
     var anchor_counter = 1;
