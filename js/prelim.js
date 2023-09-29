@@ -132,6 +132,32 @@ var _end = new Path(null, Path.none);
 Path.empty = _end;
 
 /**
+ * Paths are iterable, with the segments as values.
+ * This is not tested, consider the "segments" method instead.
+ */
+Path.prototype[Symbol.iterator] = function() {
+  return Toy.let_((p=this) =>
+                  ({next: () => {
+                    const v = {value: p.segment, done: p.segment === null};
+                    p = p.rest;
+                    return v;
+                  }}));
+};
+
+/**
+ * Returns an array of the segments in the path, in order.
+ */
+Path.prototype.segments = function() {
+  const result = [];
+  let p = this;
+  while (p.segment !== null) {
+    result.push(p.segment);
+    p = p.rest;
+  }
+  return result;
+};    
+
+/**
  * Truthy value iff this path is precisely empty (and not beyond).
  */
 Path.prototype.isMatch = function() {
