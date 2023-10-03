@@ -1507,7 +1507,7 @@ function looksBoolean(term) {
   if (term.isCall2()) {
     var op = term.getBinOp();
     // Caution: the term might not be typed.
-    return ((op.name in boolOps || op.isEquivOp())  &&
+    return ((op.name in looseBoolOps || op.isEquivOp())  &&
             looksBoolean(term.getLeft()) &&
             looksBoolean(term.getRight()));
   }
