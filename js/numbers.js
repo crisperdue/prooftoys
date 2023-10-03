@@ -1425,7 +1425,6 @@ declare(
   }
 );
 
-
 declare
   (
   // Uses the associative law to "flatten" an expression made

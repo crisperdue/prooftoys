@@ -2230,6 +2230,30 @@ function simplifyStep(step) {
   return rules.simplifySite(step, '');
 }
 
+// Data for flattenAnd.
+const contextAnd = {
+  factLists:
+  {flatteners: [
+    {stmt: 'a & (b & c) == a & b & c'},
+    {descend:
+     {schema: 'a & b',
+      parts: {a: 'flatteners', b: 'flatteners'}}},
+  ]}};
+
+declare(
+  {name: 'flattenAnd',
+   action2: function(step, path) {
+     const target = step.get(path);
+     if (target.matchSchema('a & b')) {
+       return () => Toy.arrange(step, path, contextAnd, 'flatteners');
+     }
+   },
+   inputs: {site: 1},
+   labels: 'basic',
+   menu: ' flatten conjunction',
+  },
+);
+
 declare(
   // [T = x] = x
   // Note that this or 5230TF or symmetry of equality of booleans
@@ -2918,6 +2942,7 @@ declare(
   //
   // Accepts a parseable string as the wff.
   {name: 'tautology',
+    precheck: (arg) => Toy.looksBoolean(termify(arg)),
     action: function(wff_arg) {
       const wff = termify(wff_arg).typedCopy();
       const key = '' + wff.dump();
@@ -5644,6 +5669,45 @@ declare(
    labels: 'algebra',
   },
 
+  /* This effect is easily gained by repeated use of (reverse)
+     associativity of "&".
+  {name: 'splitChain',      // Commented out!
+   action2: function(step, path_arg) {
+     const asms = step.getAsms();
+     if (asms) {
+       // This is the path from the LHS to the target term.
+       const path = step.prettifyPath(path_arg).shift();
+       // First parent is the chain of all asms.
+       const parents = asms.ancestors(path);
+       const target = parents.pop();
+       // Last parent is the parent of the target term.
+       //
+       // Only split if there is at least one level of parent of
+       // the target term.
+       if (parents.length) {
+         // These segments include the one to the target term.
+         const segs = path.segments();
+         if (segs.every(x => x === 'left')) {
+           if (parents.every(term => term.getBinOp() === '&')) {
+             // The selection is suitable for splitting, so
+             // return a function that does it.
+             return () => {
+               let asms = rules.consider(parents[0]);
+               for (let i = 0; i < parents.length; i++) {
+                 asms = rules.rewriteOnly(asms, '/right',
+                                          'a & b & c == a & (b & c)');
+               }
+               // Now replace all the asms with the transformed ones.
+               // XXX
+             };
+           }
+         }
+       }
+     }
+   },
+  },
+  */
+
   // A simplifier that removes all lambda calls.
   {name: 'reduceAll',
    toOffer: function(step, term) {
@@ -6363,6 +6427,8 @@ declare(
    simplifier: true,
   },
 
+  //// Useful for forward chaining:
+
   {statement: '(not a => a) => a',
    proof: function() {
      return rules.tautology('(not a => a) => a');
@@ -6400,6 +6466,8 @@ declare(
      return rules.tautology('a => (b => c) == b => (a => c)');
    }
   },
+
+  //// More tautologies
 
   {statement: 'a => (b => c) == a & b => c',
    proof: function() {
