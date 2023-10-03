@@ -594,7 +594,7 @@ var rules = {};
 // attempt: check, and if that succeeds tries the rest of the rule.
 //   If check fails, returns its result value.
 //
-// Toy.ok and Toy.ok2 functions for testing precheck and prep results.
+// Toy.ok is a function for testing precheck and prep results.
 
 // Rule definitions that have statements (and are thus theorems)
 // support the same properties as facts, specifically: simplifier,
@@ -1807,24 +1807,32 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         return null;
       }
       const factInfo = resolveFactRef(stmt);
-      if (!factInfo) {
-        console.error('No such fact:', ''+stmt);
+      let goal = null;
+      if (factInfo) {
+        if (factInfo.inProgress) {
+          return null;
+        }
+        goal = factExpansion(stmt);
+      } else {
+        goal = rules.tautology(stmt);
+      }
+      // TODO: Consider supporting arithmetic facts as well as
+      //   recorded facts and tautologies, as for rewriting.
+      if (!goal) {
+        console.error('No such fact:', '' + stmt);
         return null;
       }
-      if (factInfo.inProgress) {
+      // This restriction applies to tautologies also.
+      if (pureOnly && goal.isCall2('=>')) {
         return null;
       }
-      if (pureOnly && factInfo.goal.isCall2('=>')) {
-        return null;
-      }
-      const expansion = factExpansion(stmt);
-      const schema = schemaPart(expansion);
+      const schema = schemaPart(goal);
       // This substitution might fail.
       // TODO: consider how to handle its potential failure.
       const subst = term.matchSchema(schema);
       const where = factMatcher.where;
       if (subst && (!where || apply$(where, subst))) {
-        var result = {stmt: expansion,
+        var result = {stmt: goal,
                       term: term,
                       path: Toy.asPath(''),
                       subst: subst};
@@ -2014,6 +2022,9 @@ function arrangeRhs(eqn_arg, context, facts) {
  *
  * As a good practice, this considers the part in isolation, only
  * replacing it in the step when done applying facts.
+ *
+ * TODO: Consider eliminating the use of "consider" here when exactly
+ *   one fact application can be done.
  */
 function arrange(step, path, context, facts) {
   var eqn = rules.consider(step.get(path));
