@@ -1083,6 +1083,7 @@ declare(
       return (rules.eqSelf(term_arg)
               .justify('consider', arguments));
     },
+    autoSimplify: noSimplify,
     inputs: {term: 1},
     form: 'Term to consider: <input name=term> (value for A)',
     menu: 'consider a term to transform (A = A)',

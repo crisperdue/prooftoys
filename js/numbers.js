@@ -1071,7 +1071,7 @@ declare
       // it occurs in this fact, which is the desired situation.
       // Note that if c1 is the same as c, the instVar is a no-op.
       var fact2 = rules.instVar(fact, term_arg, c1);
-      return (rules.rewrite(step, eqnPath, fact2)
+      return (rules.rewriteFrom(step, eqnPath, fact2)
               .andThen('instVar', term_arg, c1)
               .justify('addToBoth', arguments, [step]));
     },
@@ -1093,7 +1093,7 @@ declare
       var c1 = step.wff.freshVar('c');
       // See addToBoth.
       var fact2 = rules.instVar(fact, term_arg, c1);
-      return (rules.rewrite(step, eqnPath, fact2)
+      return (rules.rewriteFrom(step, eqnPath, fact2)
               .andThen('instVar', term_arg, c1)
               .justify('subtractFromBoth', arguments, [step]));
     },
@@ -1115,7 +1115,7 @@ declare
       var c1 = step.wff.freshVar('c');
       // See addToBoth.
       var fact2 = rules.instVar(fact, term_arg, c1);
-      return (rules.rewrite(step, eqnPath, fact2)
+      return (rules.rewriteFrom(step, eqnPath, fact2)
               .andThen('instVar', term_arg, c1)
               .justify('multiplyBoth', arguments, [step]));
     },
@@ -1137,7 +1137,7 @@ declare
       var c1 = step.wff.freshVar('c');
       // See addToBoth.
       var fact2 = rules.instVar(fact, term_arg, c1);
-      const step1 = rules.rewrite(step, eqnPath, fact2);
+      const step1 = rules.rewriteFrom(step, eqnPath, fact2);
       const step2 = rules.instVar(step1, term_arg, c1);
       return step2.justify('divideBoth', arguments, [step]);
     },
