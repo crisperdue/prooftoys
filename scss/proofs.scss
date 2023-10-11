@@ -78,7 +78,7 @@ wffblock- > * {
     border: 2px solid #aaa;
     padding: 1em;
     border-radius: 12px;
-    background-color: hsl(200deg, 100%, 97%);
+    background-color: hsl(200deg, 100%, 93%);
     margin-bottom: 1.5em;
     // Alternate border and shadow:
     border: 1px solid #aaa;
@@ -926,7 +926,7 @@ input.copyText {
         left: 1em;
         right: 1em;
         color: black;
-        background: AliceBlue;
+        background-color: hsl(200deg, 100%, 95%);
         visibility: hidden;
         opacity: 0;
         transition: all .4s linear;
