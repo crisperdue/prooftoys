@@ -436,6 +436,24 @@ declare(
   
 );
 
+definition('x > y == y < x');
+definition('x <= y == x < y | x = y');
+definition('x >= y == x > y | x = y');
+  
+definition('subset P Q == forall {x. P x => Q x}');
+
+definition('isUB x S == R x & subset S R & not (empty S) & ' +
+           'forall {y. S y => y <= x}');
+
+definition('isLUB x S == isUB x S & forall {y. isUB y S => x <= y}');
+
+declare(
+  {name: 'completeness',
+   statement: 'exists {z. isUB z S} => exists {x. isLUB x S}', axiom: true,
+   description: 'the real numbers are Dedekind complete',
+  },
+);
+
 declare(
    {statement: 'x = y => not (x < y)',
     proof: function() {
@@ -3950,19 +3968,8 @@ var ungroupingFacts = regroupingFacts.map(function(fact) {
     return Toy.commuteEqn(Toy.resolveToFact(fact));
   });
 
-//// Inequalities
+//// Inequality facts
 
-// Define further inequalities in terms of "<".
-//
-// These definitions are universal, for variables of all types.
-//
-// TODO: At some point work out definitions that apply only
-//   to certain sorts.
-
-definition('x > y == y < x');
-definition('x <= y == x < y | x = y');
-definition('x >= y == x > y | x = y');
-  
 
 declare
   (
