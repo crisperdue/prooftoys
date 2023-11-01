@@ -1017,7 +1017,7 @@ ProofEditor.prototype.openDoc = function(name) {
       // Write the problematic proof to a new document with ".err" in
       // the name.
       const errName = Toy.genDocName(`${name}.err`);
-      Toy.writeDoc(errName, {proofState: editor.getStateString()});
+      Toy.writeDoc(errName, {proofState: this.getStateString()});
       // Show the truncated list of steps in the proof editor.
       this.setSteps(steps.steps);
       this.stepEditor.report(steps);
