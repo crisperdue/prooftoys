@@ -6790,13 +6790,13 @@ declare(
 );
 
 definition('intersect = {p. {q. {x. ((p x) & (q x))}}}');
-definition('subclass = {p. {q. (forall {x. ((p x) => (q x))})}}');
+definition('subset = {p. {q. (forall {x. ((p x) => (q x))})}}');
 
 declare(
-   {statement: '((subclass p q) = (p = (intersect p q)))',
-    name: 'SubclassInter',
+   {statement: '((subset p q) == (p = (intersect p q)))',
+    name: 'SubsetInter',
     proof: [
-            '(1 fact "subclass p q = forall{x. p x => q x}")',
+            '(1 fact "subset p q = forall{x. p x => q x}")',
             '(2 rewrite (s 1) (path "/main/right/arg/body") (t ((a => b) == (a == (a & b)))))',
             '(3 fact "(p x & q x) = intersect p q x")',
             '(4 rewriteOnlyFrom (s 2) (path "/main/right/arg/body/right") (s 3))',

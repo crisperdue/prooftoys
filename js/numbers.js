@@ -440,8 +440,6 @@ definition('x > y == y < x');
 definition('x <= y == x < y | x = y');
 definition('x >= y == x > y | x = y');
   
-definition('subset P Q == forall {x. P x => Q x}');
-
 definition('isUB x S == R x & subset S R & not (empty S) & ' +
            'forall {y. S y => y <= x}');
 
