@@ -1083,6 +1083,7 @@ declare
    {name: 'addToBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('a = b == a + c = b + c');
+      // TODO: When rewriting freshens, simplify this code.
       var c1 = step.wff.freshVar('c');
       // Since the input step has no free occurrences of c1, the
       // rewrite will have free occurrences of it exactly where
@@ -1090,7 +1091,7 @@ declare
       // Note that if c1 is the same as c, the instVar is a no-op.
       var fact2 = rules.instVar(fact, term_arg, c1);
       return (rules.rewriteFrom(step, eqnPath, fact2)
-              .andThen('instVar', term_arg, c1)
+              .andThen('instVar', c1, 'c')
               .justify('addToBoth', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
@@ -1108,11 +1109,12 @@ declare
    {name: 'subtractFromBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('a = b == a - c = b - c');
+      // TODO: When rewriting freshens, simplify this code.
       var c1 = step.wff.freshVar('c');
       // See addToBoth.
       var fact2 = rules.instVar(fact, term_arg, c1);
       return (rules.rewriteFrom(step, eqnPath, fact2)
-              .andThen('instVar', term_arg, c1)
+              .andThen('instVar', c1, 'c')
               .justify('subtractFromBoth', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
@@ -1130,11 +1132,12 @@ declare
    {name: 'multiplyBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('c != 0 => (a = b == a * c = b * c)');
+      // TODO: When rewriting freshens, simplify this code.
       var c1 = step.wff.freshVar('c');
       // See addToBoth.
       var fact2 = rules.instVar(fact, term_arg, c1);
       return (rules.rewriteFrom(step, eqnPath, fact2)
-              .andThen('instVar', term_arg, c1)
+              .andThen('instVar', c1, 'c')
               .justify('multiplyBoth', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
@@ -1152,11 +1155,12 @@ declare
    {name: 'divideBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('c != 0 => (a = b == a / c = b / c)');
+      // TODO: When rewriting freshens, simplify this code.
       var c1 = step.wff.freshVar('c');
       // See addToBoth.
       var fact2 = rules.instVar(fact, term_arg, c1);
       const step1 = rules.rewriteFrom(step, eqnPath, fact2);
-      const step2 = rules.instVar(step1, term_arg, c1);
+      const step2 = rules.instVar(step1, c1, 'c');
       return step2.justify('divideBoth', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
