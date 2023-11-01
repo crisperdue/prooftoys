@@ -4019,11 +4019,11 @@ declare(
 
 //// Integers and floor
 
-definition('ifReal x v = if (R x) v none');
+definition('forReal x v = if (R x) v none');
 
 declare
   // Axiom / definition of floor, and facts about it.
-  ({statement: `floor x = ifReal x
+  ({statement: `floor x = forReal x
                              (if (x < 0)
                                  ((floor (x + 1)) - 1)
                                  (if (x < 1)
@@ -4061,9 +4061,9 @@ declare
 
 definition('ceil x = neg (floor (neg x))');
 
-definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 x))');
+definition('sgn x = forReal x (if (x < 0) (neg 1) (if (x = 0) 0 x))');
 
-definition('abs x = ifReal x (if (x < 0) (neg x) x)');
+definition('abs x = forReal x (if (x < 0) (neg x) x)');
 
 definition('ZZ x == x = floor x');
 
