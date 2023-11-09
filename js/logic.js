@@ -4850,7 +4850,7 @@ declare(
     },
     autoSimplify: function(step) {
       const inStep = step.ruleArgs[0];
-      const path = step.ruleArgs[1];
+      const path = step.asPath(step.ruleArgs[1]);
       const stmt = step.ruleArgs[2];
       const info = resolveFactRef(stmt);
       if (info && info.autoSimplify) {
