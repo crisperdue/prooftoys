@@ -705,7 +705,9 @@ function addRule(info) {
 
     rule = function() {
       if (rule.result) {
-        return rule.result;
+        // Re-justify on each request so each request has its
+        // own proof line.
+        return rule.result.justify(name, []);
       }
       // TODO: Prevent circularity as for facts.
       const result = rule.result = proof();
@@ -714,8 +716,6 @@ function addRule(info) {
                      '\nProved:', result.toString(),
                      '\nStated:', statement.toString());
       }
-      // Re-justify on each request so each request has its
-      // own proof line.
       return result.justify(name, []);
     };
     
