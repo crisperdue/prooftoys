@@ -6316,6 +6316,16 @@ declare(
     ]
    },
 
+  {name: 'equalThe',
+   statement: 'exists1 p & v = the p => (p x == x = v)',
+   proof: function() {
+     const asm = rules.assume('the p = v');
+     return (rules.theorem('exists1TheLaw')
+             .andThen('rewriteFrom', 'the p', asm)
+             .andThen('rewrite', 'the p = v', 'x = y == y = x'));
+   },
+  },
+
   // This theorem aids in proving that a constant defined by a
   // property is unique.
    {name: 'uniqueTerm',
