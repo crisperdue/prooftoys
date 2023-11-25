@@ -1163,7 +1163,7 @@ function addDefnFacts(definition) {
 
 //// FACTS
 
-//// About fact info objects.  These are plain objects with properties:
+//// About factInfo objects.  These are plain objects with properties:
 //
 // goal: Expr statement of the fact, with all assumptions.  All
 //   variables are exactly as declared, though functions such as
@@ -1248,12 +1248,11 @@ var _factsByKey = new Map();
 const _resolutionsByKey = new Map();
 
 /**
- * This returns a fact information object of the recorded fact that
- * matches the given resInfo.  If there is exactly one with the same
- * main part and the same collection of assumptions, that is the
- * result, otherwise if exactly one has the same main part and a
- * superset of the resInfo's assumptions, that is the result,
- * otherwise null.
+ * This returns a factInfo object of the recorded fact that matches
+ * the given resInfo.  If there is exactly one with the same main part
+ * and the same collection of assumptions, that is the result,
+ * otherwise if exactly one has the same main part and a superset of
+ * the resInfo's assumptions, that is the result, otherwise null.
  *
  * TODO: See TODO for resolveFactRef.
  */
@@ -1280,9 +1279,10 @@ function factInfoMatching(resInfo) {
 
 /**
  * Returns the "expansion" of a statement, preferably given as a wff.
- * The result is a version of the full declared fact of the statement,
- * with free variable names as in the given statement rather than the
- * declaration.  Returns null if there is no such declared fact.
+ * The result is a version of the full declared fact (goal) wff of the
+ * statement, with free variable names as in the given statement
+ * rather than the declaration.  Returns null if there is no such
+ * declared fact.
  */
 function factExpansion(stmt) {
   const resInfo = getResInfo(stmt);
@@ -1306,9 +1306,9 @@ function factExpansion(stmt) {
 }
 
 /**
- * This returns information about the recorded fact the given (full)
- * statement wff is considered to properly refer to, as defined
- * by factInfoMatching, or null if there is none.
+ * This returns a factInfo object with information about the recorded
+ * fact that the given (full) statement wff is considered to properly
+ * refer to, as defined by factInfoMatching; or null if there is none.
  *
  * If the fact has in its assumptions any free variables that are not
  * also free in the consequent, and if a fact reference also has the
@@ -1981,9 +1981,9 @@ function transformApplyInvert(term_arg, eqn_arg, fact) {
 }
 
 /**
- * Apply the given simplification function to the step repeatedly
- * until the result of the call is falsy or identical to its input.
- * Return the result of the last call that was not falsy or same.
+ * Apply the given function to the step repeatedly until the result of
+ * the call is falsy or identical to its input.  Return the result of
+ * the last call that was not falsy or same.
  */
 function repeatedly(step, fn) {
   var simpler = step;
@@ -2394,6 +2394,7 @@ var factProperties = {
   desimplifier: true,
   noSwap: true,
   labels: true,
+  props: true,
   description: true,
   definitional: true,
   // autoSimplify: true,
@@ -2423,6 +2424,8 @@ var factProperties = {
  *   the proved result, and any proof function will be ignored,
  *   otherwise a WFF.
  * axiom: true if this is an axiom.
+ * asserted: true iff this fact is asserted without proof, but not 
+ *   an axiom.
  * statement:  string for input to mathParse.  Must parse to a
  *   complete statement of the fact, to be used as the goal.
  * proof: function to return the proved fact, matching the goal.
