@@ -4732,7 +4732,7 @@ declare(
   //   it was introduced and the formula (e.g. step) it came from.
   //
 
-  // Utility for all of the rewriters.  If the equation step
+  // Utility for all of the rewriters.  If the equation fact
   // argument "A" is not an equation, rewrites it to A == T.
   // Performs the needed substitution, with higher-order matching,
   // and returns the result of that.
@@ -6588,16 +6588,6 @@ declare(
        'not a => (p == b) => (a => p => (p == a | b))'
      );
    }
-  },
-
-  {statement: '(a != b) == not (a = b)',
-    labels: 'general',
-    proof: function() {
-       return (rules.eqSelf('a != b')
-               .andThen('useDefinition', '/right')
-               .andThen('apply', '/right/fn')
-               .andThen('apply', '/right'));
-     }
   },
 
   {statement: 'x != y == y != x',
