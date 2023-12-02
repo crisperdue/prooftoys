@@ -82,9 +82,9 @@ definition('forall = (=) {x. T}');
 // F need not be defined.
 definition('F == forall {x. x}');
 definition('not = (=) F');
-definition('(!=) = {x. {y. not (x = y)}}');
-definition('exists = {p. p != {x. F}}');
-definition('exists1 = {p. exists {x. p = {y. y = x}}}');
+definition('x != y == not (x = y)');
+definition('exists p == p != {x. F}');
+definition('exists1 p == exists {x. p = {y. y = x}}');
 
 // Adding definitions before use enables type checking to use the
 // known types of the constants.
