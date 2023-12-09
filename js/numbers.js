@@ -444,15 +444,51 @@ definition('x > y == y < x');
 definition('x <= y == x < y | x = y');
 definition('x >= y == x > y | x = y');
   
+declare(
+  {statement: '1 < y & 0 < z => z < y * z',
+   proof: function() {
+     return (rules.fact('x < y & 0 < z => x * z < y * z')
+             .andThen('instVar', '1', 'x')
+             .andThen('simplifySite', '/right'));
+   },
+  },
+  {statement: 'x < y & z < 0 => y * z < x * z', // Asserted
+  },
+  
+);
+
 definition('isUB x S == R x & subset S R & not (empty S) & ' +
            'forall {y. S y => y <= x}');
 
-definition('isLUB x S == isUB x S & forall {y. isUB y S => x <= y}');
+definition('hasUB S == exists {x. isUB x S}');
+
+definition('isSup x S == isUB x S & forall {y. isUB y S => x <= y}');
+  
+definition('sup S = the {x. isSup x S}')
+
+definition('isLB x S == R x & subset S R & not (empty S) & ' +
+           'forall {y. S y => y >= x}');
+
+definition('hasLB S == exists {x. isLB x S}');
+
+definition('isInf x S == isLB x S & forall {y. isLB y S => x <= y}');
+
+definition('inf S = the {x. isInf x S}');
 
 declare(
   {name: 'completeness',
-   statement: 'exists {z. isUB z S} => exists {x. isLUB x S}', axiom: true,
+   statement: 'exists {z. isUB z S} => exists {x. isSup x S}', axiom: true,
    description: 'the real numbers are Dedekind complete',
+  },
+  {name: 'supUB',
+   statement: 'hasUB S == isSup (sup S) S',  // Asserted
+  },
+  {name: 'infLB',
+   statement: 'hasLB S == isInf (inf S) S',  // Asserted
+  },
+  {statement: 'R x & S x & hasLB S => inf S <= x',  // Asserted
+  },
+  {statement: 'R x & S x & hasUB S => sup S >= x',  // Asserted
   },
 );
 
@@ -2649,7 +2685,7 @@ declare.apply(null, distribFacts);
 
 
 // Private to isDistribFact.  A mapping from statement key to value
-// that is truthy iff the statement is in distribFacts.
+// that is truthy iff the statement is in distribFactData.
 // TODO: Replace this and isDistribFact with a property in the
 //   fact info, like "props: 'distributive'".
 const _distribFacts = new Set();
