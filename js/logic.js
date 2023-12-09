@@ -6286,15 +6286,18 @@ declare(
     }
    },
 
-   {name: 'inverseFunLaw',
-    statement: 'v = the1 p & exists1 p => (p x == x = v)',
-    proof: function() {
-       const asm = rules.assume('the1 p = v');
-       return (rules.fact('exists1 p => (p x == x = the1 p)')
-               .andThen('rewriteFrom', 'the1 p', asm)
-               .andThen('rewrite', 'the1 p = v', 'x = y == y = x'));
-     }
-   },
+  // The "v" here can be a term such as (f y z) to apply it to
+  // characterize inverse functions.
+  {name: 'theLaw',
+   statement: 'v = the p & exists1 p => (p x == x = v)',
+   proof: function() {
+     const asm = rules.assume('the p = v');
+     return (rules.fact('exists1 p => (p x == x = the p)')
+             .andThen('rewriteFrom', 'the p', asm)
+             .andThen('rewrite', 'the p = v', 'x = y == y = x')
+             .andThen('rewriteOnly', '/left', 'a & b == b & a'));
+   }
+  },
 
    // Convenient corollary that uses a typical definition of an inverse
    // function and a suitable unique existence predicate to show the
