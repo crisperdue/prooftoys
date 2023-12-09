@@ -93,6 +93,8 @@ if (!Toy.deeperFieldAxioms) {
   definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
   definition('isMulIdentity = {x. R x & forall {y. R y => y * x = y}}');
 
+  definition('ifReal x v = if (R x) v none');
+
   declare
   (
      {statement: 'R (x + y)', axiom: true,
@@ -417,11 +419,13 @@ declare(
    {statement: 'x < y => x + z < y + z', axiom: true,
     description: 'ordering of reals and addition'
    },
+
    // Steven Lay, Axiom O4.
    // Also like Wikibooks Real Analysis axiom.
    {statement: 'x < y & 0 < z => x * z < y * z', axiom: true,
     description: 'ordering of reals and multiplication'
    },
+
    // Similar to Wikipedia: "Real number"
    //
    // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
@@ -4019,11 +4023,9 @@ declare(
 
 //// Integers and floor
 
-definition('forReal x v = if (R x) v none');
-
 declare
   // Axiom / definition of floor, and facts about it.
-  ({statement: `floor x = forReal x
+  ({statement: `floor x = ifReal x
                              (if (x < 0)
                                  ((floor (x + 1)) - 1)
                                  (if (x < 1)
@@ -4061,9 +4063,9 @@ declare
 
 definition('ceil x = neg (floor (neg x))');
 
-definition('sgn x = forReal x (if (x < 0) (neg 1) (if (x = 0) 0 x))');
+definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 x))');
 
-definition('abs x = forReal x (if (x < 0) (neg x) x)');
+definition('abs x = ifReal x (if (x < 0) (neg x) x)');
 
 definition('ZZ x == x = floor x');
 
