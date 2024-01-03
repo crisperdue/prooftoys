@@ -4059,6 +4059,16 @@ declare(
   },
 );
 
+// This defines the concept of being "a" square root of x.
+definition('sqrts x = {y. 0 <= y & y * y = x}');  
+
+declare(
+  {statement: '0 <= x == exists1 (sqrts x)'},  // Asserted
+);
+
+// This definition is "none" except for real numbers.
+definition('sqrt x = the (sqrts x)');
+
 
 //// Integers and floor
 
