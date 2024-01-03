@@ -4072,9 +4072,9 @@ definition('sqrt x = the (sqrts x)');
 
 //// Integers and floor
 
-declare
+declare(
   // Axiom / definition of floor, and facts about it.
-  ({statement: `floor x = ifReal x
+  {statement: `floor x = ifReal x
                              (if (x < 0)
                                  ((floor (x + 1)) - 1)
                                  (if (x < 1)
@@ -4092,7 +4092,7 @@ declare
    {statement: '',
     description: ''},
 */
-  );
+);
 
 
 
