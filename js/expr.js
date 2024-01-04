@@ -1417,8 +1417,8 @@ Expr.prototype.hasSubgoal = function() {
 
 /**
  * Returns the nth "element" of this expression.  Recurs top down
- * through function parts of calls until finding a Atom, which is
- * consider element 0.  The arg part of that call is element 1,
+ * through function parts of calls until finding an Atom, which is
+ * considered element 0.  The arg part of that call is element 1,
  * and the arg goes up by 1 for each level.  The effect is that a
  * call written as (f a b c) gives the Atom "f" as element 0, "a"
  * as element 1, "b" as element 2, and "c" as element 3.
