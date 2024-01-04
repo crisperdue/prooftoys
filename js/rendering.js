@@ -1286,8 +1286,8 @@ function renderWff(step) {
     wff.node = renderWithElisionSpace(wff);
     return wff.node;
   } else if (wff.isCall2('=>')) {
-
     // There are assumptions.
+
     const asmPart = wff.getLeft();
     const mainPart = wff.getRight();
 
@@ -1321,8 +1321,8 @@ function renderWff(step) {
     wff.node = dom($wff);
     return wff.node;
   } else if (wff.isCall2('==')) {
-
     // The WFF is a top-level equivalence.
+
     const left = wff.getLeft();
     const right = wff.getRight();
     const power = Toy.getPrecedence(wff.getBinOp());
@@ -1521,7 +1521,7 @@ Atom.prototype.render = function(minPower, isFn) {
 // Private to effectivePower.
 var useParens = {
   '|': new Set(['&']),
-  '=>': new Set(['=>', '=', '&', '|']),
+  '=>': new Set(['=>', '=']),
   '==': new Set(['=>'])
 };
 
