@@ -419,12 +419,14 @@ var rules = {};
 //   for controlling menus or display.  When present, this makes the
 //   rule function be a wrapper around the action, calling it,
 //   checking the result, then invoking the continuation and
-//   automatically justifying the result.  The action, aliased as
-//   "prep" in this case, has access to the info as "this".
+//   automatically justifying the result.  If the return value is not
+//   a continuation, the call aborts.  The action, aliased as "prep"
+//   in this case, has access to the info as "this".
 //
 //   Also creates "attempt" and "attempt0" methods that run the
-//   continuation if a function is returned from "prep"; otherwise
-//   returns the result of the "prep".
+//   continuation if a function is returned from "prep", otherwise
+//   returning the result of the "prep".  Attempt0 does not
+//   auto-justify the step.
 //
 // proof: for a theorem (no args), use this instead of "action".  Do
 //   not call "justify", that is done automatically and the proof is
@@ -703,6 +705,10 @@ function addRule(info) {
 
   if (proof) {
 
+    // This rule has a statement, a proof, and a name.  It is a
+    // theorem.  Run the proof function at the first request, and
+    // thereafter only re-justify the result so there is a new Step
+    // object.
     rule = function() {
       if (rule.result) {
         // Re-justify on each request so each request has its
@@ -744,9 +750,10 @@ function addRule(info) {
 
     if (info.action2) {
       // If the "prep" phase succeeds, it will return a continuation,
-      // and that will return the result of the rule.  This kind of rule
-      // includes the "justify" step automatically, but you must be
-      // sure not to pass a proved step where a term is needed.
+      // and that will return the result of the rule.  If it fails,
+      // the basic variant aborts.  This kind of rule includes the
+      // "justify" step automatically, but you must be sure not to
+      // pass a proved step where a term is needed.
       rule = function( ...args) {
         const more = main.apply(info, args);
         if (typeof more === 'function') {
@@ -772,7 +779,7 @@ function addRule(info) {
         const more = rule.prep.apply(info, args);
         if (typeof more === 'function') {
           const result = more();
-          if (result) {
+          if (Toy.isProved(result)) {
             return result.justify(name, args, args.filter(x => Toy.isProved(x)));
           } else {
             return result;
@@ -782,7 +789,8 @@ function addRule(info) {
         }
       };
 
-      // The attempt0 method runs the rule inline; no auto-justification.
+      // The attempt0 method runs the rule inline; like "attempt", but
+      // no auto-justification.
       rule.attempt0 = function( ...args) {
         const more = rule.prep.apply(info, args);
         if (typeof more === 'function') {
@@ -898,16 +906,15 @@ function declare(...declarations) {
 }
 
 /**
- * Returns truthy iff the given result (of a rule check)
+ * Returns truthy iff the given result (of a rule attempt)
  * is truthy and not an Error.  Useful utility for tactics
  * to test applicability of rules.
  *
- * If a "more" continuation is given, if the result is a success
- * returns the result of calling it, else the failure result.
+ * If a "more" continuation is given and the result is a success
+ * ("ok"), returns the continuation, else the failure result.
  */
 function ok(status, more) {
   if (more) {
-    // const success = typeof status == 'function';
     return ok(status) ? more : status;
   } else {
     return status && !(status instanceof Error);
@@ -1708,7 +1715,7 @@ Expr.prototype.withoutEqT = function() {
  * The value returned is falsy if no match is found, else a plain
  * object with properties:
  * 
- * stmt: Relevant fact statement, proved or not, or the equation
+ * stmt: Statement of the found fact, proved or not, or the equation
  *   returned by an "apply" pattern.
  * term: the term argument to findMatchingFact.
  * subst: substitution that makes the given term match the fact (empty for
@@ -1898,6 +1905,8 @@ function tryReduce(term) {
  * given path, returning the result, or null if none of the
  * facts apply.  Note: uses rules.rewrite by default; supply
  * a ruleName (fourth arg) if desired.
+ *
+ * TODO: Support a rule function rather than a rule name.
  */
 function applyMatchingFact(step, path, facts, ruleName='rewrite') {
   const info = findMatchingFact(facts, null, step.get(path));
@@ -2046,8 +2055,10 @@ function eachFact(fn) {
 
 /**
  * Checks that the named rule is a theorem (i.e. takes no arguments),
- * and gets its result.  Returns null if there is not a theorem
- * of that name.
+ * and gets its result by running its action.  Returns null if there
+ * is not a theorem of that name.  If the theorem's proof has already
+ * run, its action will not rerun it, but only re-justify so there
+ * will be a new step.
  */
 function getTheorem(name) {
   var action = rules[name];
@@ -2070,11 +2081,11 @@ function getTheoremStatement(name) {
 //// UTILITY FUNCTIONS
 
 /**
- * Searches the given list of equational facts in order for one that
- * matches a subexpression of the given step.  In particular, the part
- * of the step at path must match with the variable in the LHS of the
- * fact having the given name, which should occur exactly once in the
- * fact's LHS.
+ * Searches the given list of equational facts in order seeking one
+ * that matches the LHS of the given equational step.  In particular,
+ * the part of the step at path must match with the variable in the
+ * LHS of the fact having the given name, which should occur exactly
+ * once in the fact's LHS.
  *
  * If this finds such a fact it returns a function of no arguments
  * that applies the fact to the step using rules.rewrite and returns
