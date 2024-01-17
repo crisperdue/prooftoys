@@ -2704,6 +2704,57 @@ function isDistribFact(stmt) {
   return _distribFacts.has(Toy.resolveToFact(stmt));
 }
 
+var dFacts = [
+  'x * (y + z) = x * y + x * z',
+  'x * (y - z) = x * y - x * z',
+  '(x + y) * z = x * z + y * z',
+  '(x - y) * z = x * z - y * z',
+];
+
+declare(
+  // This operates on a product with at least one operand that is a
+  // sum or difference.  If so, it treats each operand as a chain and
+  // distribute each through the other, in effect multiplying
+  // polynomials.  Applies flattenSum to the result to flatten it.
+  {name: 'distribAll',
+   action2: function(step, path_arg) {
+     const path = step.asPath(path_arg);
+     let next = rules.consider(step.get(path));
+
+     // This applies some variant of the distributive law if possible
+     // at the term referenced by "p".
+     // On success it calls itself on both the left and right
+     // summands.  It depends on "next" and modifies it on success.
+     const distrib = p => {
+       const term = next.get(p);
+       const nx = Toy.applyMatchingFact(next, p, dFacts);
+       if (nx) {
+         next = nx;
+         distrib(p.concat('/right'));
+         distrib(p.concat('/left'));
+       }
+     }
+
+     if (Toy.applyMatchingFact(step, path, dFacts)) {
+       return () => {
+         // The path starts with /main to allow for the likelihood
+         // that following steps will have assumptions.
+         const rhs = Toy.asPath('/main/right');
+         // Next starts out as a pure equation, and at the end
+         // its RHS has the rewritten term.
+         distrib(rhs);
+         next = rules.flattenSum(next, rhs);
+         // Now replace the original term.
+         return rules.replace(step, path, next);
+       };
+     }
+   },
+   labels: 'tactic',
+   inputs: {site: 1},
+   menu: 'distribute completely',
+  },
+);
+
 declare(
   // Plus zero
   /* Omit from UI: somewhat redundant
@@ -4080,8 +4131,8 @@ declare(
                                  (if (x < 1)
                                      0
                                      (floor (x - 1)) + 1))`,
-    axiom: true,
-    description: 'recursive definition of floor'},
+   axiom: true,
+   description: 'recursive definition of floor'},
 /*
    {statement: '',
     description: ''},
