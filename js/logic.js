@@ -1523,7 +1523,7 @@ declare(
      // TODO: Maybe use applyMatchingFact instead of this.
      const tryRewrite = (step, path, eqn_arg) => {
        const eqn = termify(eqn_arg);
-       const result = canRewrite(step, path, eqn);
+       const result = step.canRewrite(path, eqn);
        return result && rules.rewrite(step, path, eqn);
      };
      const step1 = rules.assume(target);
@@ -4697,18 +4697,13 @@ function matchToRule(wff, path, ruleWff) {
 }
 */
 
-// Interprets the equation argument as a potential rewriter for the
-// part of the step at the given path, and determines a substitution
+// Interprets the term argument as a potential rewriter for the
+// part of this step at the given path, and determines a substitution
 // to match it with that part of the step.  Returns the substitution,
 // or null if it finds none.
-function canRewrite(step, path, eqn_arg) {
-  const expr = step.get(path);
-  return expr.findSubst(Toy.schemaPart(eqn_arg));
-}
-
-Step.prototype.rewriter = function(path, eqn_arg) {
+Step.prototype.canRewrite = function(path, term) {
   const expr = this.get(path);
-  return expr.findSubst(Toy.schemaPart(eqn_arg));
+  return expr.findSubst(Toy.schemaPart(term));
 };
 
 declare(
@@ -6859,7 +6854,6 @@ const tautologyCounts = Toy.tautologyCounts = new Map();
 
 Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
 Toy.simplifyStep = simplifyStep;
-Toy.canRewrite = canRewrite;
 Toy._factMap = _factMap;
 Toy.moverFacts = moverFacts;
 Toy.rightChain = rightChain;

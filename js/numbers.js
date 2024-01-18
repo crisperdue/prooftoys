@@ -1696,7 +1696,7 @@ declare
          for (const info of xformers) {
            const path = nextPath.upTo(info.from);
            if (path) {
-             if (Toy.canRewrite(step, path, info.fact)) {
+             if (Toy.step.canRewrite(path, info.fact)) {
                nextPath = path.concat(info.to);
                return step.rewrite(path, info.fact);
              }
