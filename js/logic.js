@@ -61,9 +61,7 @@ const F = constify('F');
 // string.  Not to be confused with _factsMap, which contains
 // information about facts as they are stated, not as they are looked
 // up.  The values are Step objects.  Private to rules.fact.
-//
-// TODO: Consider removing this or upgrading it to a Map.
-const _factMap = {};
+const _factMap = new Map();
 
 
 //// Primitive constants
@@ -5906,9 +5904,6 @@ declare(
     action: function(synopsis) {
       // Check if the synopsis string has already resulted in a proved
       // fact with suitable variable names.
-      //
-      // TODO: Consider upgrading _factMap to an actual Map, or using
-      //   mathParse and resolveFactRef here, then removing it.
       if (typeof synopsis === 'string') {
         if (Toy.isIdentifier(synopsis)) {
           const result = Toy.getTheorem(synopsis);
@@ -5917,7 +5912,7 @@ declare(
             return result;
           }
         }
-        var proved = _factMap[synopsis];
+        var proved = _factMap.get(synopsis);
         if (proved) {
           // In this case the the argument is the statement
           // and the result is the proved step.
@@ -5942,7 +5937,7 @@ declare(
         const map = expansion.getMain().matchSchema(fact.getMain());
         const instance = rules.instMultiVars(fact, map);
         // Remember the proof for future reference.
-        ((typeof synopsis === 'string') && (_factMap[synopsis] = instance));
+        ((typeof synopsis === 'string') && (_factMap.set(synopsis, instance)));
         // Justify the final result in each usage of the fact.
         return instance.justify('fact', arguments);
       }
