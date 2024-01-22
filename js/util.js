@@ -733,17 +733,27 @@ function check(v, f = Toy.abort) {
 }
 
 /**
- * For debugging: Logs all facts containing the given pattern of
- * operator characters in the given order.  Operates by "squishing"
- * the keys of _factsByKey into just the occurrences of the characters
- * +, -, *, /, =, >, <, !, and checking for occurrences of the given
- * pattern string among these squished representations of the facts.
+ * For debugging: Logs all facts containing the given list of "tokens"
+ * in the given order.  Tokens in the input are separated by spaces.
+ * Searches the printed forms of all registered facts.
  */
 function factSquish(pattern) {
-  return (Array.from(Toy._factsByKey.keys())
-          .map(k => [k, k.replace(/[^-+*/=!<>]/g, '')])
-          .filter(pair => pair[1].includes(pattern))
-          .forEach(pair => console.log(pair[0])));
+  const start = '(?<=[( ])';
+  const end = '(?=[ )])';
+  const wrap = s => start + s + end;
+  const a = (pattern
+             // Escape most special regex characters.
+             .replace(/[*+^()$|]/, '\\$&')
+             // Add context assertions to each token.
+             .split(' ').map(wrap));
+  // Allow the tokens to be separated.
+  const re = new RegExp(a.join('.*'));
+  Toy.eachFact(info => {
+    const goal$ = info.goal.$$;
+    if (re.test(goal$)) {
+      console.log(goal$);
+    }
+  });
 }
 
 /**
