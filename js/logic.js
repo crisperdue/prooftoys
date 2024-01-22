@@ -58,7 +58,7 @@ const F = constify('F');
 // Caches (details of) results of rules.fact that are given a string
 // as input, for performance of functions such as findMatchingFact.
 // Used in rules.fact to quickly get the proof of a fact given as a
-// string.  Not to be confused with _factsMap, which contains
+// string.  Not to be confused with _factsByKey, which contains
 // information about facts as they are stated, not as they are looked
 // up.  The values are Step objects.  Private to rules.fact.
 const _factMap = new Map();
@@ -2665,7 +2665,6 @@ declare(
       };
       return step.justify('instMultiVars', arguments, [b]);
     },
-    inputs: {step: 1},
     // There is no suitable form for entering the arguments for
     // this rule, so it is not offerable in any menu.
     tooltip: ('For each variable in the map substitute its value in the map'),
@@ -2675,6 +2674,8 @@ declare(
   // Given two theorems a1 => a and a2 => b, proves a1 & a2 => a & b.
   // If either theorem is unconditional, omits a1 or a2 or both
   // accordingly.
+  //
+  // TODO: Replace with chaining and A => (B => A & B)?
   {name: 'makeConjunction',
     action: function(a, b) {
       var stepa = rules.rewriteOnly(a, '/main', 'a == (T == a)');
@@ -4937,9 +4938,11 @@ function chainDescription(step) {
 // conclusion, but with the assumptions of the step carried over to
 // the result.
 declare(
-  // Chain a conditional step, matching its conclusion with the left
-  // side of a conditional schema.  Available interactively only
-  // through menuGen.
+  // Forward reasoning: Chain a conditional step, matching its
+  // conclusion with the left side of a conditional schema.  Available
+  // interactively only through menuGen.  Interactively select a
+  // proved step to match it against antecedents of conditional steps
+  // and facts (schemas).
   {name: 'chain1',
    action: function(step, schema_arg) {
      const schema = termify(schema_arg);
@@ -4967,10 +4970,12 @@ declare(
    menuGen: chainMenuGen,
   },
 
-  // Chain from a proved step, matching all of it with the left side
-  // of the conditional schema step or fact statement.  This proves an
-  // instance of the conclusion of the schema.  Available
-  // interactively only through menuGen.
+  // Forward reasoning: Chain from a proved step, matching all of it
+  // with the left side of the conditional schema step or fact
+  // statement.  This proves an instance of the conclusion of the
+  // schema.  Available interactively only through menuGen.
+  // Interactively select the consequent of a step to match it against
+  // antecedents of conditional steps and facts (schemas).
   {name: 'chain0',
    action: function(step, schema_arg) {
      const schema = termify(schema_arg);
@@ -5179,11 +5184,11 @@ declare(
       var result = rules.mergeConj(expr, Toy.asmLess);
       return result.justify('conjunctionsMerger', arguments);
     },
-    inputs: {bool: 1},
+    // inputs: {bool: 1},
     // Too technical to expose for most users.
     labels: 'uncommon',
     form: ('Conjunctions to merge: <input name=bool>'),
-    menu: 'Derives an equation to merge chains of input conjunctions',
+    menu: 'derives equation to merge chains of conjunctions',
     description: 'merge conjunctions in {bool}'
   },    
 
@@ -5900,6 +5905,9 @@ declare(
   //
   // For tautologies, proved statements, and theorems in particular,
   // this rule is inline.
+  //
+  // TODO: Consider renaming this to tryFact, and define "fact" to
+  //   call this and abort on failure.
   {name: 'fact',
     action: function(synopsis) {
       // Check if the synopsis string has already resulted in a proved
