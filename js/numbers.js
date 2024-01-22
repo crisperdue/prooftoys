@@ -425,15 +425,16 @@ declare(
 
    // Steven Lay, Axiom O4.
    // Also like Wikibooks Real Analysis axiom.
-   {statement: 'x < y & 0 < z => x * z < y * z', axiom: true,
-    description: 'ordering of reals and multiplication'
-   },
+  {name: 'ordermul',
+   statement: 'x < y & 0 < z => x * z < y * z', axiom: true,
+   description: 'ordering of reals and multiplication'
+  },
 
-   // Similar to Wikipedia: "Real number"
-   //
-   // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
-   //  description: 'ordering of reals and multiplication'
-   // },
+  // Similar to Wikipedia: "Real number"
+  //
+  // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
+  //  description: 'ordering of reals and multiplication'
+  // },
 
   // The null value does not participate in orderings.
   // TODO: Consider introducing a "domain" concept and
@@ -446,7 +447,8 @@ declare(
 definition('x > y == y < x');
 definition('x <= y == x < y | x = y');
 definition('x >= y == x > y | x = y');
-  
+
+// Facts about multiplication and ordering.
 declare(
   {statement: '1 < y & 0 < z => z < y * z',
    proof: function() {
@@ -456,6 +458,7 @@ declare(
    },
   },
   {statement: 'x < y & z < 0 => y * z < x * z', // Asserted
+   
   },
   
 );
@@ -466,7 +469,7 @@ definition('isUB x S == R x & subset S R & not (empty S) & ' +
 definition('hasUB S == exists {x. isUB x S}');
 
 definition('isSup x S == isUB x S & forall {y. isUB y S => x <= y}');
-  
+
 definition('sup S = the {x. isSup x S}')
 
 definition('isLB x S == R x & subset S R & not (empty S) & ' +
@@ -477,6 +480,9 @@ definition('hasLB S == exists {x. isLB x S}');
 definition('isInf x S == isLB x S & forall {y. isLB y S => x <= y}');
 
 definition('inf S = the {x. isInf x S}');
+
+definition('wellOrdered S == forall {P. subset P S & exists P => ' +
+           'exists {x. P x & forall {y. P y => x <= y}}}');
 
 declare(
   {name: 'completeness',
@@ -517,6 +523,7 @@ declare(
 
 );
 
+// Ordering and multiplication.
 // Lay 11.1
 declare(
      // Lay 11.1a
@@ -4110,18 +4117,7 @@ declare(
   },
 );
 
-// This defines the concept of being "a" square root of x.
-definition('sqrts x = {y. 0 <= y & y * y = x}');  
-
-declare(
-  {statement: '0 <= x == exists1 (sqrts x)'},  // Asserted
-);
-
-// This definition is "none" except for real numbers.
-definition('sqrt x = the (sqrts x)');
-
-
-//// Integers and floor
+//// Integers and floor, ceil, sgn, abs
 
 declare(
   // Axiom / definition of floor, and facts about it.
@@ -4163,7 +4159,7 @@ declare(
 
 definition('ceil x = neg (floor (neg x))');
 
-definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 x))');
+definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 1))');
 
 definition('abs x = ifReal x (if (x < 0) (neg x) x)');
 
@@ -4189,6 +4185,30 @@ declare
 
 definition('absdiv x d = natdiv (abs x) (abs d)');
 */
+
+//// Square roots
+
+// This defines the concept of being "a" square root of x.
+definition('sqrts x = {y. 0 <= y & y * y = x}');  
+
+declare(
+  // sqrt exists, uniquely.
+  {statement: '@0 <= x == exists1 (sqrts x)'},  // Asserted
+);
+
+// By this definition sqrt is "none" except for real numbers.
+definition('sqrt x = the (sqrts x)');
+
+declare(
+  {statement: 'abs x >= 0'},  // Asserted
+  {statement: 'sqrt (x ** 2) = abs x'},  // Asserted
+  // Proofs at:
+  // https://mathleaks.com/study/kb/reference/properties_of_square_roots
+  {statement: 'a >= 0 & b >= 0 => sqrt (a * b) = sqrt a * sqrt b'},  // Asserted
+  {statement: 'a >= 0 & b > 0 => sqrt (a / b) = sqrt a / sqrt b'},  // Asserted
+);
+
+//// Properties of integers
 
 // definition('quo x d = sgn (the {r. idiv x d + r = d})');
 
