@@ -2665,6 +2665,7 @@ declare(
       };
       return step.justify('instMultiVars', arguments, [b]);
     },
+    inputs: {step: 1},
     // There is no suitable form for entering the arguments for
     // this rule, so it is not offerable in any menu.
     tooltip: ('For each variable in the map substitute its value in the map'),
@@ -5184,7 +5185,7 @@ declare(
       var result = rules.mergeConj(expr, Toy.asmLess);
       return result.justify('conjunctionsMerger', arguments);
     },
-    // inputs: {bool: 1},
+    inputs: {bool: 1},
     // Too technical to expose for most users.
     labels: 'uncommon',
     form: ('Conjunctions to merge: <input name=bool>'),
