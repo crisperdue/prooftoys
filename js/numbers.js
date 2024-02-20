@@ -448,8 +448,50 @@ definition('x > y == y < x');
 definition('x <= y == x < y | x = y');
 definition('x >= y == x > y | x = y');
 
-// Facts about multiplication and ordering.
+//// Facts about ordering.
 declare(
+  {statement: 'x + z < y + z => x < y',
+   proof: function() {
+     return (rules.fact('x < y => x + z < y + z')
+             .andThen('instMultiVars',
+                      {x: 'x + z',
+                       y: 'y + z',
+                       z: 'neg z'
+                      })
+             .andThen('simplifyFocalPart'));
+   }
+  },
+
+  {statement: 'x < y == x + z < y + z',
+   proof:
+   `(1 fact "x + z < y + z => x < y")
+    (2 extractHyp (s 1) (t ((x + z) < (y + z))))
+    (3 fact "x < y => x + z < y + z")
+    (4 extractHyp (s 3) (t (x < y)))
+    (5 chain0 (s 4)
+       (t ((a1 => (b => c)) => ((a2 => (c => b)) => ((a1 & a2) => (b == c))))))
+    (6 chain0 (s 2) (s 5))
+    (7 simplifyAsms (s 6))`
+  },
+
+  {statement: 'x < y == z + x < z + y',
+   proof: function() {
+     return (rules.fact('x < y == x + z < y + z')
+             .rewrite('x + z', 'a + b = b + a')
+             .rewrite('y + z', 'a + b = b + a'));
+   },
+  },
+
+  {statement: '0 < y => x < y + x',
+   proof: function() {
+     return (rules.fact('x < y => x + z < y + z')
+             .andThen('instVar', '0', 'x')
+             .andThen('simplifySite', '/left')
+             .andThen('simplifySite', '/right')
+            );
+   },
+  },
+
   {statement: '1 < y & 0 < z => z < y * z',
    proof: function() {
      return (rules.fact('x < y & 0 < z => x * z < y * z')
@@ -457,10 +499,16 @@ declare(
              .andThen('simplifySite', '/right'));
    },
   },
-  {statement: 'x < y & z < 0 => y * z < x * z', // Asserted
-   
+
+  {statement: '0 < x == neg x < 0',
+   proof: function() {
+     return (rules.fact('x < y == x + z < y + z')
+             .andThen('instMultiVars', {x: '0', z: 'neg y'})
+             .andThen('simplifySite', '/right'));
+   },
   },
-  
+
+  {statement: 'x < y & z < 0 => y * z < x * z'},  // Asserted
 );
 
 definition('isUB x S == R x & subset S R & not (empty S) & ' +
