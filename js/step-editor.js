@@ -1608,6 +1608,14 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
     // It is possible to display more information about thrown
     // errors (aborts), but it may not be helpful to the user.
     const message = 'Rule failed:' + ruleName;
+
+    console.warn(`Rule ${ruleName} failed`);
+    if (result instanceof Error) {
+      console.warn(result.message);
+    } else {
+      console.warn('Result:', result);
+    }
+
     this.report(message);
   } else if (result.rendering) {
     // If there is already a rendering, Expr.justify must have found
