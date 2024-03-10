@@ -450,6 +450,20 @@ definition('x >= y == x > y | x = y');
 
 //// Facts about ordering.
 declare(
+  {statement: '@x < y => (y < z & R x & R y & R z => x < z)',
+   proof: function() {
+     return (rules.fact('x < y & y < z => x < z')
+             .andThen('isolateAsm', 'x < y'));
+   },
+  },
+
+  {statement: '@y < z => (x < y & R x & R y & R z => x < z)',
+   proof: function() {
+     return (rules.fact('x < y & y < z => x < z')
+             .andThen('isolateAsm', 'y < z'));
+   },
+  },
+
   {statement: 'x + z < y + z => x < y',
    proof: function() {
      return (rules.fact('x < y => x + z < y + z')
