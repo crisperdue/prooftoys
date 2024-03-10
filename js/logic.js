@@ -5249,6 +5249,53 @@ declare(
     tooltip: 'extract an assumption'
   },
 
+  {name: 'isolateAsmAt',
+    precheck: function(step, path_arg) {
+      const path = Toy.asPath(path_arg);
+      const pathstr = step.wff.prettifyPath(path).toString();
+      const asms = step.asmMap();
+      return asms.has(pathstr);
+    },
+    action: function(step, path) {
+      const hyp = step.get(path);
+      return rules.isolateAsm(step, hyp);
+    },
+    inputs: {site: 1},
+    menu: ' isolate {term} as the only assumption',
+    description: 'isolate assumption;; {in step siteStep}',
+    labels: 'basic'
+  },
+
+  // Like isolateAsmAt, accepting a term to be matched against the
+  // assumptions.  Useful for pulling out implicit assumptions such as
+  // variable types.
+  {name: 'isolateAsm',
+   precheck: function(step, asm_arg) {
+     const asm = termify(asm_arg);
+     const asms = step.getAsms();
+     return asms && asms.scanConj(a => a.sameAs(asm)) || false;
+   },
+    action: function(step, hyp_arg) {
+      var hyp = termify(hyp_arg);
+      assert(step.isCall2('=>'));
+      if (hyp.matches(step.getLeft())) {
+        var result = step;
+      } else {
+        var taut = rules.tautology(step.getLeft().hypMover(hyp));
+        var step1 = rules.rewriteOnly(step, '/left', taut);
+        var taut2 = rules.tautology('a & b => c == b => (a => c)');
+        var result = rules.rewriteOnly(step1, '', taut2);
+      }
+      return result.justify('isolateAsm', arguments, [step]);
+    },
+    inputs: {step: 1, bool: 2},
+    menu: 'extract {term}',
+    form: 'extract assumption <input name=bool> from step <input name=step>',
+    description: 'isolate assumption {bool};; {in step step}',
+    labels: 'uncommon',
+    tooltip: 'isolate an assumption'
+  },
+
   // Converts a => (b => c) to a & b => c.
   // TODO: Replace with just the fact.
   {name: 'asAssumption',
