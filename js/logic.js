@@ -4984,7 +4984,8 @@ declare(
      const target = step.wff;
      const map = target.matchSchema(schema.getLeft());
      const proved = schema.isProved();
-     assert(map, 'No match');
+     assert(map, 'In chain0 {1} does not match schema {2}',
+            step, schema.getLeft());
      const eqn = rules.rewriteOnly(step, '', 'a == (a == T)');
      const schema2 = proved ? schema : rules.fact(schema);
      const instance = rules.instMultiVars(schema2, map, true);
@@ -5956,6 +5957,7 @@ declare(
   //
   // TODO: Consider renaming this to tryFact, and define "fact" to
   //   call this and abort on failure.
+  // TODO: Handle errors systematically here -- precheck etc..
   {name: 'fact',
     action: function(synopsis) {
       // Check if the synopsis string has already resulted in a proved
@@ -5984,7 +5986,7 @@ declare(
       const factInfo = resolveFactRef(wff);
       // Try ordinary registered facts.
       if (factInfo) {
-        var fact = Toy.getResult(factInfo.goal);
+        var fact = Toy.getResult0(factInfo);
         // TODO: Try to compute the map more efficiently by
         //   factoring out computation of the map from factExpansion.
         const expansion = Toy.factExpansion(synopsis);
