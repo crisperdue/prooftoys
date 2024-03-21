@@ -758,6 +758,10 @@ function addRule(info) {
       // the basic variant aborts.  This kind of rule includes the
       // "justify" step automatically, but you must be sure not to
       // pass a proved step where a term is needed.
+      //
+      // TODO: Check "result" more carefully.  The "more" function
+      //   should only ever return a proved statement, so presumably
+      //   report an error in all other cases.
       rule = function( ...args) {
         const more = main.apply(info, args);
         if (typeof more === 'function') {
@@ -1404,8 +1408,10 @@ function proveResult(stmt) {
 /**
  * Accepts an already-proved step or the full statement of some
  * recorded fact.  Returns a proof of the step, or one like it except
- * for changes of names of variables including free variables.  Throws
- * an exception in case of failure.
+ * for changes of names of variables including free variables.  Aborts
+ * if the result of the proof does not match the stated goal or the
+ * given statement does not resolve to a recorded fact.  Does not
+ * catch exceptions.
  *
  * Note that the facts database currently looks up facts by their
  * "main" part, ignoring any assumptions.
@@ -2777,6 +2783,7 @@ Toy.addFact = addFact;
 Toy.isRecordedFact = isRecordedFact;
 Toy.proveResult = proveResult;
 Toy.getResult = getResult;
+Toy.getResult0 = getResult0;
 Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
 Toy.getTheoremStatement = getTheoremStatement;
