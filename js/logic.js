@@ -1193,7 +1193,7 @@ declare(
     menu: '[f = g] to [f val = g val]',
     tooltip: 'given f = g, deduce (f term) = (g term)',
     description: '[f = g] to [f val = g val]',
-    labels: 'primitive'
+    labels: 'other'
   },
 
   // r5201f.  Works with a conditional equation "ab".
