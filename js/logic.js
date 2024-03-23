@@ -6509,9 +6509,9 @@ declare(
    }
   },
 
-  {statement: 'a => (b => a & b)',
+  {statement: 'a => (b == a & b)',
    proof: function() {
-     return rules.tautology('a => (b => a & b)');
+     return rules.tautology('a => (b == a & b)');
    }
   },
 
@@ -6572,18 +6572,17 @@ declare(
    }
   },
 
+  // Equivalence by proving a conditional in both directions; general form.
+  {statement: 'a1 => (b => c) => (a2 => (c => b) => (a1 & a2 => (b == c)))',
+   proof: function() {
+     return rules.tautology
+       ('a1 => (b => c) => (a2 => (c => b) => (a1 & a2 => (b == c)))');
+   }
+  },
+
   // Alternate strategy for proving equivalence from conditionals.
   {statement: 'a => b => ((not a => not b) => (a == b))',
    proof: () => rules.tautology('a => b => ((not a => not b) => (a == b))'),
-  },
-
-  // Same as above, relativized to "a".
-  {statement: 'a => (b => c) => (a => (c => b) => (a => (b == c)))',
-   proof: function() {
-     return rules.tautology(
-       'a => (b => c) => (a => (c => b) => (a => (b == c)))'
-     );
-   }
   },
 
   // Simple version of proof by cases.
@@ -6603,6 +6602,19 @@ declare(
   {statement: 'a => (b == c) == (a & b == a & c)',
    proof: function() {
      return rules.tautology('a => (b == c) == (a & b == a & c)');
+   },
+  },
+
+  // Working with conditional equivalences:
+  {statement: 'a => (b == c) == (a => b == a => c)',
+   proof: function() {
+     return rules.tautology('a => (b == c) == (a => b == a => c)');
+   },
+  },
+
+  {statement: 'a => (b == c) => (a & b => c)',
+   proof: function() {
+     return rules.tautology('a => (b == c) => (a & b => c)');
    },
   },
 
