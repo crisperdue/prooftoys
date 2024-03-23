@@ -4922,29 +4922,31 @@ function chainDescription(step) {
     const rendering = schema.rendering;
     return `chain;; from step {step} with step ${rendering.stepNumber}`;
   } else {
-    return 'chain;; from step {step} with {fact}';
+    return 'reason forward;; from step {step} with {fact}';
   }
 }
 
 // Chaining is a generalization of modus ponens that works with a step
-// and a conditional schema.  The step argument proves that an
-// instance of the LHS of the conditional schema is true, and chaining
-// substitutes into the schema fact or step to make them match.
-// Chain0 matches the schema antecedent against the entire step, and
-// chain1 matches the schema antecedent against only the conclusion of
-// the (conditional) step.
+// and a conditional fact or step, which it uses as a schema to match.
+// The step argument concludes that an instance of the LHS of the
+// conditional schema is true, and chaining substitutes into the
+// schema to make them match.  Chain0 matches the schema antecedent
+// against the entire step, and chain1 matches the schema antecedent
+// against only the conclusion of the (conditional) step.
 //  
 // With chain0, the result is an instance of the conclusion of the
 // schema.  The result of chain1 is also an instance of the schema's
 // conclusion, but with the assumptions of the step carried over to
-// the result.
+// the result, and if the schema has the form (a => (b => c)), the
+// result has the same form, with the step assumptions replacing the
+// schema assumptions.
 declare(
   // Forward reasoning: Chain a conditional step, matching its
   // conclusion with the left side of a conditional schema.  Available
   // interactively only through menuGen.  Interactively select a
   // proved step to match it against antecedents of conditional steps
   // and facts (schemas).
-  {name: 'chain1',
+  {name: 'chain1Only',
    action: function(step, schema_arg) {
      const schema = termify(schema_arg);
      assert(schema.implies(), 'Not conditional: {1}', schema);
@@ -4956,14 +4958,35 @@ declare(
      const eqn = rules.rewriteOnly(step, '/right', 'a == (a == T)');
      const schema2 = proved ? schema : rules.fact(schema);
      const instance = rules.instMultiVars(schema2, map, true);
+     // Replace the antecedent of the schema with T (after substitution),
+     // bringing over the assumptions from the step at the top level.
      const result = rules.r2(instance, '/left', eqn);
-     const simpler = rules.rewriteOnly(result, '/right', 'T => a == a');
-     const withAsms = Toy.applyMatchingFact(simpler, '',
+     // Eliminate the new occurrence of T.
+     const conclusion = rules.rewriteOnly(result, '/right', 'T => a == a');
+     return (conclusion
+             .justify('chain1Only', arguments,
+                      proved ? [step, schema] : [step]));
+   },
+   labels: 'uncommon',
+   inputs: {step: 1, bool: 2},
+   description: chainDescription,
+   menuGen: chainMenuGen,
+  },
+
+  // Forward reasoning, like chain1Only, but where that returns
+  // (a => (b => c)), this combines and simplifies "a" and "b"
+  // as the assumptions.
+  {name: 'chain1',
+   action: function(step, schema_arg) {
+     const schema = termify(schema_arg);
+     const chained = rules.chain1Only(step, schema);
+     const withAsms = Toy.applyMatchingFact(chained, '',
                                             ['a => (b => c) == a & b => c'],
                                             'rewriteOnly');
-     return (/* withAsms || */ simpler)
-       .justify('chain1', arguments,
-                proved ? [step, schema] : [step]);
+     const simpler = withAsms && rules.simplifyAsms(withAsms);
+     return ((simpler || chained)
+             .justify('chain1', arguments,
+                      schema.isProved() ? [step, schema] : [step]));
    },
    labels: 'basic',
    inputs: {step: 1, bool: 2},
