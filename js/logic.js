@@ -6612,11 +6612,8 @@ declare(
    },
   },
 
-  {statement: 'a => (b == c) => (a & b => c)',
-   proof: function() {
-     return rules.tautology('a => (b == c) => (a & b => c)');
-   },
-  },
+  // Is this tautology useful?
+  // Toy.defTautology('a => (b == c) => (a & b => c)'),
 
   // Solving equations with variables in denominator.
   {statement: '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))',

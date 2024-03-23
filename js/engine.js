@@ -2701,6 +2701,12 @@ function asFactProver(prover, goal) {
   return factProverWrapper;
 }
 
+// This gets called at load time to generate the statement and
+// proof of the stated tautology.
+function defTautology(statement) {
+  return ({statement: statement, proof: () => rules.tautology(statement)});
+}
+
 
 //// SOME DEFINITIONS
 
@@ -2808,6 +2814,7 @@ Toy.getRuleInfo = getRuleInfo;
 Toy.getStepSite = getStepSite;
 Toy.proofOf = proofOf;
 Toy.assumptionsUsed = assumptionsUsed;
+Toy.defTautology = defTautology; 
 
 Toy.definition = definition;
 
