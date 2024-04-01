@@ -1319,6 +1319,8 @@ function mathParse(arg) {
 /**
  * Adds "math var conditions" as the rightmost assumptions of this
  * wff.
+ *
+ * TODO: Try adding them on the left.
  */
 Expr.prototype.andMathVarConditions = function() {
   var assume = this.mathVarConditions();
@@ -1336,6 +1338,56 @@ Expr.prototype.andMathVarConditions = function() {
   } else {
     return this;
   }
+};
+
+/**
+ * Returns the wff, omitting any assumptions that are "strippable"
+ * removed, tested by applying the function argument to the
+ * assumption term.
+ */
+Expr.prototype.stripAsms = function(strippable) {
+  const self = this;
+  const asms = self.getAsms();
+  if (!asms) {
+    return self;
+  }
+  const infix = Toy.infixCall;
+  let others = null;
+  asms.scanConj(term => {
+    if (!(strippable(term))) {
+      others = others ? infix(others, '&', term) : term;
+    }
+  });
+  const main = self.getMain();
+  return others ? infix(others, '=>', main) : main;
+};
+
+/**
+ * True iff the term isTypeTest and the argument is a variable.
+ */
+function isTypeDecl(term) {
+  return term.isTypeTest() && term.arg.isVariable();
+}
+
+/**
+ * True iff the term has the form x != y or (not (x = y))
+ * and x is a variable and y is 0.
+ */
+function isZeroTest(term) {
+  const map = (term.matchSchema('x != y') ||
+               term.matchSchema('not (x = y)'));
+  return map && map.x.isVariable() && map.y.sameAs(Toy.parse('0'));
+}
+
+/**
+ * Removes certain kinds of assumptions from this WFF if it is
+ * conditional. Removes type tests on variables and tests of
+ * variables versus 0.  Used in preparation for comparison with
+ * a recorded fact, so they can be omitted from entry by
+ * the user.
+ */
+Expr.prototype.stripSomeDecls = function() {
+  return this.stripAsms(x => isTypeDecl(x) || isZeroTest(x));
 };
 
 /**
