@@ -6005,22 +6005,28 @@ declare(
         // Behavior of "fact" is inline.
         return synopsis;
       }
-      const wff = mathParse(synopsis);
+      const term = x => termify(typeof x === 'string' && x[0] === '@'
+                                ? x.slice(1) : x);
+      // const wff = mathParse(synopsis);
+      const wff = term(synopsis);
       const factInfo = resolveFactRef(wff);
       // Try ordinary registered facts.
       if (factInfo) {
         var fact = Toy.getResult0(factInfo);
-        // TODO: Try to compute the map more efficiently by
+        // TODO: Consider computing the map more efficiently by
         //   factoring out computation of the map from factExpansion.
         const expansion = Toy.factExpansion(synopsis);
-        // Maps free variables of the fact into ones given here.
-        // Currently only maps variables in the main part.
-        const map = expansion.getMain().matchSchema(fact.getMain());
-        const instance = rules.instMultiVars(fact, map);
-        // Remember the proof for future reference.
-        ((typeof synopsis === 'string') && (_factMap.set(synopsis, instance)));
-        // Justify the final result in each usage of the fact.
-        return instance.justify('fact', arguments);
+        if (expansion) {
+          // Maps free variables of the fact into ones given here.
+          // Currently only maps variables in the main part.
+          const map = expansion.stripSomeDecls()
+                .matchSchema(fact.stripSomeDecls());
+          const instance = rules.instMultiVars(fact, map);
+          // Remember the proof for future reference.
+          ((typeof synopsis === 'string') && (_factMap.set(synopsis, instance)));
+          // Justify the final result in each usage of the fact.
+          return instance.justify('fact', arguments);
+        }
       }
       // Next try arithmetic facts (if reals are available).
       if (rules.arithFact) {
