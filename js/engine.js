@@ -573,6 +573,10 @@ var rules = {};
 //   are given, effectively a single label "none".  See processLabels
 //   for more details.
 //
+// with: space-separated list of words to provide other properties of
+//   the rule or fact, not related to menu offerings.  Accessed in the
+//   factInfo like info.with.fubar, as individual properties.
+//
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
 //
@@ -619,6 +623,7 @@ function addRule(info) {
   }
 
   info.labels = processLabels(info.labels);
+  info.with = new Set(info.with ? info.with.split(' ') : []);
 
   // DEFINITIONS
   if (info.definition) {
