@@ -1276,7 +1276,8 @@ const _resolutionsByKey = new Map();
  *
  * TODO: See TODO for resolveFactRef.
  */
-function factInfoMatching(resInfo) {
+function factInfoMatching(stmt) {
+  const resInfo = getResInfo(stmt);
   const factPropsList = _factsByKey.get(resInfo.key) || [];
   let extender = null;
   for (const factProps of factPropsList) {
@@ -1357,7 +1358,7 @@ function resolveFactRef(stmt) {
     return resolvent.factInfo;
   }
   // No resolution is already in _resolutionsByKey.
-  const resolved = factInfoMatching(resInfo);
+  const resolved = factInfoMatching(stmt);
   if (resolved) {
     resolutions.length === 0 && _resolutionsByKey.set(resInfo.key, resolutions);
     resolutions.push({resInfo: resInfo, factInfo: resolved});
