@@ -247,6 +247,8 @@ function ProofDisplay(properties) {
       // seeem to accomplish anything.
       $(this.stepsNode).scrollTop(1e9);
     }
+    // Notice "other" changes.
+    self.proofEditor && self.proofEditor._otherChanges.activate();
   });
 }
 
@@ -1821,7 +1823,7 @@ function renderSubproof(step) {
   const $subproof = renderInference(step);
   const $step = $(step.stepNode);
   $step.addClass('hasSubproof');
-  const editable = $step.is('.proofDisplay.editable .proofStep');
+  const editable = getProofDisplay(step).isEditable();
   // If not editable we animate the window scrollTop, but this
   // is the magic formula that does it across browsers.
   const $port = (editable

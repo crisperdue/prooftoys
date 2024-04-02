@@ -47,7 +47,7 @@ var nextProofEditorId = 1;
  * Optional argument "options", plain object with named properties:
  * 
  * docName: if given, overrides the default workspace name.  This is
- *   ignored if an exercise is given.
+ *   null and ignored if this is an exercise.
  * oneDoc: if present, the editor cannot switch to work on any
  *   document other than the initial one.  Currently implemented
  *   by hiding the worksheets button.  Also hides the worksheet
@@ -75,6 +75,7 @@ var nextProofEditorId = 1;
  *   an integer sequence number of the editor within the page.  In
  *   principle an editor could also be assigned an ID explicitly during
  *   editor initialization immediately after creation.
+ * exercise: the exercise property from the options.
  * fromDoc: boolean, true if the constructor gets state from an existing 
  *   document.
  * initialSteps: array of ordinary steps to display when cleared, or
@@ -104,6 +105,7 @@ function ProofEditor(options_arg={}) {
 
   const self = this;
   const options = self._options = options_arg;
+  self.exercise = options.exercise;
   
   // This is set up by a later part of the constructor.
   // It stays null for exercises.
@@ -212,9 +214,19 @@ function ProofEditor(options_arg={}) {
 
   // Prepare to write out proof state during refresh, so basically
   // whenever it changes.
-  this._refresher = new Toy.Refresher(() => this.refresh());
+  this._refresher = new Toy.Refresher(changes => this.refresh());
+  this._otherChanges = new Toy.Refresher(changes => this.otherChanges());
 
   let proofData = null;
+  
+  // Create an editor record if none exists.
+  const id = self.proofEditorId;
+  Toy.db.editors.add({id: id}).catch(err => null);
+  // Recover known content area height from the database
+  Toy.db.editors.get(id).then(item => {
+    const height = item && item.height;
+    height && self.$node.find('.proofSteps').height(height);
+  });
   if (!options.exercise) {
     const state = Toy.getOtherPedState(self);
     // Restore editor state (not document state).
@@ -378,16 +390,25 @@ function ProofEditor(options_arg={}) {
   });
 }
 
+/**
+ * Really this responds when the proof has been updated since
+ * the last time the event loop returned to idle.
+ * Response to other changes is in method otherChanges.
+ */
 ProofEditor.prototype.refresh = function() {
   const self = this;
   const mainDisplay = self.proofDisplay;
   const $status = self.$status;
   const $statusDisplay = self.$statusDisplay;
   self._updateGivens();
+
+  // Persistently store proof state.
+  // This could probably be unconditional.
   if (self.isEditable()) {
     self.saveProofState();
   }
-  // Set (or clear) the message in the $status box.
+
+  // Set (or clear) the possible "Proof complete"  message in the $status box.
   var steps = mainDisplay.steps;
   var len = steps.length;
   if (len > 0) {
@@ -395,8 +416,9 @@ ProofEditor.prototype.refresh = function() {
 
     // Is the goal proved?
     const stmt = self.goalStatement;
-    if (stmt) {
+    if (stmt && !self.animating) {
       async function showStatus(solved) {
+        self.animating = true;
         await Toy.sleep(200);
         const $node = $('.proofEditorHeader .status');
         $node.empty();
@@ -408,6 +430,7 @@ ProofEditor.prototype.refresh = function() {
         } else {
           $node.append('Proving:');
         }
+        self.animating = false;
       }
       showStatus(step.checkSubgoals(stmt) === 0);
     }
@@ -419,6 +442,17 @@ ProofEditor.prototype.refresh = function() {
   } else {
     $status.toggleClass('empty', true);
   }
+};
+
+/**
+ * Updates the database for changes to state other than the proof,
+ * currently the editor's display height.
+ */
+ProofEditor.prototype.otherChanges = function() {
+  const self = this;
+  Toy.db.editors.update(self.proofEditorId,
+                        {height: $(self.proofDisplay.stepsNode).height()}
+                       );
 };
 
 /**
@@ -470,12 +504,12 @@ function exerciseInits(stmt) {
 }
 
 /**
- * Based on the given "exercise/item" exercise name, adds the
+ * Based on the given "exercise/item" exercise name, adds the fact
  * declarations to set up the theory state for that item of that
- * exercise.  (In the declarations item names are called "exertion"s.)
- * Applies all of the declarations for that exercise preceding the
- * desired item's record, and returns that declaration, omitting its
- * exertion property.
+ * exercise.  (In the declarations, item names are called
+ * "exertion"s.)  Applies all of the declarations for that exercise
+ * preceding the desired item's record, and returns that declaration,
+ * omitting its exertion property.
  *
  * If the exercise exists, but no such item, applies all declarations
  * and returns null.  An empty part name is allowed.
