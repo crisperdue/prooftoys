@@ -216,8 +216,8 @@ function ProofEditor(options_arg={}) {
 
   let proofData = null;
   if (!options.exercise) {
+    const state = Toy.getOtherPedState(self);
     // Restore editor state (not document state).
-    const state = Toy.getSavedState(self);
     // This sets self.docName and potentially goalStatement.
     self.syncToDocName(options.docName ||
                        (state

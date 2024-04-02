@@ -1644,7 +1644,7 @@ function pedKey(ed) {
  * data, or undefined if there is no such proof editor or the value is
  * not valid JSON.
  */
-function getSavedState(ed) {
+function getOtherPedState(ed) {
   return jsonParse(localStorage.getItem(pedKey(ed)));
 }
 
@@ -2965,7 +2965,7 @@ Toy.proofData = proofData;
 Toy.dumpProofData = dumpProofData;  
 Toy.findProofData = findProofData;
 
-Toy.getSavedState = getSavedState;
+Toy.getOtherPedState = getOtherPedState;
 Toy.saveState = saveState;
 Toy.noteState = noteState;
 Toy.isDocHeldFrom = isDocHeldFrom;
