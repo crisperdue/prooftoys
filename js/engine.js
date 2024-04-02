@@ -1299,11 +1299,19 @@ function factInfoMatching(stmt) {
 }
 
 /**
- * Returns the "expansion" of a statement, preferably given as a wff.
- * The result is a version of the full declared fact (goal) wff of the
- * statement, with free variable names as in the given statement
- * rather than the declaration.  Returns null if there is no such
- * declared fact.
+ * Returns the "expansion" of a statement into a recorded fact.  The
+ * given statement, preferably given as a wff, must be the same as as
+ * the recorded fact, modulo alphabetic change of variables, except
+ * that it may omit assumptions that are "type declarations" or "zero
+ * tests" for free variables.  The result is a version of the full
+ * declared fact (goal) wff of the statement, with free variable names
+ * as in the given statement rather than the declaration.  Returns
+ * null if there is no such declared fact.
+ *
+ * The rationale is that it can be convenient for the user to enter
+ * the fact with fewer assumptions, and the omitted assumptions are
+ * guaranteed to appear elsewhere in the fact.  (If they did not, they
+ * could be dropped from the fact without effecting its truth.)
  */
 function factExpansion(stmt) {
   const resInfo = getResInfo(stmt);
@@ -1314,16 +1322,17 @@ function factExpansion(stmt) {
   const factInfo = resolveFactRef(stmt);
   if (factInfo) {
     // TODO: Catch renamings needed in the assumptions!
-    const asStated = factInfo.goal.getMain();
-    const asRequested = resInfo.stmt.getMain();
+    const asStated = factInfo.goal.stripSomeDecls();
+    const asRequested = resInfo.stmt.stripSomeDecls();
     // This check is OK as it is just a renaming.
-    const map = asRequested.matchSchema(asStated);
-    const expansion = factInfo.goal.subFree(map);
-    resInfo._expansion = expansion;
-    return expansion;
-  } else {
-    return null;
+    let map = asRequested.matchSchema(asStated);
+    if (map) {
+      const expansion = factInfo.goal.subFree(map);
+      resInfo._expansion = expansion;
+      return expansion;
+    }
   }
+  return null;
 }
 
 /**
@@ -1529,9 +1538,9 @@ function getResInfo(stmt) {
       // Uncomment this line to get the warnings back.
       // console.warn('Deprecated: resInfo of string:', stmt);
     }
-    // TODO: Do the parsing in client code so different
-    //   type assumptions and such can be inserted there.
-    const wff = mathParse(stmt);
+    const term = x => termify(typeof x === 'string' && x[0] === '@'
+                              ? x.slice(1) : x);
+    const wff = term(stmt);
     const main = wff.getMain();
     const hasAsms = wff.isCall2('=>');
     // This makes a wff with main first, and also has
