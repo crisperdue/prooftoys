@@ -636,10 +636,6 @@ function addRule(info) {
     console.warn('Fact has both statement and goal', info.goal.toString());
   }
 
-  if (statement) {
-    console.log('Adding', statement.$$);
-  }
-
   // This will become the "rule object", a function:
   var rule;
   // True iff the main function has access to the rule object as "this".
