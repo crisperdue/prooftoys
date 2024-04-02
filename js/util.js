@@ -2839,8 +2839,8 @@ window.setInterval(function() { heartbeat(); removeOldPidData(); }, 10000);
  */
 Toy.sizeObserver = new ResizeObserver(entries => {
   for (const entry of entries) {
-    let cs = window.getComputedStyle(entry.target);
     /*
+    let cs = window.getComputedStyle(entry.target);
     console.log('watching element:', entry.target);
     console.log(entry.contentRect.top, ' is ', cs.paddingTop);
     console.log(entry.contentRect.left, ' is ', cs.paddingLeft);
