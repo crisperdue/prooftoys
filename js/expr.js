@@ -2363,8 +2363,10 @@ Expr.prototype.asmSet = function() {
 
 /**
  * Applies the given action to each conjunct in a chain of conjuncts,
- * from left to right, and a reverse path to the conjunct.  If any
- * action returns a truthy value, immediately returns that value.
+ * from left to right, and an optional reverse path to the conjunct,
+ * defaulting to an empty path.  Recursive calls extend the path to
+ * refer to the subexpression.  If any action returns a truthy value,
+ * immediately returns that value.  See also scanConj.
  */
 Expr.prototype.eachConjunct = function(action, rpath_arg) {
   const rpath = rpath_arg || Path.empty;
@@ -3913,8 +3915,11 @@ function neverWhenBound(rule) {
 // Methods.
 
 // The result of this method is very similar to toString, but this
-// uses the "name" property, so aliases are treated as the same thing.
-// Intended for use in identifying facts that match terms in steps.
+// uses the "name" property of atoms, so it equates atoms that are
+// aliases.  Intended for use in mapping stated references to facts
+// with declared facts.  
+//
+// TODO: Consider properly handling type information here.
 Expr.prototype.toKey = function() {
   const key = x => {
     const c = x.constructor;
