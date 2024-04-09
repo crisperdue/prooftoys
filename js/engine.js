@@ -685,6 +685,7 @@ function addRule(info) {
       desimplifier: true,
       noSwap: true,
       labels: true,
+      with: true,
       converse: true
     };
     // Accept selected fact properties in the rule metadata.
@@ -2436,6 +2437,7 @@ var factProperties = {
   desimplifier: true,
   noSwap: true,
   labels: true,
+  with: true,
   props: true,
   description: true,
   definitional: true,
