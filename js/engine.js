@@ -1272,23 +1272,24 @@ const _resolutionsByKey = new Map();
 
 /**
  * This finds and returns the factInfo object of a recorded fact that
- * matches the given statement, or null if there is none.
- *
- * If there is exactly one fact with the same main part and the same
- * collection of assumptions as the given statement, that is the
- * result, otherwise if exactly one has the same main part and a
- * superset of the resInfo's assumptions, that is the result,
- * otherwise null.
+ * "matches" the given resInfo, or null if there is none.  It does
+ * this by comparing the resInfo's of fact goals with the given
+ * resInfo.  (We will call the fact resInfo just "the fact" and the
+ * given resInfo just "the statement", and in both cases the
+ * assumptions are compared as sets.)  The main parts of the statement
+ * and fact must be the same, and if the assumptions of the fact are
+ * the same as the assumptions of the statement, its factInfo is the
+ * result.  If the fact assumptions are a strict superset, and it is
+ * the only such fact, that factInfo is the result, otherwise null.
  *
  * This is a helper for resolveFactRef.
  *
  * TODO: See TODO for resolveFactRef.
  */
-function factInfoMatching(stmt) {
-  const resInfo = getResInfo(stmt);
-  const factPropsList = _factsByKey.get(resInfo.key) || [];
+function factInfoMatching(resInfo) {
   let extender = null;
-  for (const factProps of factPropsList) {
+  const factPropsList = _factsByKey.get(resInfo.key);
+  for (const factProps of factPropsList || []) {
     const stmtInfo = getResInfo(factProps.goal);
     if (stmtInfo.key == resInfo.key &&
         stmtInfo.asmSet.superset(resInfo.asmSet)) {
@@ -1378,12 +1379,13 @@ function resolveFactRef(stmt) {
   if (resolvent) {
     return resolvent.factInfo;
   }
-  // No resolution is already in _resolutionsByKey.
-  const resolved = factInfoMatching(stmt);
-  if (resolved) {
+  // No resolution is already in _resolutionsByKey, so do the
+  // hard work of actually matching.
+  const info = factInfoMatching(resInfo);
+  if (info) {
     resolutions.length === 0 && _resolutionsByKey.set(resInfo.key, resolutions);
-    resolutions.push({resInfo: resInfo, factInfo: resolved});
-    return resolved;
+    resolutions.push({resInfo: resInfo, factInfo: info});
+    return info;
   }
   return null;
 }
