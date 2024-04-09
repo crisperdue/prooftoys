@@ -1317,6 +1317,9 @@ function factInfoMatching(stmt) {
  * the fact with fewer assumptions, and the omitted assumptions are
  * guaranteed to appear elsewhere in the fact.  (If they did not, they
  * could be dropped from the fact without effecting its truth.)
+ *
+ * This is the principal API entry point for resolving fact references.
+ * See also resolveFactRef.
  */
 function factExpansion(stmt) {
   const resInfo = getResInfo(stmt);
@@ -1342,23 +1345,18 @@ function factExpansion(stmt) {
 
 /**
  * This returns a factInfo object with information about the unique
- * recorded fact that matches it according to factInfoMatching; or
- * null if there is none.
+ * recorded fact that the given statement can expand into, or
+ * null if there is none.  The expansion will use free variables
+ * from the given statement in place of ones from the declaration
+ * of the fact.
  *
- * XXX After standardizing both of their variables, the
- * statement wff must have the same main and a superset or equal
- * assumptions as the returned fact.
- *
- * As a consequence, if the fact or the statement has in its
- * assumptions more than one variable that is not also free in the
- * consequent, this may not report that the statement resolves to the
- * fact even though it can alpha match to the fact or the fact minus
- * some assumptions.
- *
- * TODO: Consider strengthened support for references to facts that
- *   have free variables that occur in the assumptions but not the
- *   consequent.  That requires more effort in matching assumptions in
- *   factInfoMatching.
+ * The statement can use different variable names than the fact,
+ * and it may omit some kinds of assumptions if they are not required
+ * to uniquely identify a recorded fact.  Currenetly the given statement
+ * may be able to omit type declarations on variables, such as (R x),
+ * or nonzero checks on variables, and any of these that are included
+ * can appear in any order.  Other assumptions, if included, may have
+ * to appear in the same order as stated in the actual fact.
  */
 function resolveFactRef(stmt) {
   // The resInfo is "fact resolution information" for the statemement.
@@ -1390,7 +1388,7 @@ function resolveFactRef(stmt) {
 /**
  * Resolves the given statement wff to a full fact statement if
  * possible, otherwise returns null.  Like resolveFactRef, but
- * returns just the goal.
+ * returns just the goal, as stated in the fact declaration.
  */
 function resolveToFact(stmt) {
   const info = resolveFactRef(stmt);
@@ -1399,15 +1397,8 @@ function resolveToFact(stmt) {
 
 /**
  * Returns true iff the given wff refers to a specific recorded fact
- * and has the same set of assumptions as in that fact, except that
- * variable names may differ.
- *
- * NOTE: In the unlikely event that the recorded fact has multiple
- * variables that are free only in its assumptions, the result could
- * be false even though the statements have the same assumptions.
- * This would be due to different ordering of assumptions between the
- * given statement and the recorded fact, and thus different
- * assignments of variable names.
+ * and has the same set of assumptions as in that fact, allowing
+ * for differences in variable names.
  */
 function isRecordedFact(stmt) {
   // First check that the statement resolves to a specific fact.
