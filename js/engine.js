@@ -633,7 +633,9 @@ function addRule(info) {
 
   var statement = info.statement || info.goal;
   if (info.statement && info.goal) {
-    console.warn('Fact has both statement and goal', info.goal.toString());
+    console.warn('Fact has both statement and goal',
+                 info.statement.toString(),
+                 info.goal.toString());
   }
 
   // This will become the "rule object", a function:
