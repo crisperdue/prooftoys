@@ -5965,15 +5965,17 @@ declare(
   },
 
   // If the given statement is a proved step, returns the input.
-  // Otherwise if the statement is a string, parses it with mathParse
-  // into a wff.  If the wff matches a recorded fact, permitting
-  // changes of variable names, it proves it from the fact by changing
-  // variable names, and returns the proved result.
+  // Otherwise if the statement is a wff or a string that parses into
+  // one, attempts to resolve it to a fact using resolveFactRef.
+  // If necessary, adjusts free variable names of the fact to those
+  // mentioned in the synopsis and returns the result of that.
   //
   // If the above conditions do not apply, attempts to prove the wff
   // as a tautology or simple arithmetic fact.  Removes any " = T"
   // from boolean-valued arithmetic facts.  Programmatic usage
   // supports theorems by name, but not the UI.
+  //
+  // Returns an error in case of failure.
   //
   // For tautologies, proved statements, and theorems in particular,
   // this rule is inline.
@@ -6007,7 +6009,6 @@ declare(
       }
       const term = x => termify(typeof x === 'string' && x[0] === '@'
                                 ? x.slice(1) : x);
-      // const wff = mathParse(synopsis);
       const wff = term(synopsis);
       const factInfo = resolveFactRef(wff);
       // Try ordinary registered facts.
