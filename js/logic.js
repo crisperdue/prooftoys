@@ -4945,27 +4945,26 @@ declare(
   // conclusion with the left side of a conditional schema.  Available
   // interactively only through menuGen.  Interactively select a
   // proved step to match it against antecedents of conditional steps
-  // and facts (schemas).
+  // and facts (schemas).  Expects both inputs to be conditionals.
   {name: 'chain1Only',
-   action: function(step, schema_arg) {
+   action2: function(step, schema_arg) {
      const schema = termify(schema_arg);
      assert(schema.implies(), 'Not conditional: {1}', schema);
      assert(step.implies(), 'Not conditional: {1}', step);
      const proved = schema.isProved();
      const target = step.wff.getRight();
      const map = target.matchSchema(schema.getLeft());
-     assert(map, 'No match');
-     const eqn = rules.rewriteOnly(step, '/right', 'a == (a == T)');
-     const schema2 = proved ? schema : rules.fact(schema);
-     const instance = rules.instMultiVars(schema2, map, true);
-     // Replace the antecedent of the schema with T (after substitution),
-     // bringing over the assumptions from the step at the top level.
-     const result = rules.r2(instance, '/left', eqn);
-     // Eliminate the new occurrence of T.
-     const conclusion = rules.rewriteOnly(result, '/right', 'T => a == a');
-     return (conclusion
-             .justify('chain1Only', arguments,
-                      proved ? [step, schema] : [step]));
+     return map && (() => {
+       const eqn = rules.rewriteOnly(step, '/right', 'a == (a == T)');
+       const schema2 = rules.fact(schema);
+       const instance = rules.instMultiVars(schema2, map, true);
+       // Replace the antecedent of the schema with T (after substitution),
+       // bringing over the assumptions from the step at the top level.
+       const result = rules.r2(instance, '/left', eqn);
+       // Eliminate the new occurrence of T.
+       const conclusion = rules.rewriteOnly(result, '/right', '(T => a) == a');
+       return conclusion;
+     });
    },
    labels: 'uncommon',
    inputs: {step: 1, bool: 2},
@@ -4975,18 +4974,19 @@ declare(
 
   // Forward reasoning, like chain1Only, but where that returns
   // (a => (b => c)), this combines and simplifies "a" and "b"
-  // as the assumptions.
+  // as the assumptions.  Succeeds when chain1Only succeeds.
   {name: 'chain1',
-   action: function(step, schema_arg) {
+   action2: function(step, schema_arg) {
      const schema = termify(schema_arg);
-     const chained = rules.chain1Only(step, schema);
-     const withAsms = Toy.applyMatchingFact(chained, '',
-                                            ['a => (b => c) == a & b => c'],
-                                            'rewriteOnly');
-     const simpler = withAsms && rules.simplifyAsms(withAsms);
-     return ((simpler || chained)
-             .justify('chain1', arguments,
-                      schema.isProved() ? [step, schema] : [step]));
+     const onward = rules.chain1Only.prep(step, schema);
+     if (onward) {
+       const chained = onward();
+       const withAsms = Toy.applyMatchingFact(chained, '',
+                                              ['a => (b => c) == a & b => c'],
+                                              'rewriteOnly');
+       const simpler = withAsms && rules.simplifyAsms(withAsms);
+       return (() => simpler || chained);
+     }
    },
    labels: 'basic',
    inputs: {step: 1, bool: 2},
