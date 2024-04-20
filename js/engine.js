@@ -425,8 +425,8 @@ var rules = {};
 //
 //   Also creates "attempt" and "attempt0" methods that run the
 //   continuation if a function is returned from "prep", otherwise
-//   returning the result of the "prep".  Attempt0 does not
-//   auto-justify the step.
+//   returning the non-continuation result of the "prep".  Attempt0
+//   does not auto-justify the step.
 //
 // proof: for a theorem (no args), use this instead of "action".  Do
 //   not call "justify", that is done automatically and the proof is

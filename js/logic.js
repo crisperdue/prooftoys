@@ -4727,10 +4727,10 @@ declare(
   //   it was introduced and the formula (e.g. step) it came from.
   //
 
-  // Utility for all of the rewriters.  If the equation fact
-  // argument "A" is not an equation, rewrites it to A == T.
-  // Performs the needed substitution, with higher-order matching,
-  // and returns the result of that.
+  // Utility for all of the rewriters.  If the equation fact argument
+  // "A" is not an equation, rewrites its main part to A == T.
+  // Performs the needed substitution, with higher-order matching, and
+  // returns the result of that.
   {name: 'replacementFor',
    action2: function(step, path, eqn_arg, reduce=true) {
      const target = step.get(path);

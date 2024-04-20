@@ -580,7 +580,7 @@ span.stepNumber, span.stepReference {
 }
 
 /* Scope of operation, e.g. function body to substitute into.
- * Lower priority than "new", so precedes it in the file.
+ * Lower priority than "new", so follows it in the file.
  */
 .proofStep .scope {
   background-color: #eee;

@@ -2273,7 +2273,7 @@ Expr.prototype.hypMover = function(toMove) {
  * action function to each conjunct in the chain, going from left to
  * right.
  *
- * If the action returns a truthy value given any asm, that value
+ * If the action returns a truthy value for some asm, that value
  * immediately becomes the value of the call.  Otherwise returns
  * the value of the last call to the action.
  */
