@@ -4926,6 +4926,61 @@ function chainDescription(step) {
   }
 }
 
+// Only generates menu items for a selected unconditional step
+// or a selected conclusion of a step.
+function cutMenuGen(ruleName, selStep, selTerm, editor) {
+  if (selTerm && (!selStep.implies() || selTerm !== selStep.getRight())) {
+    return null;
+  }
+  const step = selStep.original;
+  // This is the term to match against the LHS of the schema conditional.
+  const target = step.getMain();
+  const results = [];
+  Toy.eachFact(info => {
+    const match = (asm, rpath) => {
+      const map = target.matchSchema(asm);
+      if (map) {
+        results.push({ruleName,
+                      ruleArgs: [step, goal, rpath.reverse()],
+                      html: `cut ${asm.toHtml()} from ${goal.toHtml()}`,
+                     });
+      }
+    };
+    const goal = info.goal;
+    if (goal.implies()) {
+      goal.getAsms().eachConjunct(match, '/left');
+    }
+  });
+  editor.steps.forEach((step_arg, index) => {
+    const match = (asm, rpath) => {
+      const map = target.matchSchema(asm);
+      if (map) {
+        results.push({ruleName,
+                      ruleArgs: [step, step_arg.original, rpath.reverse()],
+                      html: `cut ${asm.toHtml()} from step ${index + 1}`,
+                     });
+      }
+    };
+    const schema = step_arg.original.wff;
+    if (schema.implies()) {
+      schema.getAsms().eachConjunct(match, '/left');
+    }
+  });
+  return results;
+}
+
+function cutDescription(step) {
+  const [inStep, schema, path] = step.ruleArgs;
+  if (Toy.isProved(schema)) {
+    const rendering = schema.rendering;
+    return `cut assumption ${schema.get(path).$$};; from step ${rendering.stepNumber}`;
+  } else {
+    const expanded = Toy.factExpansion(schema);
+    return (
+      `cut assumption ${expanded.get(path).$$};; from ${expanded.shortString()}`);
+  }
+}
+
 // Chaining is a generalization of modus ponens that works with a step
 // and a conditional fact or step, which it uses as a schema to match.
 // The step argument concludes that an instance of the LHS of the
@@ -5020,7 +5075,53 @@ declare(
    labels: 'basic',
    description: chainDescription,
    menuGen: chainMenuGen,
-  }
+  },
+
+  // Plan: Match the conclusion of a proved step with part of the
+  // given conditional schema step or fact statement, normally an
+  // assumption.  This substitutes into the schema and drops the
+  // assumption, which is considered to be true.  Available
+  // interactively only through menuGen.
+  //
+  // Named "plan" because schemas commonly have portions that
+  // do not participate in the match and so "show through" to
+  // the result of the step, producing a step suitable for use
+  // as a schema.
+  //
+  // Note: See also forwardChain, which matches the entire step
+  // with an entire schema antecedent.
+  {name: 'cut',
+   action2: function(step, schema_arg, path_arg) {
+     const schema = (Toy.isProved(schema_arg)
+                     ? schema_arg
+                     : Toy.factExpansion(schema_arg));
+     assert(schema.implies(), 'Not conditional: {1}', schema);
+     assert(step.implies(), 'Not conditional: {1}', step);
+     const target = step.getMain();
+     const path = schema.asPath(path_arg);
+     const map = target.matchSchema(schema.get(path));
+     if (map) {
+       return (() => {
+         const eqn = rules.rewriteOnly(step, '', '(a => b) == (a => (b == T))');
+         const schema2 = rules.fact(schema);
+         const instance = rules.instMultiVars(schema2, map, true);
+         const replaced = rules.replace(instance, path, eqn);
+         const simp = rules.simplifyAsms(replaced);
+         return simp;
+         // These lines are redundant:
+         // const result = rules.arrangeAsms(replaced);
+         // return result;
+       });
+     }
+     return newError('In cut {1} does not match schema {2}',
+                     step, schema.getLeft());
+   },
+   inputs: {step: 1, bool: 2},
+   labels: 'basic',
+   description: cutDescription,
+   menuGen: cutMenuGen,
+  },
+
 );
 
 declare(

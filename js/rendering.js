@@ -2768,6 +2768,11 @@ var hoverHandlers = {
       action(main.node, 'new');
     }
   },
+  cut: function(result, action) {
+    const [step, schema, path] = result.original.ruleArgs;
+    const main = step.rendering.getRight();
+    action(main.node, 'site');
+  },
   reduce: function(step, action) {
     const args = step.original.ruleArgs;
     const input = args[0];
