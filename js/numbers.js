@@ -450,20 +450,6 @@ definition('x >= y == x > y | x = y');
 
 //// Facts about ordering.
 declare(
-  {statement: '@x < y => (y < z & R x & R y & R z => x < z)',
-   proof: function() {
-     return (rules.fact('x < y & y < z => x < z')
-             .andThen('isolateAsm', 'x < y'));
-   },
-  },
-
-  {statement: '@y < z => (x < y & R x & R y & R z => x < z)',
-   proof: function() {
-     return (rules.fact('x < y & y < z => x < z')
-             .andThen('isolateAsm', 'y < z'));
-   },
-  },
-
   {statement: 'x + z < y + z => x < y',
    proof: function() {
      return (rules.fact('x < y => x + z < y + z')
@@ -476,7 +462,7 @@ declare(
    }
   },
 
-  {statement: 'x < y == x + z < y + z',
+  {statement: 'u < v == u + x < v + x',
    proof:
    `(1 fact "x + z < y + z => x < y")
     (2 extractHyp (s 1) (t ((x + z) < (y + z))))
@@ -488,11 +474,28 @@ declare(
     (7 simplifyAsms (s 6))`
   },
 
-  {statement: 'x < y == z + x < z + y',
+  // Same thing, commuted.
+  {statement: 'u < v == x + u < x + v',
    proof: function() {
      return (rules.fact('x < y == x + z < y + z')
              .rewrite('x + z', 'a + b = b + a')
              .rewrite('y + z', 'a + b = b + a'));
+   },
+  },
+
+  {statement: 'u < v => x + u < x + v',
+   proof: function() {
+     return (rules.fact('u < v == x + u < x + v')
+             .andThen('chain0', 'a => (b == c) => (a & b => c)'));
+   },
+  },
+
+  // Above, commuted.
+  {statement: 'u < v => u + x < v + x',
+   proof: function() {
+     return (rules.fact('u < v => x + u < x + v')
+             .rewrite('x + u', 'u + x')
+             .rewrite('x + v', 'v + x'));
    },
   },
 
@@ -503,6 +506,32 @@ declare(
              .andThen('simplifySite', '/left')
              .andThen('simplifySite', '/right')
             );
+   },
+  },
+
+  // Above, commuted.
+  {statement: '0 < y => x < x + y',
+   proof: function() {
+     return (rules.fact('0 < y => x < y + x')
+             .rewrite('y + x', 'a + b = b + a'));
+   },
+  },
+
+  {statement: 'x < 0 => x + y < y',
+   proof: function() {
+     return (rules.fact('x < y => x + z < y + z')
+             .andThen('instVar', '0', 'y')
+             .andThen('simplifySite', '/left')
+             .andThen('simplifySite', '/right')
+            );
+   },
+  },
+
+  // Above, commuted.
+  {statement: 'x < 0 => y + x < y',
+   proof: function() {
+     return (rules.fact('y < 0 => y + x < x')
+             .rewrite('y + x', 'a + b = b + a'));
    },
   },
 
