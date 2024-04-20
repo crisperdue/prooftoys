@@ -1721,8 +1721,9 @@ Step.prototype.isRendered = function() { return this == this.rendering; };
 
 /**
  * Removes "minor" conditions from the assumptions, returning an Expr.
+ * Applied to a WFF, typically a Step.
  */
-Step.prototype.shortForm = function() {
+Expr.prototype.shortForm = function() {
   const infix = Toy.infixCall;
   const asms = this.getAsms();
   let shorts = null;
@@ -1736,6 +1737,14 @@ Step.prototype.shortForm = function() {
   } else {
     return this;
   }
+};
+
+/**
+ * Returns a string presenting the "shortForm" of this WFF, with
+ * outermost parens trimmed away.
+ */
+Expr.prototype.shortString = function() {
+  return Toy.trimParens(this.shortForm().toHtml());
 };
 
 /**
