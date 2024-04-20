@@ -4951,7 +4951,6 @@ declare(
      const schema = termify(schema_arg);
      assert(schema.implies(), 'Not conditional: {1}', schema);
      assert(step.implies(), 'Not conditional: {1}', step);
-     const proved = schema.isProved();
      const target = step.wff.getRight();
      const map = target.matchSchema(schema.getLeft());
      return map && (() => {
@@ -5010,7 +5009,7 @@ declare(
      assert(map, 'In chain0 {1} does not match schema {2}',
             step, schema.getLeft());
      const eqn = rules.rewriteOnly(step, '', 'a == (a == T)');
-     const schema2 = proved ? schema : rules.fact(schema);
+     const schema2 = rules.fact(schema);
      const instance = rules.instMultiVars(schema2, map, true);
      const replaced = rules.replace(instance, '/left', eqn);
      const result = rules.rewriteOnly(replaced, '', 'T => a == a');
