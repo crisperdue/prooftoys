@@ -535,6 +535,19 @@ declare(
    },
   },
 
+  {statement: 'u < v & x < y => u + x < v + y',
+   proof: function() {
+     const step1 = rules.fact('u < v => x + u < x + v');
+     const step2 = rules.detach(step1, 'x < y & y < z => x < z',
+                             'x < y');  // '/left/left/left/left/left');
+     const step3 = (rules.fact('x < y => v + x < v + y')
+                    .rewrite('v + x', 'x + y = y + x'));
+     const step4 = (rules.detach(step3, step2, 'x + v < z')
+                    .rewrite('x + u', 'x + y = y + x'));
+     return step4;
+   },
+  },
+
   {statement: '1 < y & 0 < z => z < y * z',
    proof: function() {
      return (rules.fact('x < y & 0 < z => x * z < y * z')

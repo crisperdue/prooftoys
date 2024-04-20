@@ -2768,7 +2768,7 @@ var hoverHandlers = {
       action(main.node, 'new');
     }
   },
-  cut: function(result, action) {
+  detach: function(result, action) {
     const [step, schema, path] = result.original.ruleArgs;
     const main = step.rendering.getRight();
     action(main.node, 'site');

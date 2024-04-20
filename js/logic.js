@@ -4928,7 +4928,7 @@ function chainDescription(step) {
 
 // Only generates menu items for a selected unconditional step
 // or a selected conclusion of a step.
-function cutMenuGen(ruleName, selStep, selTerm, editor) {
+function detachMenuGen(ruleName, selStep, selTerm, editor) {
   if (selTerm && (!selStep.implies() || selTerm !== selStep.getRight())) {
     return null;
   }
@@ -4942,7 +4942,7 @@ function cutMenuGen(ruleName, selStep, selTerm, editor) {
       if (map) {
         results.push({ruleName,
                       ruleArgs: [step, goal, rpath.reverse()],
-                      html: `cut ${asm.toHtml()} from ${goal.toHtml()}`,
+                      html: `detach ${asm.toHtml()} from ${goal.toHtml()}`,
                      });
       }
     };
@@ -4957,7 +4957,7 @@ function cutMenuGen(ruleName, selStep, selTerm, editor) {
       if (map) {
         results.push({ruleName,
                       ruleArgs: [step, step_arg.original, rpath.reverse()],
-                      html: `cut ${asm.toHtml()} from step ${index + 1}`,
+                      html: `detach ${asm.toHtml()} from step ${index + 1}`,
                      });
       }
     };
@@ -4969,15 +4969,15 @@ function cutMenuGen(ruleName, selStep, selTerm, editor) {
   return results;
 }
 
-function cutDescription(step) {
+function detachDescription(step) {
   const [inStep, schema, path] = step.ruleArgs;
   if (Toy.isProved(schema)) {
     const rendering = schema.rendering;
-    return `cut assumption ${schema.get(path).$$};; from step ${rendering.stepNumber}`;
+    return `detach assumption ${schema.get(path).$$};; from step ${rendering.stepNumber}`;
   } else {
     const expanded = Toy.factExpansion(schema);
     return (
-      `cut assumption ${expanded.get(path).$$};; from ${expanded.shortString()}`);
+      `detach assumption ${expanded.get(path).$$};; from ${expanded.shortString()}`);
   }
 }
 
@@ -5090,7 +5090,7 @@ declare(
   //
   // Note: See also forwardChain, which matches the entire step
   // with an entire schema antecedent.
-  {name: 'cut',
+  {name: 'detach',
    action2: function(step, schema_arg, path_arg) {
      const schema = (Toy.isProved(schema_arg)
                      ? schema_arg
@@ -5113,13 +5113,13 @@ declare(
          // return result;
        });
      }
-     return newError('In cut {1} does not match schema {2}',
+     return newError('In detach {1} does not match schema {2}',
                      step, schema.getLeft());
    },
    inputs: {step: 1, bool: 2},
    labels: 'basic',
-   description: cutDescription,
-   menuGen: cutMenuGen,
+   description: detachDescription,
+   menuGen: detachMenuGen,
   },
 
 );
