@@ -396,7 +396,7 @@ definition('recip x = 1 / x');
 
 
 declare(
-  {statement: 'x < y => R x & R y', axiom: true,
+  {statement: '@ x < y => R x & R y', axiom: true,
    description: 'domain of "<" is the real numbers'
   },
    {statement: 'not (x < x)', axiom: true,
