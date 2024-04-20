@@ -2369,11 +2369,11 @@ Expr.prototype.asmSet = function() {
  * immediately returns that value.  See also scanConj.
  */
 Expr.prototype.eachConjunct = function(action, rpath_arg) {
-  const rpath = rpath_arg || Path.empty;
+  const rpath = rpath_arg ? Toy.asPath(rpath_arg) : Path.empty;
   if (this.isCall2('&')) {
     return this.getLeft()
-      .eachConjunct(action, new Path('/left', rpath)) ||
-      action(this.getRight(), new Path('/right', rpath));
+      .eachConjunct(action, new Path('left', rpath)) ||
+      action(this.getRight(), new Path('right', rpath));
   } else {
     return action(this, rpath);
   }
