@@ -1963,7 +1963,7 @@ function formattedStepInfo(step) {
   }
   var d1 = description;
   var d2 = '';
-  var parts = d1.match(/(.*?);;(.*)$/);
+  var parts = d1.match(/(.*?);;(.*)$/s);
   if (parts) {
     d1 = parts[1];
     d2 = parts[2];
