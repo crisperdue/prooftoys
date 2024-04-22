@@ -2208,8 +2208,9 @@ RuleMenu.prototype._update = function() {
         }
       }
       // Prepare to avoid unnecessary identification of potentially
-      // distinct free variables.
-      const renamer = fact.distinctifier(sitePath, selStep, subst);
+      // distinct free variables.  Note that if the user enters a fact
+      // statement by hand, this is not done.
+      const renamer = fact.distinctifier(selStep.original, sitePath, subst);
       const statement = fact.rename(renamer).typedCopy();
       // CAUTION: eqn1 and eqn2 are not to be added to the
       // current theory, as they are only hypothetically true

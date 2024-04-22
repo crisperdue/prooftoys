@@ -152,15 +152,13 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
 };
 
 /**
- * Calculates the effect of rewriting step2 at the given path, using
- * the given substitution map with this as the fact, returning a
- * renaming that keeps free variables distinct as much as possible.
- * The renaming is an object/map from strings to Atoms that renames
- * free variables of this step as necessary to keep them distinct from
- * other variables in the result of the rewrite, thus preserving
- * opportunities for further substitution.
+ * Considering a potential rewriting of step2 at the given path, with
+ * the given substitution map, and with this as the fact, returns a
+ * renaming substitution into this that keeps free variables of this
+ * fact distinct from those of step2 as much as is consistent with the
+ * rewrite.
  *
- * The map must include no-op mappings, as produced for example by
+ * The map argument must include no-op mappings, as produced by
  * matchSchema, from a name to the same name.
  *
  * TODO: It appears desirable in some cases to rename free variables
@@ -168,14 +166,17 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
  *   Consider supporting that option in some way, not necessarily
  *   here.
  */
-Expr.prototype.distinctifier = function(path_arg, step2, map) {
+Expr.prototype.distinctifier = function(step2, path_arg, map) {
   const keys = new Set(Object.keys(map));
   // The substitution into this followed by replacement adds only
   // these retained variables as free in the result.  The substitution
   // itself only results in free variables that are already free in
   // step2, and eliminates ones only in the map keys.
   const retained = Toy.setDiff(this.freeVarSet(), keys);
-  // The replacement will add only the retained variables to step2.
+  if (retained.size === 0) {
+    // No renaming will be needed.
+    return {};
+  }
   const free2 = step2.freeVarSet();
   const boundNames =
         new Set(step2.pathBindings(step2.asPath(path_arg)
