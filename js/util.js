@@ -1136,14 +1136,14 @@ function invoker(n = 0) {
 }
 
 /**
- * Create and return a "strict" error using a template message and
- * arguments.  If a plain object is passed instead of a template
- * string, treat that as options preceding the other arguments.
+ * Same as "error", though you might choose to place a breakpoint
+ * here.
  *
- * TODO: Rename as "strictError".
+ * TODO: Consider merging the two.
  */
 function newError(...args) {
-  return strict(error(...args));
+  const e = error(...args);
+  return e;
 }
 
 //// VARIABLE BINDING
