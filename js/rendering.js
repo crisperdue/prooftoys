@@ -2093,6 +2093,8 @@ function expandMarkup(step, markup) {
   case 'shortFact':
     var place = info.inputs.bool[0] || info.inputs.bool;
     var bool = Toy.mathParse(step.ruleArgs[place - 1]);
+    const html = bool.shortForm().renderTerm().outerHTML;
+    return `<span class=term><b>${html}</b></span>`;
     return factDisplay(markupName === 'fact' ? bool : bool.shortForm());
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
@@ -2123,9 +2125,10 @@ function termDisplay(term) {
 function factDisplay(bool) {
   const asms = bool.getAsms();
   // Trim the main HTML if there are no asms.
-  const html = bool.getMain().toHtml(!asms);
+  const html0 = bool.getMain().renderTerm().outerHTML;
+  const html = asms ? `(${html0})` : html0;
   const leftHtml =
-    asms ? asms.toHtml() + ' ⇒ ' : '';
+    asms ? asms.renderTerm().outerHTML + ' ⇒ ' : '';
   return `<span class=term>${leftHtml}<b>${html}</b></span>`;
 }
 
