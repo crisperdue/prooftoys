@@ -1320,7 +1320,7 @@ function mathParse(arg) {
  * Adds "math var conditions" as the rightmost assumptions of this
  * wff.
  *
- * TODO: Try adding them on the left.
+ * TODO: It would be nice to be able to add them on the left.
  */
 Expr.prototype.andMathVarConditions = function() {
   var assume = this.mathVarConditions();

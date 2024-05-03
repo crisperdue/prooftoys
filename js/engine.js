@@ -199,7 +199,7 @@ Expr.prototype.distinctifier = function(step2, path_arg, map) {
 
 /**
  * Utility that takes arguments as for R2 and returns false
- * if any variable bound at the target is in both the
+ * if any variable bound at the target site is in both the
  * assumptions and RHS of the equation.
  */
 function boundVarsOK(target, path, equation) {
