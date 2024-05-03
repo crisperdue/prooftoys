@@ -2672,7 +2672,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
         abort('Unknown RPC action', action);
       }
       var fn = actions[action].bind(receiver);
-      var result = fn(message, wrapper);
+      var result = fn(message, wrapper);  // Potential breakpoint
       reply.data = {channelType: 'RPC', id: id, result: result,
                     isError: false};
       function replier() {
