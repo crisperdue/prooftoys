@@ -1549,16 +1549,16 @@ declare(
        const inGoal = gasms && gasms.scanConj(match);
        const html =
              (likeAsm
-              ? '\u27ad <b>T</b> assumption'
+              ? '  \u27ad <b>T</b> assumption'
               : inGoal
-              ? '\u27ad <b>T</b> (goal assumption)'
+              ? '  \u27ad <b>T</b> (goal assumption)'
               : '\u27ad <b>T</b> assuming &star;');
        return [{html, ruleName,
                 ruleArgs: [step.original, path]
                }];
      }
    },
-   description: 'assumed',
+   description: 'assumption',
   },
 
 /*
