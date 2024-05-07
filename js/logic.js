@@ -5984,7 +5984,7 @@ declare(
       var lhs = buildHypSchema(equation.getLeft(), termMap);
       var rhs = buildHypSchema(equation.getRight(), termMap);
       var taut = rules.tautology(Toy.infixCall(lhs, '=', rhs));
-      return rules.tautInst(taut, termMap.subst);
+      return rules.instMultiVars(taut, termMap.subst);
     },
     inputs: {equation: 1},
     form: 'Equation of conjunctions: <input name=equation>',
