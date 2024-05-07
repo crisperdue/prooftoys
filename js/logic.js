@@ -4928,58 +4928,108 @@ function chainDescription(step) {
   }
 }
 
-// Only generates menu items for a selected unconditional step
-// or a selected conclusion of a step.
+// Only generates menu items for a selected conclusion of a step.
 function detachMenuGen(ruleName, selStep, selTerm, editor) {
-  if (selTerm && (!selStep.implies() || selTerm !== selStep.getRight())) {
+  if (!selTerm || !selStep.implies() || selTerm !== selStep.getRight()) {
     return null;
   }
   const step = selStep.original;
   // This is the term to match against the LHS of the schema conditional.
   const target = step.getMain();
+
+  // This becomes a list of menu items to be included in the rule menu.
   const results = [];
   Toy.eachFact(info => {
+    const stmt = info.goal;
+    // If conditional, free vars in main.
+    const mainFrees = stmt.implies() && stmt.getMain().freeVarSet();
+
     const match = (asm, rpath) => {
+      if (asm instanceof Atom && !mainFrees.has(asm.name)) {
+        // Detaching such an atomic assumption in effect replaces it with T
+        // and possibly adds assumptions, so the result is an instance
+        // of a theorem, with some added assumptions, so it does not
+        // in fact depend on the target step.
+        //
+        // TODO: Consider removing this check just because it is so
+        // special-case.
+        return;
+      }
+      const path = rpath.reverse();
       const map = target.matchSchema(asm);
       if (map) {
-        results.push({ruleName,
-                      ruleArgs: [step, goal, rpath.reverse()],
-                      html: `detach ${asm.toHtml()} from ${goal.toHtml()}`,
-                     });
+        const dum1 = Toy.isProved(stmt) ? stmt : rules.assert(stmt);
+        const p = stmt.prettyPathTo(t => t.sameAs(asm));
+        const shortFact = stmt.shortForm().renderTerm().outerHTML;
+        const asmText = asm.renderTerm().outerHTML;
+        const data = {
+          ruleName,
+          ruleArgs: [step, stmt, p],
+          html: `remove <b>${asmText}</b> from <b>${shortFact}</b>`,
+        };
+        results.push(data);
       }
     };
-    const goal = info.goal;
-    if (goal.implies()) {
-      goal.getAsms().eachConjunct(match, '/left');
+
+    if (stmt.implies()) {
+      stmt.getAsms().eachConjunct(match, '/left');
     }
   });
-  editor.steps.forEach((step_arg, index) => {
+
+  // Only the last step with any matches is offered, just to make
+  // this less prolific.
+  for (let index=editor.steps.length - 1; index >= 0; --index) {
+    const proofStep = editor.steps[index];
+    const mainFrees = proofStep.implies() && proofStep.getMain().freeVarSet();
+    // This will be set to true if any steps with matches are found.
+    let found = false;
+
     const match = (asm, rpath) => {
+      if (asm instanceof Atom && !mainFrees.has(asm.name)) {
+        // See the corresponding comment above.
+        return;
+      }
       const map = target.matchSchema(asm);
       if (map) {
-        results.push({ruleName,
-                      ruleArgs: [step, step_arg.original, rpath.reverse()],
-                      html: `detach ${asm.toHtml()} from step ${index + 1}`,
-                     });
+        const asmText = asm.renderTerm().outerHTML;
+        const stepRef =
+              `<span class=stepReference>${index + 1}</span>`;
+        results.push({
+          ruleName,
+          ruleArgs: [step, proofStep.original, rpath.reverse()],
+          html:
+          `  remove <b>${asmText}</b> from step ${stepRef}
+           (<i>To work with an earlier step, apply edit/copy to it.</i>)`,
+        });
+        found = true;
       }
     };
-    const schema = step_arg.original.wff;
+
+    const schema = proofStep.original.wff;
     if (schema.implies()) {
       schema.getAsms().eachConjunct(match, '/left');
     }
-  });
+    if (found) {
+      // If found, do not look at any more steps.
+      break;
+    }
+  }
   return results;
 }
 
 function detachDescription(step) {
   const [inStep, schema, path] = step.ruleArgs;
-  if (Toy.isProved(schema)) {
-    const rendering = schema.rendering;
-    return `detach assumption ${schema.get(path).$$};; from step ${rendering.stepNumber}`;
+  const rendering = schema.rendering;
+  if (rendering) {
+    const asmText = schema.get(path).renderTerm().outerHTML;
+    return `remove ${asmText};;` +
+      ` from step <span class=stepReference>${rendering.stepNumber}</span>`;
   } else {
     const expanded = Toy.factExpansion(schema);
+    const shortText = expanded.shortForm().renderTerm().outerHTML;
+    const asmText = expanded.get(path).renderTerm().outerHTML;
     return (
-      `detach assumption ${expanded.get(path).$$};; from ${expanded.shortString()}`);
+      `remove ${asmText};; from ${shortText}`);
   }
 }
 
@@ -5106,19 +5156,17 @@ declare(
        return (() => {
          const eqn = rules.rewriteOnly(step, '', '(a => b) == (a => (b == T))');
          const schema2 = rules.fact(schema);
+         const p = schema2.prettyPathTo(t => t.sameAs(schema.get(path)));;
          const instance = rules.instMultiVars(schema2, map, true);
-         const replaced = rules.replace(instance, path, eqn);
+         const replaced = rules.replace(instance, p, eqn);
          const simp = rules.simplifyAsms(replaced);
          return simp;
-         // These lines are redundant:
-         // const result = rules.arrangeAsms(replaced);
-         // return result;
        });
      }
      return newError('In detach {1} does not match schema {2}',
                      step, schema.getLeft());
    },
-   inputs: {step: 1, bool: 2},
+   inputs: {step: 1, bool: 2, path: 3},
    labels: 'basic',
    description: detachDescription,
    menuGen: detachMenuGen,
