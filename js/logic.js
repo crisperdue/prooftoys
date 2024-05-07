@@ -2543,7 +2543,8 @@ declare(
            + '<input name=varName>'),
     menu: '[A] to [&forall; {v. A}]',
     tooltip: ('UGen for  a whole step'),
-    description: '[A] to [&forall; {v. A}];; {in step step}'
+    description: '[A] to [&forall; {v. A}];; {in step step}',
+    autoSimplify: noSimplify,
   },
 
   // 5220 variant, from [A => B] deduces [A => forall {v. B}].
@@ -3344,6 +3345,7 @@ declare(
     menu: '[p] and [q] to [p & q]',
     tooltip: ('Given [p] and [q], derive p & q'),
     description: 'p & q;; from steps {step1}, {step2}',
+    autoSimplify: noSimplify,
     labels: 'basic'
   },
 
