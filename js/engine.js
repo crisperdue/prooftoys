@@ -553,7 +553,8 @@ var rules = {};
 //   $node, which overrides the html for controlling the menu item
 //   display.  (In this case the html still controls sorting.)  The
 //   html property has the effect and format of the plain "menu"
-//   property described above.
+//   property described above.  A returned empty string ruleName
+//   indicates a rule menu comment, and never attempts to run a rule.
 //
 //   TODO: In the future there may be a sort "key" (Array).
 //

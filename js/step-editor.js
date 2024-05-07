@@ -2437,9 +2437,10 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
                   // substitution so they will stay distinct from all
                   // other free variables in the result.
                   Toy.parse(ruleName.slice(5))]);
-  } else {
+  } else if (ruleName !== '') {
     assert(false, format('No such rule: {1}', ruleName));
   }
+  // if ruleName is '' do nothing at all.  This is a ruleMenu comment.
 };
 
 /**
