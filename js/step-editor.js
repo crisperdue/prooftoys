@@ -2188,16 +2188,7 @@ RuleMenu.prototype._update = function() {
       // TODO: Factor out all of this checking and replacement term
       //   computation, then use it here and just above.
       const fact = info.goal;
-      const schema = fact.matchPart();
 
-      if (!checkSchema(schema)) {
-        return;
-      }
-      const subst = selection.matchSchema(schema);
-      if (!subst) {
-        return;
-      }
-      
       // This is special case code for rewriting of predicates to set
       // membership.
       if (selection.isInfixCall()) {
@@ -2207,10 +2198,23 @@ RuleMenu.prototype._update = function() {
           return;
         }
       }
-      // Prepare to avoid unnecessary identification of potentially
-      // distinct free variables.  Note that if the user enters a fact
-      // statement by hand, this is not done.
-      const renamer = fact.distinctifier(selStep.original, sitePath, subst);
+
+      // Facts and steps are treated similarly, but facts are
+      // automatically renamed here to avoid unneeded identification
+      // of variables.
+
+      const schema = fact.matchPart();
+      if (!checkSchema(schema)) {
+        return;
+      }
+      const subst = selection.matchSchema(schema);
+      if (!subst) {
+        return;
+      }
+      // Prepare to avoid unnecessary identification of free variables
+      // that could be kept distinct.  Note that if the user enters a
+      // fact statement by hand, this is not done.
+      const renamer = fact.distinctifier(thisStep, sitePath, subst);
       const statement = fact.rename(renamer).typedCopy();
       // CAUTION: eqn1 and eqn2 are not to be added to the
       // current theory, as they are only hypothetically true
@@ -2225,10 +2229,11 @@ RuleMenu.prototype._update = function() {
       // Try to do the substitution, which can fail.
       const eqn2 = Toy.catching(
         () => eqn1.andThen('instMultiVars', subst, true));
-      if (eqn2 instanceof Error || !Toy.boundVarsOK(selStep, sitePath, eqn2)) {
+      if (eqn2 instanceof Error || !Toy.boundVarsOK(thisStep, sitePath, eqn2)) {
         return;
       }
       const resultTerm = eqn2.replacementTerm();
+
       // The special character is a form of white right arrow.
       let html =
           ' \u27ad <b class=resultTerm></b><input class=subgoals>';
@@ -2256,7 +2261,7 @@ RuleMenu.prototype._update = function() {
         html = ' ' + html;
       }
       var info = {ruleName: 'rewrite',
-                  ruleArgs: [selStep.original, sitePath, statement],
+                  ruleArgs: [thisStep, sitePath, statement],
                   html: html,
                   $node: $node};
       itemInfos.push(info);
