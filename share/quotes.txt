@@ -168,3 +168,6 @@ Notebook"
 
 I only made this [letter] longer because I did not have time to
 make it shorter.  -- Blaise Pascal, "Lettres Provinciales"
+
+from math import pi; abs(355/113 - pi) < 1 / 1_000_000 # is True
+-- Python
