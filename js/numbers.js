@@ -4221,10 +4221,43 @@ declare(
   },
 );
 
-//// Integers and floor, ceil, sgn, abs
+
+//// Absolute value (abs)
+
+definition('abs x = ifReal x (if (x < 0) (neg x) x)');
+
+declare(
+  {statement: 'abs x >= 0'},  // Asserted
+);
+
+
+//// Square roots (sqrt)
+
+// This defines the concept of being "a" square root of x.
+definition('sqrts x = {y. 0 <= y & y * y = x}');  
+
+declare(
+  // sqrt exists, uniquely.
+  {statement: '@0 <= x == exists1 (sqrts x)'},  // Asserted
+);
+
+// By this definition sqrt is "none" except for real numbers.
+definition('sqrt x = the (sqrts x)');
+
+declare(
+  {statement: 'sqrt (x ** 2) = abs x'},  // Asserted
+  // Proofs at:
+  // https://mathleaks.com/study/kb/reference/properties_of_square_roots
+  {statement: 'a >= 0 & b >= 0 => sqrt (a * b) = sqrt a * sqrt b'},  // Asserted
+  {statement: 'a >= 0 & b > 0 => sqrt (a / b) = sqrt a / sqrt b'},  // Asserted
+);
+
+
+//// Floor, ceil, sgn
 
 declare(
   // Axiom / definition of floor, and facts about it.
+  // TODO: Redefine in terms of "greatest integer".
   {statement: `floor x = ifReal x
                              (if (x < 0)
                                  ((floor (x + 1)) - 1)
@@ -4233,18 +4266,7 @@ declare(
                                      (floor (x - 1)) + 1))`,
    axiom: true,
    description: 'recursive definition of floor'},
-/*
-   {statement: '',
-    description: ''},
-   {statement: '',
-    description: ''},
-   {statement: '',
-    description: ''},
-   {statement: '',
-    description: ''},
-*/
 );
-
 
 
 // Note: Need "arithmetic" calculations for floor.
@@ -4265,16 +4287,16 @@ definition('ceil x = neg (floor (neg x))');
 
 definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 1))');
 
-definition('abs x = ifReal x (if (x < 0) (neg x) x)');
+
+// NN and ZZ
 
 definition('ZZ x == x = floor x');
 
 /*
-definition('NN x == ZZ x & x >= 0');
-
 // This is natural number division, defined only for naturals.
-// It is defined as the integer q whose product with the
-// divisor is not more than x, and greater than x - d.
+// It is defined as the natural number q whose product with the
+// divisor is greater than x - d, but not more than x;
+// in other words the greatest q in NN such q * d <= x.
 definition(`natdiv x d = if (NN x & NN d)
                             (the {q. NN q &
                                      x - d < q * d &
@@ -4290,29 +4312,8 @@ declare
 definition('absdiv x d = natdiv (abs x) (abs d)');
 */
 
-//// Square roots
 
-// This defines the concept of being "a" square root of x.
-definition('sqrts x = {y. 0 <= y & y * y = x}');  
-
-declare(
-  // sqrt exists, uniquely.
-  {statement: '@0 <= x == exists1 (sqrts x)'},  // Asserted
-);
-
-// By this definition sqrt is "none" except for real numbers.
-definition('sqrt x = the (sqrts x)');
-
-declare(
-  {statement: 'abs x >= 0'},  // Asserted
-  {statement: 'sqrt (x ** 2) = abs x'},  // Asserted
-  // Proofs at:
-  // https://mathleaks.com/study/kb/reference/properties_of_square_roots
-  {statement: 'a >= 0 & b >= 0 => sqrt (a * b) = sqrt a * sqrt b'},  // Asserted
-  {statement: 'a >= 0 & b > 0 => sqrt (a / b) = sqrt a / sqrt b'},  // Asserted
-);
-
-//// Properties of integers
+//// ZZ predicates and relations
 
 // definition('quo x d = sgn (the {r. idiv x d + r = d})');
 
