@@ -1708,7 +1708,7 @@ var testCase = {
       const step = termify(step_arg);
       const path = step.asPath(path_arg);
       const eqn = termify(eqn_arg);
-      const v = stringVals(d$(eqn)(path, step, map));
+      const v = stringVals(d$(eqn)(step, path, map));
       propEqual(v, desired);
     };
     const eq = termify('R x & R y & R c => (x = y == x + c = y + c)');
