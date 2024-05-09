@@ -4290,7 +4290,46 @@ definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 1))');
 
 // NN and ZZ
 
-definition('ZZ x == x = floor x');
+declare(
+
+  // The definitions here related to NN follow
+  // Murray H. Protter, "Basic Elements of Real Analysis", 1998.
+
+  {definition: 'succ n = n + 1'},
+
+
+  // Defining NN:
+
+  {definition: 'nn1 N == forall {x. N x => N (succ x)}'},
+  {definition: 'nn2 N == forall {P. nn1 P & nn2 P => subset N P}'},
+  {definition: 'isRealNN N == N 0 & nn1 N & nn2 N'},
+  {definition: 'NN = the1 {N. isRealNN N}'},
+
+  {statement: 'exists1 {N. isRealNN N}'},  // Asserted
+
+  // True via "equalThe".
+  {statement: 'isRealNN S == S = NN'},  // Asserted
+  // True via zz and nn2 properties of NN, then expanding definitions.
+  {statement:
+   'P 0 & forall {x. P x => P (x + 1)} => subset NN P'},  // Asserted
+
+
+  // Defining ZZ:
+
+  {definition: 'zz1 Z == forall {x. Z x == Z (succ x)}'},
+  {definition: 'zz2 Z == forall {P. zz1 P & zz2 P => subset Z P}'},
+  {definition: 'isRealZZ Z == Z 0 & zz1 Z & zz2 Z'},
+  {definition: 'ZZ = the1 {Z. isRealZZ Z}'},
+
+  {statement: 'exists1 {Z. isRealZZ Z}'},  // Asserted
+
+  // True via "equalThe".
+  {statement: 'isRealZZ S == S = ZZ'},  // Asserted
+  // True via zz and zz2 properties of ZZ, then expanding definitions.
+  {statement:
+   'P 0 & forall {x. P x == P (x + 1)} => subset ZZ P'},  // Asserted
+
+);
 
 /*
 // This is natural number division, defined only for naturals.
