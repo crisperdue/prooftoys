@@ -3978,7 +3978,7 @@ window.Numtest = function(x) {
  * This does not do range checks on the values of numeric inputs.  On
  * the other hand it is faster and does not use exceptions.
  */
-  function isArithmetic(term, okNone=false) {
+function isArithmetic(term, okNone=false) {
   if (term.isInfixCall()) {
     var left = term.getLeft();
     var right = term.getRight();
@@ -3998,6 +3998,8 @@ window.Numtest = function(x) {
     case '>=':
     case '<':
     case '<=':
+    case 'mod':
+    case 'div':
       return true;
     case '/':
       if (right === 0) {
@@ -4013,9 +4015,13 @@ window.Numtest = function(x) {
       return false;
     }
   } else if (term instanceof Toy.Call) {
-    return (term.fn.isConst() && term.arg.isNumeral() &&
-            (term.fn.name == 'neg' || term.fn.name == 'R'));
+    if (term.fn.isConst()) {
+      const nm = term.fn.name;
+      return (term.arg.isNumeral() &&
+              (nm == 'neg' || nm == 'R' || nm == 'ZZ' || nm == 'NN'));
+    }
   }
+  return null;
 }
 
 /**
