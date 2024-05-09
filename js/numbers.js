@@ -1001,12 +1001,12 @@ declare(
   // End of interim axioms.
 
   // Core for evaluating arithmetic expressions with operators: +, -,
-  // *, /, div, mod, neg, =, !=, >, >=, <, <=, and the type operator
-  // "R".  Given an arithmetic term with numerals as operands,
-  // produces an equation whose right side is the exact result of the
-  // operation.  Checks that inputs are all numeric (exact integers by
-  // construction) and that the result can be guaranteed to be a
-  // boolean or an exact integer.
+  // *, /, div, mod, neg, =, !=, >, >=, <, <=, and the type operators
+  // "R", NN, and ZZ.  Given an arithmetic term with numerals as
+  // operands, produces an equation whose right side is the exact
+  // result of the operation.  Checks that inputs are all numeric
+  // (exact integers by construction) and that the result can be
+  // guaranteed to be a boolean or an exact integer.
   //
   // Prefer rules.arithmetic or rules.arithSimpler to this in client
   // code.
@@ -1071,10 +1071,12 @@ declare(
         var op = term.fn;
         assert(op.isConst(), 'Unsupported operator: {1}', op);
         var arg = term.arg.getNumValue();
-        if (op.name == 'neg') {
+        const nm = op.name;
+        if (nm == 'neg') {
           value = -arg;
           var rhs = Toy.numify(value);
-        } else if (op.name == 'R') {
+        } else if (nm == 'R' || nm == 'ZZ' ||
+                   (nm == 'NN' && arg >= 0)) {
           var rhs = T;
         } else {
         // A programming error has occurred.
