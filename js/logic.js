@@ -1345,15 +1345,15 @@ declare(
         return null;
       }
       const f = term.funPart();
-      if (f.isConst()) {
-        return format('apply definition of {1}', f);
+      if (f.isConst() && Toy.isFunDef(f.name)) {
+        return format('  apply function {1}', f);
       } else if (f instanceof Lambda) {
-        return format('apply function of {1}', term.fn.bound);
+        return format('  apply function of {1}', term.fn.bound);
       } else {
         return null;
       }
     },
-    labels: 'primitive',
+    labels: 'basic',
     tooltip: ('Applies a function, named or not, to one or two arguments'),
     description: '=apply'
   },
