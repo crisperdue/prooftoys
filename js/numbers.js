@@ -4360,15 +4360,44 @@ definition('absdiv x d = natdiv (abs x) (abs d)');
 */
 
 
+//// Div and mod
+
+// See "The Euclidean Definition of the Functions div and mod",
+// Raymond Boute, ACM TOPLAS, 1992.
+// It recommends two options, best first:  
+
+// Euclidean division:
+
+// Satisfying conditions:
+// D div d = q
+// D mod d = r
+
+// where:
+// ZZ q
+// D = d * q + r
+// 0 <= r < abs d
+// D mod d is always non-negative.
+
+// Floor:
+
+// D div d = floor (D / d)
+// D mod d = D - d * (D div d)
+
+// D mod d is either 0 or has same sign as d.
+
+declare(
+  {definition: 'x div y = floor (x / y)'},
+  {definition: 'x mod y = if (y > 0) (x - y * (x div y)) none'},
+);
+
+
 //// ZZ predicates and relations
 
-// definition('quo x d = sgn (the {r. idiv x d + r = d})');
+definition('divides d x == ZZ d & ZZ x & x mod d = 0');
 
-// definition('divides d x == ZZ d & ZZ x & rem x d = 0');
+definition('even x == divides 2 x');
 
-// definition('even x == divides 2 x');
-
-// definition('odd x == ZZ x & not (even x)');
+definition('odd x == ZZ x & not (even x)');
 
 // Some properties of the integers, without proof.
 declare
