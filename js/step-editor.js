@@ -2268,17 +2268,24 @@ RuleMenu.prototype._update = function() {
     });
   }
 
+  // Ensure that each info has a priority.
+  itemInfos.forEach(info => {
+    if (info.priority == undefined) {
+      info.priority = info.html.search(/[^ ]/);
+      // Remove any leading blanks.
+      info.html = info.html.slice(info.priority);
+    }
+  });
+
   // Sort the itemInfos.
   itemInfos.sort(function(a, b) {
     // We use leading spaces to influence sorting: items with
     // more leading spaces come before ones with fewer.
     //
-    // TODO: Provide less ad hoc means for ordering, such as
-    //   additional properties of the info objects, e.g. "priority".
-    // TODO: Support a separate "key" property for sorting.
-    // TODO: Consider deprioritizing rewrites and such that introduce
-    //   new free variables.
-    return a.html.localeCompare(b.html);
+    // Higher priority comes first.
+    const diff = b.priority - a.priority;
+    // If same priority, compare the HTML alphabetically.
+    return diff !== 0 ? diff : a.html.localeCompare(b.html);
   });
 
   // Generate menu items from itemInfos.

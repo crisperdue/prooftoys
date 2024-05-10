@@ -549,7 +549,8 @@ var rules = {};
 //   which it is generating the menu.  A falsy value indicates no menu
 //   entries; a non-empty string is for one entry.  An array of one or
 //   more plain objects give full menu information, with properties
-//   ruleName (string), ruleArgs (Array), html (string), and optional
+//   ruleName (string), ruleArgs (Array), optional priority (number
+//   where highest will display first), html (string), and optional
 //   $node, which overrides the html for controlling the menu item
 //   display.  (In this case the html still controls sorting.)  The
 //   html property has the effect and format of the plain "menu"
