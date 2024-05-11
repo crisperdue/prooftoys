@@ -4309,7 +4309,7 @@ declare(
   // Defining NN:
 
   {definition: 'nn1 N == forall {x. N x => N (succ x)}'},
-  {definition: 'nn2 N == forall {P. nn1 P & nn2 P => subset N P}'},
+  {definition: 'nn2 N == forall {P. nn1 P => subset N P}'},
   {definition: 'isRealNN N == N 0 & nn1 N & nn2 N'},
   {definition: 'NN = the1 {N. isRealNN N}'},
 
@@ -4324,8 +4324,9 @@ declare(
 
   // Defining ZZ:
 
+  // This is like nn1, but with a biconditional.
   {definition: 'zz1 Z == forall {x. Z x == Z (succ x)}'},
-  {definition: 'zz2 Z == forall {P. zz1 P & zz2 P => subset Z P}'},
+  {definition: 'zz2 Z == forall {P. zz1 P => subset Z P}'},
   {definition: 'isRealZZ Z == Z 0 & zz1 Z & zz2 Z'},
   {definition: 'ZZ = the1 {Z. isRealZZ Z}'},
 
