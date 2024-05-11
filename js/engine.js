@@ -1039,13 +1039,20 @@ function definition(defn_arg) {
   assert(newList.length === 1,
          'Definition {1} has multiple new constants {2}',
          defn_arg, newList.join(', '));
+  const name = newList[0];
+  if (candidate.isCall2('=')) {
+    // The name must not appear in the RHS.
+    const rhsNames = candidate.getRight().newConstants();
+    assert(!rhsNames.has(name),
+           'Definition of {1} refers to {1}', name);
+  }
+  
   // Register the single new name as a constant.
   Toy.addConstants(newList);
   // Register the type of the new constant.
   candidate.registerConstants();
   // Notice that all of this constant registration is done before the
   // definition is potentially asserted as true in normalizeDefn.
-  const name = newList[0];
 
   // Normalizing does some deduction, so defer it until logic
   // is loaded.
