@@ -3927,7 +3927,7 @@ declare(
   {name: 'removeTypeAsm',
     precheck: function(step, path_arg) {
       var path = Toy.asPath(path_arg);
-      if (!(step.isCall2('=>') && path.isLeft())) {
+      if (!(step.isAsmPath(path))) {
         return false;
       }
       var term = step.get(path);
