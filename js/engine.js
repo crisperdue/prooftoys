@@ -817,8 +817,8 @@ function addRule(info) {
 
     } else if (info.precheck) {
       // There is a precheck.
-      var checker = function(_args) {
-        return Toy._actionInfo = info.precheck.apply(main, arguments);
+      var checker = function(... args) {
+        return Toy._actionInfo = info.precheck.apply(main, args);
       }
       // TODO: Consider communicating through the "this" argument
       //   to the main rule instead of the global variable, e.g.
