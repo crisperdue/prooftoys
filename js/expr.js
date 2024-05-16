@@ -1165,11 +1165,32 @@ Expr.prototype.pathToFocalPart = function() {
 
 
 /**
- * Returns truthy iff this is a conditional and the path is on its
- * assumptions side.  Usually "this" is a whole step.
+ * Returns truthy iff this is a conditional and the path refers to an
+ * assumption in its assumptions chain.  Usually "this" is a whole
+ * step.
  */
-Expr.prototype.isAsmPath = function(path) {
-  return this.implies() && path.isLeft();
+Expr.prototype.isAsmPath = function(path_arg) {
+  const path = this.asPath(path_arg);
+  if (!this.implies() && path.isLeft()) {
+    return false;
+  }
+  const pp = this.prettifyPath(path);
+  const isChainEnd = (term, p) => {
+    const isAnd = term.isCall2('&');
+    if (p.isEnd()) {
+      return !isAnd;
+    } else if (isAnd) {
+      const seg = p.segment;
+      return (seg === 'left'
+              ? isChainEnd(term.getLeft(), p.rest)
+              : seg === 'right'
+              ? isChainEnd(term.getRight(), p.rest)
+              : false);
+    } else {
+      return false;
+    }
+  };
+  return isChainEnd(this.getLeft(), pp.rest);
 };
 
 var _assertionCounter = 1;
