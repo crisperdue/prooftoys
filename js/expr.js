@@ -2799,8 +2799,11 @@ var unicodeNames = {
   empty: '\u2205',    // Null set
   iota: '\u2129',     // Inverted iota
   none: '\u22a5',     // Bottom / "up tack"
+  CC: '\u2102',       // Complex numbers
   R: '\u211d',        // Real numbers
   NN: '\u2115',       // Natural numbers
+  QQ: '\u211a',       // Rational numbers
+  ZZ: '\u2124',       // Integers
   forall: '\u2200',
   exists: '\u2203',
   exists1: '\u2203!'
