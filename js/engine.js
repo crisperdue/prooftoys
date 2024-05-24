@@ -1723,13 +1723,14 @@ Expr.prototype.withoutEqT = function() {
  *
  * A plain object with properties as follows:
  *
- * stmt: value acceptable to resolveToFact.  Unless "match" is also
- *   given this will need to be an equation.
+ * stmt: value acceptable to resolveFactRef, or a statement
+ *   of a tautology.
  * where: optional string to evaluate, with "subst" 
  *   argument to findMatchingFact available as "$" and cxt and term
  *   available as free variables for use in the string.
  *   OR if it is a function, call it with the substition, cxt, and
- *   term as arguments.
+ *   term as arguments.  The statement will only be considered
+ *   to match if the result is truthy.
  *
  * For fact statements passed as list elements or the "stmt" property
  * of a list element, if proof of the fact is in progress at the time,
@@ -1761,8 +1762,9 @@ Expr.prototype.withoutEqT = function() {
  * The value returned is falsy if no match is found, else a plain
  * object with properties:
  * 
- * stmt: Statement of the found fact, proved or not, or the equation
- *   returned by an "apply" pattern.
+ * stmt: Statement of the found fact, tautology, arithmetic fact, or
+ *   the equation returned by an "apply" pattern, always coerced to a
+ *   wff with asWff.
  * term: the term argument to findMatchingFact.
  * subst: substitution that makes the given term match the fact (empty for
  *   "apply" patterns).
@@ -1821,7 +1823,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
           // TODO: Consider how to handle its potential failure.
           var subst = term.matchSchema(schema);
           if (subst) {
-            var result = {stmt: fullFact,
+            var result = {stmt: fullFact.asWff(),
                           term: term,
                           path: Toy.asPath(''),
                           subst: subst};
@@ -1833,13 +1835,13 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
       // "apply"
       var eqn = Toy.normalReturn(factMatcher.apply, term);
       if (eqn && !(pureOnly && eqn.isCall2('=>'))) {
-        var result = {
-          stmt: eqn,
+        const value = {
+          stmt: eqn.asWff(),
           term: term,
           path: Toy.asPath(''),
           subst: {}
         };
-        return result;
+        return value;
       }
     } else if (factMatcher.descend) {
       // "descend"
@@ -1885,7 +1887,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
       const subst = term.matchSchema(schema);
       const where = factMatcher.where;
       if (subst && (!where || apply$(where, subst))) {
-        var result = {stmt: goal,
+        var result = {stmt: goal.asWff(),
                       term: term,
                       path: Toy.asPath(''),
                       subst: subst};
