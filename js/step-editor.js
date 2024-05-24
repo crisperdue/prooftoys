@@ -1709,7 +1709,7 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
  *
  * Otherwise if the step's rule has a "site" argument and global
  * variable Toy.autoSimplifyWholeStep is false, this simplifies the
- * site, otherwise it simplifies the whole step.
+ * site; otherwise it simplifies the "focal part".
  */
 function autoSimplify(step) {
   if (step.ruleArgs.length === 0) {
@@ -2271,6 +2271,7 @@ RuleMenu.prototype._update = function() {
   // Ensure that each info has a priority.
   itemInfos.forEach(info => {
     if (info.priority == undefined) {
+      // This sets the priority to the number of leading blanks.
       info.priority = info.html.search(/[^ ]/);
       // Remove any leading blanks.
       info.html = info.html.slice(info.priority);
