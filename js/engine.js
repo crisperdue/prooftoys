@@ -1620,9 +1620,8 @@ function getResInfo(stmt) {
  *   first fact that seems to match, and continuing the search if
  *   application fails.
  */
-function searchForMatchingFact(term, info) {
+function searchForMatchingFact(term, info, cxt={}) {
   var allFacts, searchMethod;
-  var cxt = {};
   if (info.constructor === Object) {
     allFacts = info.facts;
     info.context && Object.assign(cxt, info.context);
