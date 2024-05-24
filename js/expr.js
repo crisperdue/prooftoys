@@ -1802,14 +1802,18 @@ function isProved(x) {
 /**
  * Coerces this Expr to one that is the same, but not proved by making
  * a very shallow copy.  Carries over any type information.
+ * Also sets the "fromStep" property to this Step, providing easy
+ * access to the step for generated facts, e.g. from arithFact.
  */
 Expr.prototype.asWff = function() {
   if (this.isProved()) {
-    return (this instanceof Call
-            ? new Call(this.fn, this.arg)._typeFrom(this)
-            : this instanceof Atom
-            ? new Atom(this.name)._typeFrom(this)
-            : abort());
+    const wff = (this instanceof Call
+                 ? new Call(this.fn, this.arg)._typeFrom(this)
+                 : this instanceof Atom
+                 ? new Atom(this.name)._typeFrom(this)
+                 : abort());
+    wff.fromStep = this;
+    return wff;
   } else {
     return this;
   }

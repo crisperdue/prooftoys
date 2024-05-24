@@ -6110,9 +6110,10 @@ declare(
 
   // If the given statement is a proved step, returns the input.
   // Otherwise if the statement is a wff or a string that parses into
-  // one, attempts to resolve it to a fact using resolveFactRef.
-  // If necessary, adjusts free variable names of the fact to those
-  // mentioned in the synopsis and returns the result of that.
+  // one, attempts to resolve it to a fact, trying first the wff's
+  // fromStep property, then using resolveFactRef.  If necessary,
+  // adjusts free variable names of the fact to those mentioned in the
+  // synopsis and returns the result of that.
   //
   // If the above conditions do not apply, attempts to prove the wff
   // as a tautology or simple arithmetic fact.  Removes any " = T"
@@ -6146,10 +6147,14 @@ declare(
           return proved.justify('fact', arguments);
         }
       }
+      // From here, synopsis should be a WFF. 
       if (Toy.isProved(synopsis)) {
         // Argument is an already proved statement.
         // Behavior of "fact" is inline.
         return synopsis;
+      }
+      if (synopsis.fromStep) {
+        return synopsis.fromStep;
       }
       const term = x => termify(typeof x === 'string' && x[0] === '@'
                                 ? x.slice(1) : x);
