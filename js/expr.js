@@ -494,6 +494,8 @@ Expr.prototype._locateFree = function(name, path, paths) {
  * that the types are equivalent.  If the further optional argument
  * is truthy, the types must be identical, as when the compared terms
  * are parts of the same top-level wff.
+ *
+ * TODO: Allow names of bound variables to differ.
  */
 Expr.prototype.sameAs = function(other, andTypes=false, exact=false) {
   // Based on the assumption that typed inputs are properly typed,
@@ -2383,11 +2385,11 @@ Expr.prototype.asmSet = function() {
 };
 
 /**
- * Applies the given action to each conjunct in a chain of conjuncts,
- * from left to right, and an optional reverse path to the conjunct,
- * defaulting to an empty path.  Recursive calls extend the path to
- * refer to the subexpression.  If any action returns a truthy value,
- * immediately returns that value.  See also scanConj.
+ * Applies the given action to each conjunct in the given chain of
+ * conjuncts, from left to right, with an optional reverse path to the
+ * chain, defaulting to an empty path.  Recursive calls extend the
+ * path to refer to the subexpression.  If any action returns a truthy
+ * value, immediately returns that value.  See also scanConj.
  */
 Expr.prototype.eachConjunct = function(action, rpath_arg) {
   const rpath = rpath_arg ? Toy.asPath(rpath_arg) : Path.empty;

@@ -1496,11 +1496,8 @@ declare(
   },
 
   /**
-   * An occurrence of an assumption of the step can be taken to be
-   * true without adding a new assumption if all of its locally free
-   * variables are free in the context, and similarly for goal
-   * assumptions. This removes the resulting T if it is in a
-   * conjunction.
+   * This assumes the selected boolean term, and removes the resulting
+   * T if it is in a conjunction.
    */
   {name: 'assumed',
    // This and "assumedEq" are very similar.
@@ -1511,10 +1508,6 @@ declare(
      return (step.get(path).isBoolean() &&
              step.wff.freeBound(path).size === 0);
    },
-   // The action simply assumes the target term and rewrites the
-   // occurrence to be T, removing the T if in a conjunction.
-   // It is not strictly necessary for it to be the same as
-   // an assumption.
    action: function(step, path_arg) {
      const path = step.asPath(path_arg);
      const target = step.get(path);
@@ -1558,7 +1551,8 @@ declare(
                }];
      }
    },
-   description: 'assumption',
+   // TODO: Make the description more precise.
+   description: 'assuming &star;',
   },
 
 /*
@@ -7094,7 +7088,9 @@ Toy.enableDefnFacts();
 
 const tautologyCounts = Toy.tautologyCounts = new Map();
 
+// numbers.js adds many more to this list.
 Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
+
 Toy.simplifyStep = simplifyStep;
 Toy._factMap = _factMap;
 Toy.moverFacts = moverFacts;
