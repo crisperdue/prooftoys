@@ -611,9 +611,9 @@ var rules = {};
 // that have a swapped version).  For more information see addFact.
 
 /**
- * Process the given info into form for inclusion into Toy.rules and
- * add the resulting rule or rules.  This does not do inference, so it
- * can be called before any theorems are proved.
+ * Process the given plain object into form for inclusion into
+ * Toy.rules and add the resulting rule or rules.  This does not do
+ * inference, so it can be called before any theorems are proved.
  */
 function addRule(info) {
   const fmt = Toy.format;
@@ -913,10 +913,20 @@ function addRule(info) {
  *
  * Prefer this over addRule, addRules, or addFact for adding new
  * facts, rules, and definitions.
+ *
+ * Extends addRule by allowing "fact:" in place of "statement:"
+ * and ignoring arguments that are not plain objects.  Evaluation
+ * of any such arguments occurs before calling "declare".
  */
 function declare(...declarations) {
   for (const decl of declarations) {
-    addRule(decl);
+    if (decl && decl.constructor === Object) {
+      if (decl.fact && !decl.statement && !decl.goal) {
+        decl.statement = decl.fact;
+        delete decl.fact;
+      }
+      addRule(decl);
+    }
   }
 }
 
