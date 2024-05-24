@@ -531,8 +531,6 @@ span.ruleStats {
 /* Fact or term within a step description */
 .proofStep .term {
     font-family: StixGeneral, times;
-    /* Temporary until these terms have internal styling. */
-    font-style: italic;
 }
 
 .proofStep .stepNumber {
