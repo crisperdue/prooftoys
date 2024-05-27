@@ -4877,11 +4877,10 @@ declare(
         return simp(step);
       } else {
         if (Toy.isDistribFact && Toy.isDistribFact(stmt) &&
-            !step.isAsmPath(path)) {
+            path.isMainSide()) {
           return rules.simplifyProducts(step, path);
-        } else if (!step.isAsmPath(path)) {
-          // The left part may already be transformed,
-          // and the target may not even exist.
+        } else {
+          // Otherwise simplify as usual except for desimplifiers.
           const info = resolveFactRef(stmt);
           return (info && info.desimplifier
                   ? step
