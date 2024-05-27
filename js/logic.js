@@ -2140,15 +2140,13 @@ declare(
     labels: 'other'
   },
 
-  // TODO: Create a "rules.simplifier" that takes a term argument
-  //   and proves it equal to some (hopefully) simpler term.
-
   // Inline version of simplifySite.  Uses full rewriting and replace,
-  // so resulting assumptions are simplified.  If the simplification
-  // has no effect, return the input step.  This also enables "justify"
-  // to pretend this (or its caller!) was never invoked.
+  // so resulting assumptions are simplified with simplifyAsms.  If
+  // the simplification has no effect, return the input step.  This
+  // also enables "justify" to pretend this (or its caller!) was never
+  // invoked.
   {name: '_simplifySite',
-    action: function(step, path, opt_facts) {
+   action: function(step, path, opt_facts, asms=true) {
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.repeatedly(eqn, function(eqn) {
           // This usage of /main is kind of cool in that it automatically
@@ -2158,8 +2156,8 @@ declare(
       if (eqn.sameAs(simpler)) {
         return step;
       } else {
-        return (rules.replace(step, path, simpler)
-                .andThen('simplifyAsms'));
+        const replaced = rules.replace(step, path, simpler);
+        return asms ? rules.simplifyAsms(replaced) : replaced;
       }
     }
   },
