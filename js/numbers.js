@@ -953,7 +953,7 @@ declare(
   },
 
    {name: 'realDivNonzero',
-    statement: '@R x & x !=0 => x / y != 0',
+    statement: '@R x & x != 0 => x / y != 0',
     // TODO: Prove this.
    },
 
@@ -981,6 +981,16 @@ declare(
      const step2 = rules.rewrite(step1, '/main/right', 'a * b = b * a');
      return step2;
    }
+  },
+
+  {statement: 'x != 0 => 0 / x = 0',
+   proof: function() {
+     return (rules.fact('x / y = x * recip y')
+             .andThen('instVar', '0', 'x')
+             .rewrite('0 * recip y', '0 * x = 0')
+             .andThen('simplifySite', '/main'));
+   },
+   simplifier: true,
   },
 
   {name: 'divByZero',
@@ -1474,6 +1484,7 @@ Toy.asmSimplifiers.push
    'R (x ** 3)',
    'R (x ** 4)',
    'R (x ** 5)',
+   'R x & R m => R (x mod m)',
    'x != 0 => R (recip x)',
    'x != 0 => recip x != 0',
    'x * y != 0 == x != 0 & y != 0',
@@ -4267,13 +4278,17 @@ declare(
   // Axiom / definition of floor, and facts about it.
   // TODO: Redefine in terms of "greatest integer".
   {statement: `floor x = ifReal x
-                             (if (x < 0)
-                                 ((floor (x + 1)) - 1)
-                                 (if (x < 1)
-                                     0
-                                     (floor (x - 1)) + 1))`,
+                             (if (0 <= x & x < 1)
+                                 0
+                                 (floor (x - 1) + 1))`,
    axiom: true,
-   description: 'recursive definition of floor'},
+   description: 'definition of floor'},
+
+  {statement: 'R x => R (floor x)', simplifier: true},  // Asserted
+  {statement: 'R x => floor x = floor (x - 1) + 1'},  // Asserted
+  {statement: 'R x => floor x <= x'},                 // Asserted
+  {statement: 'R x => x < floor x + 1'},              // Asserted
+  
 );
 
 
@@ -4307,10 +4322,11 @@ declare(
 
 
   // Defining NN:
+  // Starting at 1, unlike the tutorial, which starts at 0
 
   {definition: 'nn1 N == forall {x. N x => N (succ x)}'},
   {definition: 'nn2 N == forall {P. nn1 P => subset N P}'},
-  {definition: 'isRealNN N == N 0 & nn1 N & nn2 N'},
+  {definition: 'isRealNN N == N 1 & nn1 N & nn2 N'},
   {definition: 'NN = the1 {N. isRealNN N}'},
 
   {statement: 'exists1 {N. isRealNN N}'},  // Asserted
@@ -4321,6 +4337,7 @@ declare(
   {statement:
    'P 0 & forall {x. P x => P (x + 1)} => subset NN P'},  // Asserted
 
+  
 
   // Defining ZZ:
 
@@ -4337,6 +4354,14 @@ declare(
   // True via zz and zz2 properties of ZZ, then expanding definitions.
   {statement:
    'P 0 & forall {x. P x == P (x + 1)} => subset ZZ P'},  // Asserted
+
+  {statement: 'ZZ x == floor x = x'},    // Asserted
+
+  // Sum from n to m of the value of function f applied to each value
+  // in the closed interval [n, m], incrementing by 1.
+  // Sum of an empty interval is 0.  Recursive.
+  {statement:
+   'sum m n f = if (n < m) 0 ((sum (m + 1) n f) + f m)'},  // Asserted
 
 );
 
@@ -4361,13 +4386,71 @@ definition('absdiv x d = natdiv (abs x) (abs d)');
 */
 
 
-//// Div and mod
+//// NN and ZZ facts
+
+// Mostly without proof.
+declare(
+  {fact: '@NN x == ZZ x & 0 < x'},
+  {statement: 'NN x => ZZ x'},
+  {statement: 'NN x => R x'},
+  {statement: 'NN x => 0 < x'},
+  {statement: 'NN x => x != 0'},
+
+  {statement: 'ZZ x => R x', axiom: true,
+   description: 'ZZ is a subset of R'},
+  {statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
+   description: 'ZZ is closed under addition'},
+  {statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
+   description: 'ZZ is closed under multiplication'},
+  {statement: 'R x & R y & x > 0 => exists {n. ZZ n & n * x > y}',
+   // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
+   description: 'Archimedean property of the reals'},
+
+  {statement: 'ZZ x => floor x = x'},  // Sometimes simplifies
+
+);
+
+
+//// Div, mod, divides
+
+// We only define "mod"for positive integers ...
+// but might wish to extend to nonzero integers later.  
+
+declare(
+  {definition: 'x div y = floor (x / y)'},
+  {definition: 'x mod m = x - m * (x div m)'},
+
+  {statement: 'R m => 0 mod m = 0', simplifier: true},
+  {statement:
+   'R m => (x + y) mod m = ((x mod m) + (y mod m)) mod m'},
+  {statement: 'R x & R m => R (x mod m)', simplifier: true},
+  {statement: 'R x & R m => (x mod m) mod m = x mod m',
+   proof: [
+     '(1 fact "R m => (x + y) mod m = ((x mod m) + (y mod m)) mod m")',
+     '(2 instVar (s 1) (t 0) (t y))',
+     '(3 simplifySite (s 2) (path "/right"))',
+     '(4 rewrite (s 3) (path "/right") (t (x = y == y = x)))',
+   ],
+   simplifier: true,
+  },
+
+  // Divisibility of integers
+  {definition: 'd divides x == ZZ d & ZZ x & x mod d = 0'},
+  {fact: 'R x & x != 0 => 0 divides x'},
+  {fact:
+   '@ZZ x & ZZ y & ZZ z => (x divides z & y divides z == (x + y) divides z)'},
+);
+
+definition('even x == 2 divides x');
+
+definition('odd x == ZZ x & not (even x)');
+
+
+//// Euclidean division:
 
 // See "The Euclidean Definition of the Functions div and mod",
 // Raymond Boute, ACM TOPLAS, 1992.
 // It recommends two options, best first:  
-
-// Euclidean division:
 
 // Satisfying conditions:
 // D div d = q
@@ -4386,39 +4469,12 @@ definition('absdiv x d = natdiv (abs x) (abs d)');
 
 // D mod d is either 0 or has same sign as d.
 
-declare(
-  {definition: 'x div y = floor (x / y)'},
-  {definition: 'x mod y = if (y > 0) (x - y * (x div y)) none'},
-);
-
-
-//// ZZ predicates and relations
-
-definition('divides d x == ZZ d & ZZ x & x mod d = 0');
-
-definition('even x == divides 2 x');
-
-definition('odd x == ZZ x & not (even x)');
-
-// Some properties of the integers, without proof.
-declare
-  (
-    {statement: 'ZZ x => R x', axiom: true,
-     description: 'ZZ is a subset of R'},
-    {statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
-     description: 'ZZ is closed under addition'},
-    {statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
-     description: 'ZZ is closed under multiplication'},
-    {statement: 'R x & R y & x > 0 => exists {n. ZZ n & n * x > y}',
-     // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
-     description: 'Archimedean property of the reals'},
-  );
 
 // Proof that sqrt 2 is not rational:
 //
 // Suppose it is rational.  Then there exist positive integers m and n
 // such that sqrt 2 = m / n.  Then exists a and b such that
-// sqrt 2 = a / b and either not (divides 2 a) or not (divides 2 b).
+// sqrt 2 = a / b and either not (2 divides a) or not (2 divides b).
 //
 // 2 = (a / b)**2
 // 2 = a**2 / b**2

@@ -1441,6 +1441,7 @@ var precedence = {
   '<=': 20,
   '>': 20,
   '>=': 20,
+  divides: 20,
   // Following Lean for precedence of "in" and "notin"
   'in': 20,
   'notin': 20,
