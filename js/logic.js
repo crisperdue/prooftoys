@@ -2183,30 +2183,22 @@ declare(
   },
 
   // Uses the given facts to simplify the assumptions of the given
-  // step, by default using asmSimplifiers, for example to manage type
-  // assumptions, e.g. "is real", "is integer", etc..  This also
-  // differs from other simplifiers in that it also simplifies any
-  // assumptions introduced by conditional facts in the facts list.
-  // Ensures the result has its assumptions arranged with arrangeAsms,
-  // and if the assumptions reduce to T, removes the assumptions
-  // entirely.
+  // step, first by simplifying with all asmSimplifiers; removing T
+  // from conjunctions.  Ensures the result has its assumptions
+  // arranged with arrangeAsms, and if the assumptions reduce to T,
+  // removes the assumptions entirely.
   {name: 'simplifyAsms',
-    action: function(step, facts_arg) {
-      const facts = facts_arg || Toy.asmSimplifiers;
+    action: function(step) {
+      const facts = Toy.asmSimplifiers;
       if (!step.wff.isCall2('=>')) {
         return step;
       }
       let simpler = step;
-      // Uses rewriteOnly(From), avoiding recursive calls to
-      // simplifyAsms which could be problematic or simply result in
-      // unintuitive displays of the process.
-      const rw = (step, path, eqn) =>
-        Toy.isProved(eqn) && eqn.ruleName !== 'axiomArithmetic'
-        // If eqn is already proved, sometimes it has been proved
-        // just for this use, so we may want to be able to view its
-        // proof, so use rewriteOnlyFrom.
-        ? rules.rewriteOnlyFrom(step, path, eqn)
-        : rules.rewriteOnly(step, path, eqn);
+      // Uses rewriteOnly, avoiding recursive calls to simplifyAsms
+      // which could be problematic or simply result in unintuitive
+      // displays of the process.
+      const rw = (step, path, eqn) => rules.rewriteOnly(step, path, eqn);
+      //
       // Repeatedly apply simplifying facts, each time removing T from
       // the assumptions.  Note that rewriteOnly adds any new
       // assumptions, making them available on the next iteration.
