@@ -1495,6 +1495,36 @@ declare(
     }
   },
 
+  // This applies when the target term matches the schema conclusion
+  // of the fact, and after applying the match substitution, the fact
+  // LHS is the same as some assumption of the step.  The result step
+  // replaces the target with T without adding any assumptions.
+  {name: 'impliedByAsm',
+   action2: function(step, path_arg, fact) {
+     if (!fact.getAsms()) {
+       return null;
+     }
+     const asms = step.getAsms();
+     if (asms) {
+       const path = step.asPath(path_arg);
+       const target = step.get(path);
+       const map = target.matchSchema(fact.getMain());
+       if (map) {
+         const factLHS = fact.getLeft().subFree(map);
+         const targetFree = target.freeVarSet();
+         const bound = new Set(step.pathBindings(path).keys());
+         const both = Toy.intersection(targetFree, bound);
+         if (both.size == 0) {
+           const found = asms.eachConj(asm => asm.sameAs(factLHS));
+           if (found) {
+             return (() => rules.rewrite(step, path_arg, fact));
+           }
+         }
+       }
+     }
+   },
+  },
+
   /**
    * This assumes the selected boolean term, and removes the resulting
    * T if it is in a conjunction.
