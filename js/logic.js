@@ -2077,7 +2077,7 @@ declare(
 declare(
   // Simplifies repeatedly using basicSimpFacts.  If the main part
   // of the step is an equation, simplifies its right side, otherwise the
-  // entire main part.
+  // entire main part, then runs simplifyAsms.
   {name: 'simplifyFocalPart',
    action: function(step) {
       var visPath = step.pathToFocalPart();
@@ -2085,9 +2085,9 @@ declare(
       return result.justify('simplifyFocalPart', arguments, [step]);
     },
     inputs: {step: 1},
-    menu: 'simplify',
-    description: 'simplify;; {step step}',
-    labels: 'algebra'
+    menu: 'simplify usual',
+    description: 'simplify usual;; {in step step}',
+    labels: 'uncommon',
   },
 
   // Applies simplification repeatedly within the part of the given
