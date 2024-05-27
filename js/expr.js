@@ -1167,6 +1167,21 @@ Expr.prototype.pathToFocalPart = function() {
 
 
 /**
+ * Returns truthy iff the path is to the assumptions (left)
+ * side of a conditional.
+ */
+Expr.prototype.isAsmSide = function(path_arg) {
+  return this.implies() && this.asPath(path_arg).isLeft();
+};
+
+/**
+ * Returns truthy iff the path is not to the "isAsmSide".
+ */
+Expr.prototype.isMainSide = function(path_arg) {
+  return !this.isAsmSide(path_arg);
+};
+
+/**
  * Returns truthy iff this is a conditional and the path refers to an
  * assumption in its assumptions chain.  Usually "this" is a whole
  * step.
@@ -1678,7 +1693,7 @@ Expr.prototype.revGet = function(rpath) {
 
 /**
  * Converts the argument into a path within this Expr.  Given a Path
- * or path string, this adjusts leading occurrences of "/main" based
+ * or path string, this adjusts a leading occurrence of "/main" based
  * on the structure of this Expr.
  * 
  * If the argument is a string either empty or beginning with "/",
