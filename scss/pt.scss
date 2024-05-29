@@ -31,11 +31,19 @@
 .logicZone {
 
 sub, sup {
-  /* Prevents these from making the overall line less tall. */
-  line-height: 0px;
   /* Browsers tend to size these for fractions, which makes */
   /* them a bit bigger than this. */
-  font-size: 70%;
+  // Google Chrome may override this with a user preference for
+  // minimum font size.  Use of "zoom:" can force a smaller
+  // size except in Firefox before version 126.
+  font-size: 60%;
+}
+
+sub {
+  // This assumes use of reboot.css, which positions them relative,
+  // aligned to the baseline.  The negative bottom moves it below
+  // that baseline, relative to its own size.
+  bottom: -.3em;
 }
 
 .hidden {
