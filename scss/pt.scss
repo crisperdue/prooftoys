@@ -63,6 +63,10 @@ sub {
   font-style: italic;
 }
 
+.nonItalic {
+  font-style: normal;
+}
+
 figure {
   display: flex;
   justify-content: center;
