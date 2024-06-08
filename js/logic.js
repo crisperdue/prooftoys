@@ -1407,19 +1407,22 @@ declare(
    * side wrapped in a binding of the given variable or variable name.
    */
   {name: 'bindEqn',
-    action: function(eqn, v_arg) {
-      eqn.assertCall2('=');
-      const v = varify(v_arg);
-      const step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
-      const step2 = rules.r1(step1, '/right/body', eqn);
-      return step2.justify('bindEqn', arguments, [eqn]);
-    },
-    inputs: {equation: 1, varName: 2},
-    form: ('Bind variable <input name=varName> in step <input name=equation>'),
-    menu: '[a = b] to [{v. a} = {v. b}]',
-    tooltip: ('Makes each side of an equation into a function'
-              + ' of the variable you choose.'),
-    description: '[a = b] to [{v. a} = {v. b}]',
+   precheck: function(eqn, v_arg) {
+     return eqn.isCall2('=');
+   },
+   action: function(eqn, v_arg) {
+     const v = varify(v_arg);
+     const step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
+     const step2 = rules.r1(step1, '/right/body', eqn);
+     return step2.justify('bindEqn', arguments, [eqn]);
+   },
+   inputs: {equation: 1, varName: 2},
+   form: ('Bind variable <input name=varName> in step <input name=equation>'),
+   menu: '[a = b] to [{v. a} = {v. b}]',
+   toOffer: "return step.isCall2('=');",
+   tooltip: ('Makes each side of an equation into a function'
+             + ' of the variable you choose.'),
+   description: '[a = b] to [{v. a} = {v. b}]',
   },
 
   /**
