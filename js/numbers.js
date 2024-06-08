@@ -4353,7 +4353,7 @@ declare(
   {statement: 'isRealZZ S == S = ZZ'},  // Asserted
   // True via zz and zz2 properties of ZZ, then expanding definitions.
   {statement:
-   'P 0 & forall {x. P x == P (x + 1)} => subset ZZ P'},  // Asserted
+   'P 0 & forall {x. R x & P x == P (x + 1)} => subset ZZ P'},  // Asserted
 
   {statement: 'ZZ x == floor x = x'},    // Asserted
 
