@@ -1618,7 +1618,7 @@ Call.prototype.render = function(minPower) {
     // Parenthesize both function and argument if they are calls.
     $expr.append('(', this.fn.render(0), ') ',
                  this.arg.render(Toy.namePower + 1));
-  } else if (this instanceof Atom && !this.fn.displaysIdentifier()) {
+  } else if (this.fn instanceof Atom && !this.fn.displaysIdentifier()) {
     // Function call with non-identifier operator, or lambda.
     // Display the function adjacent to its argument, but precede both
     // with a non-breaking space to the left to help the user select
