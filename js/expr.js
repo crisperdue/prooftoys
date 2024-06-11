@@ -2598,7 +2598,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 //
 // Helper for Expr.mathVars.  Traverses this expression, adding to the
 // set names of all free variables that are arguments to math
-// operators or an argument to "=" or "!=" that have an expression
+// operators -- or an argument to "=" or "!=" that have an expression
 // with a math operator as the other argument.
 // 
 //
@@ -2767,12 +2767,14 @@ Atom.prototype._toString = function() {
 
 /**
  * Unicode rendering of the name of this Atom.
+ * See also Atom.toHtml.
  */
 Atom.prototype.unicodeName = function() {
   // Always show boolean equality as such.
   // Using pname helps here in some obsolescent usage.
   const name = this.isEquivOp() ? '==' : this.pname;
-  var uname = unicodeNames[name];
+  const andOrNames = Toy.alphaAndOr ? {'&': 'and', '|': 'or'} : {};
+  const uname = andOrNames[name] || unicodeNames[name];
   if (uname) {
     return uname;
   }
@@ -2838,20 +2840,21 @@ var aliases = {
 };
 
 // This is useful in itself, but Expr.toHtml does not invoke this
-// internally for Atoms.
-// TODO: Fix Expr.toHtml.  
+// internally for Atoms, though rendering does so.
+// TODO: Fix Expr.toHtml. (?)
 Atom.prototype.toHtml = function() {
   // Always show boolean equality as such.
   // Using pname helps here in some obsolescent usage.
   const name = this.isEquivOp() ? '==' : this.pname;
-  var uname = unicodeNames[name];
+  const andOrNames = Toy.alphaAndOr ? {'&': 'and', '|': 'or'} : {};
+  const uname = andOrNames[name] || unicodeNames[name];
   if (uname) {
     return uname;
   }
   var info = this.parseName();
   var text = info.name;
   if (info.sub) {
-    text += `<sub>${info.sub}</sub>`;
+    text += `<sub class=nonItalic>${info.sub}</sub>`;
   }
   // The lines below are the same as in Atom._toString:
   const show = Toy.showTypes;
@@ -3995,6 +3998,9 @@ Expr.prototype.toKey = function() {
 
 
 //// Export public names.
+
+// Exported variable here:
+Toy.alphaAndOr = true;
 
 Toy.assertEqn = assertEqn;
 
