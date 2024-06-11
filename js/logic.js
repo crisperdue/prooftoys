@@ -1112,11 +1112,20 @@ declare(
   },
 
   {name: 'goal',
-   action: function(term) {
-     return rules.assumeExplicitly(term).justify('goal', arguments);
+   action: function(wff) {
+     if (wff.implies()) {
+       return (rules.assumeExplicitly(wff.getMain())
+               // TODO: Consider possibly including this next line,
+               //   so expected assumptions are part of this step.
+               // .andThen('andAssume', wff.getAsms())
+               .justify('goal', arguments));
+     } else {
+       return rules.assumeExplicitly(wff).justify('goal', arguments);
+     }
    },
    inputs: {bool: 1},
-   form: 'Desired conclusion: <input name=bool>',
+   form: 'Desired result: <input name=bool>',
+   menu: 'use as goal',
    menuGen: function(ruleName, step, term, proofEditor) {
      // This rule is only available if the proof is currently empty.
      if (proofEditor.proofDisplay.steps.length == 0) {
@@ -1124,7 +1133,7 @@ declare(
        if (goal) {
          return [{html: 'state the goal',
                   ruleName: 'goal',
-                  ruleArgs: [goal.getMain()]
+                  ruleArgs: [goal]
                  }];
        } else {
          return 'state the goal';
@@ -1138,6 +1147,30 @@ declare(
    labels: 'basic',
   },
 
+  {name: 'subgoal',
+   precheck: function(step, path) {
+     return step.get(path).isBoolean();
+   },
+   // TODO: If term is not quantified, consider using all
+   //   assumptions to imply the selection.
+   action: function(step, path) {
+     const wff = step.get(path);
+     if (wff.implies()) {
+       return (rules.assumeExplicitly(wff.getMain())
+               .andThen('andAssume', wff.getAsms())
+               .justify('subgoal', arguments));
+     } else {
+       return rules.assumeExplicitly(wff).justify('subgoal', arguments);
+     }
+   },
+   inputs: {site: 1},
+   form: 'Desired result: <input name=bool>',
+   toOffer: 'return term.isBoolean()',
+   menu: ' use as subgoal',
+   description: 'subgoal;; {site}',
+   labels: 'basic',
+  },
+   
   // Similar to "consider", but uses a selected term.
   {name: 'considerPart',
     action: function(step, path) {

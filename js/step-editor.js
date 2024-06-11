@@ -499,7 +499,7 @@ ProofEditor.prototype._initExercise = function(exName) {
  * exercise based on setting the given wff as a goal.
  */
 function exerciseInits(stmt) {
-  const step = rules.goal(stmt.getMain());
+  const step = rules.goal(stmt);
   return [step];
 }
 
