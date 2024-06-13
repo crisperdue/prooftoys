@@ -518,10 +518,11 @@ span.ruleStats {
 .proofStep .stepInfo {
   display: inline-block;
     white-space: normal;
-    padding-left: .3em;
+    margin-left: .3em;
     font-family: "Roboto Flex", sans-serif;
     font-size: 90%;
     color: #999;
+    background-color: #DEF;
 
     b {
       color: #555;
