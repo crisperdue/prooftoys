@@ -1707,9 +1707,12 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
  * as the auto-simplification.  If it returns a falsy value it will be
  * treated as a no-op (identity function).
  *
- * Otherwise if the step's rule has a "site" argument and global
- * variable Toy.autoSimplifyWholeStep is false, this simplifies the
- * site; otherwise it simplifies the "focal part".
+ * Otherwise if the step's rule has a "site" argument and it references
+ * the "assumptions side" of the step, simplify that side, else the
+ * "focal part".
+ *
+ * TODO: Consider moving smarts about a "site" argument into
+ *   simplifyFocalPart.
  */
 function autoSimplify(step) {
   if (step.ruleArgs.length === 0) {
@@ -1723,12 +1726,10 @@ function autoSimplify(step) {
     // supply a simplifier that does nothing.
     return simplifier(step) || step;
   }
-  var path = Toy.getStepSite(step);
-  if (path && !Toy.autoSimplifyWholeStep) {
-    return Toy.rules.simplifySite(step, path) || assert(false);;
-  } else {
-    return Toy.rules.simplifyFocalPart(step) || assert(false);
-  }
+  const path = Toy.getStepSite(step);
+  return (path && step.isAsmSide(path)
+          ? Toy.rules.simplifySite(step, '/left')
+          : Toy.rules.simplifyFocalPart(step2) || assert(false));
 }
 
 /**
@@ -2817,10 +2818,10 @@ function acceptsSelection(step, ruleName) {
  */
 function ruleMenuInfo(ruleName, step, term, proofEditor) {
   // Set up convenient substitutions for occurrences of {term} and
-  // {right} using Toy.format.  These support deferral of the
-  // rendering and insertion of the rendering of the term and right
-  // neighbor to the RuleMenu._update code where it is more convenient
-  // and the HTML has been converted to DOM structure.
+  // {right} in menu format strings via Toy.format.  These support
+  // deferral of the rendering and insertion of the rendering of the
+  // term and right neighbor to the RuleMenu._update code where it is
+  // more convenient and the HTML has been converted to DOM structure.
   const formatArgs = {term: '<span class=menuSelected></span>',
                       right: '<span class=menuRightNeighbor></span>'};
   const info = Toy.rules[ruleName].info;
@@ -2914,9 +2915,6 @@ Toy.autoSimplify = autoSimplify;
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Toy.profileName = '';
-
-// Global setting controlling auto-simplification.
-Toy.autoSimplifyWholeStep = true;
 
 // Export public names.
 Toy.stepTypes = stepTypes;

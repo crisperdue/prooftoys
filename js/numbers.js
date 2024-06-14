@@ -2394,15 +2394,6 @@ declare(
     toOffer: function(step, expr) {
       return Toy.matchFactPart(step, step.pathTo(expr), regroupingFacts, 'b');
     },
-    autoSimplify: function(step) {
-      // TODO: Consider renaming this flag as "focal part".
-      if (Toy.autoSimplifyWholeStep) {
-        return rules.simplifyFocalPart(step);
-      } else {
-        var path = getStepSite(step).parent().parent().concat('/right');
-        return rules.simplifySite(step, path);
-      }
-    },
     action: function(step, path) {
       var func = Toy.matchFactPart(step, path, regroupingFacts, 'b');
       return func
