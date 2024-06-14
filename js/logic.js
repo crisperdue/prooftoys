@@ -1167,7 +1167,12 @@ declare(
    form: 'Desired result: <input name=bool>',
    toOffer: 'return term.isBoolean()',
    menu: ' use as subgoal',
-   description: 'subgoal;; {site}',
+   description: step => {
+     const [s, p] = step.ruleArgs;
+     const site = s.get(p);
+     const html = site.getMain().termDisplay();
+     return `subgoal;; <span class=term><b>${html}</b></span>`;
+   },
    labels: 'basic',
   },
    
