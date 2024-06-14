@@ -1740,7 +1740,7 @@ declare(
    description:
    // TODO: include "in step <n>".
    (step =>
-    `assumed equation ;;<b>${Toy.termDisplay(step.ruleArgs[2])}</b>`),
+    `assumed equation ;;<b>${step.ruleArgs[2].termDisplay()}</b>`),
   },  
 
   /**
@@ -5070,15 +5070,14 @@ function detachDescription(step) {
   const [inStep, schema, path] = step.ruleArgs;
   const rendering = schema.rendering;
   if (rendering) {
-    const asmText = schema.get(path).renderTerm().outerHTML;
+    const asmText = schema.get(path).termDisplay();
     return `remove ${asmText};;` +
       ` from step <span class=stepReference>${rendering.stepNumber}</span>`;
   } else {
     const expanded = Toy.factExpansion(schema);
-    const shortText = expanded.shortForm().renderTerm().outerHTML;
-    const asmText = expanded.get(path).renderTerm().outerHTML;
-    return (
-      `remove ${asmText};; from ${shortText}`);
+    const shortText = expanded.shortForm().termDisplay();
+    const asmText = expanded.get(path).termDisplay();
+    return `remove ${asmText};; from ${shortText}`;
   }
 }
 

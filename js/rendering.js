@@ -1481,6 +1481,18 @@ Expr.prototype.renderTerm = function() {
 };
 
 /**
+ * Returns an HTML string based on rendering with renderTerm
+ * and enclosing the result in a span of class=term, for
+ * displaying terms in step descriptions and other areas not
+ * strictly within a step display.
+ */
+Expr.prototype.termDisplay = function() {
+  const html = this.renderTerm().outerHTML;
+  return `<span class=term>${html}</span>`;
+
+};
+
+/**
  * Render this renderable term into a new DOM node, returning a
  * jQuery object for the node.  Sets the expression's "node" property
  * to refer to the DOM node created to enclose this expression.
@@ -2086,15 +2098,15 @@ function expandMarkup(step, markup) {
     }
     var terms = places.map(function(place) {
         var term = Toy.termify(step.ruleArgs[place - 1]);
-        return termDisplay(term);
+        return term.termDisplay();
       });
     return terms.join(', ');
   case 'fact':
   case 'shortFact':
     var place = info.inputs.bool[0] || info.inputs.bool;
     var bool = Toy.mathParse(step.ruleArgs[place - 1]);
-    const html = bool.shortForm().renderTerm().outerHTML;
-    return `<span class=term><b>${html}</b></span>`;
+    const html = bool.shortForm().termDisplay();
+    return `<b>${html}</b>`;
     return factDisplay(markupName === 'fact' ? bool : bool.shortForm());
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
@@ -2103,19 +2115,11 @@ function expandMarkup(step, markup) {
     var place = info.inputs.site[0] || info.inputs.site;
     var siteStep = argStep(place - 1);
     var term = siteStep.get(step.ruleArgs[place]);
-    return term.toHtml();
+    return term.termDisplay();
   default:
     // Pass it through unchanged.
     return markup;
   }
-}
-
-/**
- * Returns an HTML display of the given term for step descriptions.
- */
-function termDisplay(term) {
-  const html = term.toHtml(true);
-  return '<span class=term>' + html + '</span>'
 }
 
 /**
@@ -2866,8 +2870,6 @@ Toy.getProofStep = getProofStep;
 Toy.getStepsNode = getStepsNode;
 Toy.getExpr = getExpr;
 Toy.getProofDisplay = getProofDisplay;
-
-  Toy.termDisplay = termDisplay;
 
 // For debugging
 Toy._adjacentSteps = adjacentSteps;
