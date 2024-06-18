@@ -1726,11 +1726,24 @@ function autoSimplify(step) {
     // supply a simplifier that does nothing.
     return simplifier(step) || step;
   }
+  return step.simplifyUsual();
+}
+
+/**
+ * Simplify this step based on its target site, if any,
+ * simplify the asm side if it refers into the asms, otherwise
+ * the "focal part".  Hopefully this can be considered the
+ * default style of autosimplification.
+ *
+ * TODO: Should this be a rule?
+ */
+Step.prototype.simplifyUsual = function() {
+  const step = this;
   const path = Toy.getStepSite(step);
   return (path && step.isAsmSide(path)
           ? Toy.rules.simplifySite(step, '/left')
-          : Toy.rules.simplifyFocalPart(step2) || assert(false));
-}
+          : Toy.rules.simplifyFocalPart(step) || assert(false));
+};
 
 /**
  * Create and fill in part of the args array with the step or step and
