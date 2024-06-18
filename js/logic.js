@@ -4917,7 +4917,7 @@ declare(
           const info = resolveFactRef(stmt);
           return (info && info.desimplifier
                   ? step
-                  : rules.simplifyFocalPart(step));
+                  : step.simplifyUsual());
         }
       }
     },
