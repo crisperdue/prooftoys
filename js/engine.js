@@ -557,8 +557,6 @@ var rules = {};
 //   property described above.  A returned empty string ruleName
 //   indicates a rule menu comment, and never attempts to run a rule.
 //
-//   TODO: In the future there may be a sort "key" (Array).
-//
 // tooltip: plain text to become the title attribute of mentions of the
 //   rule name in proof displays and the description in subproof displays.
 //
