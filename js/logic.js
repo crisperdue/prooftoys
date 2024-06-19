@@ -2453,6 +2453,10 @@ declare(
   // of a proved step.  This is the same as rewriting the proved
   // step with [a == (a == T)], then rewriting the target term
   // with [a == T].
+  //
+  // TODO: Make this be forgiving about differences in ordering
+  //   of assumptions.  (Differences in order should be fixable
+  //   using tautology instance proof of equality.)
   {name: 'trueBy0',
    action2: function(target, path, step) {
       const eqn = rules.rewriteOnly(step, '', 'p == (p == T)');
@@ -2462,10 +2466,29 @@ declare(
     inputs: {site: 1, step: 3},
     autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
-    form: ('{term} instance of step <input name=step>'),
-    menu: 'instance of unconditional step',
-    description: 'true by step {step};; {in step siteStep}',
-    labels: 'other'
+   form: ('{term} instance of step <input name=step>'),
+   menuGen: function(ruleName, targetStep, term, editor) {
+     const items = [];
+     editor.steps.forEach((step, index) => {
+       // TODO: Invent matchStep and use that here.
+       //   It should be forgiving, at least about order
+       //   of assumptions.
+       if (term && term.matchSchema(step)) {
+         const n = index + 1;
+         const path = targetStep.prettyPathTo(term);
+         const html = `true by step ${n}`;
+         items.push({html,
+                     ruleName,
+                     ruleArgs:
+                     [targetStep.original, path, step.original],
+                     priority: 10,
+                    });
+       }
+     });
+     return items;
+   },
+   description: 'true;; {in step siteStep} from step {step}',
+   labels: 'basic',
   },
 
   // Checks that the target site is an instance of the main part of
@@ -2480,10 +2503,10 @@ declare(
     inputs: {site: 1, step: 3},
     autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
-    form: ('Match {term} with (consequent of) step <input name=step>'),
-    menu: 'replace known true part with T',
-    description: 'true by step {step};; {in step siteStep}',
-    labels: 'other'
+   form: ('Match {term} with (consequent of) step <input name=step>'),
+   menu: 'replace known true part with T',
+   description: 'true by step {step};; {in step siteStep}',
+   labels: 'basic',
   },
 
   // This takes two site arguments.  It finds a substitution into the
