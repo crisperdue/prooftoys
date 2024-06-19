@@ -2505,7 +2505,7 @@ declare(
     toOffer: 'return term.isBoolean()',
    form: ('Match {term} with (consequent of) step <input name=step>'),
    menu: 'replace known true part with T',
-   description: 'true by step {step};; {in step siteStep}',
+   description: 'true;; {in step siteStep} from step {step}',
    labels: 'basic',
   },
 
@@ -3175,10 +3175,10 @@ declare(
      }
      return null;
    },
-    inputs: {site: 1},
-    menu: ' {term} true by tautology',
-    description: 'true by tautology;; {in step siteStep}',
-    labels: 'general'
+   inputs: {site: 1},
+   menu: ' {term} true by tautology',
+   description: 'true as tautology instance;; {in step siteStep}',
+   labels: 'general'
   },
 
   // TODO: Complete this.
