@@ -2466,7 +2466,10 @@ declare(
        return step3.justify('trueBy0', arguments, [target, step]);
      } else {
        return Toy.error('{1} not instance of {2}', term, step);
-     }
+   action2: function(target, path, step) {
+      const eqn = rules.rewriteOnly(step, '', 'p == (p == T)');
+      const result = rules.rewriteOnlyFrom(target, path, eqn);
+      return ok(result, () => result);
    },
     inputs: {site: 1, step: 3},
     autoSimplify: simplifyStep,
@@ -2481,11 +2484,10 @@ declare(
   // the given step.  If so, converts the main part to [main == T] and
   // uses it to rewrite the target site.
   {name: 'trueBy1',
-    action: function(target, path, step) {
-      const term = target.get(path);
-      const step2 = rules.rewriteOnly(step, '/main', 'p == (p == T)');
-      const result = rules.rewriteOnlyFrom(target, path, step2);
-      return result.justify('trueBy1', arguments, [target, step]);
+    action2: function(target, path, step) {
+      const eqn = rules.rewriteOnly(step, '/main', 'p == (p == T)');
+      const result = rules.rewriteOnlyFrom(target, path, eqn);
+      return ok(result, () => result);
     },
     inputs: {site: 1, step: 3},
     autoSimplify: simplifyStep,
