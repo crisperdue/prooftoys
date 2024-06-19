@@ -2554,8 +2554,9 @@ declare(
     proof: function() {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
       var fa = rules.definition('forall');
-      return rules.rRight(step1, '/fn', fa);
-    }
+     return rules.rRight(step1, '/fn', fa);
+   },
+   simplifier: true,
   },
 
   {name: 'existsXT',
