@@ -417,22 +417,26 @@ ProofEditor.prototype.refresh = function() {
     // Is the goal proved?
     const stmt = self.goalStatement;
     if (stmt && !self.animating) {
-      async function showStatus(solved) {
+      async function showProved() {
+        // TODO: Use CSS transitions for the animation.  The current
+        //   design probably doesn't work if auto-simplification
+        //   changes a solution into a non-solution.
         self.animating = true;
         await Toy.sleep(200);
-        const $node = $('.proofEditorHeader .status');
-        $node.empty();
-        if (solved) {
-          for (const ch of '\u2713 Proof complete. '.split('')) {
-            $node.append(ch);
-            await Toy.sleep(20);
-          }
-        } else {
-          $node.append('Proving:');
+        for (const ch of '\u2713 Proof complete. '.split('')) {
+          $node.append(ch);
+          await Toy.sleep(20);
         }
         self.animating = false;
       }
-      showStatus(step.checkSubgoals(stmt) === 0);
+      const solved = step.checkSubgoals(stmt) === 0;
+      const $node = $('.proofEditorHeader .status');
+      $node.empty();
+      if (solved) {
+        showProved();
+      } else {
+        $node.append('Proving:');
+      }
     }
 
     var message = self.progressMessage(step.original);
@@ -1688,12 +1692,10 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
     // has any effect.
     Toy.afterRepaint(function() {
       cleanup();
-      var trial = autoSimplify(result);
-      // If autoSimplify is a no-op, do not display the result.
-      var simplified = (trial.sameAs(result)
-                        ? result
-                        : trial);
-      self.proofDisplay.addDerivation(simplified);
+      const simplified = autoSimplify(result);
+      if (!simplified.sameAs(result)) {
+        self.proofDisplay.addDerivation(simplified);
+      }
     });
   }
   if (!deferCleanup) {
