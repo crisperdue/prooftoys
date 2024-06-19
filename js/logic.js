@@ -2454,18 +2454,6 @@ declare(
   // step with [a == (a == T)], then rewriting the target term
   // with [a == T].
   {name: 'trueBy0',
-   // TODO: Clean up this implementation, probably like trueBy1.
-   action: function(target, path, step) {
-     const term = target.get(path);
-     const wff = step.wff;
-     const map = term.matchSchema(wff);
-     if (map) {
-       const step1 = rules.rewriteOnly(step, '', 'a == (a == T)');
-       const step2 = rules.instMultiVars(step1, map, true);
-       const step3 = rules.replace(target, path, step2);
-       return step3.justify('trueBy0', arguments, [target, step]);
-     } else {
-       return Toy.error('{1} not instance of {2}', term, step);
    action2: function(target, path, step) {
       const eqn = rules.rewriteOnly(step, '', 'p == (p == T)');
       const result = rules.rewriteOnlyFrom(target, path, eqn);
@@ -2476,7 +2464,7 @@ declare(
     toOffer: 'return term.isBoolean()',
     form: ('{term} instance of step <input name=step>'),
     menu: 'instance of unconditional step',
-    description: ('use step {step};; {in step siteStep}'),
+    description: 'true by step {step};; {in step siteStep}',
     labels: 'other'
   },
 
@@ -2494,7 +2482,7 @@ declare(
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with (consequent of) step <input name=step>'),
     menu: 'replace known true part with T',
-    description: ('use step {step};; {in step siteStep}'),
+    description: 'true by step {step};; {in step siteStep}',
     labels: 'other'
   },
 
