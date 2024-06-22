@@ -3808,6 +3808,22 @@ declare(
     }
   },
 
+  /***
+  // This says that any conditional implies a conditional with
+  // an additional assumption.
+  // TODO: Surely there are better ways to accomplish this; at
+  //   the very least the substitutivity of implication.
+  {statement:
+    'forall {x. p x => q x} => forall {x. p x & a x => q x}',
+   proof: [
+     '(1 tautologous (t (((p x) => (q x)) => (((p x) & (a x)) => (q x)))))',
+     '(2 toForall0 (s 1) "x")',
+     `(3 chain0 (s 2) 
+         (t ((forall {x. ((p x) => (q x))}) => ((forall p) => (forall q)))))`,
+   ],
+  },
+  */
+
   // Reduce the scope of a quantifier by extracting terms that
   // have no free occurrences of the quantified variable.
   // Applies to "and" within "exists" and "or" within "forall".
