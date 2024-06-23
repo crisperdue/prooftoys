@@ -1031,6 +1031,8 @@ function exercise(name, ...declarations) {
  * for generated facts, or provide a way to declare fact properties
  * separately from proof of the fact.
  *
+ * TODO: Fix the alleged support for benign redefinitions.
+ *
  * Returns the newly-defined name.
  */
 function definition(defn_arg) {
