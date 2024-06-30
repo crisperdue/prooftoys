@@ -1050,7 +1050,7 @@ function abort(msg, ...args) {
     // abort occurs with Toy.proceeding on.  (For this, in the
     // debugger request a pseudo-breakpoint that never pauses.)
     if (Toy.proceeding) {
-      console.warn('Proceeding');
+      console.warn('Proceeding at:', e.message);
       throw e;  // You may ask the debugger not to pause here.
     } else {
       throw e;
