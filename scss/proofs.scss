@@ -554,12 +554,14 @@ span.stepNumber, span.stepReference {
 
 /* Highlighting of parts of proof steps */
 
+/* The "site" and "new" clases are transient,
+   so they override "unsolved". */
 /* Step number area of step used by hovered step */
 .proofStep.dep .stepNumArea,
 /* A "site" input of a proof step */
-.proofStep .expr.site,
+.proofStep .expr.site, .proofStep .expr.site .unsolved,
 /* New value ("replacement expression") */
-.proofStep .new {
+.proofStep .new, .proofStep .new .unsolved {
   background-color: #afa;
   border-color: #0d0;
 }
