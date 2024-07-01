@@ -171,3 +171,10 @@ make it shorter.  -- Blaise Pascal, "Lettres Provinciales"
 
 from math import pi; abs(355/113 - pi) < 1 / 1_000_000 # is True
 -- Python
+
+The best theory is inspired by practice.  -- Donald Knuth
+
+The best practice is inspired by theory.  -- Donald Knuth
+
+Computer science departments have always considered 'user interface'
+research to be sissy work. -- Nicholas Negroponte
