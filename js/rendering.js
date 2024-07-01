@@ -2733,7 +2733,7 @@ function hoverAsRewriter(step, action) {
         const main = deeper ? step.wff.getRight() : step.wff;
         action(main.get(path).node, 'site');
       }
-    });
+    }, true);  // true => "proceeding" through errors here.
   });
 }
 
