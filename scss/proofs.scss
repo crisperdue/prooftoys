@@ -25,10 +25,6 @@ b[videotip], b[imagetip] {
   padding: 0 2px;
 }
 
-.expr.hover, .inShadow {
-  background-color: hsl(200deg, 100%, 90%);
-}
-
 .expr.unsolved {
   font-weight: bold;
   color: crimson;
@@ -37,6 +33,10 @@ b[videotip], b[imagetip] {
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
   // text-decoration-thickness: 2px;
+}
+
+.expr.hover, .expr.hover .unsolved, .inShadow {
+  background-color: hsl(200deg, 100%, 90%);
 }
 
 wffblock- {
@@ -623,7 +623,8 @@ span.stepRef {
 
 /* Highlight selected expressions; a bit over-specific
    to take precedence over the hover highlight. */
-.proofDisplay.editable .proofStep .expr.selected {
+.proofDisplay.editable .proofStep .expr.selected,
+.proofDisplay.editable .proofStep .expr.selected .unsolved {
   background-color: hsl(200deg, 100%, 75%);
 }
 
