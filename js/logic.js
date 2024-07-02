@@ -3438,7 +3438,7 @@ declare(
 
   // Adds an assumption to the given step and deduplicates it, or a
   // set of assumptions given as a conjunction, not necessarily flat.
-  // If no existing asms, adds them as-is.
+  // If there are no existing asms, adds them as-is.
   {name: 'andAssume',
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
@@ -3459,9 +3459,32 @@ declare(
     },
     inputs: {step: 1, bool: 2},
     form: ('Add assumption <input name=bool> in step <input name=step>'),
-    menu: 'add assumption',
+    menu: 'add assumption(s)',
     labels: 'basic',
     description: 'add assumption {bool};; {in step step}'
+  },
+
+  // Given a boolean site and a condition, this conjoins "& condition"
+  // to the boolean at the site, and adds the condition to the step
+  // as needed.  Presumes that no free variables in the condition are
+  // bound in context.
+  {name: 'andCondition',
+   action2: function(step, path, cond_arg) {
+     const cond = termify(cond_arg);
+     const target = step.get(path);
+     if (target.isBoolean() && cond.isBoolean()) {
+       return (() => {
+         const fact = (rules.assume(cond)
+                       .andThen('rewriteOnly', '/right', 'a == (T == a)'));
+         return (rules.rewriteOnly(step, path, 'a == a & T')
+                 .andThen('replace', path.concat('/right'), fact));
+       });
+     }
+   },
+   inputs: {site: 1, bool: 3},
+   menuGen: null,
+   labels: 'tactic',
+   description: 'add condition;; {in step siteStep}',
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
