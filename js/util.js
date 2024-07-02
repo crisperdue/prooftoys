@@ -1206,9 +1206,10 @@ function unwind() {
  * Starts a computation that can be aborted by a call to an exit
  * function.  Calls the given function, passing it an exit function.
  * During the computation, if the exit function is called, withExit
- * returns the value passed to the exit function.  If the exit
- * function is called after completion of the call to "fn", the result
- * is an assertion failure.  This is a limited form of
+ * immediately returns the value passed to the exit function;
+ * otherwise it returns the result of its function argument.  If the
+ * exit function is called after completion of the call to "fn", it
+ * aborts with an assertion failure.  This is a limited form of
  * call-with-current-continuation.
  */
 function withExit(fn) {
@@ -1783,6 +1784,14 @@ ToySet.prototype.addAll = function(more) {
     more.forEach(add);
   }
   return self;
+};
+
+/**
+ * Adds all of the elements of the container to a new ToySet
+ * and returns that.
+ */
+ToySet.from = function(container) {
+  return new ToySet().addAll(container);
 };
 
 /**
