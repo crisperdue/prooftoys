@@ -1111,13 +1111,13 @@ declare(
     labels: 'algebra basic'
   },
 
+  // Add the conclusion of the wff to its assumptions to
+  // build a known-true goal statement.
   {name: 'goal',
    action: function(wff) {
      if (wff.implies()) {
        return (rules.assumeExplicitly(wff.getMain())
-               // TODO: Consider possibly including this next line,
-               //   so expected assumptions are part of this step.
-               // .andThen('andAssume', wff.getAsms())
+               .andThen('andAssume', wff.getAsms())
                .justify('goal', arguments));
      } else {
        return rules.assumeExplicitly(wff).justify('goal', arguments);
@@ -1170,7 +1170,7 @@ declare(
    description: step => {
      const [s, p] = step.ruleArgs;
      const site = s.get(p);
-     const html = site.getMain().termDisplay();
+     const html = site.termDisplay();
      return `subgoal;; <span class=term><b>${html}</b></span>`;
    },
    labels: 'basic',
