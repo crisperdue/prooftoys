@@ -2303,7 +2303,7 @@ declare(
      }
    },
    inputs: {site: 1},
-   labels: 'basic',
+   labels: 'tactic',
    menu: ' flatten conjunction',
   },
 );
