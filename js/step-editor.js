@@ -508,6 +508,24 @@ function exerciseInits(stmt) {
 }
 
 /**
+ * Async utility function to print and return the
+ * proofState of the named exercise.
+ */
+async function exerciseSteps(exName) {
+  let result;
+  await Toy.db.exercises.get(exName)
+    .then(data => {
+      if (data) {
+        console.log(data.proofState);
+        result = data.proofState;
+      } else {
+        console.log('not found');
+      }
+    });
+  return result;
+}
+
+/**
  * Based on the given "exercise/item" exercise name, adds the fact
  * declarations to set up the theory state for that item of that
  * exercise.  (In the declarations, item names are called
@@ -2939,5 +2957,6 @@ Toy.ProofEditor = ProofEditor;
 Toy.StepEditor = StepEditor;
 
 Toy.tryRuleSoon = tryRuleSoon;
+Toy.exerciseSteps = exerciseSteps;
 
 })();
