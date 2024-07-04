@@ -1116,6 +1116,10 @@ declare(
   {name: 'goal',
    action: function(wff) {
      if (wff.implies()) {
+       return (rules.tautology('b => (a => b)')
+               .andThen('instMultiVars', {b: wff.getMain(), a: wff.getAsms()})
+               .andThen('mergeAsms')
+               .justify('goal', arguments));
        return (rules.assumeExplicitly(wff.getMain())
                .andThen('andAssume', wff.getAsms())
                .justify('goal', arguments));
@@ -1736,7 +1740,7 @@ declare(
          return [
            {ruleName,
             ruleArgs: [step.original, path, asm],
-            html: `\u27ad <b>${asm.getRight().$$}</b> assuming ${asm.$$}`,
+            html: `\u27ad <b>${asm.getRight().$$}</b> by assumed ${asm.$$}`,
            }
          ];
        }
@@ -1745,7 +1749,7 @@ declare(
    description:
    // TODO: include "in step <n>".
    (step =>
-    `assumed equation ;;<b>${step.ruleArgs[2].termDisplay()}</b>`),
+    `by assumed;;<b>${step.ruleArgs[2].termDisplay()}</b>`),
   },  
 
   /**
