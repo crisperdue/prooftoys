@@ -11,6 +11,7 @@ const assert = Toy.assertTrue;
 const abort = Toy.abort;
 const format = Toy.format;
 const dom = Toy.dom;
+const ToySet = Toy.ToySet;  
 const TermSet = Toy.TermSet;
 const rules = Toy.rules;
 const declare = Toy.declare;
@@ -19,9 +20,10 @@ const Expr = Toy.Expr;
 const Atom = Toy.Atom;
 const Call = Toy.Call;
 const Lambda = Toy.Lambda;
+const noSimplify = Toy.noSimplify;  
 
-Toy.exercise(
-  'nat',
+
+const decls = [
 
   // NN axioms; 1
   {statement: '@NN 0', axiom: true,
@@ -31,7 +33,8 @@ Toy.exercise(
 
   // 2
   {statement: '@NN n => NN (succ n)', axiom: true,
-   description: 'axiom: successor is closed over the natural numbers'
+   description: 'axiom: successor is closed over the natural numbers',
+   // This is a lot like a subsumption fact.
   },
   {statement: '@NN n => NN (succ n) == T',
    proof: function() {
@@ -56,13 +59,16 @@ Toy.exercise(
   {statement: '@NN n => succ n != 0', axiom: true,
    description: 'axiom: zero is not a successor'
   },
+  {statement: '@NN n => (succ n = 0 == F)'},
 
   // 5 (induction)
-  {statement: '@P 0 & (P n => P (succ n)) => (NN x => P x)', axiom: true,
+  {statement:
+   '@P 0 & forall {n. NN n & P n => P (succ n)} => (NN x => P x)', axiom: true,
    name: 'induction',
    description: 'axiom: induction for natural numbers'
   },
-  {statement: '@P 0 & (P n => P (succ n)) & NN x => P x',
+  {statement:
+   '@P 0 & forall {n. NN n & P n => P (succ n)} & NN x => P x',
    name: 'induction2',
    description: 'convenient statement of induction for natural numbers',
    proof: `(1 induction)
@@ -108,7 +114,7 @@ Toy.exercise(
    precheck: function(step, path_arg, v) {
      const path = step.asPath(path_arg);
      const term = step.get(path);
-     if (term instanceof Call && term.isBoolean()) {
+     if (step.isAsmPath(path)) {
        const frees = term.freeVarsMap();
        const vbl = frees.get(v);
        /* Consider including these lines, which should probably
@@ -127,6 +133,7 @@ Toy.exercise(
      return false;
    },
    action: function(step, path_arg, name) {
+     // The path refers to an asm.
      const path = step.asPath(path_arg);
      const asm = step.get(path);
 
@@ -135,12 +142,41 @@ Toy.exercise(
      // This replaces the assumption with the lambda call.
      const step2 = rules.r1(step, path, rules.eqnSwap(reducer));
      // Apply the induction2 fact to the modified assumption.
-     // Do not reduce introduced lambdas.
      const step3 = rules.rewriteOnly(step2, path, 'induction2', false);
-     // This has effect much like using plain rewrite in step3.
-     const step4 = rules.simplifyAsms(step3);
-     return rules.reduceAll(step4, '').justify('induct', arguments, [step]);
+     // Reduce the lambda calls.
+     const reduced = rules.reduceAll(step3, '');
+     // Items b and c here are at the locations of the inductive
+     // case and the base case.
+     const map = reduced.matchSchema('a & b & c => d');
+     let imported = reduced;
+     if (map) {
+       const asms = map.a;
+       const subgoal = map.b;
+       // These are the locally free variables of the "forall"
+       // containing the subgoal.
+       const frees = ToySet.from(subgoal.freeVarSet());
+       // This is the path to the "forall" enclosing the future subgoal.
+       const sgpath = Toy.parse('a & forall {x. a2 => c2} & c => d').pathTo('a2');
+       assert(sgpath);
+       // Now import relevant assumptions of the step into the
+       // subgoal.
+       asms.scanConj(a => {
+         // We now import assumptions other than the base case from
+         // the step into the subgoal.  These are the "a" part of
+         // the schema.
+         //
+         // This mechanism does not import assumptions with variables
+         // not free in the (quantified) subgoal, such as the variable
+         // replaced there by the quantified variable.
+         if (frees.superset(ToySet.from(a.freeVarSet()))) {
+           const addc = rules.andCondition;
+           imported = addc(imported, sgpath, a);
+         }
+       });
+     }
+     return imported.justify('induct', arguments, [step]);
    },
+   autoSimplify: noSimplify,
    inputs: {site: 1},
    menu: 'induction on {term}',
    description: 'set up induction',
@@ -218,58 +254,80 @@ Toy.exercise(
   {exertion: 'nat4'},
   
   {statement: '@NN n => 0 + n = n',
-   proof: `(1 goal (t ((0 + n) = n)))
-           (2 induct (s 1) (path "/left") "n")
-           (3 simplifySite (s 2) (path "/left/right"))
-           (4 rewrite (s 3) (path "/left/right") (t (NN 0)))
-           (5 rewrite (s 4) (path "/left/right/right/left")
-              (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
-           (6 rewrite (s 5) (path "/left/left/right")
-              (t (((x = y) => ((f x) = (f y))) == T)))
-           (7 rewrite (s 6) (path "/left/right") (t (NN 0)))`,
+   proof:
+   `(1 goal (t ((NN n) => ((0 + n) = n))))
+    (2 induct (s 1) (path "/left/right") "n")
+    (3 simplifySite (s 2) (path "/left/right"))
+    (4 simplifySite (s 3) "/left")
+    (5 subgoal (s 4) (path "/left/right/arg/body"))
+    (6 rewrite (s 5) (path "/left/left/left/left")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (7 simplifySite (s 6) "/left")
+    (8 rewrite (s 7) (path "/left/left/left")
+       (t ((x = y) => (((f x) = (f y)) == T))))
+    (9 trueBy0 (s 4) (path "/left/right/arg/body") (s 8))
+    (10 simplifySite (s 9) "")`,
    simplifier: true,
   },
   {exertion: 'add1'},
 
   {statement: '@NN a & NN b => NN (a + b)',
-   proof: `(1 goal (t (NN (a + b))))
-           (2 induct (s 1) (path "/left") "b")
-           (3 rewrite (s 2) (path "/left/left/right/right/arg")
-              (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
-           (4 rewrite (s 3) (path "/left/left/left/left/right")
-              (t (((NN n) => (NN (succ n))) == T)))
-           (5 rewrite (s 4) (path "/left/left/left/right/arg")
-              (t ((NN a) => ((a + 0) = a))))
-           (6 removeTypeAsm (s 5) (path "/left/right"))`},
+   proof:
+   `(1 goal (t (((NN x) & (NN y)) => (NN (x + y)))))
+    (2 induct (s 1) (path "/left/right") "y")
+    (3 simplifySite (s 2) (path "/left/right"))
+    (4 subgoal (s 3) (path "/left/right/arg/body"))
+    (5 rewrite (s 4) (path "/left/left/left/left/arg")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (6 rewrite (s 5) (path "/left/left/left/left")
+       (t ((NN n) => (NN (succ n)))))
+    (7 trueBy0 (s 3) (path "/left/right/arg/body") (s 6))
+    (8 simplifySite (s 7) "")`,
+   simplifier: true,
+  },
   {exertion: 'add1.5'},
 
   {statement: '@NN x & NN y & NN z => (x + y) + z = x + (y + z)',
    proof:
-   `(1 tautologous
-      (t ((((x + y) + z) = (x + (y + z))) => (((x + y) + z) = (x + (y + z))))))
-    (2 induct (s 1) (path "/left") "z")
-    (3 rewrite (s 2) (path "/left/right/right/right")
-      (t ((NN x) => ((x + 0) = x))))
-    (4 rewrite (s 3) (path "/left/left/left/left/left")
-      (t ((NN x) => ((x + 0) = x))))
-    (5 rewrite (s 4) (path "/left/left/left/left/left") (t ((x = x) == T)))
-    (6 rewrite (s 5) (path "/left/left/left/left/right/right/right")
-      (t (((NN x) & (NN d)) => ((x + (succ d)) = (succ (x + d))))))
-    (7 rewrite (s 6) (path "/left/left/left/left/left/right/right")
-      (t (((NN x) & (NN d)) => ((x + (succ d)) = (succ (x + d))))))
-    (8 rewrite (s 7) (path "/left/left/left/left/left/left/left/right/left")
-      (t (((NN x) & (NN d)) => ((x + (succ d)) = (succ (x + d))))))
-    (9 rewrite (s 8) (path "/left/left/left/left/left/left/left")
-      (t (((x = y) => ((f x) = (f y))) == T)))
-    (10 rewrite (s 9) (path "/left/left/left/left/left/right")
-      (t (((NN x) & (NN y)) => (NN (x + y)))))
+   `(1 goal
+       (t ((((NN x) & (NN y)) & (NN z)) => (((x + y) + z) = (x + (y + z))))))
+    (2 induct (s 1) (path "/left/right") "z")
+    (3 simplifySite (s 2) (path "/left/right"))
+    (4 simplifySite (s 3) "/left")
+    (5 subgoal (s 4) (path "/left/right/arg/body"))
+    (6 rewrite (s 5) (path "/left/left/left/left/left/left")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (7 simplifySite (s 6) "/left")
+    (8 rewrite (s 7) (path "/left/left/left/left/left/right/right")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (9 rewrite (s 8) (path "/left/left/left/left/left/right")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (10 simplifySite (s 9) "/left")
     (11 rewrite (s 10) (path "/left/left/left/left/left")
-      (t (((NN x) & (NN y)) => (NN (x + y)))))
-    (12 removeTypeAsm (s 11) (path "/left/right"))`},
+        (t ((x = y) => (((f x) = (f y)) == T))))
+    (12 trueBy0 (s 4) (path "/left/right/arg/body") (s 11))
+    (13 simplifySite (s 12) "")`,
+  },
   {exertion: 'add2'},
 
   {exertion: 'add3',
-   statement: '@NN x & NN y => succ x + y = succ (x + y)'
+   statement: '@NN x & NN y => succ x + y = succ (x + y)',
+   proof:
+   `(1 goal (t (((NN x) & (NN y)) => (((succ x) + y) = (succ (x + y))))))
+    (2 induct (s 1) (path "/left/right") "y")
+    (3 simplifySite (s 2) (path "/left/right"))
+    (4 rewrite (s 3) (path "/left/right") (t ((NN n) => (NN (succ n)))))
+    (5 subgoal (s 4) (path "/left/right/arg/body"))
+    (6 rewrite (s 5) (path "/left/left/left/left/left")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (7 assumedEq (s 6) (path "/left/left/left/left/left/left/arg")
+       (t (((succ x) + n) = (succ (x + n)))))
+    (8 rewrite (s 7) (path "/left/left/left/left/left/right/arg")
+       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (9 simplifySite (s 8) "/left")
+    (10 rewrite (s 9) (path "/left/right") (t ((NN n) => (NN (succ n)))))
+    (11 trueBy0 (s 4) (path "/left/right/arg/body") (s 10))
+    (12 simplifySite (s 11) "")`,
   },
 
   {exertion: 'add4',
@@ -300,16 +358,15 @@ Toy.exercise(
   {exertion: 'addx8',
    statement: '@NN x & NN y => (x + y = 0 => y = 0)',
    proof:
-   `(1 goal (t (((x + y) = 0) => (y = 0))))
-    (2 induct (s 1) (path "/left") "y")
-    (3 rewrite (s 2) (path "/left/left/right/right/left/left")
-       (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
-    (4 rewrite (s 3) (path "/left/left/left/left/right/right/left")
-       (t ((NN n) => (((succ n) = 0) == F))))
-    (5 simplifySite (s 4) (path "/left"))
-    (6 rewrite (s 5) (path "/left/right")
-       (t (((NN a) & (NN b)) => (NN (a + b)))))
-    (7 removeTypeAsm (s 6) (path "/left/left/right"))`
+   `(1 goal (t (NN x & NN y => (x + y = 0 => y = 0))))
+    (2 induct (s 1) (path "/left/right") "y")
+    (3 simplifySite (s 2) (path "/left"))
+    (4 subgoal (s 3) (path "/left/right/arg/body"))
+    (5 rewrite (s 4) (path "/left/left/left/left/left/left") (t (((NN a) & (NN d)) => ((a + (succ d)) = (succ (a + d))))))
+    (6 rewrite (s 5) (path "/left/left/left/left/left") (t ((NN n) => (((succ n) = 0) == F))))
+    (7 simplifySite (s 6) "/left")
+    (8 trueBy0 (s 3) (path "/left/right/arg/body") (s 7))
+    (9 simplifySite (s 8) "")`
   },
 
   {exertion: 'addxbonus',
@@ -335,6 +392,18 @@ Toy.exercise(
    'forall {x. Rock x | Country x} & exists {x. not (Rock x)} \
      => exists {x. Country x}'
   },
+];
+
+// Any facts with "proof" changed to "pruf" can be removed.
+// In effect they are just comments or remnants.  
+decls.forEach(decl => {
+  delete decl.pruf;
+});
+
+// Declare all the exercises.
+Toy.exercise(
+  'nat',
+  ... decls
 );
 
   /*
