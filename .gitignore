@@ -1,2 +1,6 @@
 /jsc/
+/dist/
+.vscode/
+*.code-workspace
+*.sublime*
 go.mod
