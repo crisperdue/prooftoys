@@ -1,0 +1,114 @@
+
+  /* Visit https://aka.ms/tsconfig to read more about this file */
+
+{
+  // "include": ["js/*.js"],
+  "files": [
+    "js/site.js", 
+    "js/util.js", 
+    "js/prelim.js", 
+    "js/expr.js",
+    "js/xutil.js",
+  ],
+
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "target": "es2020",
+    "outDir": "dist",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "skipLibCheck": true,
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    /* Projects */
+    // "incremental": true,
+    // "composite": true,
+    // "tsBuildInfoFile": "./.tsbuildinfo",
+    // "disableSourceOfProjectReferenceRedirect": true,
+    // "disableSolutionSearching": true,
+    // "disableReferencedProjectLoad": true,
+    
+    /* Language and Environment */
+    // "experimentalDecorators": true,
+    // "emitDecoratorMetadata": true,
+    // "noLib": true,
+    // "useDefineForClassFields": true,
+    // "moduleDetection": "auto",
+    
+    /* Modules */
+    // "rootDir": "./",
+    // "moduleResolution": "node10",
+    // "baseUrl": "./",
+    // "paths": {},
+    // "rootDirs": [],
+    // "typeRoots": [],
+    // "types": [],
+    // "allowUmdGlobalAccess": true,
+    // "moduleSuffixes": [],
+    // "allowImportingTsExtensions": true,
+    // "resolvePackageJsonExports": true,
+    // "resolvePackageJsonImports": true,
+    // "customConditions": [],
+    // "resolveJsonModule": true,
+    // "allowArbitraryExtensions": true,
+    // "noResolve": true,
+    
+    /* JavaScript Support */
+    // "maxNodeModuleJsDepth": 1,
+    
+    /* Emit */
+    // "declaration": true,
+    // "declarationMap": true,
+    // "emitDeclarationOnly": true,
+    // "sourceMap": true,
+    // "inlineSourceMap": true,
+    // "outFile": "./",
+    // "removeComments": true,
+    // "noEmit": true,
+    // "importHelpers": true,
+    // "downlevelIteration": true,
+    // "sourceRoot": "",
+    // "mapRoot": "",
+    // "inlineSources": true,
+    // "emitBOM": true,
+    // "newLine": "crlf",
+    // "stripInternal": true,
+    // "noEmitHelpers": true,
+    // "noEmitOnError": true,
+    // "preserveConstEnums": true,
+    // "declarationDir": "./",
+    
+    /* Interop Constraints */
+    // "isolatedModules": true,
+    // "verbatimModuleSyntax": true,
+    // "isolatedDeclarations": true,
+    // "allowSyntheticDefaultImports": true,
+    // "preserveSymlinks": true,
+    
+    /* Type Checking */
+    // "strict": true,
+    // "noImplicitAny": true,
+    // "strictNullChecks": true,
+    // "strictFunctionTypes": true,
+    // "strictBindCallApply": true,
+    // "strictPropertyInitialization": true,
+    // "noImplicitThis": true,
+    // "useUnknownInCatchVariables": true,
+    // "alwaysStrict": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "exactOptionalPropertyTypes": true,
+    // "noImplicitReturns": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noUncheckedIndexedAccess": true,
+    // "noImplicitOverride": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // "allowUnusedLabels": true,
+    // "allowUnreachableCode": true,
+    
+    /* Completeness */
+    // "skipDefaultLibCheck": true,
+  }
+}
