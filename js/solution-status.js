@@ -395,7 +395,7 @@ var methods = {
       if (isEmpty(givsInfo) || !isEmpty(overages) || solInfo.others.size()) {
         return null;
       }
-      var result = {
+      let result = {
         // This step does not preclude other solutions.
         type: 'confirmation',
         givens: givsInfo.givens,
@@ -438,7 +438,7 @@ var methods = {
       // This step (may) show progress toward a solution or solutions.
       // The caller can use the status to describe the progress toward
       // solution(s).
-      result = {
+      let result = {
         type: isConditional ? 'tentative' : 'equiv',
         solutions: solsInfo,
         absentGivens: absentGivens,
@@ -560,7 +560,7 @@ var methods = {
     var messagesByName = {};
     var byVar = sol.byVar;
     for (var name in byVar) {
-      var msg = messageForName(name, byVar[name]);
+      const msg = messageForName(name, byVar[name]);
       if (msg) {
         messagesByName[name] = msg;
       }
@@ -584,8 +584,8 @@ var methods = {
     // Count of variables fully solved for.
     var fullySolvedCount = 0;
     for (var i = 0; i < varsList.length; i++) {
-      var name = varsList[i];
-      var msg = messagesByName[name];
+      const name = varsList[i];
+      const msg = messagesByName[name];
       if (msg) {
         results.push(msg);
         if (msg.match(/Solves for \w*$/)) {

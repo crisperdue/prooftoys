@@ -206,6 +206,7 @@ function ProofEditor(options_arg={}) {
     .append($status)
     .append($formParent)
     .append(proofButtons.$node)
+    // @ts-expect-error 2352
     .append(this._wksControls.node)
     .append(stepEditor.$proofErrors)
     .append(self.$uxDialog())
@@ -1537,6 +1538,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
     var n = step.stepNumber;
     // Search for the first input field that is compatible with the
     // selection and fill it in with selection information.
+    // @ts-ignore 2345
     form.find('input').each(function() {
       var fieldType = this.name.match(/^(.*?)\d*$/)[1];
       if (expr) {
@@ -2294,11 +2296,13 @@ RuleMenu.prototype._update = function() {
         // rewrite priority with an extra leading space.
         html = ' ' + html;
       }
-      var info = {ruleName: 'rewrite',
-                  ruleArgs: [thisStep, sitePath, statement],
-                  html: html,
-                  $node: $node};
-      itemInfos.push(info);
+      const result = {
+        ruleName: 'rewrite',
+        ruleArgs: [thisStep, sitePath, statement],
+        html: html,
+        $node: $node
+      };
+      itemInfos.push(result);
     });
   }
 

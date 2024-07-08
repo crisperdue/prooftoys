@@ -807,13 +807,13 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   }
   $proofStep.data('proofStep', step);
   step.stepNode = dom($proofStep);
-  var elide = wantLeftElision(step, self);
+  var elide = wantLeftElision(step);
   // This initializes hasLeftElision.
   step.hasLeftElision = elide;
   var $wff = $(renderWff(step));
   hackOnRendering($wff);
   $stepAndNum.append($('<wffblock->').append($wff));
-  $proofStep.find('.stepInfo').html(formattedStepInfo(step));
+  $proofStep.find('.stepInfo').append(formattedStepInfo(step));
 
   // Event handling:
 
@@ -872,9 +872,12 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   });
 
   // Set up "hover" event handling on the stepNode.
-  $proofStep.hover(function(event) {
-      hoverStep(step, event.type === 'mouseenter' ? 'in' : 'out');
-    });
+  $proofStep.on('mouseenter', function(event) {
+      hoverStep(step, 'in');
+  });
+  $proofStep.on('mouseleave', function(event) {
+      hoverStep(step, 'out');
+  });
 
   // Deleter events
   // If there is no deleter, this sets nothing up.
@@ -1943,7 +1946,7 @@ function adjacentSteps(step1, step2) {
 }
 
 /**
- * Returns HTML text describing the renderable step, displayed after
+ * Returns a jQuery node describing the renderable step, displayed after
  * the formula on each proof line.  This is an HTML description of a
  * proof step followed by references to other steps this one depends
  * on.  This finds the description in the rule's 'description'
@@ -2255,7 +2258,7 @@ function renderInference(step) {
     // step being renderable (or not).
     var match = String(stepNum).match(/(.*?)([0-9]+)$/);
     if (match) {
-      prefix = match[1] + (match[2] - 1) + '.';
+      prefix = match[1] + (Number(match[2]) - 1) + '.';
     }
   }
   const editor = getProofDisplay(step).proofEditor;
@@ -2265,25 +2268,25 @@ function renderInference(step) {
   controller.setSteps(steps);
   var tooltip = Toy.escapeHtml(Toy.getRuleInfo(step).tooltip || '');
   var $subproof = $('<div class=inferenceDisplay></div>');
+  var $details = null;
   if (step.ruleName === 'fact') {
     var $header = $('<div class=proofHeader><b>Proof of <span class=math>'
                     + step.toHtml()
                     + '</span></b><br>'
                     + '<i>' + tooltip + '</i>'
                     + ' <span class=subproofHider>hide &#x25be;</span></div>');
-    var $details = null;
   } else {
     var $header = $('<div class=proofHeader>' +
-                    '<span class=subproofHider>hide &#x25be;</span>' +
-                    ' <span class="techDetailsButton noselect">' +
-                    '  more info</span>' +
-                    '</div>');
-    var $details = $('<div class="techDetails hidden">' +
-                     '<b>' + (step.ruleArgs.length ? 'Rule ' : 'Proof of ') +
-                     step.ruleName + '</b> ' +
-                     computeHeaderArgInfo(step) + '<br>' +
-                     '<i>' + tooltip + '</i>' +
-                     '</div>');
+      '<span class=subproofHider>hide &#x25be;</span>' +
+      ' <span class="techDetailsButton noselect">' +
+      '  more info</span>' +
+      '</div>');
+    $details = $('<div class="techDetails hidden">' +
+      '<b>' + (step.ruleArgs.length ? 'Rule ' : 'Proof of ') +
+      step.ruleName + '</b> ' +
+      computeHeaderArgInfo(step) + '<br>' +
+      '<i>' + tooltip + '</i>' +
+      '</div>');
   }
   $header.find('.subproofHider')
     .on('click', function() { clearSubproof(step); });
@@ -2384,7 +2387,7 @@ function computeHeaderArgInfo(step) {
 function computeFirstOrdinal(steps) {
   var lowest = 0;
   for (var i = 0; i < steps.length; i++) {
-    var lowest = steps[i].getBase().ordinal;
+    lowest = steps[i].getBase().ordinal;
     if (lowest >= 1) {
       return lowest;
     }
@@ -2501,7 +2504,7 @@ function exprHandleOver(event) {
     // Flag as ".popped" the first parent .expr containing an ".above",
     // if any.
     $expr.add($expr.parents('.fullExpr'))
-      .filter(function() { return $(this).children('.above').length})
+      .filter(function() { return $(this).children('.above').length > 0})
       // Adding the two sets puts the result in document order.
       // Self/nearest parent should then be last.
       .last()
@@ -2528,7 +2531,7 @@ function exprHandleOut(event) {
 
   // Unmark any "popped" ancestor.  See exprHandleOver.
   $target.add($target.parents('.fullExpr'))
-    .filter(function() { return $(this).children('.above').length})
+    .filter(function() { return $(this).children('.above').length > 0})
     .last()
     .toggleClass('popped', false);
   // Clear display of the textual hover path.
