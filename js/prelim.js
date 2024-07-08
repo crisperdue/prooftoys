@@ -405,9 +405,11 @@ function asPath(arg) {
     segments = arg;
   } else if (arg instanceof Bindings) {
     // If a Bindings, reverse it into an array and go from there.
+    let bindings = arg;
     segments = [];
     while (bindings != null) {
       segments.unshift(bindings.from);
+      bindings = bindings.more;
     }
   } else if (typeof arg === 'string') {
     const cached = pathCache.get(arg);
