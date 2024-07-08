@@ -4,11 +4,21 @@
 {
   // "include": ["js/*.js"],
   "files": [
+    "js/global.d.ts",
     "js/site.js", 
     "js/util.js", 
     "js/prelim.js", 
     "js/expr.js",
     "js/xutil.js",
+    "js/engine.js",
+    "js/unify.js",
+    "js/logic.js",
+    "js/numbers.js",
+    "js/natnums.js",
+    "js/step-editor.js",
+    "js/rendering.js",
+    "js/solution-status.js",
+    "js/proof-data.js",
   ],
 
   "compilerOptions": {
