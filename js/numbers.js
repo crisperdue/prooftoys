@@ -3532,7 +3532,6 @@ declare(
     }
   },
   {statement: 'b != 0 => a * b / b = a',
-   simplifier: true,
    proof: function() {
      return (rules.fact('a * b / c = a * (b / c)')
              .andThen('instVar', 'b', 'c')

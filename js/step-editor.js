@@ -1465,7 +1465,7 @@ StepEditor.prototype.checkArgs = function(args, minArgs, reportError) {
   var required = (typeof minArgs == 'number'
                   ? minArgs
                   : args.length);
-  for (var i = 0; i < args.length; i++) {
+  for (let i = 0; i < args.length; i++) {
     var value = args[i];
     if (value === undefined && i < required) {
       if (reportError) {
@@ -1474,14 +1474,14 @@ StepEditor.prototype.checkArgs = function(args, minArgs, reportError) {
       return false
     } else if (value instanceof Error) {
       if (reportError) {
-	this.error(value.message);
+	      this.error(value.message);
       }
       return false;
     }
   }
   // Truncate the args array to omit optional args not supplied,
   // in case the rule looks at its arguments array.
-  for (var i = required; i < args.length; i++) {
+  for (let i = required; i < args.length; i++) {
     if (args[i] === undefined) {
       args.length = i;
       break;
@@ -1540,22 +1540,22 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
     form.find('input').each(function() {
       var fieldType = this.name.match(/^(.*?)\d*$/)[1];
       if (expr) {
-	// TODO: Don't use the selection as a term if it will be used
-	// by the rule as a site.
-	if (fieldType == 'term') {
+        // TODO: Don't use the selection as a term if it will be used
+        // by the rule as a site.
+        if (fieldType == 'term') {
           // TODO: Use printing that is guaranteed reversible.
-	  this.value = expr.toString();
+          this.value = expr.toString();
           // Stop iteration.
-	  return false;
-	}
+          return false;
+        }
       } else {
-	if (fieldType == 'step'
-	    || (fieldType == 'equation' && step.isEquation())
-	    || (fieldType == 'implication' && step.implies())) {
-	  this.value = n;
+        if (fieldType == 'step'
+            || (fieldType == 'equation' && step.isEquation())
+            || (fieldType == 'implication' && step.implies())) {
+          this.value = n;
           // Stop iteration.
-	  return false;
-	}
+          return false;
+        }
       }
     });
   }
@@ -1848,11 +1848,11 @@ StepEditor.prototype.fillFromForm = function(ruleName, args) {
       // Non-empty when referring to one of multiple args of the same
       // type.  Then the value of the entry in rule.info.inputs is a
       // list.
-      var which = match[2];
+      var which = Number(match[2]);
       var inputs = rule.info.inputs;
       var argNum = which ? inputs[type][which - 1] : inputs[type];
       if (!argNum) {
-	throw new Error('Internal error: no input descriptor for type ' + type);
+	      throw new Error('Internal error: no input descriptor for type ' + type);
       }
       try {
         // Try to fill in the actual argument.
