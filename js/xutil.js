@@ -777,7 +777,6 @@ var constantTypes = new Map(Object.entries({
   mod: fun2Type(),
   '**': fun2Type(),
   neg: funType(),
-  recip: funType(),
   sqrt: funType(),
   // Absolute value
   abs: funType(),
