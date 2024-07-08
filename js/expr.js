@@ -171,7 +171,7 @@ TermMap.prototype.unbind = function() {
 TermMap.prototype._set = ToyMap.prototype.set;
 
 TermMap.prototype.set = function(term, name) {
-  throw new Error('Unsupported: TermMap.set', term, name);
+  throw new Error('Unsupported: TermMap.set');
 };
 
 
@@ -3565,7 +3565,7 @@ function checkFnMatch(schema, fn, expr, map, bindings) {
       return reduced;
     }
     if (reducible.isLambdaCall()) {
-      reduced = rules.reduce(reduced, '/right');
+      reduced = Toy.rules.reduce(reduced, '/right');
     } else {
       return null;
     }
