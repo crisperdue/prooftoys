@@ -6,6 +6,7 @@
 
 (function() {
 
+const abort = Toy.abort;
 const Expr = Toy.Expr;
 const Atom = Toy.Atom;
 const Call = Toy.Call;
