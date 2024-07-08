@@ -3,6 +3,9 @@
 interface Window {
   _paq: Array;
   $: function;
+  proofEditor: any;
+  rCounter: number;
+  dCounter: number;
 }
 
 interface Element {
