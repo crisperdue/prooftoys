@@ -72,10 +72,10 @@ var _tautologies = new Map();
  * or alternatively, never "arrange" them here, leaving that task
  * to rules such as "replace".
  */
-Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
+Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   // Note: when splitting Step and Expr, make a version of this just
   // for rules.assert, and use that in any primitive inference rules.
-  var ruleDeps = Array.from(ruleDeps || []);
+  var ruleDeps = Array.from(deps || []);
   // TODO: Consider removing this special treatment of rule "r" here.
   if (!retain && ruleName !== 'r') {
     for (var i = 0; i < ruleDeps.length; i++) {
@@ -1856,7 +1856,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
       // "descend"
       var partInfo = factMatcher.descend;
       // TODO: Handle pureOnly here.
-      var result = _locateMatchingFact(term,
+      let result = _locateMatchingFact(term,
                                        partInfo.schema,
                                        partInfo.parts,
                                        cxt);
