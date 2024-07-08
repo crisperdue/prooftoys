@@ -271,10 +271,6 @@ function tokenizeType(input) {
     const t = {name: match[1], index: match.index};
     tokens.push(t);
   }
-  if (tokens.lastIndex != undefined && tokens.lastIndex !== input.length) {
-    console.log('In', input);
-    console.log(`lastIndex ${tokens.lastIndex} vs $(input.length)`);
-  }
   return tokens;
 }
   
@@ -285,13 +281,7 @@ function tokenizeType(input) {
  * separater.
  */
 function parseType(input) {
-  return parseTokens(tokenizeType(input));
-}
-
-/**
- * Parses an array of tokens; see above.
- */
-function parseTokens(tokens) {
+  let tokens = tokenizeType(input);
   const end = {name: '(end)', index: -1};
 
   // Get next token, advancing past it, or "end" if no more.
@@ -335,7 +325,7 @@ function parseTokens(tokens) {
         break;
       default:
         if (name.match(/^(t[0-9]*)$/)) {
-          var type = new TypeVariable(name);
+          let type = new TypeVariable(name);
           left = left ? new FunctionType(type, left) : type;
         } else {
           assert(false, 'Bad token in type term: "' + name + '"');
@@ -2243,7 +2233,6 @@ Toy.TypeVariable = TypeVariable;
 Toy.TypeConstant = TypeConstant;
 Toy.FunctionType = FunctionType;
 Toy.tokenizeType = tokenizeType;
-Toy.parseTokens = parseTokens;
 Toy.parseType = parseType;
 Toy.isBooleanBinOp = isBooleanBinOp;
 
