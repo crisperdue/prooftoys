@@ -21,7 +21,6 @@ const termify = Toy.termify;
 const mathParse = Toy.mathParse;
 const call = Toy.call;
 const equal = Toy.equal;
-const implies = Toy.implies;
 const lambda = Toy.lambda;
 
 const Expr = Toy.Expr;
@@ -3122,7 +3121,6 @@ declare(
       // NOTE that saving proved tautologies as we already do has
       //   potential for accomplishing similar improvements, though it
       //   would work better if saved variable names were standardized.
-      var taut = null;
       var names = wff.freeVars();
       // Not really a loop, just works with the first free (variable!)
       // name returned.
