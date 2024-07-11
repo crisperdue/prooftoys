@@ -1,5 +1,5 @@
 
-  /* Visit https://aka.ms/tsconfig to read more about this file */
+// Visit https://aka.ms/tsconfig to read more about this file
 
 {
   // "include": ["js/*.js"],
@@ -25,6 +25,9 @@
     "allowJs": true,
     "checkJs": true,
     "target": "es2020",
+    // Declarations here are experimental:
+    "declarationDir": "./dts",
+    "declaration": true,
     "outDir": "dist",
     "lib": ["es2022", "dom", "dom.iterable"],
     "skipLibCheck": true,
