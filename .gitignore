@@ -1,5 +1,5 @@
-/jsc/
 /dist/
+/dts/
 .vscode/
 *.code-workspace
 *.sublime*
