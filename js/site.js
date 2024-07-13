@@ -252,7 +252,7 @@ Toy.queryParams = {};
 // with space.
 Toy.rawQueryParams = {};
 
-(function () {
+( function () {
   function decode(s) {
     return decodeURIComponent(s.replace(/\+/g, " "));
   }
@@ -264,7 +264,7 @@ Toy.rawQueryParams = {};
     Toy.queryParams[decode(match[1])] = decode(match[2]);
     Toy.rawQueryParams[decode(match[1])] = match[2];
   }
-})();
+} )();
 
 
 //// For mobile site "hamburgers":
