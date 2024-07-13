@@ -1,5 +1,6 @@
 /dist/
 /dts/
+/js/
 .vscode/
 *.code-workspace
 *.sublime*
