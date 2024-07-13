@@ -9,15 +9,10 @@
 //// theorem-proving.
 ////
 
-// We avoid changes to the global environment except through namespace
-// "Toy".
-window.Toy = window.Toy || {};
-
-/** @type {any} */
-var Toy;
+namespace Toy {
 
 // Alternative to jQuery $(fn).  Used by our own "$" function above.
-Toy.onReady = function(fn) {
+export var onReady = function(fn) {
   if (document.readyState === 'loading') {  // Loading hasn't finished yet
     document.addEventListener('DOMContentLoaded', fn);
   } else {  // DOMContentLoaded has already fired
@@ -48,8 +43,6 @@ window.$ = function(x) {
 jQuery.extend($, jQuery);
 
 
-(function() {
-
   // This ensures that all of our scripts can refer to _paq even in
   // strict mode, and even if Matomo support is not loaded.  If Matomo
   // loads later, it will set up _paq when it loads because it checks
@@ -74,19 +67,19 @@ jQuery.extend($, jQuery);
   // @ts-ignore
   Error.stackTraceLimit = 100;
 
-  // These browsers are known to be incompatible with Prooftoys.
-  Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
+  // These browsers are known to be incompatible with Proofexport var .
+  export var incompatible = !!navigator.userAgent.match(/ MSIE /);
 
   // These browsers, if recent enough, should be compatiable
   // with Prooftoys.
-  Toy.compatible = !!navigator.userAgent.match(/(Chrome|Firefox|Safari)[/]/);
+  export var compatible = !!navigator.userAgent.match(/(Chrome|Firefox|Safari)[/]/);
 
   /**
    * Track an event with Matomo.  Truthy return value iff _paq is
    * initialized.  Needs an action possibly followed by a string
    * and possibly a number.
    */
-  Toy.trackAppEvent = function(action, ...more) {
+  export var trackAppEvent = function(action, ...more) {
     _paq && _paq.push(['trackEvent', 'App', action, ...more]);
     console.log('App event:', action, ...more);
     return !!_paq;
@@ -96,7 +89,7 @@ jQuery.extend($, jQuery);
    * Enable/disable Matomo Heatmap sesssion recording.
    * also stores the target state in Toy:uxOK.
    */
-  Toy.setSessionRecording = function(on) {
+  export var setSessionRecording = function(on) {
     localStorage.setItem('Toy:uxOK', on ? 'true' : 'false');
     _paq && _paq.push(['HeatmapSessionRecording::' +
       (on ? 'enable' : 'disable')]);
@@ -120,7 +113,7 @@ jQuery.extend($, jQuery);
    *
    * Obsolete.
    */
-  Toy.extends = function(constructor, parent) {
+  Toy['extends'] = function(constructor, parent) {
     if (typeof constructor === 'function' && typeof parent === 'function') {
       // Set up the prototype for the child class.
       // Instances will see this as their constructor.
@@ -140,7 +133,7 @@ jQuery.extend($, jQuery);
   /**
    * Adds some methods / properties to a class given the constructor.
    */
-  function addMethods(constructor, properties) {
+  export function addMethods(constructor, properties) {
     Object.assign(constructor.prototype, properties);
   }
 
@@ -149,7 +142,7 @@ jQuery.extend($, jQuery);
    * checking carefully that it is a jQuery singleton.
    * @type {function(jQuery): Element}
    */
-  function dom($node) {
+  export function dom($node) {
     if ($node instanceof jQuery) {
       if ($node.length === 0) {
         abort('No element');
@@ -177,7 +170,7 @@ jQuery.extend($, jQuery);
    * Escapes text to guarantee it is not interpreted as containing
    * HTML markup.
    */
-  Toy.escapeHtml = function(str) {
+  export var escapeHtml = function(str) {
     return str.replace(/[&<>"'\/`]/g,  // help the emacs parser: "]
       function(match) { return _HTML_MAP[match]; });
   };
@@ -185,7 +178,7 @@ jQuery.extend($, jQuery);
 
   //// PROPERTY ACCESS
 
-  var ownProperty = Object.prototype.hasOwnProperty;
+  export var ownProperty = Object.prototype.hasOwnProperty;
 
   /**
    * Version of hasOwnProperty that is not accessed through the
@@ -193,7 +186,7 @@ jQuery.extend($, jQuery);
    * "hasOwnProperty" property.
    * 
    */
-  function hasOwn(thing, name) {
+  export function hasOwn(thing, name) {
     return ownProperty.call(thing, name);
   };
 
@@ -201,7 +194,7 @@ jQuery.extend($, jQuery);
    * Gets the named property if it is an own property, otherwise
    * returns "undefined".
    */
-  function getOwn(thing, name) {
+  export function getOwn(thing, name) {
     return (hasOwn(thing, name) ? thing[name] : undefined);
   };
 
@@ -209,7 +202,7 @@ jQuery.extend($, jQuery);
    * Returns an object with no prototype, having the own properties
    * of the input object as its properties.
    */
-  function ownProperties(object) {
+  export function ownProperties(object) {
     // If it has no prototype just return it.
     if (Object.getPrototypeOf(object) === null) {
       return object;
@@ -225,7 +218,7 @@ jQuery.extend($, jQuery);
    * Converts an object/map into a Map from own property names to their
    * values.
    */
-  function asMap(object) {
+  export function asMap(object) {
     const result = new Map();
     Object.getOwnPropertyNames(object).forEach(function(name) {
       result.set(name, object[name]);
@@ -237,7 +230,7 @@ jQuery.extend($, jQuery);
    * Converts an array of keys and an array of values into a Map
    * from key to value
    */
-  function mapify(keys, values) {
+  export function mapify(keys, values) {
     const map = new Map();
     for (let i = 0; i < keys.length; i++) {
       map.set(keys[i], values[i]);
@@ -250,7 +243,7 @@ jQuery.extend($, jQuery);
    * from the arguments, an alternating sequence of string keys and
    * values.  The argument list length must be even.
    */
-  function object0(_args) {
+  export function object0(_args) {
     var result = Object.create(null);
     var nargs = arguments.length;
     if (nargs % 2) {
@@ -266,7 +259,7 @@ jQuery.extend($, jQuery);
    * Removes from the first map (plain object) all entries having keys
    * enumerable in the second map
    */
-  function removeAll(map1, map2) {
+  export function removeAll(map1, map2) {
     for (var k in map2) {
       delete map1[k];
     }
@@ -277,7 +270,7 @@ jQuery.extend($, jQuery);
    * "own" properties of the second map, keeping only entries for keys
    * that appear in both.
    */
-  function removeExcept(map1, map2) {
+  export function removeExcept(map1, map2) {
     for (var k in map1) {
       if (!hasOwn(map2, k)) {
         delete map1[k];
@@ -285,7 +278,7 @@ jQuery.extend($, jQuery);
     }
   }
 
-  function isIterable(value) {
+  export function isIterable(value) {
     // Note that Object is the identity function if value is an Object.
     return Symbol.iterator in Object(value);
   }
@@ -298,7 +291,7 @@ jQuery.extend($, jQuery);
    * converted to the set of its keys with Object.keys, or a Set.
    * @type {function(any): Set}
    */
-  function asSet(object) {
+  export function asSet(object) {
     return (object instanceof Set
       ? object
       : object.constructor === Object
@@ -312,7 +305,7 @@ jQuery.extend($, jQuery);
    * Returns a new Set containing all the elements of each of its zero
    * or more arguments, coerced to Sets with asSet.
    */
-  function union(...args) {
+  export function union(...args) {
     const result = new Set();
     args.forEach(setLike => asSet(setLike).forEach(x => result.add(x)));
     return result;
@@ -322,7 +315,7 @@ jQuery.extend($, jQuery);
    * Returns a new Set containing all values that are elements of each
    * of its arguments, each coerced to a Set with asSet.
    */
-  function intersection(arg1, ...rest) {
+  export function intersection(arg1, ...rest) {
     const result = union(arg1);
     const sets = rest.map(asSet);
     result.forEach(x => {
@@ -340,7 +333,7 @@ jQuery.extend($, jQuery);
    * Returns the items in the first argument that are not also
    * in the second argument, taking each as a set.
    */
-  function setDiff(big_arg, small_arg) {
+  export function setDiff(big_arg, small_arg) {
     const result = union(big_arg);
     const small = asSet(small_arg);
     result.forEach(x => { if (small.has(x)) { result.delete(x); } });
@@ -351,7 +344,7 @@ jQuery.extend($, jQuery);
    * Returns true iff the second argument contains every element of the
    * first argument, otherwise false, taking each as a Set.
    */
-  function isSubset(arg1, arg2) {
+  export function isSubset(arg1, arg2) {
     const small = asSet(arg1);
     const big = asSet(arg2);
     if (small.size > big.size) {
@@ -369,7 +362,7 @@ jQuery.extend($, jQuery);
    * True if both arguments are sets and each "has"
    * the same elements.
    */
-  function equalSets(arg1, arg2) {
+  export function equalSets(arg1, arg2) {
     assert(arg1 instanceof Set, 'Not a Set: {1}', arg1);
     assert(arg2 instanceof Set, 'Not a Set: {1}', arg2);
     if (arg1.size !== arg2.size) {
@@ -390,7 +383,7 @@ jQuery.extend($, jQuery);
    * dates, strings, and Arrays.  Returns negative, zero, or positive,
    * suitable for Array.sort.
    */
-  function dexCompare(a, b) {
+  export function dexCompare(a, b) {
     const t1 = typeof a;
     const t2 = typeof b;
     //  Array.isArray here should probably be just "instanceof Array".
@@ -472,7 +465,7 @@ jQuery.extend($, jQuery);
    * error situations, that resist most uses as a normally returned
    * object.
    */
-  function locked(obj) {
+  export function locked(obj) {
     const toss = () => { abort('Locked'); };
     const handler = {
       get: function(target, key, receiver) {
@@ -497,7 +490,7 @@ jQuery.extend($, jQuery);
    * Returns the locked object, or if not locked, the object
    * you passed in, which cannot be null or undefined.
    */
-  function unlock(obj) {
+  export function unlock(obj) {
     return obj.$locked$ || obj;
   }
 
@@ -516,7 +509,7 @@ jQuery.extend($, jQuery);
    *   Fortunately we use this for Error objects and it's fine for that.
    *   See "locked" above for code that should work in Safari.
    */
-  function strict(obj) {
+  export function strict(obj) {
     let handler = {
       get: function(obj, prop) {
         if (prop == 'self') {
@@ -536,7 +529,7 @@ jQuery.extend($, jQuery);
   /**
    * Returns a truthy value if any of the arguments is a LogicError.
    */
-  function errant(...values) {
+  export function errant(...values) {
     return values.some(x => x instanceof Error);
   }
 
@@ -546,7 +539,7 @@ jQuery.extend($, jQuery);
   // JavaScript is defined to use IEEE 64-bit floating point in "round
   // to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
   // the greatest integer value we "allow".
-  var MAX_INT = Math.pow(2, 53) - 1;
+  export var MAX_INT = Math.pow(2, 53) - 1;
 
   /**
    * Polyfill for the new standard Math.sign.
@@ -570,7 +563,7 @@ jQuery.extend($, jQuery);
    * Knuth-style div defined by the floor of the quotient.
    * Always yields an integer.
    */
-  function div(n, divisor) {
+  export function div(n, divisor) {
     return Math.floor(n / divisor);
   }
 
@@ -579,7 +572,7 @@ jQuery.extend($, jQuery);
    * the sign of the divisor.  Obeys the rule that
    * b * div(a, b) + mod(a, b) = a.
    */
-  function mod(n, divisor) {
+  export function mod(n, divisor) {
     return n - divisor * div(n, divisor);
   }
 
@@ -589,7 +582,7 @@ jQuery.extend($, jQuery);
    * except if either number's absolute value is less than 1, returns 0.
    * For correct results supply inputs <= MAX_INT.
    */
-  function gcd(x, y) {
+  export function gcd(x, y) {
     var x1 = Math.trunc(Math.abs(x));
     var y1 = Math.trunc(Math.abs(y));
     var a = Math.max(x1, y1);
@@ -611,7 +604,7 @@ jQuery.extend($, jQuery);
    * Returns the LCM of two integers.  This always returns a positive
    * value regardless of their signs.
    */
-  function lcm(x, y) {
+  export function lcm(x, y) {
     return Math.abs(x * y) / gcd(x, y);
   }
 
@@ -623,7 +616,7 @@ jQuery.extend($, jQuery);
    * and eventually finding a GCD and/or reducing a fraction to lowest
    * terms.
    */
-  function npd(x, y, n) {
+  export function npd(x, y, n) {
     var xFactor = nextPrimeFactor(x, n);
     var yFactor = nextPrimeFactor(y, n);
     // This is the largest number that need by considered as a factor
@@ -651,7 +644,7 @@ jQuery.extend($, jQuery);
    * Returns an array of all prime numbers up to 32000.  This is enough
    * to support factoring of any number less than 10**9.
    */
-  function getPrimes() {
+  export function getPrimes() {
     "use strict";
     if (primes.length === 0) {
       primes.push(2);
@@ -683,7 +676,7 @@ jQuery.extend($, jQuery);
    * is greater than "last" and a factor of x, possibly x itself.
    * Returns null if there is none.
    */
-  function nextPrimeFactor(x, last) {
+  export function nextPrimeFactor(x, last) {
     var abs = Math.abs(x);
     var primes = getPrimes();
     for (var i = 0; i < primes.length; i++) {
@@ -702,7 +695,7 @@ jQuery.extend($, jQuery);
    * prime factor within its search range (up to approximately the
    * square root of a billion).
    */
-  function primeFactors(n) {
+  export function primeFactors(n) {
     const result = [];
     if (Number.isInteger(n) && n > 0) {
       var p = 0;
@@ -723,7 +716,7 @@ jQuery.extend($, jQuery);
    * it.  Useful for debugging values of expressions in arbitrary
    * contexts including expressions in return statements.
    */
-  function debug(value) {
+  export function debug(value) {
     console.log('Value:', value);
     if (value) {
       console.log(' =', value.toString());
@@ -736,7 +729,7 @@ jQuery.extend($, jQuery);
    * Checks for Error values.  Calls the function with the error
    * if it is an Error, otherwise just returns the value.
    */
-  function check(v, f = Toy.abort) {
+  export function check(v, f = Toy.abort) {
     return v instanceof Error ? f(v) : v;
   }
 
@@ -745,7 +738,7 @@ jQuery.extend($, jQuery);
    * in the given order.  Tokens in the input are separated by spaces.
    * Searches the printed forms of all registered facts.
    */
-  function factSquish(pattern) {
+  export function factSquish(pattern) {
     const start = '(?<=[( ])';
     const end = '(?=[ )])';
     const wrap = s => start + s + end;
@@ -775,7 +768,7 @@ jQuery.extend($, jQuery);
    * and all arguments following it are accessible as {1}, {2}, and so
    * on.
    */
-  function assertTrue(condition, message, ...args) {
+  export function assertTrue(condition, message, ...args) {
     if (!condition) {
       var step;
       if (typeof message === 'function') {
@@ -788,7 +781,7 @@ jQuery.extend($, jQuery);
   }
 
   // Use the application's assertTrue function for assertions.
-  var assert = assertTrue;
+  export var assert = assertTrue;
 
   /**
    * Returns a string showing the top-level properties
@@ -796,7 +789,7 @@ jQuery.extend($, jQuery);
    * given, it should be a map from key name to a function
    * for presenting the value of any key with that name.
    */
-  function debugString(o, specials) {
+  export function debugString(o, specials) {
     if (o === null) {
       return 'null';
     }
@@ -863,7 +856,7 @@ jQuery.extend($, jQuery);
     }
   }
 
-  Toy.alert = function(message) {
+  export var  alert = function(message) {
     if (Toy.testing) {
       console.error('Alert: ' + message);
     } else {
@@ -876,7 +869,7 @@ jQuery.extend($, jQuery);
   /**
    * Is the given object empty, i.e. has it any enumerable properties?
    */
-  function isEmpty(o) {
+  export function isEmpty(o) {
     for (var key in o) {
       return false;
     }
@@ -886,7 +879,7 @@ jQuery.extend($, jQuery);
   /**
    * Returns the number of enumerable properties possessed by the object.
    */
-  function mapSize(o) {
+  export function mapSize(o) {
     var n = 0;
     for (var key in o) {
       n++;
@@ -900,7 +893,7 @@ jQuery.extend($, jQuery);
    * not specifically of type Object are treated as plain values and
    * not made writable, enumerable, or configurable.
    */
-  function configure(object, properties) {
+  export function configure(object, properties) {
     var define = Object.defineProperty;
     for (var key in properties) {
       var value = properties[key];
@@ -960,7 +953,7 @@ jQuery.extend($, jQuery);
    * The result has a property "done" that has the value true iff
    * it has been called at least once.
    */
-  function memo(fn) {
+  export function memo(fn) {
     var value;
     var memoFn = function() {
       if (memoFn.done) {
@@ -984,7 +977,7 @@ jQuery.extend($, jQuery);
    * Alternatively, supply extra non-Object arguments and access them
    * as {1}, {2}, etc..  This presumably is more efficient.
    */
-  function format(fmt, map_arg) {
+  export function format(fmt, map_arg) {
     var map = (map_arg && map_arg.constructor === Object)
       ? map_arg
       : arguments;
@@ -1008,7 +1001,7 @@ jQuery.extend($, jQuery);
   /**
    * If text begins and ends with left and right parens, trims them off.
    */
-  function trimParens(text) {
+  export function trimParens(text) {
     return text.replace(/^\((.*)\)$/, '$1');
   }
 
@@ -1019,7 +1012,7 @@ jQuery.extend($, jQuery);
    * desired ordering.  The items passed to "sort" have their "key"
    * properties in the same order as their insertion into the object.
    */
-  function sortMap(object, comparator) {
+  export function sortMap(object, comparator) {
     // This method guarantees retention of insertion order
     // of the object keys in ES6+.
     const a = Object.getOwnPropertyNames(object);
@@ -1032,6 +1025,8 @@ jQuery.extend($, jQuery);
   }
 
   //// ABORTS AND ERRORS
+
+  export let thrown;
 
   /**
    * Unconditionally throws an Error (used by assert).  Convenient, and
@@ -1053,7 +1048,7 @@ jQuery.extend($, jQuery);
    * to not make the debugger pause here.
    * @type {function(any, ...any): never}
    */
-  function abort(msg, ...args) {
+  export function abort(msg, ...args) {
     /** @type {function(any): never} */
     const thrower = e => {
       Toy.thrown = e;
@@ -1108,7 +1103,7 @@ jQuery.extend($, jQuery);
    * string, treat that as options preceding the other arguments.
    * Also accepts an initial "options" argument, a plain object.
    */
-  function error(options, msg, ...args) {
+  export function error(options, msg, ...args) {
     if (typeof options === 'string') {
       return error({}, options, msg, ...args);
     } else {
@@ -1128,7 +1123,7 @@ jQuery.extend($, jQuery);
    * then that, else a new Error by formatting the message
    * and message args.
    */
-  function errify(error, msg, ...args) {
+  export function errify(error, msg, ...args) {
     return (error instanceof Error
       ? error
       : new Error(Toy.format(msg, ...args)));
@@ -1136,9 +1131,9 @@ jQuery.extend($, jQuery);
 
   /**
    * Returns a string indicating the invocation point of
-   * the function calling this.
+   * the export function calling this.
    */
-  function invoker(n = 0) {
+  export function invoker(n = 0) {
     const stack = new Error().stack.split('\n');
     let place = stack[n + 2];
     if (place.match(/andThen/)) {
@@ -1153,7 +1148,7 @@ jQuery.extend($, jQuery);
    *
    * TODO: Consider merging the two.
    */
-  function newError(...args) {
+  export function newError(...args) {
     const e = error(...args);
     return e;
   }
@@ -1172,13 +1167,14 @@ jQuery.extend($, jQuery);
    * returns the function's value.
    */
   const bind = f => f();
+  export const let_ = f => f();
 
   // Calls the function with no arguments in a context where the given
   // property of Toy has the given value and returns its value if it
   // returns at all.  Guarantees restoration of the old value on exit
   // from the function.  If the property was not previously present,
   // adds it, restoring it afterward to undefined.
-  function rebind(name, value, fn) {
+  export function rebind(name, value, fn) {
     assert(typeof name === 'string',
       'Property name must be a string: {1}', name);
     try {
@@ -1195,22 +1191,22 @@ jQuery.extend($, jQuery);
   // A stack of "exit target" objects currently available for use.
   // Entry to withExit pushes one onto the stack, and exit from it
   // pops it off.
-  let activeTargets = [];
+  export let activeTargets = [];
 
-  // Exit object (function) identifying the stack level we want to
+  // Exit object (export function) identifying the stack level we want to
   // unwind to.
-  let exitTarget = null;
+  export let exitTarget = null;
 
   // Value to return from the exit.
-  let exitValue = undefined;
+  export let exitValue = undefined;
 
   // A counter for debugging, helps the developer distinguish different
   // targets.
-  let targetID = 1;
+  export let targetID = 1;
 
   // Unwind the stack.  You may want to tell the debugger to "Never
   // Pause" here:
-  function unwind() {
+  export function unwind() {
     throw undefined;  // You may ask the debugger not to pause here.
   }
 
@@ -1224,7 +1220,7 @@ jQuery.extend($, jQuery);
    * aborts with an assertion failure.  This is a limited form of
    * call-with-current-continuation.
    */
-  function withExit(fn) {
+  export function withExit(fn) {
     const id = targetID++;
     const exitFn = value => {
       // If the exit will fail, notice it before unwinding the stack.
@@ -1275,7 +1271,7 @@ jQuery.extend($, jQuery);
    *
    * TODO: Rename to "aborted".
    */
-  function catchAborts(fn, proceed = false) {
+  export function catchAborts(fn, proceed = false) {
     let success = false;
     // For good measure:
     Toy.thrown = null;
@@ -1301,7 +1297,7 @@ jQuery.extend($, jQuery);
    * Truthy iff x is nullish or an Error object.  Use this to
    * test the results of inference steps.
    */
-  function isError(x) {
+  export function isError(x) {
     return x == null || x instanceof Error;
   }
 
@@ -1315,7 +1311,7 @@ jQuery.extend($, jQuery);
    * problems may occur.  For recovery from specific problems consider
    * using dynamically bound recovery functions.
    */
-  function normalReturn(fn, ...args) {
+  export function normalReturn(fn, ...args) {
     let normalValue;
     if (catchAborts(() => normalValue = fn.apply(undefined, args))) {
       return undefined;
@@ -1328,7 +1324,7 @@ jQuery.extend($, jQuery);
    * Calls the given function, catching any aborts during the call.
    * Returns the function value, or undefined if aborted.
    */
-  function value(fn) {
+  export function value(fn) {
     let normalValue;
     if (catchAborts(() => normalValue = fn())) {
       return undefined;
@@ -1341,7 +1337,7 @@ jQuery.extend($, jQuery);
    * Calls the given function, catching any aborts during the call.
    * Returns the function value, or the thrown value if aborted.
    */
-  function try_(fn) {
+  export function try_(fn) {
     let value;
     const failed = catchAborts(() => value = fn());
     if (failed) {
@@ -1362,7 +1358,7 @@ jQuery.extend($, jQuery);
    * intended for catching errors that are expected as part of normal
    * operation.
    */
-  function catching(fn, ...args) {
+  export function catching(fn, ...args) {
     try {
       return fn.apply(undefined, args);
     } catch (e) {
@@ -1380,7 +1376,7 @@ jQuery.extend($, jQuery);
   // Stack of active NestedTimers.
   const _timers = [];
 
-  function NestedTimer(name) {
+  export function NestedTimer(name) {
     this.name = name;
     this.elsewhere = 0;
   }
@@ -1416,7 +1412,7 @@ jQuery.extend($, jQuery);
    * in case of an error during parsing.  Legal JSON includes
    * null, but not undefined.
    */
-  function jsonParse(string) {
+  export function jsonParse(string) {
     try {
       return JSON.parse(string);
     } catch (e) {  // OK here, only catches error from JSON.parse.
@@ -1429,7 +1425,7 @@ jQuery.extend($, jQuery);
    * as in JSON.stringify.  Uses a "space" value of 1 for human
    * readability.
    */
-  function stringify(object, replacer) {
+  export function stringify(object, replacer) {
     return JSON.stringify(object, replacer, 1);
   }
 
@@ -1500,7 +1496,7 @@ jQuery.extend($, jQuery);
    * Now experimentally allows anything if the entire name begins
    * with an open parenthesis and ends with a closing one.
    */
-  function checkDocName(name) {
+  export function checkDocName(name) {
     const result = name.match(/^[(].*[)]$|^([a-zA-Z0-9_ /.#-]+)$/);
     const term = (Toy.parse && name.startsWith('(')
       ? catching(() => Toy.parse(name))
@@ -1518,7 +1514,7 @@ jQuery.extend($, jQuery);
    * data, or undefined if there is no such document or the value
    * is not valid JSON.
    */
-  function readDoc(name) {
+  export function readDoc(name) {
     if (checkDocName(name)) {
       return jsonParse(localStorage.getItem('Toy:doc:' + name));
     }
@@ -1528,7 +1524,7 @@ jQuery.extend($, jQuery);
    * Atomically replaces the content of the named document with a JSON
    * encoding of the given value, returning true.
    */
-  function writeDoc(name, content) {
+  export function writeDoc(name, content) {
     if (checkDocName(name)) {
       localStorage.setItem('Toy:doc:' + name, stringify(content));
       return true;
@@ -1539,7 +1535,7 @@ jQuery.extend($, jQuery);
    * Removes the document with the given name, returning true unless the
    * name is invalid.
    */
-  function rmDoc(name) {
+  export function rmDoc(name) {
     if (checkDocName(name)) {
       localStorage.removeItem('Toy:doc:' + name);
       return true;
@@ -1549,7 +1545,7 @@ jQuery.extend($, jQuery);
   /**
    * Returns an array of the names of all stored documents.
    */
-  function lsDocs() {
+  export function lsDocs() {
     const prefix = 'Toy:doc:';
     const len = prefix.length;
     const names = [];
@@ -1567,7 +1563,7 @@ jQuery.extend($, jQuery);
    * starting with the given base, followed by {base}.1, {base}.2,
    * and so on.
    */
-  function genDocName(base) {
+  export function genDocName(base) {
     const names = lsDocs();
     let n = 0;
     let name;
@@ -1583,7 +1579,7 @@ jQuery.extend($, jQuery);
    * searching for the given regex pattern in the document proof state.
    * Returns an array of names of docs containing the pattern.
    */
-  function grepDocs(pattern) {
+  export function grepDocs(pattern) {
     return lsDocs().filter(function(name) {
       const str = readDoc(name).proofState;
       return str.match(pattern);
@@ -1597,13 +1593,13 @@ jQuery.extend($, jQuery);
    * TODO: Consider replacing double quotes within steps with single
    * quotes and converting back when reading.
    */
-  function docSteps(name) {
+  export function docSteps(name) {
     const doc = readDoc(name);
     const steps = doc.proofState.split('\n').slice(1, -2);
     return steps;
   }
 
-  function proofData(regexes) {
+  export function proofData(regexes) {
     const docs = lsDocs().sort();
     const data = [];
     for (const docName of docs) {
@@ -1620,7 +1616,7 @@ jQuery.extend($, jQuery);
    * of proofs that can be loaded to solve problems.  Unlike official
    * "exercises", these do not have order or dependencies.
    */
-  function dumpProofData() {
+  export function dumpProofData() {
     const data = proofData([/^\/equations[0-9/#]*$/,
       /^\/lunar\/$/,
       /^\/fake-proof\/$/,
@@ -1633,7 +1629,7 @@ jQuery.extend($, jQuery);
    * Returns a proofData record for the document with the given name,
    * or a falsy value if none is found.
    */
-  function findProofData(docName) {
+  export function findProofData(docName) {
     return Toy.proofData.find(x => x.doc === docName);
   }
 
@@ -1648,7 +1644,7 @@ jQuery.extend($, jQuery);
   // Internal function that returns a localstorage key for information
   // associated with a specific proof editor at a specific URL.  Here
   // "ped" is short for proof editor.
-  function pedKey(ed) {
+  export function pedKey(ed) {
     return Toy.format('Toy:ped:{1}', ed.proofEditorId);
   }
 
@@ -1657,7 +1653,7 @@ jQuery.extend($, jQuery);
    * data, or undefined if there is no such proof editor or the value is
    * not valid JSON.
    */
-  function getOtherPedState(ed) {
+  export function getOtherPedState(ed) {
     return jsonParse(localStorage.getItem(pedKey(ed)));
   }
 
@@ -1665,7 +1661,7 @@ jQuery.extend($, jQuery);
    * Replaces the stored information about the given proof editor with a
    * JSON encoding of the given value, returning true.
    */
-  function saveState(ed, content) {
+  export function saveState(ed, content) {
     localStorage.setItem(pedKey(ed), stringify(content));
   }
 
@@ -1679,7 +1675,7 @@ jQuery.extend($, jQuery);
   // is unloaded.
 
   // TODO: Rename to noteStatus, also saveStatus, etc..
-  function noteState(ed, content) {
+  export function noteState(ed, content) {
     const key = Toy.format('Toy:pid:{1}:{2}', pid, ed.proofEditorId);
     localStorage.setItem(key, stringify(content));
   }
@@ -1688,7 +1684,7 @@ jQuery.extend($, jQuery);
    * Returns true if the named document has at least one recorded user
    * in some other pid or proof editor, otherwise false.
    */
-  function isDocHeldFrom(name, ped) {
+  export function isDocHeldFrom(name, ped) {
     const pidPattern = /^Toy:pid:(.*?):(.*)/;
     const id = ped.proofEditorId;
     let found = false;
@@ -1713,7 +1709,7 @@ jQuery.extend($, jQuery);
    * Calls its functional arg with each key and value of the
    * localStorage object.
    */
-  function eachStore(fn) {
+  export function eachStore(fn) {
     const store = localStorage;
     for (let i = 0; i < store.length; i++) {
       const key = store.key(i);
@@ -1724,7 +1720,7 @@ jQuery.extend($, jQuery);
   /**
    * Removes all information about proof editors in the current context.
    */
-  function releaseThisPid() {
+  export function releaseThisPid() {
     const keys = [];
     const prefix = 'Toy:pid:' + pid + ':';
     for (let i = 0; i < localStorage.length; i++) {
@@ -1747,7 +1743,7 @@ jQuery.extend($, jQuery);
    * 1000.  Report the time and number of calls through the console log.
    * Use Function.bind to presupply arguments to the function.
    */
-  function benchmark(fn, count) {
+  export function benchmark(fn, count) {
     count = count || 1000;
     var start = Date.now();
     for (var i = 0; i < count; i++) {
@@ -1763,17 +1759,17 @@ jQuery.extend($, jQuery);
   // Plain object where we can hang events for completion of module
   // loading.  Indicate module loaded using Toy.loaded.trigger('xutil'),
   // and notice loading with e.g. Toy.loaded.on('xutil', ... ).
-  Toy.loaded = jQuery({});
+  export const loaded = jQuery({});
 
 
   //// ToySet
 
-  function ToySet(stringifier) {
+  export function ToySet(stringifier) {
     this.map = {};
     this.stringifier = stringifier || String;
   }
 
-  var emptySet = Object.freeze(new ToySet());
+  export var emptySet = Object.freeze(new ToySet());
 
   /**
    * Add an element, returning this.
@@ -1931,7 +1927,7 @@ jQuery.extend($, jQuery);
    * string, and a default value when getting a key that is not in the
    * map.  The default default is the undefined value.
    */
-  function ToyMap(stringifier, dfault) {
+  export function ToyMap(stringifier, dfault) {
     this.map = {};
     this.stringifier = stringifier || String;
     this.dfault = dfault;
@@ -2067,14 +2063,14 @@ jQuery.extend($, jQuery);
 
   // Finding and reporting different stack contexts where code runs:
 
-  Toy.callStacks = new Map();
+  export const callStacks = new Map();
 
-  function noticeStack(msg) {
+  export function noticeStack(msg) {
     var stack = new Error(msg).stack;
     Toy.callStacks.set(stack, (Toy.callStacks.get(stack) || 0) + 1);
   }
 
-  function showStacks() {
+  export function showStacks() {
     const stacks = Toy.callStacks;
     for (const s of stacks.keys()) {
       const n = stacks.get(s);
@@ -2090,7 +2086,7 @@ jQuery.extend($, jQuery);
    * the next time the event system becomes idle.  When the function
    * runs, the Refresher becomes ready for another activation.
    */
-  function Refresher(fn) {
+  export function Refresher(fn) {
     this.fn = fn;
     this._timer = null;
     this.active = false;
@@ -2121,7 +2117,7 @@ jQuery.extend($, jQuery);
    * It will run after the current initialization or event handler
    * completes.
    */
-  function soonDo(action) {
+  export function soonDo(action) {
     return window.setTimeout(action, 0);
   }
 
@@ -2129,7 +2125,7 @@ jQuery.extend($, jQuery);
    * Returns a promise that resolves to undefined after the given number of
    * milliseconds.
    */
-  const sleep = millis => new Promise(resolve => setTimeout(resolve, millis));
+  export const sleep = millis => new Promise(resolve => setTimeout(resolve, millis));
 
   /**
    * Do the action as soon as possible after giving the page a chance to
@@ -2341,7 +2337,7 @@ jQuery.extend($, jQuery);
    * domain "top level" such as co.uk or herokuapp.com.  Returns true
    * iff it shortens the domain, else false.
    */
-  function useParentOrigin() {
+  export function useParentOrigin() {
     const domain = document.domain;
     const a = domain.split('.');
     try {
@@ -2364,7 +2360,7 @@ jQuery.extend($, jQuery);
    * threads.  If a numeric argument and URI string are supplied, will
    * immediately create and add that many Worker threads.
    */
-  function MessageQueue(n, uri) {
+  export function MessageQueue(n, uri) {
     // Queue of messages to be sent.  Each item is a data structure with
     // properties "promise", "resolve", "reject", and "wrapper", where
     // the wrapper has a "channelType", an "id", and "data", which is
@@ -2388,6 +2384,9 @@ jQuery.extend($, jQuery);
       }
     }
   }
+
+  // Set this to true to request logging of RPCs.
+  export let logRpc = false;
 
   // Will be set to the time of the first call to rpcLog.
   var rpcLogStart;
@@ -2628,7 +2627,7 @@ jQuery.extend($, jQuery);
    * Assign a function to the "onmessage" property to receive RPC
    * results.
    */
-  function FakeRpcWorker(receiver) {
+  export function FakeRpcWorker(receiver) {
     this.receiver = receiver;
     this.onmessage = null;
   }
@@ -2865,7 +2864,7 @@ jQuery.extend($, jQuery);
    * This observer creation code is from an example in the
    * csswg draft.
    */
-  Toy.sizeObserver = new ResizeObserver(entries => {
+  export let sizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
       /*
       let cs = window.getComputedStyle(entry.target);
@@ -2887,16 +2886,10 @@ jQuery.extend($, jQuery);
    * the element is the target.
    * 
    */
-  function onResize(element, handler) {
+  export function onResize(element, handler) {
     element.handleResize = handler;
     Toy.sizeObserver.observe(element);
   };
-
-  //// Export public names.
-
-  Toy.onResize = onResize;
-
-  Toy.dom = dom;
 
   // This is a circled latin small letter i.
   // An "info" character without circle is available at &#x2139;
@@ -2904,23 +2897,16 @@ jQuery.extend($, jQuery);
   // but it is not supported in Chrome fonts.
   // In font-awesome 4.7.0 "fa fa-info-circle".  See also the "warning
   // sign", &#x26a0, and font-awesome 4.7.0 "fa fa-question-circle".
-  Toy.infoChar = '<span style="color:blue">&#x24d8;</span>';
+  export var infoChar = '<span style="color:blue">&#x24d8;</span>';
 
-  Toy.hasOwn = hasOwn;
+  /*
+
   Toy.getOwn = getOwn;
   Toy.addMethods = addMethods;
   // Done at point of definition because "extends" is a reserved word.
   // Toy.extends = extends;
 
   Toy.MAX_INT = MAX_INT;
-  Toy.div = div;
-  Toy.mod = mod;
-  Toy.gcd = gcd;
-  Toy.lcm = lcm;
-  Toy.npd = npd;
-  Toy.getPrimes = getPrimes;
-  Toy.nextPrimeFactor = nextPrimeFactor;
-  Toy.primeFactors = primeFactors;
 
   Toy.debug = debug;
   Toy.check = check;
@@ -3038,4 +3024,6 @@ jQuery.extend($, jQuery);
   // for interactive testing
   Toy._testTriangle = _testTriangle;
 
-})();
+*/
+
+}  // namespace;
