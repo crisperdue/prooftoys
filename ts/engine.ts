@@ -4,11 +4,13 @@
 // and definitons, matching and fact management that can be separated
 // from actual deduction.
 
+/// <reference path="util.ts" />
+
 'use strict';
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
-(function() {
+namespace Toy {
 
 //// THEOREMS AND RULES
 
@@ -2887,4 +2889,4 @@ Toy._tautologies = _tautologies;
 Toy._locateMatchingFact = _locateMatchingFact;
 Toy._conjunctionSchema = conjunctionSchema;
 
-})();
+}  // namespace;

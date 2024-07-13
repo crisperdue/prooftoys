@@ -4,7 +4,7 @@
 
 'use strict';
 
-(function() {
+namespace Toy {
 
 const abort = Toy.abort;
 const Expr = Toy.Expr;
@@ -438,4 +438,4 @@ Toy.fullUnifTypes = fullUnifTypes;
 Toy.checkTriv = checkTriv;
 Toy.coreUnifTypes = coreUnifTypes;
 
-})();
+}  // namespace;

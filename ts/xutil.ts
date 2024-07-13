@@ -5,7 +5,7 @@
 
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
-(function() {
+namespace Toy {
 
 'use strict';
 
@@ -2261,4 +2261,4 @@ Toy._dereference = dereference;
 
 Toy.loaded.trigger('xutil');
 
-})();
+}  // namespace;

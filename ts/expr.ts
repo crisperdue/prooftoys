@@ -2,7 +2,7 @@
 
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
-(function() {
+namespace Toy {
 
 'use strict';
 
@@ -4043,4 +4043,4 @@ Toy.neverWhenBound = neverWhenBound;
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;
 
-})();
+}  // namespace;

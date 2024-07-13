@@ -7,7 +7,7 @@
 
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
-(function() {
+namespace Toy {
 
 'use strict';
 
@@ -518,4 +518,4 @@ Toy.asPath = asPath;
 
 Toy._pathCache = pathCache;
 
-})();
+}  // namespace;

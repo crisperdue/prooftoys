@@ -9,7 +9,7 @@ window.Toy = window.Toy || {};
 // depend on any other Prooftoys script, so its functions can be used
 // before the other scripts are loaded.
 
-+function() {
+namespace Toy {
 
 /**
  * Track uncaught errors with Matomo.
@@ -441,4 +441,4 @@ if (!Object.prototype.$$) {
   Object.defineProperty(Object.prototype, '$$', {get: debstr});
 }
 
-}();
+}  // namespace;

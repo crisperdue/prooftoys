@@ -4,7 +4,7 @@
 // site generation.  It generates standard page content
 // that would otherwise be repeated in various files.
 
-(function() {
+namespace Toy {
   // Try the HTML5 way, otherwise look for a script
   // named boilerplate.js.
   var element = document.currentScript
@@ -68,4 +68,4 @@
     getScript('logic.js');
     getScript('numbers.js');
   }
-})();
+}  // namespace;

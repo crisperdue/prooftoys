@@ -1,6 +1,6 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
-(function() {
+namespace Toy {
 
 'use strict';
 
@@ -642,4 +642,4 @@ Toy._analyze1Solution = analyze1Solution;
 Toy._analyzeSolutions = analyzeSolutions;
 Toy._isLowestTerms = isLowestTerms;
 
-})();
+}  // namespace;

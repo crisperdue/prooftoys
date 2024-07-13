@@ -4,7 +4,7 @@
 
 // Set everything up immediately on load, avoiding changes to
 // the global environment except through namespace "Toy".
-+function() {
+namespace Toy {
 
 const assert = Toy.assertTrue;
 
@@ -464,4 +464,4 @@ Toy.exercise(
 
 // And this is the end of Advanced Addition World!
 
-}();
+}  // namespace;

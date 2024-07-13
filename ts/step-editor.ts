@@ -2,7 +2,7 @@
 
 // Set everything up immediately on load, avoiding changes to
 // the global environment except through namespace "Toy".
-(function() {
+namespace Toy {
 
 'use strict';
 
@@ -2963,4 +2963,4 @@ Toy.StepEditor = StepEditor;
 Toy.tryRuleSoon = tryRuleSoon;
 Toy.exerciseSteps = exerciseSteps;
 
-})();
+}  // namespace;

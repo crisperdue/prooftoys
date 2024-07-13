@@ -8,7 +8,7 @@
 
 // Set all of this up immediately on load, but avoiding changes
 // to the global environment except in namespace "Toy".
-(function() {
+namespace Toy {
 
 'use strict';
 
@@ -2918,4 +2918,4 @@ Toy.modes = {
   subproofs: true
 };
 
-})();
+}  // namespace;

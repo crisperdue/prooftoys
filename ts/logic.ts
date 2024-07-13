@@ -2,7 +2,7 @@
 //
 // Definitions and theorems of pure logic
 
-+function() {
+namespace Toy {
 
 'use strict';
 
@@ -7265,4 +7265,4 @@ Toy.moverFacts = moverFacts;
 Toy.rightChain = rightChain;
 Toy.leftChain = leftChain;
 
-}();
+}  // namespace;

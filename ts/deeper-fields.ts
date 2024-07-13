@@ -8,7 +8,7 @@
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
-+function() {
+namespace Toy {
 
 const rules = Toy.rules;
 const addRule = Toy.addRule;
@@ -206,4 +206,4 @@ declare(
 
 );
 
-}();
+}  // namespace;
