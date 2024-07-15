@@ -18,7 +18,7 @@
     "ts/rendering.ts",
     "ts/solution-status.ts",
     "ts/proof-data.js",
-    // Put a tsconfig.json file in this dir to control it
+    // Put a tsconfig.json file in the tests/ dir for this one:
     // "tests/tests.js",
     // The following are present basically to be copied to js/ folder.
     "ts/boilerplate.ts",
@@ -40,14 +40,15 @@
     // Seems to need this whole library to be in a subfolder, e.g.
     // modifies effect of outDir if rootDir is not ".".
     // I.e. with "composite": true, outputs go to ts/js and ts/dts.
+    // But now I cannot reproduce this! Syntax of relative pathnames??
     //
-    // "composite": true,
+    "composite": true,
     //
     // Directory structure
-    "rootDir": "./ts",
+    "rootDir": "ts",
     "declaration": true,
-    "declarationDir": "./dts",
-    "outDir": "./js",
+    "declarationDir": "dts",
+    "outDir": "js",
     "lib": ["es2022", "dom", "dom.iterable"],
     "skipLibCheck": true,
     "module": "commonjs",

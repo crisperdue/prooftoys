@@ -829,7 +829,7 @@ export declare class ToyMap {
    * given, it should be a map from key name to a function
    * for presenting the value of any key with that name.
    */
-  export function debugString(o, specials) {
+  export function debugString(o, specials=undefined) {
     if (o === null) {
       return 'null';
     }
@@ -973,7 +973,7 @@ export declare class ToyMap {
    * returns that value, otherwise the value is undefined.  Remembers
    * the array length at the start and uses that value throughout.
    */
-  function each(array, fn) {
+  export function each(array, fn) {
     var len = array.length;
     assert(typeof len === 'number',
       'Not an array: {1}', array);
