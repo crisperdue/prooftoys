@@ -9,6 +9,8 @@
 //// theorem-proving.
 ////
 
+console.log('good morning');
+
 namespace Toy {
 
 // Alternative to jQuery $(fn).  Used by our own "$" function above.
@@ -42,7 +44,7 @@ window.$ = function(x) {
 }
 jQuery.extend($, jQuery);
 
-declare class ToySet {
+export declare class ToySet {
   constructor(stringifier?: any);
   map: {};
   stringifier: any;
@@ -61,8 +63,8 @@ declare class ToySet {
   toString(): any;
 }
 
-declare namespace ToySet {
- //function from_(container: any): any;
+export declare namespace ToySet {
+  //function from_(container: any): any;
 }
 
 export declare class ToyMap {
@@ -806,7 +808,7 @@ export declare class ToyMap {
    * and all arguments following it are accessible as {1}, {2}, and so
    * on.
    */
-  export function assertTrue(condition, message, ...args) {
+  export function assertTrue(condition=undefined, message=undefined, ...args) {
     if (!condition) {
       var step;
       if (typeof message === 'function') {
@@ -2167,7 +2169,7 @@ export declare class ToyMap {
    * repaint, regardless of some of the claims made on
    * stackoverflow.com.
    */
-  function afterRepaint(action) {
+  export function afterRepaint(action) {
     return window.setTimeout(action, 10);
   }
 

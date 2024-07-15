@@ -20,6 +20,14 @@ var abort = Toy.abort;
 //// changing names of bound variables.
 ////
 
+export declare class Bindings {
+  constructor(from: any, to: any, more: any);
+  from: any;
+  to: any;
+  more: any;
+  toString(): string;
+}
+
 /**
  * Binding (for a set of variables).  From is usually a variable name,
  * "to" is some information about its binding in some scope.  "More"
@@ -27,7 +35,7 @@ var abort = Toy.abort;
  * a set of bindings rather than just one.  Used in copying to replace
  * occurrences of variables with replacements.
  */
-function Bindings(from, to, more) {
+export function Bindings(from, to, more) {
   this.from = from;
   this.to = to;
   this.more = more;
@@ -57,7 +65,7 @@ Bindings.prototype.toString = function() {
  * Returns the number of bindings represented by this object,
  * or you could say, the depth of nesting.
  */
-function numBindings(bindings) {
+export function numBindings(bindings) {
   var i = 0;
   for (var b = bindings; b; b = b.more) {
     i++;
@@ -69,7 +77,7 @@ function numBindings(bindings) {
  * Finds and returns the Binding object in bindings with "from" equal
  * to the target, or null if it finds no such binding.
  */
-function findBinding(target, bindings) {
+export function findBinding(target, bindings) {
   return bindings == null
     ? null
     : (target == bindings.from)
@@ -81,7 +89,7 @@ function findBinding(target, bindings) {
  * Like findBinding, but searches for a binding with "to" part equal
  * to the target value.
  */
-function findBindingValue(targetValue, bindings) {
+export function findBindingValue(targetValue, bindings) {
   return bindings == null
     ? null
     : (targetValue === bindings.to)
@@ -93,7 +101,7 @@ function findBindingValue(targetValue, bindings) {
  * Returns the replacement for the target in the given Bindings, or
  * null if none is found.
  */
-function getBinding(target, bindings) {
+export function getBinding(target, bindings) {
   var found = findBinding(target, bindings);
   return found ? found.to : null;
 }
@@ -106,6 +114,39 @@ function getBinding(target, bindings) {
 // TODO: Consider defining distinct subclases for forward and reverse
 //   paths.
 
+export declare class Path {
+  constructor(segment: any, opt_rest: any);
+  segment: any;
+  rest: any;
+  segments(): any[];
+  isMatch(): boolean;
+  isEnd(): boolean;
+  isLeft(): boolean;
+  getLeft(): any;
+  uglify(opt_isImplies: any): any;
+  parent(): Path;
+  nth(n: any): this;
+  length(): number;
+  firstN(n: any): any;
+  above(n?: number): any;
+  upTo(tail: any): any;
+  last(): any;
+  isRight(): boolean;
+  getRight(): any;
+  tail(): any;
+  toString(): string;
+  concat(p: any): any;
+  expand(): any;
+  reverse(): any;
+  remainder(path: any): this;
+}
+
+export declare namespace Path {
+  export let none: Path;
+  export let empty: Path;
+  // ?? export { _end as empty };
+}
+
 /**
  * Construct a Path from a segment string ('fn', 'arg', 'bound',
  * 'body', 'left', 'right', 'binop', or null) and an optional Path,
@@ -113,7 +154,7 @@ function getBinding(target, bindings) {
  * is a path with a single segment, and if both are null it is an
  * empty path.
  */
-function Path(segment, opt_rest) {
+export function Path(segment, opt_rest) {
   this.segment = segment;
   this.rest = opt_rest || _end;;
 }
@@ -381,7 +422,7 @@ Path.prototype.toString = function() {
 
 // Maps from string to Path.  Private to asPath.
 // This exists to accelerate conversions from strings.
-const pathCache = new Map();
+export const _pathCache = new Map();
 
 /**
  * Pseudo-constructor: coerces its argument to a Path given a string
@@ -394,7 +435,7 @@ const pathCache = new Map();
  * A null input or no arg given indicates an empty path; passes
  * through a Path argument.
  */
-function asPath(arg) {
+export function asPath(arg) {
   if (arg instanceof Path) {
     return arg;
   }
@@ -412,7 +453,7 @@ function asPath(arg) {
       bindings = bindings.more;
     }
   } else if (typeof arg === 'string') {
-    const cached = pathCache.get(arg);
+    const cached = _pathCache.get(arg);
     if (cached !== undefined) {
       return cached;
     }
@@ -429,7 +470,7 @@ function asPath(arg) {
     result = new Path(piece, result);
   }
   if (typeof arg === 'string') {
-    pathCache.set(arg, result);
+    _pathCache.set(arg, result);
   }
   return result;
 }
@@ -513,9 +554,5 @@ Toy.getBinding = getBinding;
 
 Toy.Path = Path;
 Toy.asPath = asPath;
-
-//// For debugging, analysis
-
-Toy._pathCache = pathCache;
 
 }  // namespace;

@@ -154,7 +154,7 @@ const decls = [
        const subgoal = map.b;
        // These are the locally free variables of the "forall"
        // containing the subgoal.
-       const frees = ToySet.from(subgoal.freeVarSet());
+       const frees = ToySet.from_(subgoal.freeVarSet());
        // This is the path to the "forall" enclosing the future subgoal.
        const sgpath = Toy.parse('a & forall {x. a2 => c2} & c => d').pathTo('a2');
        assert(sgpath);
@@ -168,7 +168,7 @@ const decls = [
          // This mechanism does not import assumptions with variables
          // not free in the (quantified) subgoal, such as the variable
          // replaced there by the quantified variable.
-         if (frees.superset(ToySet.from(a.freeVarSet()))) {
+         if (frees.superset(ToySet.from_(a.freeVarSet()))) {
            const addc = rules.andCondition;
            imported = addc(imported, sgpath, a);
          }

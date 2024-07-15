@@ -2,7 +2,6 @@
 // Visit https://aka.ms/tsconfig to read more about this file
 
 {
-  // "include": ["js/*.js"],
   "files": [
     "ts/global.d.ts",
     "ts/site.ts", 
@@ -19,6 +18,8 @@
     "ts/rendering.ts",
     "ts/solution-status.ts",
     "ts/proof-data.js",
+    // Put a tsconfig.json file in this dir to control it
+    // "tests/tests.js",
     // The following are present basically to be copied to js/ folder.
     "ts/boilerplate.ts",
     "ts/canvas.js",
@@ -35,10 +36,18 @@
     "allowJs": true,
     "checkJs": true,
     "target": "es2020",
-    // Declarations here are experimental:
-    "declarationDir": "./dts",
+    // See https://github.com/RyanCavanaugh/project-references-demo
+    // Seems to need this whole library to be in a subfolder, e.g.
+    // modifies effect of outDir if rootDir is not ".".
+    // I.e. with "composite": true, outputs go to ts/js and ts/dts.
+    //
+    // "composite": true,
+    //
+    // Directory structure
+    "rootDir": "./ts",
     "declaration": true,
-    "outDir": "js",
+    "declarationDir": "./dts",
+    "outDir": "./js",
     "lib": ["es2022", "dom", "dom.iterable"],
     "skipLibCheck": true,
     "module": "commonjs",

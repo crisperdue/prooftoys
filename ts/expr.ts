@@ -82,7 +82,7 @@ function identifyTerm(term) {
  * A TermSet is simply a set of terms distinguished by their "dump"s
  * as strings.  Variable scoping is not accounted for.
  */
-function TermSet(term) {
+export function TermSet(term) {
   ToySet.call(this, identifyTerm);
   if (term) {
     this.add(term);
