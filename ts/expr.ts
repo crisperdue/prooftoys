@@ -88,7 +88,7 @@ function TermSet(term) {
     this.add(term);
   }
 }  
-Toy.extends(TermSet, ToySet);
+Toy.extends_(TermSet, ToySet);
 
 
 /**
@@ -116,7 +116,7 @@ function TermMap() {
   this.shadowVars = [];
   this.shadowTerms = [];
 }
-Toy.extends(TermMap, ToyMap);
+Toy.extends_(TermMap, ToyMap);
 
 /**
  * Ensure the term is in this map.  If not already present, assign it

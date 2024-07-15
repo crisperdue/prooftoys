@@ -33,7 +33,7 @@ function TypeCheckError(msg) {
   // just fill in a "message" property.
   this.message = msg;
 }
-Toy.extends(TypeCheckError, Error);
+Toy.extends_(TypeCheckError, Error);
 
 
 // Base class constructor for type expressions.
@@ -117,7 +117,7 @@ function TypeVariable(name) {
     this.name = 't' + _typeVarCounter++;
   }
 }
-Toy.extends(TypeVariable, TypeEx);
+Toy.extends_(TypeVariable, TypeEx);
 
 TypeVariable.prototype.toString = function() {
   const map = Toy._typeNums;
@@ -194,7 +194,7 @@ TypeVariable.prototype.hasVariable = function() {
 function TypeConstant(name) {
   this.name = name;
 }
-Toy.extends(TypeConstant, TypeEx);
+Toy.extends_(TypeConstant, TypeEx);
 
 var tcMethods = {
   toString: function() {
@@ -223,7 +223,7 @@ function FunctionType(fromType, toType) {
   this.fromType = fromType;
   this.toType = toType;
 }
-Toy.extends(FunctionType, TypeEx);
+Toy.extends_(FunctionType, TypeEx);
 
 FunctionType.prototype.toString = function() {
   return '(' + this.toType + ' ' + this.fromType + ')';

@@ -42,6 +42,44 @@ window.$ = function(x) {
 }
 jQuery.extend($, jQuery);
 
+declare class ToySet {
+  constructor(stringifier?: any);
+  map: {};
+  stringifier: any;
+  add(value: any): this;
+  addAll(more: any): this;
+  has(value: any): any;
+  size(): number;
+  superset(other: any): boolean;
+  equals(other: any): boolean;
+  remove(value: any): void;
+  each(fn: any, thisObj: any): any;
+  isEmpty(): boolean;
+  clear(): void;
+  choose(): any;
+  values(): any[];
+  toString(): any;
+}
+
+declare namespace ToySet {
+ //function from_(container: any): any;
+}
+
+export declare class ToyMap {
+  constructor(stringifier: any, dfault: any);
+  map: {};
+  stringifier: any;
+  dfault: any;
+  set(key: any, value: any): void;
+  has(key: any): any;
+  get(key: any): any;
+  remove(key: any): void;
+  each(fn: any, thisObj: any): any;
+  size(): number;
+  isEmpty(): boolean;
+}
+
+//declare namespace ToyMap {}
 
   // This ensures that all of our scripts can refer to _paq even in
   // strict mode, and even if Matomo support is not loaded.  If Matomo
@@ -113,7 +151,7 @@ jQuery.extend($, jQuery);
    *
    * Obsolete.
    */
-  Toy['extends'] = function(constructor, parent) {
+  export function extends_(constructor, parent) {
     if (typeof constructor === 'function' && typeof parent === 'function') {
       // Set up the prototype for the child class.
       // Instances will see this as their constructor.
@@ -123,7 +161,7 @@ jQuery.extend($, jQuery);
     } else if (typeof constructor === 'function' && parent == null) {
       // Do nothing.
     } else {
-      abort('Toy.extends requires functions as arguments.');
+      abort('Toy.extends_ requires functions as arguments.');
     }
     constructor.addMethods = function(properties) {
       jQuery.extend(constructor.prototype, properties);
@@ -1048,9 +1086,8 @@ jQuery.extend($, jQuery);
    * to not make the debugger pause here.
    * @type {function(any, ...any): never}
    */
-  export function abort(msg, ...args) {
-    /** @type {function(any): never} */
-    const thrower = e => {
+  export function abort(msg, ...args): never {
+    const thrower: (e: any) => never = e => {
       Toy.thrown = e;
       // The two code paths here enable us to suppress debugging when an
       // abort occurs with Toy.proceeding on.  (For this, in the
@@ -1064,7 +1101,7 @@ jQuery.extend($, jQuery);
     };
     // TODO: Interpret options??
     /** @type {function(object, string, any[]): never} */
-    function _abort(options, msg, ...args) {
+    function _abort(options, msg, ...args): never {
       const e = new Error(Toy.format(msg || 'Oops', ...args));
       let step;
       // Find a step argument if there is one.
@@ -1768,6 +1805,7 @@ jQuery.extend($, jQuery);
     this.map = {};
     this.stringifier = stringifier || String;
   }
+  // Toy['ToySet'] = ToySet;
 
   export var emptySet = Object.freeze(new ToySet());
 
@@ -1798,21 +1836,17 @@ jQuery.extend($, jQuery);
    * Adds all of the elements of the container to a new ToySet
    * and returns that.
    */
-  ToySet.from = function(container) {
+  
+  ToySet.from_ = function(container) {
     return new ToySet().addAll(container);
   };
+  
 
   /**
    * Does the set contain the element (one with the same key)?
    */
   ToySet.prototype.has = function(value) {
     return hasOwn(this.map, this.stringifier(value));
-  };
-
-  ToySet.prototype.size = function() {
-    var result = 0;
-    this.each(function(x) { result++; });
-    return result;
   };
 
   /**
@@ -2396,7 +2430,7 @@ jQuery.extend($, jQuery);
    * rpcLogStart if RPC logging is turned on by setting Toy.logRpc to
    * true.
    */
-  function rpcLog(_args) {
+  function rpcLog(...args) {
     if (!Toy.logRpc) {
       return;
     }
@@ -2659,7 +2693,7 @@ jQuery.extend($, jQuery);
     var self = this;
     var receiver = self.receiver;
     // This is the fake reply event to be passed to the reply handler.
-    var reply = { target: self };
+    var reply = { target: self, data: undefined };
     // This function does the work of a "real" onmessage handler
     // function in worker.js for messages to a worker, except this
     // receives the RPC wrapper object directly, not wrapped in an
@@ -2989,9 +3023,9 @@ jQuery.extend($, jQuery);
   Toy.eachStore = eachStore;
 
   Toy.benchmark = benchmark;
-  Toy.ToySet = ToySet;
+  // Toy.ToySet = ToySet;
   Toy.emptySet = emptySet;
-  Toy.ToyMap = ToyMap;
+  // Toy.ToyMap = ToyMap;
   Toy.ArraySnap = ArraySnap;
 
   Toy.track = track;
