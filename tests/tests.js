@@ -798,7 +798,7 @@ var testCase = {
     var steps = [Toy.rules.assert('x = y + 1')];
     function check(expected, input) {
       input = typeof input == 'string' ? Toy.justParse(input) : input;
-      var actual = Toy._decodeArg(input, steps);
+      var actual = Toy.decodeArg(input, steps);
       assertEqual(expected, actual.toString());
     }
     check('foo', '"foo"');
