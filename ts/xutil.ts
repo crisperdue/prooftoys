@@ -738,7 +738,7 @@ export function ifType() {
 
 // Common monomorphic composite constant types.
 // This list supports sharing of the instances.
-const commonTypes =
+export const commonTypes =
   [
    booleanBinOpType(),
    funType(),
@@ -1251,7 +1251,7 @@ export function justParse1(input, aboveToken?) {
  *
  * TODO: Currently unused; test this.
  */
-function parseMin(input) {
+export function parseMin(input) {
   return justParse1(input, new Atom('x'));
 }
 
@@ -1439,10 +1439,10 @@ export function getPrecedence(token) {
 // Unary operators should all be the same.
 // No unary operators exist at this time, but the constant
 // is used in rendering.
-const unaryPower = 200;
+export const unaryPower = 200;
 
 // Alphanumeric names have this power unless specified otherwise.
-var namePower = 100;
+export var namePower = 100;
 
 // Precedence table for infix operators.
 var precedence = {
@@ -2220,88 +2220,6 @@ export function asProof(info) {
     abort(`Not a proof: ${info}`);
   }
 }
-
-
-//// Export public names.
-
-Toy.infixCall = infixCall;
-Toy.call = call;
-Toy.equal = equal;
-Toy.implies = implies;
-Toy.lambda = lambda;
-Toy.isInfixDesired = isInfixDesired;
-
-Toy.asmLess = asmLess;
-Toy.asmComparator = asmComparator;
-Toy.repeatedCall = repeatedCall;
-Toy.chainCall = chainCall;
-Toy.commuteEqn = commuteEqn;
-Toy.inputTypes = inputTypes;
-
-Toy.encodeSteps = encodeSteps;
-Toy.decodeSteps = decodeSteps;
-
-Toy.dumpProof = dumpProof;
-Toy.asProof = asProof;
-
-Toy.unicodify = unicodify;
-
-Toy.termify = termify;
-Toy.namify = namify;
-
-Toy.looksBoolean = looksBoolean;
-Toy.boolSchemaInfo = boolSchemaInfo;
-Toy.boolSchema = boolSchema;
-Toy.standardVars = standardVars;
-Toy.standardSubst = standardSubst;
-
-// Definitions
-
-Toy.definex = definex;
-Toy.isDefined = isDefined;
-Toy.isFunDef = isFunDef;
-Toy.findDefinition = findDefinition;
-Toy.getDefinition = getDefinition;
-// For testing:
-Toy.definitions = definitions;
-
-// Types
-
-Toy.boolean = boolean;
-Toy.individual = individual;
-Toy.equalityType = equalityType;
-Toy.commonTypes = commonTypes;
-Toy.realType = realType;
-Toy.TypeCheckError = TypeCheckError;
-Toy.TypeVariable = TypeVariable;
-Toy.TypeConstant = TypeConstant;
-Toy.FunctionType = FunctionType;
-Toy.tokenizeType = tokenizeType;
-Toy.parseType = parseType;
-Toy.isBooleanBinOp = isBooleanBinOp;
-
-// Expression parsing
-
-Toy.unaryPower = unaryPower;
-Toy.namePower = namePower;
-Toy.getPrecedence = getPrecedence;
-Toy.tokenize = tokenize;
-Toy.parse = parse;
-Toy.justParse = justParse;
-Toy.parseMin = parseMin;
-Toy.mathParse = mathParse;
-Toy.parseStringContent = parseStringContent;
-
-// For testing:
-Toy.unparseString = unparseString;
-Toy._decodeArg = decodeArg;
-Toy._parsed = _parsed;
-Toy._mathParsed = _mathParsed;
-
-// For debugging
-Toy.nParsed = nParsed;
-Toy._constantTypes = constantTypes;
-Toy._dereference = dereference;
 
 Toy.loaded.trigger('xutil');
 
