@@ -190,6 +190,9 @@ TermMap.prototype.set = function(term, name) {
 
 //// Expr -- the base class
 
+/** The actual instantiable types. */
+export type EType = Atom | Call | Lambda;
+
 // Note: Transformations on expressions that leave a given
 // subexpression the same return the identical subexpression object
 // they were given.  This means that all operations that transform
@@ -325,6 +328,15 @@ export class Expr {
   __type;
   __memos;
   wff;
+  original;
+  // If proved (Step):
+  ruleName;
+  ruleArgs;
+  ruleDeps;
+  details;
+  ordinal;
+  // If rendered:
+  rendering;
 
   constructor() {
     this.__type = null;
@@ -426,7 +438,7 @@ export interface Atom {
       sub: any;
       type: any;
   };
-  _nthArg(n: any): 1 | Atom;
+  _nthArg(n: any);
 }
 
 /**
