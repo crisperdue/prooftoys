@@ -9,100 +9,102 @@ namespace Toy {
 
 'use strict';
 
-// Make some names available without prefix.
-var Expr = Toy.Expr;
-var Atom = Toy.Atom;
-var Call = Toy.Call;
-var Lambda = Toy.Lambda;
-var assert = Toy.assertTrue;
-var abort = Toy.abort;
-var Path = Toy.Path;
-
 ////
 //// Extended Utilities that may depend on expr.js.
 ////
-
 
 //// TYPE ANALYSIS
 
 /**
  * Specialized error for use when type checking/inference fails.
  */
-function TypeCheckError(msg) {
-  // Do not call Error because that behaves specially,
-  // just fill in a "message" property.
-  this.message = msg;
+export class TypeCheckError extends Error {
+  constructor(msg) {
+    super();
+    // Do not call Error because that behaves specially,
+    // just fill in a "message" property.
+    this.message = msg;
+  }
 }
-Toy.extends_(TypeCheckError, Error);
-
 
 // Base class constructor for type expressions.
-function TypeEx() {}
+export class TypeEx {
 
-/**
- * Returns a copy of this type term, with the same constraints but all
- * type variables renamed to fresh new ones.
- */
-TypeEx.prototype.clone = function() {
-  const replacements = new Map();
-  const clohn = type => {
-    const c = type.constructor;
-    if (c === TypeVariable) {
-      const name = type.name;
-      const replica = replacements.get(name);
-      if (replica) {
-        return replica;
-      } else {
-        const replica = new TypeVariable();
-        replacements.set(name, replica);
-        return replica;
+  /**
+   * Returns a copy of this type term, with the same constraints but all
+   * type variables renamed to fresh new ones.
+   */
+  clone() {
+    const replacements = new Map();
+    const clohn = type => {
+      const c = type.constructor;
+      if (c === TypeVariable) {
+        const name = type.name;
+        const replica = replacements.get(name);
+        if (replica) {
+          return replica;
+        } else {
+          const replica = new TypeVariable();
+          replacements.set(name, replica);
+          return replica;
+        }
+      } else if (c === TypeConstant) {
+        return type;
+      } else if (c === FunctionType) {
+        return new FunctionType(clohn(type.fromType),
+                                clohn(type.toType));
       }
-    } else if (c === TypeConstant) {
-      return type;
-    } else if (c === FunctionType) {
-      return new FunctionType(clohn(type.fromType),
-                              clohn(type.toType));
     }
+    return clohn(this);
   }
-  return clohn(this);
-};
 
-/**
- * Tests if this type expression is the same as the given other one,
- * after possible variable renamings.  The second argument if given is
- * a Map of additional renamings to be honored, defaulting to a new
- * empty Map.  Any name correspondences encountered here are added to
- * the Map.
- */
-TypeEx.prototype.equiv = function(other, map) {
-  const renames = map || new Map();
-  const equiv = (a, b) => {
-    const c = a.constructor;
-    if (c !== b.constructor) {
-      return false;
-    } else if (c === TypeConstant) {
-      return a === b;
-    } else if (c === TypeVariable) {
-      const anm = a.name;
-      const bnm = b.name;
-      const expected = renames.get(anm);
-      if (expected) {
-        return bnm === expected;
-      } else {
-        renames.set(anm, bnm);
-        return true;
+  /**
+   * Tests if this type expression is the same as the given other one,
+   * after possible variable renamings.  The second argument if given is
+   * a Map of additional renamings to be honored, defaulting to a new
+   * empty Map.  Any name correspondences encountered here are added to
+   * the Map.
+   */
+  equiv(other, map) {
+    const renames = map || new Map();
+    const equiv = (a, b) => {
+      const c = a.constructor;
+      if (c !== b.constructor) {
+        return false;
+      } else if (c === TypeConstant) {
+        return a === b;
+      } else if (c === TypeVariable) {
+        const anm = a.name;
+        const bnm = b.name;
+        const expected = renames.get(anm);
+        if (expected) {
+          return bnm === expected;
+        } else {
+          renames.set(anm, bnm);
+          return true;
+        }
+      } else if (c === FunctionType) {
+        return a.fromType.equiv(b.fromType) && a.toType.equiv(b.toType);
       }
-    } else if (c === FunctionType) {
-      return a.fromType.equiv(b.fromType) && a.toType.equiv(b.toType);
-    }
-  };
-  return equiv(this, other);
-};
+    };
+    return equiv(this, other);
+  }
 
+  /**
+   * Type of any function with boolean output.  This definition
+   * includes boolean -> boolean.
+   */
+  isSetType() {
+    return this instanceof FunctionType && this.toType.equal(boolean);
+  }
+
+}
 
 // Private to the TypeVariable constructor.
 var _typeVarCounter = 1;
 
+export class TypeVariable extends TypeEx {
+  name;
 /**
  * Type variable constructor.  The name is optional, 't' followed by
  * digits if not given explicitly.  Names are currently required to
@@ -110,16 +112,16 @@ var _typeVarCounter = 1;
  * distinct type variables have distinct names within the type
  * expression it is applied to.
  */
-function TypeVariable(name) {
+constructor(name?: string) {
+  super();
   if (name) {
     this.name = name;
   } else {
     this.name = 't' + _typeVarCounter++;
   }
 }
-Toy.extends_(TypeVariable, TypeEx);
 
-TypeVariable.prototype.toString = function() {
+toString() {
   const map = Toy._typeNums;
   if (Toy.showTypes === 'testing') {
     let num = map.get(this);
@@ -161,7 +163,7 @@ TypeVariable.prototype.toString = function() {
  * The "replacements" indicates replacement type variables already chosen
  * for type variables in a generic type (generic FunctionType).
  */
-TypeVariable.prototype.fresh = function(replacements, nonGenerics, map) {
+fresh(replacements, nonGenerics, map) {
   var type = dereference(this, map);
   if (type instanceof TypeVariable) {
     var name = type.name;
@@ -179,90 +181,84 @@ TypeVariable.prototype.fresh = function(replacements, nonGenerics, map) {
   }
 };
 
-TypeVariable.prototype.equal = function(other) {
+equal(other) {
   return other === this;
 };
 
-TypeVariable.prototype.hasVariable = function() {
+hasVariable() {
   return true;
 };
-
+}
 
 /**
  * Type constant constructor.
  */
-function TypeConstant(name) {
-  this.name = name;
-}
-Toy.extends_(TypeConstant, TypeEx);
-
-var tcMethods = {
-  toString: function() {
+export class TypeConstant extends TypeEx {
+  name: string;
+  constructor(name) {
+    super();
+    this.name = name;
+  }
+  toString() {
     return this.name;
-  },
+  }
 
-  fresh: function(mapping, nonGenerics) {
+  fresh(mapping, nonGenerics) {
     return this;
-  },
+  }
 
-  equal: function(other) {
+  equal(other) {
     return other === this;
-  },
+  }
 
-  hasVariable: function() {
+  hasVariable() {
     return false;
   }
-};
-Toy.addMethods(TypeConstant, tcMethods);
-
-
-function FunctionType(fromType, toType) {
-  // Include these lines for debugging if needed.
-  // assert(fromType instanceof TypeEx, 'fromType');
-  // assert(toType instanceof TypeEx, 'toType');
-  this.fromType = fromType;
-  this.toType = toType;
 }
-Toy.extends_(FunctionType, TypeEx);
 
-FunctionType.prototype.toString = function() {
-  return '(' + this.toType + ' ' + this.fromType + ')';
-};
+export class FunctionType extends TypeEx {
+  fromType;
+  toType;
+  constructor(fromType, toType) {
+    super();
+    // Include these lines for debugging if needed.
+    // assert(fromType instanceof TypeEx, 'fromType');
+    // assert(toType instanceof TypeEx, 'toType');
+    this.fromType = fromType;
+    this.toType = toType;
+  }
 
-FunctionType.prototype.fresh = function(replacements, nonGenerics, map) {
-  return new FunctionType(this.fromType.fresh(replacements, nonGenerics, map),
-                          this.toType.fresh(replacements, nonGenerics, map));
-};
+  toString() {
+    return '(' + this.toType + ' ' + this.fromType + ')';
+  }
 
-FunctionType.prototype.equal = function(other) {
-  return (other instanceof FunctionType &&
-          other.fromType.equal(this.fromType) &&
-          other.toType.equal(this.toType));
-};
+  fresh(replacements, nonGenerics, map) {
+    return new FunctionType(this.fromType.fresh(replacements, nonGenerics, map),
+                            this.toType.fresh(replacements, nonGenerics, map));
+  }
 
-FunctionType.prototype.hasVariable = function() {
-  return this.fromType.hasVariable() || this.toType.hasVariable();
-};
+  equal(other) {
+    return (other instanceof FunctionType &&
+            other.fromType.equal(this.fromType) &&
+            other.toType.equal(this.toType));
+  }
 
-/**
- * Type of any function with boolean output.  This definition
- * includes boolean -> boolean.
- */
-TypeEx.prototype.isSetType = function() {
-  return this instanceof FunctionType && this.toType.equal(boolean);
-};
+  hasVariable() {
+    return this.fromType.hasVariable() || this.toType.hasVariable();
+  }
+}
 
 
 //// PARSING
 
-var individual = new TypeConstant('i');
-var boolean = new TypeConstant('o');
+export var individual = new TypeConstant('i');
+export const boolean = new TypeConstant('o');
 // TODO: Change this to a proper type of its own.
-var realType = individual;
+export var realType = individual;
 
 // Returns a list of tokens as objects with properties 'name' and
 // 'index'.
-function tokenizeType(input) {
+export function tokenizeType(input) {
   // Matches a token with possible whitespace before and/or after.
   const tokenRE = /\s*([()]|[a-zA-Z0-9]+)\s*/g;
   let match;
@@ -280,7 +276,7 @@ function tokenizeType(input) {
  * upper case letter, or "t" followed by digits, with space as the
  * separater.
  */
-function parseType(input) {
+export function parseType(input) {
   let tokens = tokenizeType(input);
   const end = {name: '(end)', index: -1};
 
@@ -346,11 +342,14 @@ function parseType(input) {
 
 // TODO: More and better comments throughout the type analysis code.
 
-/**
- * Seeks and returns any subexpression of this with no type
- * information.  This is a debugging utility, not used in the rest of
- * the codebase.
- */
+export interface Expr {
+  /**
+   * Seeks and returns any subexpression of this with no type
+   * information.  This is a debugging utility, not used in the rest of
+   * the codebase.
+   */
+  findUntyped();
+}
 Expr.prototype.findUntyped = function() {
   const self = this;
   if (!self.type) {
@@ -366,6 +365,7 @@ Expr.prototype.findUntyped = function() {
   }
 };
 
+export interface Expr {
 /**
  * If this already has a type, return it without making a copy.
  * Otherwise makes and returns a well-typed copy of this, ignoring any
@@ -385,6 +385,8 @@ Expr.prototype.findUntyped = function() {
  *   this operation.  The term "f = g" in axiom3 seems an interesting
  *   case.
  */
+  typedCopy(mustCopy?: boolean);
+}
 Expr.prototype.typedCopy = function(mustCopy) {
   if (!mustCopy && this.type) {
     return this;
@@ -404,13 +406,14 @@ Expr.prototype.typedCopy = function(mustCopy) {
   // Unifying substitution to make a consistent assignment of types:
   const unifier = new Map();
   // Recursive function that does all the work:
-  const copy = x => {
+  const copy = (x: Expr) => {
     // Makes a copy with all-new nodes with the possible exception of
     // monomorphic constants).  Consequently if full resolution of
     // type information mutates types in the copy, no part of the
     // input will be affected.
     if (x.isVariable()) {
-      const xnm = x.name;
+      const a = x as Atom;
+      const xnm = a.name;
       const bound = boundVars.find(y => y.name === xnm);
       if (bound) {
         return bound;
@@ -426,10 +429,11 @@ Expr.prototype.typedCopy = function(mustCopy) {
       }
     }
     // X is not a variable.
-    const c = x.constructor;
-    if (c === Atom) {
+    const cx = x.constructor;
+    if (cx === Atom) {
+      const a = x as Atom;
       // It is some kind of constant.
-      const xpnm = x.pname;
+      const xpnm = a.pname;
       const constType = constantTypes.get(xpnm);
       // This relies on constantTypes to include entries
       // for aliases, currently just "==".
@@ -437,26 +441,28 @@ Expr.prototype.typedCopy = function(mustCopy) {
         // In this case it is a known named constant.
         // TODO: Don't continually copy monomorphic named constants.
         const clone = constType.clone();
-        return new Atom(x.name)._withType(clone);
-      } else if (x.isLiteral()) {
+        return new Atom(a.name)._withType(clone);
+      } else if (a.isLiteral()) {
         // All literals are currently individuals.
-        return new Atom(x.name)._withType(individual);
-      } else if (x.isConst()) {
+        return new Atom(a.name)._withType(individual);
+      } else if (a.isConst()) {
         // It is a named constant not seen before.
-        const existing = newConsts.get(x.name);
+        const existing = newConsts.get(a.name);
         if (existing) {
           return existing;
         } else {
-          const newConst = new Atom(x.name)._withType(new TypeVariable());
+          const newConst = 
+            new Atom(a.name)._withType(new TypeVariable()) as Atom;
           newConsts.set(newConst.name, newConst);
           return newConst;
         }
       } else {
         abort('Bad input: {1}', x);
       }
-    } else if (c === Call) {
-      const fn = copy(x.fn);
-      const arg = copy(x.arg);
+    } else if (cx === Call) {
+      const c = x as Call;
+      const fn = copy(c.fn);
+      const arg = copy(c.arg);
       const resultType = new TypeVariable();
       const ft = new FunctionType(arg.type, resultType);
       if (!Toy.andUnifTypes(ft, fn.type, unifier, toUnify)) {
@@ -466,10 +472,11 @@ Expr.prototype.typedCopy = function(mustCopy) {
         abort('Not unifiable');
       }
       return new Call(fn, arg)._withType(resultType);
-    } else if (c === Lambda) {
-      const bound = new Atom(x.bound.name)._withType(new TypeVariable());
+    } else if (cx === Lambda) {
+      const xl = x as Lambda;
+      const bound = new Atom(xl.bound.name)._withType(new TypeVariable());
       boundVars.unshift(bound);
-      const body = copy(x.body);
+      const body = copy(xl.body);
       const result = (new Lambda(bound, body)
                       ._withType(new FunctionType(bound.type, body.type)));
       boundVars.shift();
@@ -489,12 +496,42 @@ Expr.prototype.typedCopy = function(mustCopy) {
   return annotated;
 };
 
-/**
+export interface Expr {
+  /**
  * Returns a copy like deepCopy, also bringing over all type
  * information from the original, suitable for rendering because all
  * occurrences of variables are represented by distinct structure in
  * the result.
  */
+  copyWithTypes();
+  /**
+   * Expr method that returns any annotated type, otherwise aborts with
+   * an error.
+   */
+  getType();
+  /**
+   * Like getType, but returns a falsy value if the term is not
+   * annotated.
+   */
+  hasType();
+  /**
+   * Returns true iff the type of the term is Real.  Only ever returns
+   * true if Expr is part of a WFF that has been annotated with type
+   * information.
+   *
+   * TODO: This check is only approximate.  Reconsider all uses of it.
+   */
+  isReal(): boolean;
+  /**
+   * Analyzed type of this is boolean, similarly to isReal.
+   */
+  isBoolean(): boolean;
+  /**
+   * Analyzed type of this is individual, similarly to isReal.
+   */
+  isIndividual(): boolean;
+}
+
 Expr.prototype.copyWithTypes = function() {
   const c = this.constructor;
   if (c === Atom) {
@@ -510,43 +547,22 @@ Expr.prototype.copyWithTypes = function() {
   }
 };
 
-/**
- * Expr method that returns any annotated type, otherwise aborts with
- * an error.
- */
 Expr.prototype.getType = function() {
   return this.hasType() || abort('Type not available: ' + this);
 };
 
-/**
- * Like getType, but returns a falsy value if the term is not
- * annotated.
- */
 Expr.prototype.hasType = function() {
   return this.type;
 };
 
-/**
- * Returns true iff the type of the term is Real.  Only ever returns
- * true if Expr is part of a WFF that has been annotated with type
- * information.
- *
- * TODO: This check is only approximate.  Reconsider all uses of it.
- */
 Expr.prototype.isReal = function() {
   return this.hasType() == realType;
 };
 
-/**
- * Analyzed type of this is boolean, similarly to isReal.
- */
 Expr.prototype.isBoolean = function() {
   return this.hasType() == boolean;
 };
 
-/**
- * Analyzed type of this is individual, similarly to isReal.
- */
 Expr.prototype.isIndividual = function() {
   return this.hasType() == individual;
 };
@@ -561,7 +577,7 @@ Expr.prototype.isIndividual = function() {
 /**
  * Assumes "type" is dereferenced.
  */
-function occursInList(type, types, map) {
+export function occursInList(type, types, map) {
   for (var i = 0; i < types.length; i++) {
     if (occursInType(type, types[i], map)) {
       return true;
@@ -573,7 +589,7 @@ function occursInList(type, types, map) {
 /**
  * Assumes type1 is dereferenced.
  */
-function occursInType(type1, type2, map) {
+export function occursInType(type1, type2, map) {
   var type2 = dereference(type2, map);
   if (type2 == type1) {
     return true;
@@ -588,7 +604,7 @@ function occursInType(type1, type2, map) {
  * The return value is only meaningful in case of failure,
  * and then it is a TypeCheckError.
  */
-function unifyTypes(t1, t2, map) {
+export function unifyTypes(t1, t2, map) {
   // TODO: Consider whether withExit is expensive to use,
   // perhaps because it contains a try block.
   return Toy.withExit(exit => {
@@ -634,7 +650,7 @@ function unifyTypes(t1, t2, map) {
  * Note that this is the identity function for objects that are not
  * type variables, including null and undefined.
  */
-function dereference(type, map) {
+export function dereference(type, map) {
   if (type instanceof TypeVariable) {
     const ref = map.get(type);
     if (ref) {
@@ -652,7 +668,7 @@ function dereference(type, map) {
 //// The only primitive constants currently are the built-in T, F, =,
 //// "the", but others may be defined.
 
-function booleanBinOpType() {
+export function booleanBinOpType() {
   return new FunctionType(boolean, new FunctionType(boolean, boolean));
 }
 
@@ -660,7 +676,7 @@ function booleanBinOpType() {
  * Returns a truthy value iff the term has been annotated with a type
  * and the type maps from 2 booleans to a boolean.
  */
-function isBooleanBinOp(term) {
+export function isBooleanBinOp(term) {
   var type = term.hasType();
   if ((type instanceof FunctionType) && type.fromType === boolean) {
     var t1 = type.toType;
@@ -672,10 +688,13 @@ function isBooleanBinOp(term) {
   }
 }
 
+export interface Atom {
 /**
  * True iff this Atom is the boolean equivalence operator.
  */
-Atom.prototype.isEquivOp = function(op) {
+  isEquivOp();
+}
+Atom.prototype.isEquivOp = function() {
   return this.name === '=' && isBooleanBinOp(this);
 }
 
@@ -683,21 +702,21 @@ Atom.prototype.isEquivOp = function(op) {
  * Function of any two things of the same type, with boolean result.
  * The input type defaults to a new type variable.
  */
-function equalityType(ofType = new TypeVariable()) {
+export function equalityType(ofType = new TypeVariable()) {
   return new FunctionType(ofType, new FunctionType(ofType, boolean));
 }
 
 /**
  * Function from individuals to individuals.
  */ 
-function funType() {
+export function funType() {
   return new FunctionType(individual, individual);
 }
 
 /**
  * Function of two individuals, returning an individual.
  */
-function fun2Type() {
+export function fun2Type() {
   var v = individual;
   return new FunctionType(v, new FunctionType(v, v));
 }
@@ -706,12 +725,12 @@ function fun2Type() {
  * Function from a collection of things of some type, to
  * a thing of that type.
  */
-function theType() {
+export function theType() {
   var v = new TypeVariable();
   return new FunctionType(new FunctionType(v, boolean), v);
 }
 
-function ifType() {
+export function ifType() {
   const fn = (from, to) => new FunctionType(from, to);
   const v = new TypeVariable();
   return fn(boolean, fn(v, fn(v, v)));
@@ -732,6 +751,9 @@ const commonTypes =
 // Primitive constants.  Unlike textbook, these include T and F.
 var _primitives = {T: true, F: true, '=': true, the1: true};
 
+export interface Atom {
+  isPrimitive(): boolean;
+}
 Atom.prototype.isPrimitive = function() {
   return _primitives.hasOwnProperty(this.name);
 };
@@ -741,7 +763,7 @@ Atom.prototype.isPrimitive = function() {
 // TODO: Trim this collection as more constants become properly
 //   defined.
 //
-var constantTypes = new Map(Object.entries({
+export var constantTypes = new Map(Object.entries({
   // Primitive constants
   T: boolean,
   F: boolean,
@@ -791,7 +813,7 @@ var constantTypes = new Map(Object.entries({
 //
 // Primitive constants are here, but the definitions are truthy fakes.
 // This prevents them from being defined later.
-var definitions = {
+export var definitions = {
   T: true,
   // TODO: try removing this, since F is defined.
   F: true,
@@ -803,7 +825,7 @@ var definitions = {
  * Fetches a definition from the definitions database.  Aborts if an
  * appropriate definition is not found.
  */
-function getDefinition(name) {
+export function getDefinition(name) {
   var defn = findDefinition(name);
   assert(defn, 'Not defined: ' + name);
   return defn;
@@ -816,7 +838,7 @@ function getDefinition(name) {
  * Returns null if the given name has no definition; false if it is a
  * primitive constant.
  */
-function findDefinition(name) {
+export function findDefinition(name) {
   name = name instanceof Atom ? name.name : name;
   var defn = definitions[name];
   if (!defn) {
@@ -830,7 +852,7 @@ function findDefinition(name) {
  * definition, not just "seen" previously as a constant in some axiom
  * or assertion.
  */
-function isDefined(name) {
+export function isDefined(name) {
   var def = definitions[name];
   return def !== true && !!def;
 }
@@ -839,7 +861,7 @@ function isDefined(name) {
  * Returns a truthy value iff the given name has a simple equational
  * definition as a function (Lambda).
  */
-function isFunDef(name) {
+export function isFunDef(name) {
   const def = definitions[name];
   return (def instanceof Expr &&
           def.isCall2('=') &&
@@ -867,7 +889,7 @@ function isFunDef(name) {
  * TODO: Consider supporting definition of multiple constants with one
  *   defining fact (with multiple existentially quantified variables).
  */
-function definex(name_arg, fact) {
+export function definex(name_arg, fact) {
   var constant = Toy.constify(name_arg);
   var name = constant.name;
   var result = Toy.getTheorem(fact) || Toy.getResult(fact);
@@ -905,7 +927,7 @@ function definex(name_arg, fact) {
 // Tokens pattern, private to tokenize.
 var _tokens = new RegExp(['[(){}\\[\\]]',
                            // Identifiers: variables and named constants
-                           Toy._identifierPattern,
+                           Toy.identifierPattern,
                            // Numeric constants.  The parser glues together
                            // negative numerals later.
                            '[0-9]+',
@@ -959,7 +981,7 @@ var _altTokens = _buildAltTokens();
  * tokenized here as the "ASCII" equivalent, so those characters get
  * parsed as if the usual textual form were seen.
  */
-function tokenize(str) {
+export function tokenize(str) {
   var match;
   var result = [];
   while (match = _tokens.exec(str)) {
@@ -983,7 +1005,7 @@ var _parsed = {};
  * string, caches the result on success, and reuses a cached result if
  * one exists.
  */
-function parse(input) {
+export function parse(input) {
   if (typeof input == 'string' &&
       _parsed.hasOwnProperty(input)) {
     return _parsed[input];
@@ -995,6 +1017,9 @@ function parse(input) {
   return result;
 }
 
+export interface Expr {
+  registerConstants();
+}
 /**
  * Registers the types of all constants found in this term that have
  * not already been registered.
@@ -1014,7 +1039,7 @@ Expr.prototype.registerConstants = function() {
  * does not memoize in _parsed.  We call these untyped terms
  * "preterms".
  */ 
-function justParse(input) {
+export function justParse(input) {
   try {
     return justParse1(input);
   } catch(e) {
@@ -1026,7 +1051,7 @@ function justParse(input) {
  * Same as justParse, but throws errors with low-level messages.
  * The second argument is private to parseMin.
  */
-function justParse1(input, aboveToken) {
+export function justParse1(input, aboveToken?) {
   var tokens = input;
 
   /**
@@ -1233,7 +1258,7 @@ function parseMin(input) {
 /**
  * Returns the number of entries in the parser lookup table.
  */
-function nParsed() {
+export function nParsed() {
   var i = 0;
   for (var key in _parsed) { i++; }
   return i;
@@ -1245,7 +1270,7 @@ function nParsed() {
  * followed by another character (except newline) with just the
  * following character.
  */
-function parseStringContent(name) {
+export function parseStringContent(name) {
   var content = name.substring(1, name.length - 1);
   return content.replace(/\\(.)/g, '$1');
 }
@@ -1258,7 +1283,7 @@ function parseStringContent(name) {
  * TODO: Consider replacing this and parseString with JSON.stringify
  * and JSON.parse applied to strings.
  */
-function unparseString(content) {
+export function unparseString(content) {
   var s1 = content.replace(/["\\]/g, '\\$&');  // For emacs: "]);
   return '"' + s1 + '"';
 }
@@ -1288,7 +1313,7 @@ var _mathParsed = new Map();
  *   will need to be able to include statements about default types of
  *   variables according to their names.
  */
-function mathParse(arg) {
+export function mathParse(arg) {
   if (arg instanceof Expr) {
     return arg.typedCopy();
   }
@@ -1305,6 +1330,9 @@ function mathParse(arg) {
   return result;
 }
 
+export interface Expr {
+  andMathVarConditions();
+}
 /**
  * Adds "math var conditions" as the rightmost assumptions of this
  * wff.
@@ -1329,6 +1357,9 @@ Expr.prototype.andMathVarConditions = function() {
   }
 };
 
+export interface Expr {
+  stripAsms(strippable);
+}
 /**
  * Returns the wff, omitting any assumptions that are "strippable"
  * removed, tested by applying the function argument to the
@@ -1354,7 +1385,7 @@ Expr.prototype.stripAsms = function(strippable) {
 /**
  * True iff the term isTypeTest and the argument is a variable.
  */
-function isTypeDecl(term) {
+export function isTypeDecl(term) {
   return term.isTypeTest() && term.arg.isVariable();
 }
 
@@ -1362,12 +1393,15 @@ function isTypeDecl(term) {
  * True iff the term has the form x != y or (not (x = y))
  * and x is a variable and y is 0.
  */
-function isZeroTest(term) {
+export function isZeroTest(term) {
   const map = (term.matchSchema('x != y') ||
                term.matchSchema('not (x = y)'));
   return map && map.x.isVariable() && map.y.sameAs(Toy.parse('0'));
 }
 
+export interface Expr {
+  stripSomeDecls();
+}
 /**
  * Removes certain kinds of assumptions from this WFF if it is
  * conditional. Removes type tests on variables and tests of
@@ -1386,7 +1420,7 @@ Expr.prototype.stripSomeDecls = function() {
  * TODO: Include context in the computation, specifically prefix
  *   versus infix context.
  */
-function getPrecedence(token) {
+export function getPrecedence(token) {
   // TODO: Clean this up.  Without the special case, getPrecedence
   //   only works for "==" during parsing.  After that it gets treated the
   //   same as "=".
@@ -1449,6 +1483,9 @@ var precedence = {
   '{': 1000
 };
 
+export interface Expr {
+  isOperator();
+}
 /**
  * Returns a truthy value iff this Expr is an Atom with a specific
  * precedence, so not a simple named or literal constant, nor a
@@ -1481,7 +1518,7 @@ var superscripts = [
  * Convert text to non-HTML Unicode.  Mainly useful for console
  * logging.  Use Toy.mathMarkup where HTML output is OK.
  */
-function unicodify(text) {
+export function unicodify(text) {
   var pattern =
     /=>|==|!=|<=|>=|\s*\*\*\s*-?[0-9]+|\*\*|\*|-|<\/|\/|\bforall\b|\bexists\b/g;
   return text.replace(pattern, function(symbol) {
@@ -1506,7 +1543,7 @@ function unicodify(text) {
  * Coerce the given Expr or string to an Expr by parsing it
  * if not an Expr.
  */
-function termify(x) {
+export function termify(x) {
   return (x instanceof Expr) ? x : parse(x);
 }
 
@@ -1514,11 +1551,11 @@ function termify(x) {
  * Coerce the given Object to a string by taking its 'name' property
  * if it is not a string.  Expects a string or Atom.
  */
-function namify(x) {
+export function namify(x) {
   return (typeof x === 'string') ? x : x.name;
 }
 
-var boolOps = {
+export var boolOps = {
   '==': true,
   '&': true,
   '|': true,
@@ -1526,7 +1563,7 @@ var boolOps = {
 };
 
 // Boolean ops for looksBoolean.
-var looseBoolOps = {
+export var looseBoolOps = {
   '==': true,
   // This one is practical though a bit deprecated.  If it appears
   // with only the other boolean ops, it will generally work out.
@@ -1542,7 +1579,7 @@ var looseBoolOps = {
  * usual boolean operators as for boolSchema, and the only other
  * constants present are T and F.
  */
-function looksBoolean(term) {
+export function looksBoolean(term) {
   if (term instanceof Atom) {
     return term.isVariable() || term.name == 'T' || term.name == 'F';
   }
@@ -1569,7 +1606,7 @@ function looksBoolean(term) {
  *
  * TODO: Check that the term is typed.
  */
-function boolSchemaInfo(term) {
+export function boolSchemaInfo(term) {
   var map = new Toy.TermMap();
   var infix = Toy.infixCall;
   function makeSchema(term) {
@@ -1603,7 +1640,7 @@ function boolSchemaInfo(term) {
 /**
  * Returns just the schema part of the boolean schema info.
  */
-function boolSchema(term) {
+export function boolSchema(term) {
   return boolSchemaInfo(term).schema;
 }
 
@@ -1612,13 +1649,13 @@ function boolSchema(term) {
  * of the term into the "standard" variable names, following a
  * predictable, "left-to-right" order.
  */
-function standardSubst(term) {
+export function standardSubst(term) {
   const free = term.freeVarSet();
   // Names in a known LR order.
   const freeVars = Array.from(free);
   const subst = {};
   var counter = 1;
-  freeVars.forEach(function(name) {
+  freeVars.forEach(function(name: string) {
       // Using variable names as in TermMap.addTerm.
       subst[name] = new Atom('a' + counter);
       counter++;
@@ -1632,7 +1669,7 @@ function standardSubst(term) {
  * internal use of a TermMap, applied to the variables in
  * left-to-right order.
  */
-function standardVars(term) {
+export function standardVars(term) {
   var map = new Toy.TermMap();
   function makeSchema(term) {
     if (term instanceof Toy.Call) {
@@ -1654,11 +1691,14 @@ function standardVars(term) {
   return makeSchema(term);
 }
 
-/**
- * Returns the appropriate subexpression of this to match against a
- * target site if this Expr is to be used as a rewriter.  Notice that
- * it is completely determined by the form of this Expr.
- */
+export interface Expr {
+  /**
+   * Returns the appropriate subexpression of this to match against a
+   * target site if this Expr is to be used as a rewriter.  Notice that
+   * it is completely determined by the form of this Expr.
+   */
+  matchPart();
+}
 Expr.prototype.matchPart = function() {
   const self = this;
   // If given an equation or conditional equation, this is its
@@ -1671,19 +1711,23 @@ Expr.prototype.matchPart = function() {
           : self);
 };
 
-/**
- * Returns a path to the part of a step to be matched when using it as
- * a rewrite rule.
- */
+export interface Expr {
+  /**
+   * Returns a path to the part of a step to be matched when using it as
+   * a rewrite rule.
+   */
+  matchPath();
+  /**
+   * Returns the part of this term that would become the replacement
+   * term if given to rules.replace.  To support rewrite rules that
+   * implicitly rewrite to T, returns T in case this is not equational.
+   */
+  replacementTerm();
+}
 Expr.prototype.matchPath = function() {
   return this.asPath(this.isEquation() ? '/main/left' : '/main');
 };
 
-/**
- * Returns the part of this term that would become the replacement
- * term if given to rules.replace.  To support rewrite rules that
- * implicitly rewrite to T, returns T in case this is not equational.
- */
 Expr.prototype.replacementTerm = function() {
   return (this.isEquation()
           ? this.get('/main/right')
@@ -1699,7 +1743,7 @@ Expr.prototype.replacementTerm = function() {
  */
 // TODO: Eliminate use of binops in favor of infixCall.  This will
 // be problematic for some infix operators.
-function call(fn, arg) {
+export function call(fn, arg) {
   // TODO: Allow fn to be a variable name.
   fn = fn instanceof Expr ? fn : Toy.constify(fn);
   var result = new Call(fn, termify(arg));
@@ -1715,7 +1759,7 @@ function call(fn, arg) {
  * argument) as the binary operator between them.  The op must be an
  * Expr or name of a constant.
  */
-function infixCall(arg1, op, arg2) {
+export function infixCall(arg1, op, arg2) {
   // TODO: Change this when redefining meaning of infix operators.
   return call(op, arg1, arg2);
 }
@@ -1726,7 +1770,7 @@ function infixCall(arg1, op, arg2) {
  * TODO: Order of args changes when infix changes.  Similarly for
  * implies and other infix operators.
  */
-function equal(lhs, rhs) {
+export function equal(lhs, rhs) {
   if (rhs) {
     return call('=', lhs, rhs);
   } else {
@@ -1737,7 +1781,7 @@ function equal(lhs, rhs) {
 /**
  * Builds an expression [lhs => rhs].
  */
-function implies(lhs, rhs) {
+export function implies(lhs, rhs) {
   return call('=>', lhs, rhs);
 }
 
@@ -1745,7 +1789,7 @@ function implies(lhs, rhs) {
  * Builds a Lambda.  The "bound" argument may be a string, converted to
  * an Atom with varify.
  */
-function lambda(bound, body) {
+export function lambda(bound, body) {
   return new Lambda(Toy.varify(bound), body);
 }
 
@@ -1755,7 +1799,7 @@ function lambda(bound, body) {
  *
  * TODO: Rename this to isInfixOp.
  */
-function isInfixDesired(atom) {
+export function isInfixDesired(atom) {
   if (!(atom instanceof Atom)) {
     return false;
   }
@@ -1774,7 +1818,7 @@ Atom.prototype.isUnary = function() {
  * True iff the result of calling asmComparator is less than 0.
  * Useful for ordering deduplicated hypotheses.
  */
-function asmLess(e1, e2) {
+export function asmLess(e1, e2) {
   return asmComparator(e1, e2) < 0;
 }
 
@@ -1783,7 +1827,7 @@ function asmLess(e1, e2) {
  * calls to "R" come before all others.  Value < 0 means e1 is less
  * than e2.  Value is 0 iff the terms are identical.
  */
-function asmComparator(e1, e2) {
+export function asmComparator(e1, e2) {
   function asmScore(e) {
     return (e.isCall1('R')
             ? 4
@@ -1818,7 +1862,7 @@ function asmComparator(e1, e2) {
  * Useful for rearranging expressions containing operators that are
  * commutative and associative.
  */
-function repeatedCall(operator, indices) {
+export function repeatedCall(operator, indices) {
   var op = (typeof operator == 'string') ? new Atom(operator) : operator;
   function x(n) {
     return new Atom('x' + indices[n]);
@@ -1841,7 +1885,7 @@ function repeatedCall(operator, indices) {
  * is empty, return the given default, or if just one item,
  * returns the item.
  */
-function chainCall(operator, list, dfault) {
+export function chainCall(operator, list, dfault) {
   if (list.length == 0) {
     return dfault;
   }
@@ -1859,7 +1903,7 @@ function chainCall(operator, list, dfault) {
  * l = r or a => l = r.  Calls err if structure does not match.
  * Returns the same form of "=" found in the equation.
  */
-function commuteEqn(eqn) {
+export function commuteEqn(eqn) {
   var infix = Toy.infixCall;
   var subst;
   // OK because all types are OK here.
@@ -1881,7 +1925,7 @@ function commuteEqn(eqn) {
  * indicating an implied path following the step argument for the site,
  * e.g. {reducible: 1} gives the result ['reducible', '_'].
  */
-function inputTypes(ruleName) {
+export function inputTypes(ruleName) {
   assert(typeof ruleName === 'string' && Toy.rules[ruleName],
          'Bad rule name {1}', ruleName);
   const inputs = Toy.rules[ruleName].info.inputs;
@@ -1917,7 +1961,7 @@ function inputTypes(ruleName) {
  * reference to another step (followed by the index of the referenced
  * step).
  */
-function encodeSteps(steps_arg) {
+export function encodeSteps(steps_arg) {
   // This maps from step to its index within the proof.
   const indexes = new WeakMap();
 
@@ -2012,7 +2056,7 @@ function encodeSteps(steps_arg) {
  *
  * Returns a (strict) Error in case of failure.
  */
-function decodeSteps(input) {
+export function decodeSteps(input) {
   const parsed =
         (typeof input == 'string'
          ? justParse(input.trim().startsWith('(steps')
@@ -2078,7 +2122,7 @@ function decodeSteps(input) {
  * Argument info Exprs have one of the forms: (s <n>) for a step
  * number; (t <expr>) for a term; or (path <string>) for a path.
  */
-function decodeArg(info, steps) {
+export function decodeArg(info, steps) {
   if (info.isString()) {
     return (info._value);
   } else {
@@ -2124,7 +2168,7 @@ function decodeArg(info, steps) {
  * browser console, then cut and paste the two parts of the output
  * string.
  */
-function dumpProof(proofEditor) {
+export function dumpProof(proofEditor) {
   const ed = proofEditor || window.proofEditor;
   const step = ed.steps[ed.steps.length - 1].original;
   const steps = Toy.proofOf(step);
@@ -2156,7 +2200,7 @@ function dumpProof(proofEditor) {
  *
  * This does not set up caching of the proof result.
  */
-function asProof(info) {
+export function asProof(info) {
   const type = typeof info;
   if (type === 'function') {
     assert(info.length === 0,
