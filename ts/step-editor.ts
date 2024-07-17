@@ -1312,7 +1312,7 @@ var formTypes = {
 // Datatypes that refer to proof steps.
 //
 // TODO: Make this a Set.
-var stepTypes = {
+export var stepTypes = {
   step: true,
   equation: true,
   implication: true
@@ -1320,7 +1320,7 @@ var stepTypes = {
 
 // Datatypes that refer to sites within a step.  None of these are
 // in formTypes.
-var siteTypes = {
+export var siteTypes = {
   site: true,
   bindingSite: true,
   reducible: true

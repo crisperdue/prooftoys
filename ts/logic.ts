@@ -4451,7 +4451,7 @@ declare(
       // This is the path from the conjunction to the base.
       var toBase = path.nth(i).firstN(j - i);
       var base = conjunction.get(toBase);
-      var schema = Toy._conjunctionSchema(conjunction);
+      var schema = Toy.conjunctionSchema(conjunction);
       var eqnVar = schema.get(eqnPath);
       var baseVar = schema.get(toBase);
       var rhs = schema.replaceAt(toBase, function(x) {

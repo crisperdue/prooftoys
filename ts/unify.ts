@@ -33,7 +33,7 @@ const findBinding = Toy.findBinding;
 // failure (cycle).
 //
 // Note that all recursive calls here supply the same Map and name.
-function checkTriv(map, name, term) {
+export function checkTriv(map, name, term) {
   if (term instanceof TypeVariable) {
     const n2 = term.name;
     if (name === n2) {
@@ -77,7 +77,7 @@ function justCheckTriv(map, name, term) {
 // given map of bindings and array of pairs still to be unified,
 // updating the map if needed so it can be resolved into a successful
 // unifier.  Returns falsy if unification fails, else truthy.
-function andUnifTypes(type1, type2, map, pairs) {
+export function andUnifTypes(type1, type2, map, pairs) {
   const c1 = type1.constructor;
   const c2 = type2.constructor;
   const unifVar = (v, type) => {
@@ -120,7 +120,7 @@ function andUnifTypes(type1, type2, map, pairs) {
 // The unification may still need to be resolved.  Treats the pairs as
 // a stack, so examines the last pair first.  May consume some of the
 // pairs, or all if successful.
-function unifTypesList(map_arg, pairs_arg) {
+export function unifTypesList(map_arg, pairs_arg) {
   const map = map_arg;
   const pairs = pairs_arg;
   while (pairs.length > 0) {
@@ -135,7 +135,7 @@ function unifTypesList(map_arg, pairs_arg) {
 // Converts a Map resulting from unification into a single
 // substitution that does the entire work, or returns null
 // if given null.
-function resolve(map) {
+export function resolve(map) {
   if (!map) {
     return map;
   }
@@ -163,7 +163,7 @@ function resolve(map) {
 // success; otherwise null.  If successful there is a unifier,
 // but the unification is not "resolved".  See "resolve" or
 // fullUnifTypes for this.
-function coreUnifTypes(type1, type2) {
+export function coreUnifTypes(type1, type2) {
   const pairs = [];
   const map = new Map()
   return (andUnifTypes(type1, type2, map, pairs) &&
@@ -172,7 +172,7 @@ function coreUnifTypes(type1, type2) {
 
 // Returns a Map with the result of fully unifying just type1 and
 // type2, or null if the terms do not unify.
-function fullUnifTypes(type1, type2) {
+export function fullUnifTypes(type1, type2) {
   const map = coreUnifTypes(type1, type2);
   return map ? resolve(map) : null;
 }
@@ -183,12 +183,16 @@ function fullUnifTypes(type1, type2) {
 
 //// TYPE SUBSTITUTION
 
-// Substitutes for the named type variables in this term, returning a
-// term with updated type information.  If the substitution is empty,
-// just returns this term, otherwise a copy as needed.
-//
-// The map preferably should not have any identity mappings; this
-// copies structure any time a mapping applies to a node's type.
+export interface Expr {
+/** Substitutes for the named type variables in this term, returning a
+ * term with updated type information.  If the substitution is empty,
+ * just returns this term, otherwise a copy as needed.
+ *
+ * The map preferably should not have any identity mappings; this
+ * copies structure any time a mapping applies to a node's type.
+ */
+  subsType(map);
+}
 Expr.prototype.subsType = function(map) {
   if (!map.size) {
     return this;
@@ -224,8 +228,12 @@ Expr.prototype.subsType = function(map) {
   }
 };
 
-// Destructively applies the given type substitution to
-// all parts of this term.  Careful, this is destructive.
+export interface Expr {
+  /** Destructively applies the given type substitution to
+   * all parts of this term.  Careful, this is destructive.
+   */
+  replaceTypes(map);
+}
 Expr.prototype.replaceTypes = function(map) {
   if (!map.size) {
     return this;
@@ -255,14 +263,23 @@ Expr.prototype.replaceTypes = function(map) {
   treeWalk(this);
 };
 
+export interface TypeVariable {
+  tsubst(map);
+}
 TypeVariable.prototype.tsubst = function(map) {
  return map.get(this.name) || this;
 };
 
+export interface TypeConstant {
+  tsubst(map);
+}
 TypeConstant.prototype.tsubst = function(map) {
   return this;
 };
 
+export interface FunctionType {
+  tsubst(map);
+}
 // Substitutes for type variables in this type.  The implementation
 // takes some care to share existing instances rather than creating new
 // ones, the main purpose being to avoid using unnecessary space.
@@ -286,8 +303,13 @@ FunctionType.prototype.tsubst = function(map, seen = []) {
 
 //// Finding TypeVariable names.
 
-// Computes and returns a Set of the names of
-// type variables apppearing within this expression.
+export interface Expr {
+  /** Computes and returns a Set of the names of
+   * type variables apppearing within this expression.
+   */
+  typeVars();
+  _addTVars(vars);
+}
 Expr.prototype.typeVars = function() {
   return this._addTVars(new Set());
 };
@@ -309,13 +331,22 @@ Expr.prototype._addTVars = function(vars) {
 // These add the names of all type variables appearing within their
 // type term to the given set of type variable names.
 
+export interface TypeVariable {
+  _addTVars(vars);
+}
 TypeVariable.prototype._addTVars = function(vars) {
   vars.add(this.name);
 };
 
+export interface TypeConstant {
+  _addTVars(vars);
+}
 TypeConstant.prototype._addTVars = function(vars) {
 };
 
+export interface FunctionType {
+  _addTVars(vars);
+}
 FunctionType.prototype._addTVars = function(vars) {
   this.fromType._addTVars(vars);
   this.toType._addTVars(vars);
@@ -328,9 +359,13 @@ FunctionType.prototype._addTVars = function(vars) {
 // type variables that occur in both and rename all of those in one of
 // the steps.
 
-// Returns a substitution Map that can make the type variables in this
-// all distinct from the type variables in the argument term, e.g.  by
-// calling Expr.subsType with the result.
+export interface Expr {
+  /** Returns a substitution Map that can make the type variables in this
+   * all distinct from the type variables in the argument term, e.g.  by
+   * calling Expr.subsType with the result.
+   */
+  typesDistinctifier(term2);
+}
 Expr.prototype.typesDistinctifier = function(term2) {
   const term1 = this;
   const vars1 = term1.typeVars();
@@ -343,13 +378,17 @@ Expr.prototype.typesDistinctifier = function(term2) {
   return map;
 };
 
-// Returns a substitution Map that unifies the types in this with the
-// types in the Expr argument; or a falsy value in case unification
-// fails.  Assumes that this Expr and the argument are exactly the
-// same other than type assignments and names of bound variables.
-//
-// Call this.subsType and expr.subsType with the result of this call
-// to make their type assignments the same.  The result is resolved.
+export interface Expr {
+  /** Returns a substitution Map that unifies the types in this with the
+   * types in the Expr argument; or a falsy value in case unification
+   * fails.  Assumes that this Expr and the argument are exactly the
+   * same other than type assignments and names of bound variables.
+   *
+   * Call this.subsType and expr.subsType with the result of this call
+   * to make their type assignments the same.  The result is resolved.
+   */
+  typesUnifier(expr2);
+}
 Expr.prototype.typesUnifier = function(expr2) {
   const map = new Map();
   const pairs = [];
@@ -374,20 +413,29 @@ Expr.prototype.typesUnifier = function(expr2) {
   return u && resolve(u);
 };
 
-// Returns this or if necessary a copy with type variables substituted
-// to be all distinct from type variables of the argument.
-//
-// TODO: Consider a version that updates types in place, never copying.
+export interface Expr {
+  /** Returns this or if necessary a copy with type variables substituted
+   * to be all distinct from type variables of the argument.
+   *
+   * TODO: Consider a version that updates types in place, never copying.
+   */
+  distinctifyTypes(expr2);
+}
 Expr.prototype.distinctifyTypes = function(expr2) {
   const distinctor = this.typesDistinctifier(expr2);
   const result = this.subsType(distinctor);
   return result;
 };
 
-// Returns an array of pairs of types that need to be unified
-// to make the current preterm well-formed in its type assignments.
-// This is work in progress, unused, untested, and not full
-// type inference.
+export interface Expr {
+  /**
+   * Returns an array of pairs of types that need to be unified
+   * to make the current preterm well-formed in its type assignments.
+   * This is work in progress, unused, untested, and not full
+   * type inference.
+   */
+  annotate1();
+}
 Expr.prototype.annotate1 = function() {
   const pairs = [];
   // This returns a type expression for the term visited.  This type
@@ -427,15 +475,5 @@ Expr.prototype.annotate1 = function() {
   };
   visit(this);
 };
-
-
-//// EXPORTS
-
-Toy.andUnifTypes = andUnifTypes;
-Toy.unifTypesList = unifTypesList;
-Toy.resolve = resolve;
-Toy.fullUnifTypes = fullUnifTypes;
-Toy.checkTriv = checkTriv;
-Toy.coreUnifTypes = coreUnifTypes;
 
 }  // namespace;

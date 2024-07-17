@@ -2609,9 +2609,9 @@ var testCase = {
   },
 
   testConjunctionSchema: function() {
-    var result = Toy._conjunctionSchema(Toy.parse('2<3 & (3<4 & (b => c))')).$$
+    var result = Toy.conjunctionSchema(Toy.parse('2<3 & (3<4 & (b => c))')).$$
     assertEqual('(a1 & (a2 & a3))', result);
-    assertEqual('a1', Toy._conjunctionSchema(Toy.parse('a => b')).$$);
+    assertEqual('a1', Toy.conjunctionSchema(Toy.parse('a => b')).$$);
   },
 
   testEQuantify: function() {

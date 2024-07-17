@@ -16,28 +16,6 @@ namespace Toy {
 
 //// THEOREMS AND RULES
 
-var assert = Toy.assertTrue;
-const abort = Toy.abort;
-
-//  Make some useful names available here.
-var assertEqn = Toy.assertEqn;
-var varify = Toy.varify;
-var constify = Toy.constify;
-var termify = Toy.termify;
-var mathParse = Toy.mathParse;
-var call = Toy.call;
-var equal = Toy.equal;
-var implies = Toy.implies;
-var lambda = Toy.lambda;
-const check = Toy.check;
-
-var Expr = Toy.Expr;
-var Atom = Toy.Atom;
-var Call = Toy.Call;
-var Lambda = Toy.Lambda;
-
-var memo = Toy.memo;
-
 // Predefine some common constants.
 var T = constify('T');
 var F = constify('F');
@@ -46,7 +24,7 @@ var F = constify('F');
 // for proved tautologies.  Private to the tautology rule.
 //
 // TODO: Part of a proof context.
-var _tautologies = new Map();
+export var _tautologies = new Map();
 
 
 //
@@ -213,7 +191,7 @@ Expr.prototype.distinctifier = function(step2, path_arg, map) {
  * if any variable bound at the target site is in both the
  * assumptions and RHS of the equation.
  */
-function boundVarsOK(target, path, equation) {
+export function boundVarsOK(target, path, equation) {
   if (equation.isCall2('=>')) {
     const hypFreeNames = equation.getLeft().freeVars();
     const eqFreeNames = equation.getRight().freeVars();
@@ -237,7 +215,7 @@ function boundVarsOK(target, path, equation) {
  * space-separated list of words.  If the object/set is empty
  * returns one containing just "none", for convenience.
  */
-function processLabels(labels) {
+export function processLabels(labels) {
   switch(typeof labels) {
   case 'string':
     var result = {};
@@ -339,7 +317,7 @@ function hasTypeAsm(goal) {
 // Conceptually it could be incremented just by rule R.
 var stepCounter = 1;
 
-function getStepCounter() {
+export function getStepCounter() {
   return stepCounter;
 }
 
@@ -347,7 +325,7 @@ function getStepCounter() {
  * A simplification function that does nothing, useful as the
  * auto-simplifier for rules that want to suppress simplification.
  */
-function noSimplify(step) {
+export function noSimplify(step) {
   return step;
 }
 
@@ -627,7 +605,7 @@ export var rules: Record<string, any> = {};
  * Toy.rules and add the resulting rule or rules.  This does not do
  * inference, so it can be called before any theorems are proved.
  */
-function addRule(info) {
+export function addRule(info) {
   const fmt = Toy.format;
 
   var name = info.name;
@@ -930,7 +908,7 @@ function addRule(info) {
  * and ignoring arguments that are not plain objects.  Evaluation
  * of any such arguments occurs before calling "declare".
  */
-function declare(...declarations) {
+export function declare(...declarations) {
   for (const decl of declarations) {
     if (decl && decl.constructor === Object) {
       if (decl.fact && !decl.statement && !decl.goal) {
@@ -950,7 +928,7 @@ function declare(...declarations) {
  * If a "more" continuation is given and the result is a success
  * ("ok"), returns the continuation, else the failure result.
  */
-function ok(status, more?) {
+export function ok(status, more?) {
   if (more) {
     return ok(status) ? more : status;
   } else {
@@ -961,14 +939,14 @@ function ok(status, more?) {
 //// Exercises
   
 // This maps from an exercise name to its declarations.
-var exercises = new Map();
+export var exercises = new Map();
 
 /**
  * Declares an exercise with a number of declarations.  This is like
  * the declarations function, but is specific to exercises and requires
  * the name of the exercise as its first argument.
  */
-function exercise(name, ...declarations) {
+export function exercise(name, ...declarations) {
   const decls = exercises.get(name) || [];
   decls.push(...declarations);
   exercises.set(name, decls);
@@ -1049,7 +1027,7 @@ function exercise(name, ...declarations) {
  *
  * Returns the newly-defined name.
  */
-function definition(defn_arg) {
+export function definition(defn_arg) {
   const definitions = Toy.definitions;
   const candidate: EType = termify(defn_arg).typedCopy();
   // Free occurrences of names of constants that do not have
@@ -1165,12 +1143,12 @@ function normalizeDefn(defn_arg) {
 let deferringDefnFacts = true;
 
 // Functions to compute defnFacts when the needed support is ready.
-const deferredDefnFacts = [];
+export const deferredDefnFacts = [];
 
 /**
  * Call this to prove deferred facts and cease deferrals.
  */
-function enableDefnFacts() {
+export function enableDefnFacts() {
   deferringDefnFacts = false;
   deferredDefnFacts.forEach(function(f) { f(); });
   deferredDefnFacts.length = 0;
@@ -1188,7 +1166,7 @@ function enableDefnFacts() {
  *
  * This is intended mainly for use from Toy.definition.
  */
-function addDefnFacts(definition) {
+export function addDefnFacts(definition) {
   if (definition.isCall2('=') && definition.getLeft().isNamedConst()) {
     // Add the converse as a simplifier.
     const eqn0 = rules.fact(definition);
@@ -1252,7 +1230,7 @@ function addDefnFacts(definition) {
 //   in its place.
 //
 // TODO: Part of a proof context.
-var _factsByKey = new Map();
+export var _factsByKey = new Map();
 
 // Fact declarations and fact references:
 
@@ -1302,7 +1280,7 @@ var _factsByKey = new Map();
  * store just pairs of statement and fact goal.
  */
 // TODO: Part of a proof context.
-const _resolutionsByKey = new Map();
+export const _resolutionsByKey = new Map();
 
 /**
  * This finds and returns the factInfo object of a recorded fact that
@@ -1320,7 +1298,7 @@ const _resolutionsByKey = new Map();
  *
  * TODO: See TODO for resolveFactRef.
  */
-function factInfoMatching(resInfo) {
+export function factInfoMatching(resInfo) {
   let extender = null;
   const factPropsList = _factsByKey.get(resInfo.key);
   for (const factProps of factPropsList || []) {
@@ -1359,7 +1337,7 @@ function factInfoMatching(resInfo) {
  * This is the principal API entry point for resolving fact references.
  * See also resolveFactRef.
  */
-function factExpansion(stmt) {
+export function factExpansion(stmt) {
   const resInfo = getResInfo(stmt);
   const expanded = resInfo._expansion;
   if (expanded) {
@@ -1396,7 +1374,7 @@ function factExpansion(stmt) {
  * can appear in any order.  Other assumptions, if included, may have
  * to appear in the same order as stated in the actual fact.
  */
-function resolveFactRef(stmt) {
+export function resolveFactRef(stmt) {
   // The resInfo is "fact resolution information" for the statemement.
   const resInfo = getResInfo(stmt);
   const resolutions = _resolutionsByKey.get(resInfo.key) || [];
@@ -1429,7 +1407,7 @@ function resolveFactRef(stmt) {
  * possible, otherwise returns null.  Like resolveFactRef, but
  * returns just the goal, as stated in the fact declaration.
  */
-function resolveToFact(stmt) {
+export function resolveToFact(stmt) {
   const info = resolveFactRef(stmt);
   return info ? info.goal : null;
 }
@@ -1439,7 +1417,7 @@ function resolveToFact(stmt) {
  * and has the same set of assumptions as in that fact, allowing
  * for differences in variable names.
  */
-function isRecordedFact(stmt) {
+export function isRecordedFact(stmt) {
   // First check that the statement resolves to a specific fact.
   const factInfo = resolveFactRef(stmt);
   if (factInfo) {
@@ -1457,7 +1435,7 @@ function isRecordedFact(stmt) {
  * Like getResult, below, but always proves the statement if it has
  * an associate prover function.
  */
-function proveResult(stmt) {
+export function proveResult(stmt) {
   return getResult(stmt, true);
 }
 
@@ -1479,7 +1457,7 @@ function proveResult(stmt) {
  * TODO: Consider renaming to something like "stepify" and using as
  *   a conversion for inputs to steps in the vein of "termify".
  */
-function getResult(statement, mustProve) {
+export function getResult(statement, mustProve) {
   if (Toy.isProved(statement)) {
     return statement;
   }
@@ -1491,7 +1469,7 @@ function getResult(statement, mustProve) {
 /**
  * Same as getResult, but the argument is a factInfo.
  */
-function getResult0(info, mustProve) {
+export function getResult0(info, mustProve) {
   // TODO: Consider more precise checking of the result of the lookup.
   if (info.proved) {
     return info.proved;
@@ -1540,7 +1518,7 @@ function isInProgress(stmt) {
  * conversion of strings to wffs.
  */
 // TODO: Part of a proof context.
-const _statementResInfos = new Map();
+export const _statementResInfos = new Map();
 
 const noTerms = new Toy.TermSet();
 
@@ -1575,7 +1553,7 @@ const noTerms = new Toy.TermSet();
  * TODO: Do the parsing in client code so different type assumptions
  *  and such can be inserted there.
  */
-function getResInfo(stmt) {
+export function getResInfo(stmt) {
   // Computes the resolution info for the statement and caches the
   // association in _statementResInfos.
   function computeStatementInfo(stmt) {
@@ -1644,7 +1622,7 @@ function getResInfo(stmt) {
  *   first fact that seems to match, and continuing the search if
  *   application fails.
  */
-function searchForMatchingFact(term, info, cxt={}) {
+export function searchForMatchingFact(term, info, cxt={}) {
   var allFacts, searchMethod;
   if (info.constructor === Object) {
     allFacts = info.facts;
@@ -1686,7 +1664,7 @@ function searchForMatchingFact(term, info, cxt={}) {
  * is unconditional and so applicable in all contexts, even within
  * variable bindings.
  */
-function isPureFact(fact) {
+export function isPureFact(fact) {
   if (typeof fact === 'string' || fact instanceof Expr) {
     // This next line supports ordinary facts and also tautologies.
     // It relies on resolveToFact to return a conditional whenever
@@ -1700,7 +1678,7 @@ function isPureFact(fact) {
 
 // This finds the fact part to match.  If the fact is not an equation,
 // uses the main part instead of the LHS.
-function schemaPart(fact) {
+export function schemaPart(fact) {
   var main = fact.getMain();
   return (main.isCall2('=')
           ? main.getLeft()
@@ -1800,7 +1778,7 @@ Expr.prototype.withoutEqT = function() {
  * If pureOnly is true, this only accepts a fact that is a pure
  * equation, with no conditions on it.
  */
-function findMatchingFact(facts_arg, cxt, term, pureOnly) {
+export function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   // This function interprets a fact statement as a wff.
   // Currently it uses mathParse.
   // TODO: Use the context (cxt) and perhaps other information to determine
@@ -1933,7 +1911,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
  * property of the "descend" pattern, the "parts" property of the
  * "descend" pattern, and the context argument to findMatchingFact.
  */
-function _locateMatchingFact(expr, schema_arg, varsMap, context) {
+export function _locateMatchingFact(expr, schema_arg, varsMap, context) {
   var schema = termify(schema_arg);
   var factLists = context.factLists;
   var subst;
@@ -1971,7 +1949,7 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
  * Beta-reduces the given term if it is a call to a lambda,
  * otherwise returns a falsy value.
  */
-function tryReduce(term) {
+export function tryReduce(term) {
   return term.isLambdaCall() && rules.axiom4(term);
 }
 
@@ -1983,7 +1961,7 @@ function tryReduce(term) {
  *
  * TODO: Support a rule function rather than a rule name.
  */
-function applyMatchingFact(step, path, facts, ruleName='rewrite') {
+export function applyMatchingFact(step, path, facts, ruleName='rewrite') {
   const info = findMatchingFact(facts, null, step.get(path));
   return info && rules[ruleName](step, path, info.stmt);
 }
@@ -1992,7 +1970,7 @@ function applyMatchingFact(step, path, facts, ruleName='rewrite') {
  * Apply the list of fact rewrites to the "focal" part of the step
  * until none of them any longer is applicable, returning the result.
  */
-function applyToFocalPart(step, facts) {
+export function applyToFocalPart(step, facts) {
   return applyFactsWithinSite(step, step.pathToFocalPart(), facts);
 }
 
@@ -2002,7 +1980,7 @@ function applyToFocalPart(step, facts) {
  * with asms deduped but not simplified. (?)  Returns its input step
  * if no matches are found.
  */
-function applyFactsWithinSite(step, path_arg, facts) {
+export function applyFactsWithinSite(step, path_arg, facts) {
   var path = Toy.asPath(path_arg);
   var eqn1 = rules.considerPart(step, path);
   var eqn2 = applyFactsWithinRhs(eqn1, facts);
@@ -2015,7 +1993,7 @@ function applyFactsWithinSite(step, path_arg, facts) {
  * applicable, returning the result.  Returns its input step if no
  * matches are found.  Uses rules.rewrite, not rewriteOnly.
  */
-function applyFactsWithinRhs(step, facts) {
+export function applyFactsWithinRhs(step, facts) {
   var rhs;
   var info;
   var eqn = step;
@@ -2035,7 +2013,7 @@ function applyFactsWithinRhs(step, facts) {
  *
  * If the function returns a falsy value, this returns that.
  */ 
-function convert(step, path, fn) {
+export function convert(step, path, fn) {
   var expr = step.get(path);
   assert(expr, 'Bad path {1}', path, step);
   var eqn = fn(expr);
@@ -2053,7 +2031,7 @@ function convert(step, path, fn) {
  * Intended to capture a design pattern for proving facts about
  * "inverse" functions such as division and subtraction.
  */
-function transformApplyInvert(term_arg, eqn_arg, fact) {
+export function transformApplyInvert(term_arg, eqn_arg, fact) {
   var term = termify(term_arg);
   var eqn = getResult(eqn_arg);
   var revEqn = rules.eqnSwap(eqn);
@@ -2069,7 +2047,7 @@ function transformApplyInvert(term_arg, eqn_arg, fact) {
  * the call is falsy or identical to its input.  Return the result of
  * the last call that was not falsy or same.
  */
-function repeatedly(step, fn) {
+export function repeatedly(step, fn) {
   var simpler = step;
   var next;
   while (true) {
@@ -2086,7 +2064,7 @@ function repeatedly(step, fn) {
  * until none matches, each time replacing the RHS with the result of
  * applying the matching fact.  Returns the last version created.
  */ 
-function arrangeRhs(eqn_arg, context, facts) {
+export function arrangeRhs(eqn_arg, context, facts) {
   var rhsPath;
   var info;
   var eqn = eqn_arg;
@@ -2110,7 +2088,7 @@ function arrangeRhs(eqn_arg, context, facts) {
  * TODO: Consider eliminating the use of "consider" here when exactly
  *   one fact application can be done.
  */
-function arrange(step, path, context, facts) {
+export function arrange(step, path, context, facts) {
   var eqn = rules.consider(step.get(path));
   var arranged = arrangeRhs(eqn, context, facts);
   return rules.replace(step, path, arranged);
@@ -2120,7 +2098,7 @@ function arrange(step, path, context, facts) {
  * Call the given function for each recorded fact, passing
  * it the info object stored for the fact.
  */
-function eachFact(fn) {
+export function eachFact(fn) {
   _factsByKey.forEach(function(list) {
       list.forEach(function(info) {
           fn(info);
@@ -2135,7 +2113,7 @@ function eachFact(fn) {
  * run, its action will not rerun it, but only re-justify so there
  * will be a new step.
  */
-function getTheorem(name) {
+export function getTheorem(name) {
   var action = rules[name];
   if (!action || action.length !== 0) {
     return null;
@@ -2146,7 +2124,7 @@ function getTheorem(name) {
 /**
  * Returns the statement of a named theorem.
  */
-function getTheoremStatement(name) {
+export function getTheoremStatement(name) {
   const fn = rules[name];
   // If the rule takes arguments it will have no statement.
   return fn && fn.info.statement;
@@ -2173,7 +2151,7 @@ function getTheoremStatement(name) {
  *   rethink and rewrite along with all or most uses of
  *   matchSchemaPart.
  */
-function matchFactPart(step, path, factList, name) {
+export function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
       const stmt = mathParse(fact_arg);
       const expn = (factExpansion(stmt) ||
@@ -2196,7 +2174,7 @@ function matchFactPart(step, path, factList, name) {
  * of the form a1 & ... & an, where the "a"s are variables for the
  * terms for each of the assumptions.
  */
-function buildHypSchema(hyps, map, exclusions) {
+export function buildHypSchema(hyps, map, exclusions) {
   var schema = null;
   hyps.scanConj(function(hyp) {
       var v = map.addTerm(hyp);
@@ -2225,7 +2203,7 @@ function hypsExcept(hyps, exclusions) {
 /**
  * Makes a facts map into a list of the fact keys.
  */
-function listFacts(map) {
+export function listFacts(map) {
   var list = [];
   for (var key in map) {
     list.push(key);
@@ -2237,7 +2215,7 @@ function listFacts(map) {
  * Developer utility function that modifies the named rule to emit
  * information about calls to it.
  */
-function traceRule(name) {
+export function traceRule(name) {
   var rule = rules[name];
   function timed() {
     console.log('Enter', name);
@@ -2260,7 +2238,7 @@ function traceRule(name) {
  * Returns the plain object with various information about the rule
  * applied to create the given step.
  */
-function getRuleInfo(step) {
+export function getRuleInfo(step) {
   return rules[step.ruleName].info;
 }
 
@@ -2270,7 +2248,7 @@ function getRuleInfo(step) {
  * "inputs" information of the rule that generated the step to
  * determine which argument to access.
  */
-function getStepSite(step) {
+export function getStepSite(step) {
   var inputs = getRuleInfo(step).inputs;
   for (var type in inputs) {
     if (type in Toy.siteTypes) {
@@ -2286,7 +2264,7 @@ function getStepSite(step) {
  * Returns an array of the (regular) steps leading up to and including
  * the given plain / unrendered step, sorted by ordinal.
  */
-function proofOf(step) {
+export function proofOf(step) {
   // See also the similar Toy.unrenderedDeps.
   const visited = new Set();
   var result = [];
@@ -2313,7 +2291,7 @@ function proofOf(step) {
  * normalized assumptions.  Used in rendering to highlight the sources
  * of assumptions.
  */
-function assumptionsUsed(step) {
+export function assumptionsUsed(step) {
   var asms = step.asmPart();
   if (!asms) {
     return [];
@@ -2344,7 +2322,7 @@ function assumptionsUsed(step) {
  * passes the test.  Returns a (pretty) path to the node found,
  * or null if none is found.
  */
-function pathToConjunct(root, test) {
+export function pathToConjunct(root, test) {
   var Path = Toy.Path;
   function pathFrom(node) {
     if (test(node)) {
@@ -2370,7 +2348,7 @@ function pathToConjunct(root, test) {
  * with the structure of the tree of conjunctions rooted at the term.
  * Matching parts get the same variable letter.
  */
-function conjunctionSchema(term) {
+export function conjunctionSchema(term) {
   var map = new Toy.TermMap();
   var infixCall = Toy.infixCall;
   function makeSchema(term) {
@@ -2444,7 +2422,7 @@ Expr.prototype.pathBindings = function(path_arg) {
  * TODO: Declare number facts as simplifiers rather than adding here.
  */
 // TODO: Part of a proof context.
-var basicSimpFacts = [
+export var basicSimpFacts = [
                       'T & a == a',
                       'a & T == a',
                       'F & a == F',
@@ -2537,7 +2515,7 @@ var factProperties = {
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
  */
-function addFact(info) {
+export function addFact(info) {
   // This function adds to the info and supplies it to setFactInfo.
 
   // This will be the same as the goal if the goal is proved.
@@ -2772,7 +2750,7 @@ function asFactProver(prover, goal) {
 
 // This gets called at load time to generate the statement and
 // proof of the stated tautology.
-function defTautology(statement) {
+export function defTautology(statement) {
   return ({statement: statement, proof: () => rules.tautology(statement)});
 }
 
@@ -2782,7 +2760,7 @@ function defTautology(statement) {
 /**
  * Dumps out fact resolutions as a debugging aid.
  */
-function dumpFactResolutions() {
+export function dumpFactResolutions() {
   const map = _resolutionsByKey;
   map.forEach(function(list, k) {
       console.log('Key', k);
@@ -2803,8 +2781,10 @@ function dumpFactResolutions() {
 
 //// Database management
 
+export var db;
+
 $(function() {
-  const db = window.Toy.db = new Dexie('Prooftoys');
+  db = new Dexie('Prooftoys');
   db.version(1).stores({
     prefs: '&key',
     editors: '&id',
@@ -2814,98 +2794,20 @@ $(function() {
   db.prefs.put({key: 'boo', value: 'far'});
 });
 
-
-//// Export public names.
-
-Toy.rules = rules;
-Toy._factsByKey = _factsByKey;
-
-Toy.factInfoMatching = factInfoMatching;
-Toy.factExpansion = factExpansion;
-
 // Settable variables, export right here:
 
 // If true, facts are only proved when explicitly requested,
 // as when displaying the proof, but not when used in another
 // proof.  Matching never causes a fact to be proved.
-Toy.assertFacts = false;
+export var assertFacts = false;
 
 // Assert requested facts that don't match the result of the proof.  
 // This can be temporarily set to true to work around failures
 // of proofs that might obscure other bugs that need to be fixed.
-Toy.assertOnMismatch = false;
+export var assertOnMismatch = false;
 
 // Set to true to assert facts whose proofs fail with an error.
 // The purpose is somewhat like assertOnMismatch.
-Toy.assertOnFailure = false;
-
-Toy.getStepCounter = getStepCounter;
-Toy.noSimplify = noSimplify;
-Toy.boundVarsOK = boundVarsOK;
-
-Toy.declare = declare;
-Toy.ok = ok;
-Toy.exercise = exercise;
-Toy.exercises = exercises;
-Toy.addRule = addRule;
-Toy.definition = definition;
-Toy.deferredDefnFacts = deferredDefnFacts;
-Toy.enableDefnFacts = enableDefnFacts;
-Toy.addDefnFacts = addDefnFacts;
-Toy.resolveFactRef = resolveFactRef;
-Toy.resolveToFact = resolveToFact;
-Toy.addFact = addFact;
-Toy.isRecordedFact = isRecordedFact;
-Toy.proveResult = proveResult;
-Toy.getResult = getResult;
-Toy.getResult0 = getResult0;
-Toy.eachFact = eachFact;
-Toy.getTheorem = getTheorem;
-Toy.getTheoremStatement = getTheoremStatement;
-Toy.getResInfo = getResInfo;
-Toy.convert = convert;
-Toy.schemaPart = schemaPart;
-Toy.findMatchingFact = findMatchingFact;
-Toy.tryReduce = tryReduce;
-Toy.applyFactsWithinSite = applyFactsWithinSite;
-Toy.applyFactsWithinRhs = applyFactsWithinRhs;
-Toy.applyMatchingFact = applyMatchingFact;
-Toy.applyToFocalPart = applyToFocalPart;
-Toy.repeatedly = repeatedly;
-Toy.arrange = arrange;
-Toy.arrangeRhs = arrangeRhs;
-Toy.listFacts = listFacts;
-Toy.transformApplyInvert = transformApplyInvert;
-Toy.matchFactPart = matchFactPart;
-Toy.searchForMatchingFact = searchForMatchingFact;
-Toy.isPureFact = isPureFact;
-Toy.getRuleInfo = getRuleInfo;
-Toy.getStepSite = getStepSite;
-Toy.proofOf = proofOf;
-Toy.assumptionsUsed = assumptionsUsed;
-Toy.defTautology = defTautology; 
-
-Toy.definition = definition;
-
-Toy.basicSimpFacts = basicSimpFacts;
-
-Toy.traceRule = traceRule;
-
-Toy.buildHypSchema = buildHypSchema;
-Toy.pathToConjunct = pathToConjunct;
-
-// For communication between an action precheck and the rule's main
-// action function.
-Toy._actionInfo;
-
-// For debugging.
-Toy._statementResInfos = _statementResInfos;
-Toy._resolutionsByKey = _resolutionsByKey;
-Toy.dumpFactResolutions = dumpFactResolutions;
-
-// For testing.
-Toy._tautologies = _tautologies;
-Toy._locateMatchingFact = _locateMatchingFact;
-Toy._conjunctionSchema = conjunctionSchema;
+export var assertOnFailure = false;
 
 }  // namespace;
