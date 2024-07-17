@@ -7,6 +7,7 @@ interface Window {
   proofEditor: any;
   rCounter: number;
   dCounter: number;
+  idCount: number;
   Numtest: function;
   Tval: any;
 }

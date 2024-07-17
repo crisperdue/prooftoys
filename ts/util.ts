@@ -283,14 +283,14 @@ export declare class ToyMap {
    * from the arguments, an alternating sequence of string keys and
    * values.  The argument list length must be even.
    */
-  export function object0(_args) {
+  export function object0(...args) {
     var result = Object.create(null);
-    var nargs = arguments.length;
+    var nargs = args.length;
     if (nargs % 2) {
-      abort('object0 bad arguments list');
+      abort('object0 bad args list');
     }
     for (var i = 0; i < nargs; i += 2) {
-      result[arguments[i]] = arguments[i + 1];
+      result[args[i]] = args[i + 1];
     }
     return result;
   }
@@ -1088,7 +1088,7 @@ export declare class ToyMap {
    * to not make the debugger pause here.
    * @type {function(any, ...any): never}
    */
-  export function abort(msg, ...args): never {
+  export function abort(msg?, ...args): never {
     const thrower: (e: any) => never = e => {
       Toy.thrown = e;
       // The two code paths here enable us to suppress debugging when an
@@ -1125,7 +1125,7 @@ export declare class ToyMap {
     } else if (typeof msg === 'string') {
       _abort({}, msg, ...args);
     } else {
-      _abort(...arguments);
+      _abort(msg, ...args);
     }
   }
 

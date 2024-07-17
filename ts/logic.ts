@@ -4277,7 +4277,7 @@ declare(
       var boundNames = target.boundNames(path);
       Toy.removeExcept(boundNames, equation.freeVars());
       // Is this the full set of names?
-      var t = Toy.genVar('t', Object.assign({},
+      var t: Expr = Toy.genVar('t', Object.assign({},
                                             target.allNames(),
                                             equation.allNames()));
       var texpr = t;

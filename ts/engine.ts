@@ -402,7 +402,7 @@ Toy.addMethods(Expr, ruleMethods);
 // This is a central global variable.
 //
 // TODO: Part of a proof context.
-var rules = {};
+export var rules: Record<string, any> = {};
 
 //// RULE PROPERTIES
 

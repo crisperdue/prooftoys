@@ -115,7 +115,7 @@ export function getBinding(target, bindings) {
 //   paths.
 
 export declare class Path {
-  constructor(segment: any, opt_rest: any);
+  constructor(segment: any, ...rest: any[]);
   segment: any;
   rest: any;
   segments(): any[];
