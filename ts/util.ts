@@ -1017,9 +1017,11 @@ export declare class ToyMap {
    * Alternatively, supply extra non-Object arguments and access them
    * as {1}, {2}, etc..  This presumably is more efficient.
    */
-  export function format(fmt, map_arg) {
-    var map = (map_arg && map_arg.constructor === Object)
-      ? map_arg
+  export function format(fmt, ...objects) {
+    const arg1 = objects[0];
+    var map = (arg1 && arg1.constructor === Object)
+      ? arg1
+      // Yes, all.  Indexes start at 1.
       : arguments;
     return fmt.replace(/\{[$_a-zA-Z0-9]*?\}/g, function(matched) {
       return map[matched.slice(1, -1)];
