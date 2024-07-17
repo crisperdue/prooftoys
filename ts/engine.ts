@@ -12,6 +12,8 @@
 // to the global environment (except through the "Toy" namespace).
 namespace Toy {
 
+  export var _actionInfo;
+
 //// THEOREMS AND RULES
 
 var assert = Toy.assertTrue;
@@ -51,6 +53,7 @@ var _tautologies = new Map();
 // Expr methods for inference
 //
 
+export interface Expr {
 /**
  * Returns a shallow copy of this, annotating the copy with the rule
  * name, rule arguments, and dependencies (ruleName,
@@ -74,6 +77,8 @@ var _tautologies = new Map();
  * or alternatively, never "arrange" them here, leaving that task
  * to rules such as "replace".
  */
+justify(ruleName, ruleArgs, deps?: Step[], retain?: boolean);
+}
 Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   // Note: when splitting Step and Expr, make a version of this just
   // for rules.assert, and use that in any primitive inference rules.
@@ -153,6 +158,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   return result;
 };
 
+export interface Expr {
 /**
  * Considering a potential rewriting of step2 at the given path, with
  * the given substitution map, and with this as the fact, returns a
@@ -168,6 +174,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
  *   Consider supporting that option in some way, not necessarily
  *   here.
  */
+distinctifier(step2, path_arg, map);
+}
 Expr.prototype.distinctifier = function(step2, path_arg, map) {
   const keys = new Set(Object.keys(map));
   // The substitution into this followed by replacement adds only
@@ -184,6 +192,7 @@ Expr.prototype.distinctifier = function(step2, path_arg, map) {
         new Set(step2.pathBindings(step2.asPath(path_arg)
                                    .uglify(step2.implies()))
                 .keys());
+  // TODO: XXX This looks broken, names vs Atoms.
   const avoidNames = Toy.union(free2, retained, boundNames);
   const result = {};
   // The result of applying the substitution and then replacing
@@ -254,7 +263,7 @@ const descriptors = new Set(['exists1', 'the', 'the1']);
 // and goal, and stores them as info.categories.  The categories are
 // like menus, but can be more fine-grained, each menu displaying a
 // characteristic set of categories.
-function computeMenuCategories(info, isConverse) {
+function computeMenuCategories(info) {
   const stmt = info.goal;
   const categories = new Set;
 
@@ -342,6 +351,7 @@ function noSimplify(step) {
   return step;
 }
 
+export interface Path {
 /**
  * Adjusts a path to account for application of a typical rewrite rule
  * that could prefix the path with /right, given a step that is the
@@ -351,7 +361,9 @@ function noSimplify(step) {
  *
  * Caution, currently unused.
  */
-Toy.Path.prototype.adjustForRewrite = function(input, output) {
+adjustForRewrite(input, output);
+}
+Path.prototype.adjustForRewrite = function(input, output) {
   return (!input.isCall2('=>') && output.isCall2('=>')
           ? Toy.asPath('/right').concat(this)
           : this);
@@ -694,7 +706,7 @@ function addRule(info) {
       converse: true
     };
     // Accept selected fact properties in the rule metadata.
-    var properties = {goal: statement, proof: proof};
+    var properties = {goal: statement, proof: proof} as Record<string, any>;
     for (var k in factXferProps) {
       if (k in info) {
         // Uncomment this for detailed tracing.
@@ -938,7 +950,7 @@ function declare(...declarations) {
  * If a "more" continuation is given and the result is a success
  * ("ok"), returns the continuation, else the failure result.
  */
-function ok(status, more) {
+function ok(status, more?) {
   if (more) {
     return ok(status) ? more : status;
   } else {
@@ -1039,7 +1051,7 @@ function exercise(name, ...declarations) {
  */
 function definition(defn_arg) {
   const definitions = Toy.definitions;
-  const candidate = termify(defn_arg).typedCopy();
+  const candidate: EType = termify(defn_arg).typedCopy();
   // Free occurrences of names of constants that do not have
   // definitions.  We check this before adding any facts that
   // may reference the defined name.
@@ -1051,7 +1063,7 @@ function definition(defn_arg) {
   assert(newList.length === 1,
          'Definition {1} has multiple new constants {2}',
          defn_arg, newList.join(', '));
-  const name = newList[0];
+  const name: string = newList[0];
   if (candidate.isCall2('=')) {
     // The name must not appear in the RHS.
     const rhsNames = candidate.getRight().newConstants();
@@ -1073,10 +1085,10 @@ function definition(defn_arg) {
     // The defn is the definition in standard form: <constant> = <term>.
     const defn = normalizeDefn(candidate);
     // TODO: Is the best place to assert it?
-    const assertion = rules.assert(defn);
+    const assertion: EType = rules.assert(defn);
     if (defn.isCall2('=') && defn.getLeft().isNamedConst()) {
       // Allow benign redefinition same as an existing one.
-      const name = defn.getLeft().name;
+      const name: string = defn.getLeft().name;
       const prev = definitions[name];
       if (prev instanceof Expr && prev.matches(defn)) {
         // If it does not match, later checks will flunk it.
@@ -1695,8 +1707,12 @@ function schemaPart(fact) {
           : main);
 }
 
-// Converts a main part of the form a == T back to just A, useful for
-// presentation of a rewrite rule.  Currently unused.
+export interface Expr {
+  /** Converts a main part of the form a == T back to just A, useful for
+   * presentation of a rewrite rule.  Currently unused.
+   */
+  withoutEqT();
+}
 Expr.prototype.withoutEqT = function() {
   const infix = Toy.infixCall;
   const main = this.getMain();
@@ -2369,6 +2385,7 @@ function conjunctionSchema(term) {
   return makeSchema(term);
 }
 
+export interface Expr {
 /**
  * Returns a Map with information about the bindings of variables that
  * are bound in the scope of the given path.  Keys of the map are
@@ -2381,6 +2398,8 @@ function conjunctionSchema(term) {
  *   name is bound in multiple parents of the target term, this
  *   only reports the innermost binding of that name.
  */
+pathBindings(path_arg);
+}
 Expr.prototype.pathBindings = function(path_arg) {
   const Path = Toy.Path;
   const bindings = new Map();

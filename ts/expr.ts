@@ -324,6 +324,7 @@ export interface Expr {
 export class Expr {
   __type;
   __memos;
+  wff;
 
   constructor() {
     this.__type = null;
