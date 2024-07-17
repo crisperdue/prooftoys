@@ -1778,7 +1778,7 @@ Expr.prototype.withoutEqT = function() {
  * If pureOnly is true, this only accepts a fact that is a pure
  * equation, with no conditions on it.
  */
-export function findMatchingFact(facts_arg, cxt, term, pureOnly) {
+export function findMatchingFact(facts_arg, cxt, term, pureOnly?) {
   // This function interprets a fact statement as a wff.
   // Currently it uses mathParse.
   // TODO: Use the context (cxt) and perhaps other information to determine
@@ -2422,7 +2422,7 @@ Expr.prototype.pathBindings = function(path_arg) {
  * TODO: Declare number facts as simplifiers rather than adding here.
  */
 // TODO: Part of a proof context.
-export var basicSimpFacts = [
+export var basicSimpFacts: (string | Object)[] = [
                       'T & a == a',
                       'a & T == a',
                       'F & a == F',

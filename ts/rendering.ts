@@ -2449,7 +2449,7 @@ function getTopProofContainer(step) {
  * TODO: Split this into at least two different things when there is
  * an actual Step class.
  */
-function getProofDisplay(expr) {
+export function getProofDisplay(expr) {
   if (expr instanceof Expr && expr.isProved()) {
     return (expr.proofDisplay ||
             (expr.rendering && expr.rendering.proofDisplay));

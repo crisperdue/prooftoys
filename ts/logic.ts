@@ -6,6 +6,9 @@ namespace Toy {
 
 'use strict';
 
+/** Rebindable exit */
+export var tautExit;
+
 //// Import names
 
 const assert = Toy.assertTrue;
@@ -60,7 +63,7 @@ const F = constify('F');
 // string.  Not to be confused with _factsByKey, which contains
 // information about facts as they are stated, not as they are looked
 // up.  The values are Step objects.  Private to rules.fact.
-const _factMap = new Map();
+export const _factMap = new Map();
 
 
 //// Primitive constants
@@ -2338,7 +2341,7 @@ declare(
  * Function callable to simplify an entire step.  Useful
  * as an autoSimplify function.
  */
-function simplifyStep(step) {
+export function simplifyStep(step) {
   return rules.simplifySite(step, '');
 }
 
@@ -5864,7 +5867,7 @@ const chainOps = [].concat( ...chainTypes);
  * If the target term is not part of a chain, the result is an empty
  * array.
  */
-function rightChain(step, path) {
+export function rightChain(step, path) {
   const bop = term => term.isCall2() && term.getBinOp().name;
 
   const chain = [];
@@ -5935,7 +5938,7 @@ function leftmost(term_arg) {
  * operator of the parent of the target term, and all to the left of
  * the target.
  */
-function leftChain(step, path) {
+export function leftChain(step, path) {
   if (path.isEnd()) {
     return [];
   }
@@ -6431,7 +6434,7 @@ declare(
  * everything in, because left movers use the 2 operator facts if
  * applicable, so they need to be first.
  */
-var moverFacts = {right: [{facts: [], up: 1,
+export var moverFacts = {right: [{facts: [], up: 1,
                            before: '/left', after: '/right'},
                           {facts: [], up: 2,
                            before: '/left/right', after: '/right'},
@@ -7254,15 +7257,9 @@ Toy.enableDefnFacts();
 
 //// EXPORT NAMES
 
-const tautologyCounts = Toy.tautologyCounts = new Map();
+export const tautologyCounts = new Map();
 
-// numbers.js adds many more to this list.
-Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
-
-Toy.simplifyStep = simplifyStep;
-Toy._factMap = _factMap;
-Toy.moverFacts = moverFacts;
-Toy.rightChain = rightChain;
-Toy.leftChain = leftChain;
+/** numbers.js adds many more to this list. */
+export const asmSimplifiers: (string | Object)[] = ['a & T == a', 'T & a == a'];
 
 }  // namespace;
