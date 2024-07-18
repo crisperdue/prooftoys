@@ -9,28 +9,6 @@ namespace Toy {
 /** Rebindable exit */
 export var tautExit;
 
-//// Import names
-
-const assert = Toy.assertTrue;
-const abort = Toy.abort;
-const assertEqn = Toy.assertEqn;
-const newError = Toy.newError;
-const ok = Toy.ok;
-const let_ = Toy.let_;
-
-const varify = Toy.varify;
-const constify = Toy.constify;
-const termify = Toy.termify;
-const mathParse = Toy.mathParse;
-const call = Toy.call;
-const equal = Toy.equal;
-const lambda = Toy.lambda;
-
-const Expr = Toy.Expr;
-const Atom = Toy.Atom;
-const Call = Toy.Call;
-const Lambda = Toy.Lambda;
-
 const Step = Expr;
 
 const definition = Toy.definition;
@@ -42,17 +20,6 @@ const definition = Toy.definition;
 // into a flag to toggle between use of the definition and use of the
 // two extra axioms.
 const useFalseDefn = true;
-
-const rules = Toy.rules;
-const declare = Toy.declare;
-const buildHypSchema = Toy.buildHypSchema;
-const tryReduce = Toy.tryReduce;
-
-const noSimplify = Toy.noSimplify;
-
-const resolveFactRef = Toy.resolveFactRef;
-const basicSimpFacts = Toy.basicSimpFacts;
-const _tautologies = Toy._tautologies;
 
 const T = constify('T');
 const F = constify('F');
@@ -68,11 +35,11 @@ export const _factMap = new Map();
 
 //// Primitive constants
 
-Toy.namedConstants.add('=');
-Toy.namedConstants.add('==');
-Toy.namedConstants.add('the1');
-Toy.namedConstants.add('T');
-// Toy.namedConstants.add('F');
+namedConstants.add('=');
+namedConstants.add('==');
+namedConstants.add('the1');
+namedConstants.add('T');
+// namedConstants.add('F');
 
 
 //// Definitions
@@ -7244,15 +7211,13 @@ declare(
 
 );
 
-
-
 // Intersection of a set of sets -- "big intersection"
 definition('Intersect = {p. {x. forall {q. p q => q x}}}');
 
 //// Other initializations
 
 // Make defn facts available and stop deferring their proofs.
-Toy.enableDefnFacts();
+enableDefnFacts();
 
 
 //// EXPORT NAMES
