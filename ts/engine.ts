@@ -12,7 +12,7 @@
 // to the global environment (except through the "Toy" namespace).
 namespace Toy {
 
-  export var _actionInfo;
+export var _actionInfo;
 
 //// THEOREMS AND RULES
 
@@ -136,22 +136,22 @@ Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
 };
 
 export interface Expr {
-/**
- * Considering a potential rewriting of step2 at the given path, with
- * the given substitution map, and with this as the fact, returns a
- * renaming substitution into this that keeps free variables of this
- * fact distinct from those of step2 as much as is consistent with the
- * rewrite.
- *
- * The map argument must include no-op mappings, as produced by
- * matchSchema, from a name to the same name.
- *
- * TODO: It appears desirable in some cases to rename free variables
- *   of this to be captured by bound variables at the target site.
- *   Consider supporting that option in some way, not necessarily
- *   here.
- */
-distinctifier(step2, path_arg, map);
+  /**
+   * Considering a potential rewriting of step2 at the given path, with
+   * the given substitution map, and with this as the fact, returns a
+   * renaming substitution into this that keeps free variables of this
+   * fact distinct from those of step2 as much as is consistent with the
+   * rewrite.
+   *
+   * The map argument must include no-op mappings, as produced by
+   * matchSchema, from a name to the same name.
+   *
+   * TODO: It appears desirable in some cases to rename free variables
+   *   of this to be captured by bound variables at the target site.
+   *   Consider supporting that option in some way, not necessarily
+   *   here.
+   */
+  distinctifier(step2, path_arg, map);
 }
 Expr.prototype.distinctifier = function(step2, path_arg, map) {
   const keys = new Set(Object.keys(map));
@@ -346,6 +346,11 @@ Path.prototype.adjustForRewrite = function(input, output) {
           : this);
 };
 
+export interface Expr {
+  andThen(name, ...args);
+  swap();
+  rewrite(path, fact);
+}
 /**
  * These become methods on steps, set up by Step.justify.
  */
@@ -355,12 +360,10 @@ var ruleMethods = {
    * Applies the named rule to this Expr and any other given arguments
    * as if by a call to Toy.rules[name](args).
    */
-  andThen: function(name, arg1) {
-    var nm = name;
-    arguments[0] = this;
-    var rule = rules[nm];
-    assert(rule, 'No rule with name "{1}"', nm);
-    var result = rule.apply(rule.info, arguments);
+  andThen: function(name, ...args) {
+    var rule = rules[name];
+    assert(rule, 'No rule with name "{1}"', name);
+    var result = rule.apply(rule.info, [this, ...args]);
     return result;
   },
       
@@ -1456,7 +1459,7 @@ export function proveResult(stmt) {
  * TODO: Consider renaming to something like "stepify" and using as
  *   a conversion for inputs to steps in the vein of "termify".
  */
-export function getResult(statement, mustProve) {
+export function getResult(statement, mustProve?) {
   if (Toy.isProved(statement)) {
     return statement;
   }
@@ -2637,7 +2640,7 @@ function addSwappedFact(info) {
       if (info.labels && info.labels.primitive) {
         labels2.primitive = true;
       }
-      computeMenuCategories(info, true);
+      computeMenuCategories(info);
       var info2 = {proof: proveSwapped,
                    goal: swapped,
                    simplifier: !!info.desimplifier,

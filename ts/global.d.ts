@@ -12,6 +12,7 @@ interface Window {
   Rtest: function;
   Tval: any;
   clipboardData: any;
+  tippy;
 }
 
 interface Element {

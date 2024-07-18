@@ -6,21 +6,11 @@ namespace Toy {
 
 'use strict';
 
-// Make application assertions available through "assert".
-const assert = Toy.assertTrue;
-  
-const Expr = Toy.Expr;
-const Step = Toy.Step;  
+// Global variable, name to use for CPU profiles, or falsy to disable:
+export var profileName = '';
 
-const abort = Toy.abort;
-const format = Toy.format;
-const dom = Toy.dom;
-const TermSet = Toy.TermSet;
-const rules = Toy.rules;
-const infixCall = Toy.infixCall;
-
-/** For execution profiling */
-export var profileName;
+/** Queue for worker RPCs; constant after init */
+export var rpcQueue;
 
 /** 
  * If an exercise is set up, value is the exercise name, e.g. "nat",
@@ -131,7 +121,7 @@ export class ProofEditor {
   givenVars;
   solutions: any[];
   standardSolution: boolean;
-  goalStatement: EType;
+  goalStatement: Expr;
   showRuleType: string;
   showRules: string[];
   initialSteps: EType[];
@@ -260,7 +250,6 @@ export class ProofEditor {
       .append($status)
       .append($formParent)
       .append(proofButtons.$node)
-      // @ts-expect-error 2352
       .append(this._wksControls.node)
       .append(stepEditor.$proofErrors)
       .append(self.$uxDialog())
@@ -955,7 +944,7 @@ function buildProofButtons(editor) {
   });
   $proofButtons.append($ux);
   // Set up a fancy tooltip.
-  const tp = tippy(dom($ux), {
+  const tp = window.tippy(dom($ux), {
     allowHTML: true,
     delay: 400,
     maxWidth: '500px',
@@ -1918,7 +1907,7 @@ function addClassInfo(form) {
  * Requests running the rule with the given args as soon as the UI has
  * opportunity to repaint, and indicates that the prover is working.
  */
-function tryRuleSoon(stepEditor, ruleName, args) {
+export function tryRuleSoon(stepEditor, ruleName, args) {
   args.forEach(function(arg) {
       if (Toy.isProved(arg) && arg.isRendered()) {
         // Really all step arguments to all steps everywhere should be
@@ -1972,7 +1961,7 @@ const addedSubgoals = (step, replacer, goal) => {
  * TODO: Consider moving smarts about a "site" argument into
  *   simplifyFocalPart.
  */
-function autoSimplify(step) {
+export function autoSimplify(step) {
   if (step.ruleArgs.length === 0) {
     // It is an axiom or theorem without parameters.
     // Simplification does not make sense, so don't do it.
@@ -3000,24 +2989,9 @@ $(function () {
     var queue = new Toy.MessageQueue();
     queue.addWorker(fakeWorker);
     // This is the endpoint for accessing worker threads via RPC.
-    Toy.rpcQueue = queue;
+    rpcQueue = queue;
   });
 
 
-// For testing:
-Toy.autoSimplify = autoSimplify;
-
-// Global variable, name to use for CPU profiles, or falsy to disable:
-Toy.profileName = '';
-
-// Export public names.
-Toy.stepTypes = stepTypes;
-Toy.siteTypes = siteTypes;
-
-Toy.ProofEditor = ProofEditor;
-Toy.StepEditor = StepEditor;
-
-Toy.tryRuleSoon = tryRuleSoon;
-//Toy.exerciseSteps = exerciseSteps;
 
 }  // namespace;

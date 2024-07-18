@@ -215,7 +215,7 @@ export interface Expr {
   _typeFrom(expr: Lambda): Lambda;
   toString(simply?: any): any;
   show(level: any): any;
-  toUnicode(simply: any): any;
+  toUnicode(simply?: boolean): string;
   toHtml(trimmed: any): any;
   in(list: any): boolean;
   isAtomic(): boolean;
@@ -259,7 +259,8 @@ export interface Expr {
   freeVars(): {};
   freeVarSet(): Set<any>;
   newConstants(): Set<any>;
-  mathVars(): {};
+  mathVars(): Record<string, true>;
+  _addMathVars(bindings, set: Record<string, true>): boolean;
   mathVarConditions(expr: any): any;
   boundNames(path: any): {};
   freeBound(path: any): any;
@@ -274,8 +275,8 @@ export interface Expr {
   likeSubgoal(): boolean;
   hasSubgoal(): any;
   nthArg(n: any): any;
-  isCall1(name: any): boolean;
-  isCall2(name: any): boolean;
+  isCall1(name?: string): boolean;
+  isCall2(name?: string): boolean;
   implies(): boolean;
   isLambdaCall(): boolean;
   assertCall1(name: any): void;
@@ -419,7 +420,6 @@ export interface Atom {
   _addFreeVarSet: (set: any, bindings: any) => void;
   _addNewConstants(set: any, bindings: any): void;
   _boundNames(path: any, bindings: any): any;
-  _addMathVars(bindings: any, set: any): boolean;
   replaceAt(path: any, xformer: any): any;
   matches(expr: any, bindings: any): boolean;
   _traverse(fn: any, rpath: any): void;
@@ -523,7 +523,6 @@ export interface Call extends Expr {
   _addFreeVarSet(set: any, bindings: any): void;
   _addNewConstants(set: any, bindings: any): void;
   _boundNames(path: any, bindings: any): any;
-  _addMathVars(bindings: any, set: any): boolean;
   replaceAt(path: any, xformer: any): any;
   matches(expr: any, bindings?: any): any;
   _traverse(fn: any, rpath: any): void;
@@ -585,7 +584,6 @@ export interface Lambda extends Expr {
   _addFreeVarSet(set: any, bindings: any): void;
   _addNewConstants(set: any, bindings: any): void;
   _boundNames(path: any, bindings: any): any;
-  _addMathVars(bindings: any, set: any): boolean;
   replaceAt(path: any, xformer: any): any;
   matches(expr: any, bindings: any): any;
   _traverse(fn: any, rpath: any): void;
@@ -1599,7 +1597,7 @@ Expr.prototype.newConstants = function(this: EClass) {
  *   for variables according to their names.
  */
 Expr.prototype.mathVars = function() {
-  var map = {}; 
+  var map:Record<string, true> = {}; 
   this._addMathVars(null, map);
   return map;
 };
@@ -1615,11 +1613,11 @@ Expr.prototype.mathVars = function() {
  * If the optional expr is present, uses that as an initial conjunct
  * to add to.
  */
-Expr.prototype.mathVarConditions = function(expr) {
+Expr.prototype.mathVarConditions = function(this:Expr, expr) {
   var real = new Atom('R');
   // Order the names for nice presentation.
   var names = [];
-  const freeVars = Array.from(this.freeVarSet());  // as string[];
+  const freeVars = Array.from(this.freeVarSet());
   const numVars = this.mathVars();
   freeVars.forEach(function(name) {
       if (numVars[name]) {
