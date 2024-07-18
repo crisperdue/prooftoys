@@ -172,6 +172,14 @@ function isLowestTerms(expr) {
           (Toy.isFraction(expr) && gcd(expr) === 1));
 }
 
+export interface ProofEditor {
+  matchesSolution(step);
+  statusInfo(step);
+  solutionStatus(step);
+  progressMessage(step);
+  messageForSolution(step, sol);
+}
+
 var methods = {
 
   /**

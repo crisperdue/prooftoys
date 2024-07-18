@@ -2405,7 +2405,7 @@ export declare class ToyMap {
    * threads.  If a numeric argument and URI string are supplied, will
    * immediately create and add that many Worker threads.
    */
-  export function MessageQueue(n, uri) {
+  export function MessageQueue(n?, uri?) {
     // Queue of messages to be sent.  Each item is a data structure with
     // properties "promise", "resolve", "reject", and "wrapper", where
     // the wrapper has a "channelType", an "id", and "data", which is

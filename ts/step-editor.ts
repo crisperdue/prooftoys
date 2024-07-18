@@ -19,6 +19,9 @@ const TermSet = Toy.TermSet;
 const rules = Toy.rules;
 const infixCall = Toy.infixCall;
 
+/** For execution profiling */
+export var profileName;
+
 /** 
  * If an exercise is set up, value is the exercise name, e.g. "nat",
  * otherwise null.
@@ -122,7 +125,35 @@ export var nextProofEditorId = 1;
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
  */
-export function ProofEditor(options_arg={}) {
+export class ProofEditor {
+  _options;
+  _givens;
+  givenVars;
+  solutions: any[];
+  standardSolution: boolean;
+  goalStatement: EType;
+  showRuleType: string;
+  showRules: string[];
+  initialSteps: EType[];
+  proofEditorId: string;
+  proofDisplay: ProofDisplay;
+  steps: EType[];
+  $node;
+  $status;
+  $statusDisplay;
+  $copyText;
+  $proofButtons;
+  _wksControls;
+  stepEditor;
+  ruleMenu;
+  _refresher;
+  _otherChanges;
+  animating: boolean = false;
+  fromDoc: boolean;
+  exercise;
+  docName;
+
+  constructor(options_arg:Record<string, any>={}) {
 
   //// Initialize properties.
 
@@ -419,7 +450,7 @@ export function ProofEditor(options_arg={}) {
  * the last time the event loop returned to idle.
  * Response to other changes is in method otherChanges.
  */
-ProofEditor.prototype.refresh = function() {
+refresh() {
   const self = this;
   const mainDisplay = self.proofDisplay;
   const $status = self.$status;
@@ -470,18 +501,18 @@ ProofEditor.prototype.refresh = function() {
   } else {
     $status.toggleClass('empty', true);
   }
-};
+}
 
 /**
  * Updates the database for changes to state other than the proof,
  * currently the editor's display height.
  */
-ProofEditor.prototype.otherChanges = function() {
+otherChanges() {
   const self = this;
   Toy.db.editors.update(self.proofEditorId,
                         {height: $(self.proofDisplay.stepsNode).height()}
                        );
-};
+}
 
 /**
  * Initializes proof editor state for the given exercise item, named
@@ -490,7 +521,7 @@ ProofEditor.prototype.otherChanges = function() {
  * exercise item, sets those up, else if the proof editor has declared
  * initialSteps, sets those up.
  */
-ProofEditor.prototype._initExercise = function(exName) {
+_initExercise(exName) {
   /**
    * Returns an array of ordinary proof steps that initialize an
    * exercise based on setting the given wff as a goal.
@@ -528,13 +559,13 @@ ProofEditor.prototype._initExercise = function(exName) {
       .replaceWith('<b class=status>Proving:</b> <span class=wff></span>');
     $header.find('.wff').append(statement.renderTerm());
   }
-};
+}
 
 /**
  * Build and return a UX trace control initializing dialog
  * as a jQuery object.
  */
-ProofEditor.prototype.$uxDialog = function() {
+$uxDialog() {
   const raw = `
     <div class="dialogWrapper uxDialog invisible">
     <div class="dialog">
@@ -551,7 +582,7 @@ ProofEditor.prototype.$uxDialog = function() {
     </div>`;
   const cooked = raw.replace(/^    /mg, '');
   return $(cooked);
-};
+}
 
 /**
  * Sets the name of this editor's worksheet, (this.docName) and
@@ -559,7 +590,7 @@ ProofEditor.prototype.$uxDialog = function() {
  * any proof state.  (In most use cases one or the other should also
  * be done.)
  */
-ProofEditor.prototype.syncToDocName = function(name) {
+syncToDocName(name) {
   const self = this;
   self.docName = name;
   // Set the document name into all nodes of class wksName.
@@ -578,7 +609,7 @@ ProofEditor.prototype.syncToDocName = function(name) {
   // Visiting the same page in another tab then will cause its proof
   // editor to visit the same document as this one.
   Toy.saveState(self, {docName: self.docName});
-};
+}
 
 /**
  * Attempts to open the named document in this proof editor, setting
@@ -591,7 +622,7 @@ ProofEditor.prototype.syncToDocName = function(name) {
  * are set up except if the proof goal indicates NN but not R.  In
  * that case ensures that NN is set up.
  */
-ProofEditor.prototype.openDoc = function(name) {
+openDoc(name) {
   const goal = Toy.catching(() => Toy.parse(name));
   if (!('noload' in this._options)) {
     let needNN = false;
@@ -630,7 +661,7 @@ ProofEditor.prototype.openDoc = function(name) {
       const errName = Toy.genDocName(`${name}.err`);
       Toy.writeDoc(errName, {proofState: this.getStateString()});
       // Show the truncated list of steps in the proof editor.
-      this.setSteps(steps.steps);
+      this.setSteps(steps.steps);  // Bug?
       this.stepEditor.report(steps);
       return false;
     } else {
@@ -641,23 +672,23 @@ ProofEditor.prototype.openDoc = function(name) {
   } else {
     return false;
   }
-};
+}
 
 /**
  * Returns the name of the editor's current document.
  */
-ProofEditor.prototype.getDocumentName = function() {
+getDocumentName() {
   return this.docName;
-};
+}
 
 /**
  * Empties the proof and problem statement for a fresh start.
  */
-ProofEditor.prototype.clear = function() {
+clear() {
   this.showRules = [];
   this.stepEditor.hideForm();
   this.setSteps(this.initialSteps);
-};
+}
 
 /**
  * Recompute the problem givens from the first proof step if its rule
@@ -665,7 +696,7 @@ ProofEditor.prototype.clear = function() {
  * main part of the first step, set up as an equivalence by
  * rules.given.
  */
-ProofEditor.prototype._updateGivens = function() {
+_updateGivens() {
   var self = this;
   var steps = self.proofDisplay.steps;
   self._givens.clear();
@@ -677,72 +708,72 @@ ProofEditor.prototype._updateGivens = function() {
     }
   }
   self._updateGivenVars();
-};
+}
 
 /**
  * Update the givenVars to match the (possibly changed) set of givens
  * of this problem.
  */
-ProofEditor.prototype._updateGivenVars = function() {
+_updateGivenVars() {
   // An object/set with names of all variables in any of the
   // givens:
   var vars = {};
   this._givens.each(function(g) { $.extend(vars, g.freeVars()); });
   this.givenVars = vars;
-};
+}
 
 /**
  * Add a step to the proof.
  */
-ProofEditor.prototype.addStep = function(step) {
+addStep(step) {
   const rendered = this.proofDisplay.addStep(step);
   const stmt = this.goalStatement;
   if (stmt) {
     rendered.checkSubgoals(stmt);
   }
-};
+}
 
-ProofEditor.prototype.getLastStep = function() {
+getLastStep() {
   return this.proofDisplay.getLastStep();
-};
+}
 
 /**
  * Gets the state of the proof, in string form.
  */
-ProofEditor.prototype.getStateString = function() {
+getStateString() {
   return Toy.encodeSteps(this.proofDisplay.steps);
-};
+}
 
 /**
  * Returns an array of string forms of the steps
  * of this proof editor, usable as JSON.
  */
-ProofEditor.prototype.getStepWffs = function() {
+getStepWffs() {
   return this.steps.map(s => s.wff.toString());
-};
+}
 
-ProofEditor.prototype.getJSONState = function() {
+getJSONState() {
   const v = {
     proofState: this.getStateString(),
     stepWffs: this.getStepWffs(),
   };
   return v;
-};
+}
 
 /**
  * Sets the state of the proof from a string as returned by
  * getStateString.
  */
-ProofEditor.prototype.setStateFromString = function(encoded) {
+setStateFromString(encoded) {
   // TODO: Rename to setProofFromString.
   var steps = encoded ? Toy.decodeSteps(encoded) : [];
   this.setSteps(steps);
-};
+}
 
 /**
  * Sets the steps to the given array of non-renderable steps.
  */
-ProofEditor.prototype.setSteps = function(steps) {
+setSteps(steps) {
   const setTheSteps = steps => {
     // Note that the editor does not have its own
     // removeStepAndFollowing method.
@@ -759,14 +790,14 @@ ProofEditor.prototype.setSteps = function(steps) {
     setTheSteps(steps);
     this.toggleClass('proofLoadError', false);
   }
-};
+}
 
 /**
  * Save the proof state to the the worksheet controls text area and
  * the document's data store.  Normally use the proofChanged method
  * rather than calling this directly, to avoid redundant work.
  */
-ProofEditor.prototype.saveProofState = function() {
+saveProofState() {
   const self = this;
   const options = self._options;
   var text = self.getStateString();
@@ -779,41 +810,42 @@ ProofEditor.prototype.saveProofState = function() {
   } else {
     console.warn('State not saved');
   }
-};
+}
 
 /**
  * Attempts to restore the proof state from the worksheet controls
  * text area.
  */
-ProofEditor.prototype.restoreState = function() {
+restoreState() {
   var string = this._wksControls.getProofText();
   this.setStateFromString(string);
-};
+}
 
 /**
  * Returns true iff this is editable.
  */
-ProofEditor.prototype.isEditable = function() {
+isEditable() {
   return this.proofDisplay.isEditable();
-};
+}
 
 /**
  * Turns editability of the proof editor on or off, currently
  * affecting only the UI.
  */
-ProofEditor.prototype.setEditable = function(value) {
+setEditable(value) {
   this.toggleClass('editable', value);
   // The following set the state of the display and hide or show the
   // step editor.
   this.proofDisplay.setEditable(value);
-};
+}
 
 /**
  * Toggles a CSS class on the main node of this proof editor.
  */
-ProofEditor.prototype.toggleClass = function(className, truthy) {
+toggleClass(className, truthy) {
   this.$node.toggleClass(className, truthy);
-};
+}
+}
 
 /**
  * Define the "givens" property as a virtual property.  Setting it has
@@ -875,7 +907,7 @@ function prepExercise(name) {
   keepers.forEach(Toy.addRule);
   Toy.exerciseLoaded = exName;
   return result;
-};
+}
 
 /**
  * Builds and returns an object for the proofButtons DIV of the given
@@ -995,7 +1027,7 @@ function buildWksControls(editor) {
   const $inputs = $('<div class=wksInputs>');
   $controls.append($inputs);
 
-  function makeEntryField(prefix, classes, action) {
+  function makeEntryField(prefix, classes) {
     const html =
       '<div class="{2} hidden form">{1} ' +
       '<input type=text class=input size=30>' +
@@ -1943,6 +1975,9 @@ function autoSimplify(step) {
   return step.simplifyUsual();
 }
 
+export interface Expr {
+  simplifyUsual();
+}
 /**
  * Simplify this step based on its target site, if any,
  * simplify the asm side if it refers into the asms, otherwise
@@ -1961,6 +1996,18 @@ Step.prototype.simplifyUsual = function() {
 
 //// RULEMENU
 
+class RuleMenu {
+  proofEditor: ProofEditor;
+  _refresher;
+  length: number;
+  hovering;
+  suppressing: boolean;
+  timer: number;
+  $modeList;
+  $node;
+  $items;
+  $title;
+
 /**
  * Widget that displays a list of rules for the user to try
  * if desired. Constructor argument is the StepEditor it
@@ -1976,7 +2023,7 @@ Step.prototype.simplifyUsual = function() {
  * Internal-ish properties:
  * hovering: DOM node under mouse or null.
  */
-function RuleMenu(proofEditor) {
+constructor(proofEditor) {
   var self = this;
   self.proofEditor = proofEditor;
   self._refresher = new Toy.Refresher(self._update.bind(self));
@@ -2088,7 +2135,7 @@ function RuleMenu(proofEditor) {
  * Updates the step suggestions and rule menu to offer items
  * reflecting the currently-selected step or term, if any.
  */
-RuleMenu.prototype._update = function() {
+_update() {
   var self = this;
   const proofEditor = self.proofEditor;
   const stepEditor = proofEditor.stepEditor;
@@ -2380,14 +2427,14 @@ RuleMenu.prototype._update = function() {
     var $right = rightTerm ? $(rightTerm.renderTerm()) : '?';
     $items.find('.menuRightNeighbor').append($right);
   }
-};
+}
 
 /**
  * Handler for selection of a menu item.  Overall purpose is to run
  * the appropriate rule from information already available, otherwise
  * to display an input form.
  */
-RuleMenu.prototype.handleMouseClickItem = function(node, event) {
+handleMouseClickItem(node, event) {
   if (this.suppressing) {
     return;
   }
@@ -2484,12 +2531,12 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
     assert(false, format('No such rule: {1}', ruleName));
   }
   // if ruleName is '' do nothing at all.  This is a ruleMenu comment.
-};
+}
 
 /**
  * Event handler for mouseenter events on RuleMenu items.
  */
-RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
+handleMouseEnterItem(node, event) {
   if (this.suppressing) {
     return;
   }
@@ -2589,15 +2636,15 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
  * Call this any time this object's display might need to be updated.
  * The display update will occur when the event loop becomes idle.
  */
-RuleMenu.prototype.refresh = function() {
+refresh() {
   this._refresher.activate();
-};
+}
 
 /**
  * Returns a list of names of rules that are "offerable" in the
  * sense of "offerable" returning true and labelApproved returning true.
  */
-RuleMenu.prototype.offerableRuleNames = function() {
+offerableRuleNames() {
   var matches = [];
   for (var name in Toy.rules) {
     if (this.labelApproved(name) && this.offerableRule(name)) {
@@ -2606,7 +2653,7 @@ RuleMenu.prototype.offerableRuleNames = function() {
   }
   matches.sort();
   return matches;
-};
+}
 
 /**
  * Policy-based rule offering policy function based on rule labels,
@@ -2614,7 +2661,7 @@ RuleMenu.prototype.offerableRuleNames = function() {
  * editor.showRules.  Given a rule name, returns a truthy value iff
  * current policy is to show the rule.
  */
-RuleMenu.prototype.labelApproved = function(name) {
+labelApproved(name) {
   const editor = this.proofEditor;
   const labels = Toy.rules[name].info.labels;
   if (editor.showRules.indexOf(name) >= 0) {
@@ -2638,7 +2685,7 @@ RuleMenu.prototype.labelApproved = function(name) {
   default:
     return false;
   }
-};
+}
 
 /**
  * Returns true iff the rule name can be offered by the UI, based on
@@ -2662,7 +2709,7 @@ RuleMenu.prototype.labelApproved = function(name) {
  * TODO: Consider adding a rule attribute to suppress offering
  *   the rule in any menu.
  */
-RuleMenu.prototype.offerableRule = function(ruleName) {
+offerableRule(ruleName) {
   const rule = Toy.rules[ruleName];
   const info = rule.info;
   const editor = this.proofEditor;
@@ -2736,14 +2783,14 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
     // All the above checks pass, so we can offer the rule.
     return true;
   }
-};
+}
 
 /**
  * Returns an array of fact info objects for facts that are offerable
  * as rewrite rules in the UI menus based on the categories of the fact
  * including at least one of the categories of the current menu.
  */
-RuleMenu.prototype.offerableFacts = function() {
+offerableFacts() {
   // TODO: filter facts based on constants they may introduce
   //   into a formula, compared with ones approved by the user
   //   and/or appearing already in the proof.
@@ -2775,8 +2822,8 @@ RuleMenu.prototype.offerableFacts = function() {
     });
   }
   return facts;
-};
-
+}
+}
 // This maps from menu name to a set of fact category names to be
 // presented in that mode.
 const catsOfMenu =

@@ -2342,7 +2342,7 @@ export function renderInference(step) {
  * then should also be given, with the number of steps counted during
  * execution of the proof.
  */
-export function renderProof(step, where, millis, nSteps) {
+export function renderProof(step, where, millis?, nSteps?) {
   where = $(where);
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);

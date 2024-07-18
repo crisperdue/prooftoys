@@ -37,3 +37,8 @@ interface Promise {
   id: any;
   canceled: any;
 }
+
+interface Console {
+  profile(name: string);
+  profileEnd();
+}
