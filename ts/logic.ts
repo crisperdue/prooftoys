@@ -3692,7 +3692,8 @@ declare(
               .andThen('rewrite', '', '(a == b) == (not a == not b)')
               .andThen('rewrite', '/left',
                        'not (forall p) == exists {x. not (p x)}')
-              .andThen('simplifySite', '', facts.concat(basicSimpFacts)));
+              .andThen('simplifySite', '',
+                (facts as any).concat(basicSimpFacts)));
     }
   },
 
@@ -3814,7 +3815,8 @@ declare(
               .andThen('rewriteOnly', '/left',
                        'not (forall p) == exists {x. not (p x)}')
               // TODO: Simplify with a more specific set of facts,
-              .andThen('simplifySite', '', facts.concat(basicSimpFacts)));
+              .andThen('simplifySite', '',
+                (facts as any).concat(basicSimpFacts)));
     }
   },
 
@@ -6460,13 +6462,6 @@ function initMovers() {
     info.ready = true;
  }
 }
-
-// This is just for debugging.  It logs Toy.moverFacts to the console.
-Toy.dbgMovers = () => {
-  const cvt = (k, v) => v instanceof Expr ? v.$$ : v;
-  console.log(JSON.stringify(Toy.moverFacts, cvt, 1));
-};
-
 
 // This fact states the truth table for ==.  At present the
 // proof display for it shows proofs of facts for rows in the truth
