@@ -26,7 +26,6 @@ var F = constify('F');
 // TODO: Part of a proof context.
 export var _tautologies = new Map();
 
-
 //
 // Expr methods for inference
 //
@@ -1469,7 +1468,7 @@ export function getResult(statement, mustProve) {
 /**
  * Same as getResult, but the argument is a factInfo.
  */
-export function getResult0(info, mustProve) {
+export function getResult0(info, mustProve?) {
   // TODO: Consider more precise checking of the result of the lookup.
   if (info.proved) {
     return info.proved;
@@ -2174,7 +2173,7 @@ export function matchFactPart(step, path, factList, name) {
  * of the form a1 & ... & an, where the "a"s are variables for the
  * terms for each of the assumptions.
  */
-export function buildHypSchema(hyps, map, exclusions) {
+export function buildHypSchema(hyps, map, exclusions?) {
   var schema = null;
   hyps.scanConj(function(hyp) {
       var v = map.addTerm(hyp);

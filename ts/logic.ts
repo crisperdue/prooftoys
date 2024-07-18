@@ -229,6 +229,9 @@ declare(
   }
 );
 
+export interface Expr {
+  axiom4Core(repl, vbl);
+}
 /**
  * Given this well-typed term consisting of an application of a Lambda
  * to an arbitrary term, this returns the result of the substitution
@@ -285,7 +288,7 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
         // capturing actually would occur.  This also renames it if there
         // are free occurrences of a variable of the same name before the
         // substitution.
-        const newVar = Toy.genVar(boundName, allNames)._typeFrom(term.bound);
+        const newVar = genVar(boundName, allNames)._typeFrom(term.bound);
         allNames[newVar.name] = true;
         //
         // Recursive call to the method!
@@ -363,6 +366,9 @@ declare(
 
 );
 
+export interface Expr {
+  ruleRCore(target, path_arg);
+}
 /**
  * This is the core functionality for the full Rule R.  It takes
  * "this" as an unconditional equation, with a target WFF and a path
@@ -3200,7 +3206,7 @@ declare(
    description: 'true as tautology instance;; {in step siteStep}',
    labels: 'general'
   },
-
+/*
   // TODO: Complete this.
   {name: 'simplifyBool',
     action: function(term) {
@@ -3265,8 +3271,12 @@ declare(
       }
     }
   }
+*/
 );
 
+export interface Expr {
+  reduceSites(wff, map);
+}
 /**
  * With this a step resulting from a substitution, and given the input
  * wff and substitution map for the substitution, this determines all
@@ -4830,10 +4840,15 @@ function matchToRule(wff, path, ruleWff) {
 }
 */
 
+export interface Expr {
+  canRewrite(path, term);
+}
+/**
 // Interprets the term argument as a potential rewriter for the
 // part of this step at the given path, and determines a substitution
 // to match it with that part of the step.  Returns the substitution,
 // or null if it finds none.
+ */
 Step.prototype.canRewrite = function(path, term) {
   const expr = this.get(path);
   return expr.findSubst(Toy.schemaPart(term));
@@ -6403,7 +6418,7 @@ declare(
  * everything in, because left movers use the 2 operator facts if
  * applicable, so they need to be first.
  */
-export var moverFacts = {right: [{facts: [], up: 1,
+export const moverFacts = {right: [{facts: [], up: 1,
                            before: '/left', after: '/right'},
                           {facts: [], up: 2,
                            before: '/left/right', after: '/right'},
@@ -6414,14 +6429,16 @@ export var moverFacts = {right: [{facts: [], up: 1,
                           before: '/right', after: '/left/right'},
                         ],
                  };
-                       
+
+// private to initMovers:
+var moversReady = false;
 
 /**
  * Initialize the data for moveRight, moveLeft, et cetera.
  */
 function initMovers() {
-  const info = Toy.moverFacts;
-  if (!info.ready) {
+  const info = moverFacts;
+  if (!moversReady) {
     const add = (which, term) => info[which].push(term);
 
     const process = (n, term) => {
@@ -6459,7 +6476,7 @@ function initMovers() {
 
     info.left.reverse();
 
-    info.ready = true;
+    moversReady = true;
  }
 }
 

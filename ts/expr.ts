@@ -210,7 +210,9 @@ export interface Expr {
   // set memos(v: {});
   // get memos(): {};
   _withType(type: any): Expr;
-  _typeFrom(expr: any): Expr;
+  _typeFrom(expr: Atom): Atom;
+  _typeFrom(expr: Call): Call;
+  _typeFrom(expr: Lambda): Lambda;
   toString(simply?: any): any;
   show(level: any): any;
   toUnicode(simply: any): any;

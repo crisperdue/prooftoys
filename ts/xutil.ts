@@ -1743,13 +1743,13 @@ Expr.prototype.replacementTerm = function() {
  */
 // TODO: Eliminate use of binops in favor of infixCall.  This will
 // be problematic for some infix operators.
-export function call(fn, arg) {
+export function call(fn, arg, ...more) {
   // TODO: Allow fn to be a variable name.
   fn = fn instanceof Expr ? fn : Toy.constify(fn);
   var result = new Call(fn, termify(arg));
   // Skip fn and the first "arg" after that.
-  for (var i = 2; i < arguments.length; i++) {
-    result = call(result, arguments[i]);
+  for (var i = 0; i < more.length; i++) {
+    result = call(result, more[i]);
   }
   return result;
 }
@@ -1770,7 +1770,7 @@ export function infixCall(arg1, op, arg2) {
  * TODO: Order of args changes when infix changes.  Similarly for
  * implies and other infix operators.
  */
-export function equal(lhs, rhs) {
+export function equal(lhs, rhs?) {
   if (rhs) {
     return call('=', lhs, rhs);
   } else {
