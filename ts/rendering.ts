@@ -56,7 +56,7 @@ jQuery.event.special.destroyed = {
  * scrollTop on completion.  Use this to stabilize the scrolling
  * position around code that may make it jump.
  */
-function keepScroll(fn) {
+export function keepScroll(fn) {
   let top = $('html').scrollTop();
   let result = fn();
   $('html').scrollTop(top);
@@ -70,7 +70,7 @@ function keepScroll(fn) {
  * descriptors.  Currently does not include indexes of paths not
  * explicitly described.
  */
-function eachArgType(ruleName, action) {
+export function eachArgType(ruleName, action) {
   var inputs = Toy.rules[ruleName].info.inputs;
   for (var type in inputs) {
     var where = inputs[type];
@@ -88,7 +88,7 @@ function eachArgType(ruleName, action) {
  * Given a step, rendered or not, uses its rule information to return
  * a list of paths used in its rule.
  */
-function stepPaths(step) {
+export function stepPaths(step) {
   assert(step.isProved(), 'Not a step: ' + step);
   var results = [];
   var args = step.ruleArgs;
@@ -105,7 +105,7 @@ function stepPaths(step) {
  * of subexpressions of renderings of source steps that provided the input
  * sites for this step.  Their nodes will contain the rendering of the sites.
  */
-function stepSites(step) {
+export function stepSites(step) {
   assert(step.isProved(), 'Not a step: ' + step);
   var results = [];
   var args = step.ruleArgs;
@@ -126,7 +126,7 @@ function stepSites(step) {
  * right neighbor of b is c in either (b + c) or ((a + b) + c) where
  * "+" indicates any binary operator(s).
  */
-function getRightNeighbor(step, term) {
+export function getRightNeighbor(step, term) {
   var pathToTerm = step.prettyPathTo(term);
   var parentPath = pathToTerm.upTo('/left') || pathToTerm.upTo('/left/right');
   var rightNeighbor = (parentPath
@@ -135,300 +135,13 @@ function getRightNeighbor(step, term) {
   return rightNeighbor;
 }
 
+// String containing just the turnstile math character.  See
+// http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
+const _turnstile = '\u22a6';
 
-//// ProofDisplay
-
-// TODO: Extend these to support proof steps that can take more
-// than one selection.
-
-// DOM representation notes:
-//
-// <div class=proofDisplay>
-//   <div class=proofSteps>  (getStepsNode)
-//     // Proof steps and possible subproofs between them
-//     <div class=proofStep> (getStepNode)
-//     // or
-//     <div class=inferenceDisplay>
-
-/**
- * Construct a ProofDisplay.
- *
- * Optional single properties argumenent, recognizing:
- * 
- * stepPrefix: to initialize the stepPrefix property.
- * parentStep: parent step, rendered or not.  If given,
- *   this ProofDisplay's steps will be assumed to be the
- *   details for this step.
- * prevStep: If given, this rendered step will be considered
- *   the previous rendered step for all steps within this
- *   ProofDisplay.  Used for display of alternative next steps
- *   in the "rule selector" of the step editor (builder).
- *
- * ProofDisplay object properties:
- *
- * steps: an array of the _rendered_ steps displayed.
- *
- * node: Node containing the entire rendering of the proof.  This has
- * CSS class proofDisplay and the ProofDisplay as the value of its
- * data('proofDisplay').  Only ProofDisplay nodes should have the
- * proofDisplay class.
- *
- * stepsNode: DOM node of the proofSteps DIV.
- *
- * proofEditor: ProofEditor for this ProofDisplay, or null if there is
- *   none.  Also works if this shows a subproof, as initialized by
- *   subproof rendering (renderInference).
- *
- * stepPrefix: string prefixed to each step number, defaults to
- * an empty string.  Set only during initialization.
- *
- * Other properties should be considered private.
- *
- * A step is an Expr, either rendered or unrendered.  Unrendered steps
- * are the top-level sentences of a proof, with properties added by
- * Expr.justify.
- *
- * Note that the stepNumber property of a step depends on its position
- * in its ProofDisplay's steps array, so it must be a property of a
- * _rendered_ step.
- *
- * TODO: Consider supporting a set of renderings per unrendered proof
- * step.
- */
-function ProofDisplay(properties) {
-  properties = properties || {};
-  const self = this;
-  var controller = this;
-  this.steps = [];
-  // Set (array) of selected steps.
-  // TODO: Implement this.
-  this.selections = [];
-  // Single selected step when exactly one is selected, or null.
-  this.selection = null;
-  // If a step is being suggested, the rendered version of the step.
-  this.suggesting = null;
-  // Prefix string for each step.
-  this.stepPrefix = properties.stepPrefix || '';
-  this.parentStep = properties.parentStep || null;
-  this.prevStep = properties.prevStep || null;
-  this.proofEditor = properties.proofEditor || null;
-
-  // Only official "proof nodes" are permitted to have class proofDisplay.
-  var $node = $('<div class="proofDisplay logicZone">' +
-             '<div class=proofSteps></div>' +
-             '</div>');
-  $node.data('proofDisplay', this);
-  this.node = dom($node);
-
-  this.stepsNode = dom($node.find('.proofSteps'));
-
-  this._editable = false;
-  // Initially selection is not locked out, so selections can be made
-  // when this is editable.
-  this._selectLock = false;
-  this.setEditable(false);
-  this.setHoverHighlighting(Toy.highlightAllHovers);
-
-  // Saved width of the proofSteps DIV contentRect.
-  // Connection to the DOM will trigger resize events.
-  // The initial zero value will cause the steps to be
-  // reindented as soon as they are connected.
-  self.savedWidth = 0;
-  Toy.onResize(this.stepsNode, entry => {
-    const width = entry.contentRect.width;
-    if (width !== self.savedWidth) {
-      self.steps.forEach(s => {
-        const step = s.rendering;
-        step.wff.reIndent();
-      });
-      self.savedWidth = width;
-      // On resize we currently scroll to the bottom.
-      // Attempting to defer the scrolling does not
-      // seeem to accomplish anything.
-      $(this.stepsNode).scrollTop(1e9);
-    }
-    // Notice "other" changes.
-    self.proofEditor && self.proofEditor._otherChanges.activate();
-  });
+export interface Expr {
+  checkSubgoals(goalWff);
 }
-
-/**
- * Returns the last step of this display, or a null
- * value if the display is empty.
- */
-ProofDisplay.prototype.getLastStep = function() {
-  var steps = this.steps;
-  return steps[steps.length - 1];
-}
-
-/**
- * Notify that the proof has changed.
- */
-ProofDisplay.prototype.proofChanged = function() {
-  if (this.proofEditor) {
-    this.proofEditor._refresher.activate();
-    // This next only needed on account of rules.given as of 02/2017.
-    this.proofEditor.ruleMenu.refresh();
-  }
-};
-
-/**
- * Notify that the selection has changed.
- */
-ProofDisplay.prototype.selectionChanged = function() {
-  const editor = this.proofEditor;
-  if (editor) {
-    editor.ruleMenu.refresh();
-  }
-};
-
-/**
- * Sets the steps of this proof control to be renderings of the ones
- * in the given array of nonrenderable steps.
- */
-ProofDisplay.prototype.setSteps = function(steps) {
-  if (this.steps.length > 0) {
-    this.removeStepAndFollowing(this.steps[0]);
-  }
-  for (var i = 0; i < steps.length; i++) {
-    this.addStep(steps[i]);
-  }
-};
-
-/**
- * Render's the step number into its element of class "stepNumber".
- */
-function renderStepNumber(step) {
-  $(step.stepNode).find('.stepNumber').html(step.stepNumber);
-}
-
-/**
- * Hides any suggested step, doing necessary bookkeeping.
- */
-ProofDisplay.prototype.hideSuggestion = function() {
-  var node = this.suggesting;
-  if (node) {
-    // This does not remove event listeners and data.  To be safe,
-    // they will be removed when the RuleMenu is updated.
-    $(node).detach();
-    this.suggesting = null;
-  }
-};
-
-/**
- * Renders the given "real" proof step as a suggestion.  Returns a DOM
- * node containing either the rendered step, or HTML with a suitable
- * message.
- */
-ProofDisplay.prototype.stepSuggestion = function(step) {
-  // Rules that wind up doing nothing generally return one of their
-  // inputs, and that input would already be rendered.  This is a
-  // quick hack way to detect that.  Suggested steps have a rendering,
-  // but it is not attached to the document.
-  if (step.rendering && document.contains(step.rendering.stepNode)) {
-    return this.suggestionMessage('no change');
-  }
-  var rendered = step.rendering || this.renderStep(step);
-  if (rendered) {
-    rendered.stepNumber = this.steps.length + 1;
-    renderStepNumber(rendered);
-    const ed = this.proofEditor;
-    if (ed && ed.goalStatement) {
-      rendered.checkSubgoals(ed.goalStatement);
-    }
-    var node = rendered.stepNode;
-    $(node).addClass('stepSuggestion');
-    return node;
-  }
-  return this.suggestionMessage('failed to render step ' +
-                                step.toUnicode());
-};
-
-/**
- * Returns a DOM node with styling appropriate for a suggestion, given
- * a string or other suitable argument to jQuery.append.
- */
-ProofDisplay.prototype.suggestionMessage = function(message) {
-  var $div = $('<div class="proofStep stepSuggestion stepMessage">');
-  $div.append(message);
-  return $div[0];
-};
-
-/**
- * Inserts the given DOM node into the spot set aside for suggestions,
- * i.e. after all the display's steps.
- */
-ProofDisplay.prototype.suggest = function(node) {
-  this.hideSuggestion();
-  $(this.stepsNode).append(node).scrollTop(1e9);
-  this.suggesting = node;
-};
-
-
-/**
- * Create and return a (rendered) renderable step to display the given
- * real step within the given display.  The returned step is not
- * attached to the DOM.
- *
- * This also sets up event handlers for click and hover events within
- * the step.  Does not insert the new node into the document.
- *
- * The rendering is structured as follows:
- *
- * - Each rendered expression and subexpression has a "node" property
- *   that refers to a DOM node with its rendering.
- *
- * - A rendered step has an "original" property referring to the
- *   unrendered proof step from which it was created.
- *
- * - A rendered step has a "proofDisplay" property referring to
- *   the ProofDisplay it belongs to.
- *
- * - A rendered step has a set of "users", which are other rendered
- *   steps that depend directly on the step via a single possibly
- *   derived inference step.
- *
- * - When a rendered step has a subproof display open, its
- *   "subproofDisplay" property refers to the subproof's ProofDisplay.
- *
- * - Creation of a rendered step adds a "rendering" property to the
- *   original, so original proof steps can currently have only one
- *   rendering at a time.
- *
- * - The given step's node has CSS class 'proofStep' and a 'proofStep'
- *   data property that refers to the step.  Code elsewhere may assume
- *   that a node renders a proof step iff it has the proofStep CSS
- *   class.
- *
- * - Rendered steps have properties "stepNumber", a string identifying
- *   the step number to display; and "hasLeftElision", a boolean true
- *   to request omitting display of the LHS of an equation.
- */
-ProofDisplay.prototype.renderStep = function(step) {
-  var self = this;
-  assert(!step.rendering, 'Already rendered', step);
-  var copy = step.stepFullCopy();
-  copy.users = new Set();
-  copy.ordinal = step.ordinal;
-  step.rendering = copy;
-  copy.rendering = copy;
-  step.original = step;
-  copy.original = step;
-  copy.proofDisplay = this;
-  copy.subproofDisplay = null;
-  var node = this.renderStep1(copy);
-  $(node).addClass('noticeInsert');
-  // Reindent when inserted into the DOM:
-  node.oninsert = function() {
-    copy.wff.reIndent();
-    // All insertions of a rendered step immediately scroll the window
-    // to the very bottom.
-    $(self.stepsNode).scrollTop(1e9);
-  }
-  return $(node).data('proofStep');
-};
-
-
 /**
  * Processes a rendered step, searching for assumptions not in the
  * given goal statement.  If the main part is not the same as the
@@ -458,456 +171,718 @@ Expr.prototype.checkSubgoals = function(goalWff) {
   return found;
 };
 
-/**
- * Adds a rendering of the given "real" proof step to the end
- * of the control's proof, assigning it the stepNumber for its
- * position.
- *
- * Returns the rendered version, or null if adding to the
- * proof display failed.
- */
-ProofDisplay.prototype.addStep = function(step) {
-  var self = this;
-  var rendered = self.renderStep(step);
-  $(self.stepsNode).append(rendered.stepNode);
-  this.steps.push(rendered);
-  rendered.stepNumber =  (this.prevStep
-                          ? '<span class=stepNumPlaceholder/>'
-                          : (Toy.showOrdinals
-                             ? step.ordinal
-                             : this.stepPrefix + this.steps.length));
-  renderStepNumber(rendered);
-  step.ruleDeps.forEach(function(s) {
-    if (self == getProofDisplay(s.rendering)) {
-      s.rendering.addUser(rendered);
-    }
-  });
-  this.proofChanged();
-  return rendered;
-};
+
+//// ProofDisplay
+
+// TODO: Extend these to support proof steps that can take more
+// than one selection.
+
+// DOM representation notes:
+//
+// <div class=proofDisplay>
+//   <div class=proofSteps>  (getStepsNode)
+//     // Proof steps and possible subproofs between them
+//     <div class=proofStep> (getStepNode)
+//     // or
+//     <div class=inferenceDisplay>
 
 /**
- * Adds to this proof display all unrendered dependencies
- * of this regular step.
+ * Render's the step number into its element of class "stepNumber".
  */
-ProofDisplay.prototype.addDerivation = function(step) {
-  const self = this;
-  var steps = Toy.unrenderedDeps(step);
-  steps.forEach(function(s) {
-    self.addStep(s);
-  });
-};
+export function renderStepNumber(step) {
+  $(step.stepNode).find('.stepNumber').html(step.stepNumber);
+}
 
-/**
- * Finds a step belonging to this ProofDisplay that depends on the original
- * of the given target step; or null if none found.
- */
-ProofDisplay.prototype.findDependent = function(target) {
-  var original = target.original;
-  for (var i = 0; i < this.steps.length; i++) {
-    var step = this.steps[i];
-    if (step.ruleDeps.indexOf(original) >= 0) {
-      return step;
-    }
-  }
-  return null;
-};
+export class ProofDisplay {
+  steps: any[];
+  selections: any[];
+  selection: any;
+  suggesting: any;
+  stepPrefix: any;
+  parentStep: any;
+  prevStep: any;
+  proofEditor: any;
+  node: Element;
+  stepsNode: Element;
+  _editable: boolean;
+  _selectLock: boolean;
+  savedWidth: number;
 
-/**
- * Unconditionally remove the rendered step from this controller,
- * deselecting it if selected.  Only triggers refreshing of menus if
- * the step was selected.
- */
-ProofDisplay.prototype.removeLastStep = function() {
-  var self = this;
-  var steps = self.steps;
-  var index = steps.length - 1;
-  var step = steps[index];
-  if (self.selection === step) {
-    self.deselectStep();
-  }
-  clearSubproof(step);
-  // Remove highlighting by pretending the mouse moved out.
-  // Deleting the node will not trigger the mouse out event.
-  hoverStepSelector(step, 'out');
-  var display = getProofDisplay(step);
-  step.ruleDeps.forEach(function(s) {
-      if (getProofDisplay(s.rendering) == display) {
-        s.rendering.removeUser(step);
-      }
-    });
-  $(step.stepNode).remove();
-  step.original.rendering = null;
-  steps.length = index;
-};
-
-/**
- * Remove from the proof display the given top-level rendered proof
- * step and all other steps of the display that come after it.
- */
-ProofDisplay.prototype.removeStepAndFollowing = function(toRemove) {
-  var index = this.steps.indexOf(toRemove);
-  var steps = this.steps;
-  // Remove the last remaining step in each iteration so there is
-  // never a step that references a deleted or non-rendered step.
-  for (var i = steps.length - 1; i >= index; --i) {
-    this.removeLastStep();
-  }
-  this.proofChanged();
-};
-
-/**
- * Remove just the given rendered step from this proof.
- * The step must not have any rendered steps that depend on it.
- */
-ProofDisplay.prototype.removeStep = function(step) {
-  assert(step.users.size === 0, 'Cannot remove used step {1}', step);
-  // Works by removing from here down, then re-inserting.
-  var self = this;
-  var index = self.steps.indexOf(step);
-  var followers = self.steps.slice(index + 1);
-  const ed = this.proofEditor;
-  const $node = $(this.stepsNode);
-  var top = $node.scrollTop();
-  self.removeStepAndFollowing(step);
-  followers.forEach(function(s) { return self.addStep(s.original)});
-  // The insertions cause scrolling to bottom, and this hack
-  // overrides that with a later scroll back to previous top.
-  Toy.afterRepaint(() => $node.scrollTop(top));
-};
-
-/**
- * Turn highlighting of expressions on or off by adding or removing
- * handlers for their events.
- */
-ProofDisplay.prototype.setHoverHighlighting = function(state) {
-  var action = state ? 'on' : 'off';
-  var $node = $(this.node);
-  $node[action]('mouseover', exprHandleOver);
-  $node[action]('mouseout', exprHandleOut);
-  // If not actually handling "hover" events, prevent occurrences here
-  // from being handled by an ancestor.
-  var ignore = state ? 'off' : 'on';
-  $node[ignore]('mouseover', false);
-  $node[ignore]('mouseout', false);
-};
-
-/**
- * Returns true iff this ProofDisplay is editable.
- */
-ProofDisplay.prototype.isEditable = function() {
-  return this._editable;
-};
-
-/**
- * Makes the control editable or not by showing/hiding the
- * editor button and flagging its state.  Also updates event
- * handling accordingly.  Can turn on hoverHighlighting, but never
- * turns it off.
- */
-ProofDisplay.prototype.setEditable = function(state) {
-  this._editable = state;
-  if (state) {
-    this.setHoverHighlighting(state);
-  }
-  $(this.node).toggleClass('editable', !!state);
-};
-
-/**
- * Turns this control's select lock on or off.  When on, the lock
- * prevents steps and expressions within this control from being
- * selected.  This does not affect highlighting on hover.  This lock
- * may be temporarily set for example when a rule has been chosen
- * based on an existing selection and its form is displayed.
- */
-ProofDisplay.prototype.setSelectLock = function(state) {
-  this._selectLock = state;
-};
-
-/**
- * Result is truthy if selection is currently accepted in this
- * ProofDisplay, specifically when the control is editable and
- * selection is not locked out.  Display of "popup" replacement
- * expressions also keys off of this.
- */
-ProofDisplay.prototype.isSelectAllowed = function() {
-  return !this._selectLock && this.isEditable();
-};
-
-
-//// STEP SELECTION
-
-// Whenever there is a selected step or term, the associated
-// ProofEditor's root node is flagged with the CSS class
-// "hasSelection", and the invariant is maintained by these functions.
-
-// TODO: Use this CSS class to control which rule menus are offered in
-// the UI.
-
-/**
- * Unconditionally flag the renderable step as selected within this
- * ProofDisplay and in the UI, no other action.
- */
-ProofDisplay.prototype.selectStep = function(step) {
-  var $node = $(step.stepNode);
-  $node.addClass('selected');
-  $node.find('.checkbox').prop('checked', true);
-  this.selection = step;
-  this.proofEditor && this.proofEditor.$node.addClass('hasSelection');
-  this.selectionChanged();
-};
-
-/**
- * Unconditionally deselect any selected step and any selected
- * expression in it, in both the ProofDisplay and the UI.
- */
-ProofDisplay.prototype.deselectStep = function() {
-  var step = this.selection;
-  if (step) {
-    var $node = $(step.stepNode);
-    $node.removeClass('selected');
-    $node.find('.checkbox').prop('checked', false);
+  constructor(properties?: any) {
+    properties = properties || {};
+    const self = this;
+    var controller = this;
+    this.steps = [];
+    // Set (array) of selected steps.
+    // TODO: Implement this.
+    this.selections = [];
+    // Single selected step when exactly one is selected, or null.
     this.selection = null;
-    this.deselectExpr(step);
-    this.proofEditor && this.proofEditor.$node.removeClass('hasSelection');
-    this.selectionChanged();
+    // If a step is being suggested, the rendered version of the step.
+    this.suggesting = null;
+    // Prefix string for each step.
+    this.stepPrefix = properties.stepPrefix || '';
+    this.parentStep = properties.parentStep || null;
+    this.prevStep = properties.prevStep || null;
+    this.proofEditor = properties.proofEditor || null;
+
+    // Only official "proof nodes" are permitted to have class proofDisplay.
+    var $node = $('<div class="proofDisplay logicZone">' +
+              '<div class=proofSteps></div>' +
+              '</div>');
+    $node.data('proofDisplay', this);
+    this.node = dom($node);
+    this.stepsNode = dom($node.find('.proofSteps'));
+    this._editable = false;
+    // Initially selection is not locked out, so selections can be made
+    // when this is editable.
+    this._selectLock = false;
+    this.setEditable(false);
+    this.setHoverHighlighting(Toy.highlightAllHovers);
+
+    // Saved width of the proofSteps DIV contentRect.
+    // Connection to the DOM will trigger resize events.
+    // The initial zero value will cause the steps to be
+    // reindented as soon as they are connected.
+    self.savedWidth = 0;
+    Toy.onResize(this.stepsNode, entry => {
+      const width = entry.contentRect.width;
+      if (width !== self.savedWidth) {
+        self.steps.forEach(s => {
+          const step = s.rendering;
+          step.wff.reIndent();
+        });
+        self.savedWidth = width;
+        // On resize we currently scroll to the bottom.
+        // Attempting to defer the scrolling does not
+        // seeem to accomplish anything.
+        $(this.stepsNode).scrollTop(1e9);
+      }
+      // Notice "other" changes.
+      self.proofEditor && self.proofEditor._otherChanges.activate();
+    });
+
   }
-};
 
-/**
- * Unconditionally select the expr in this ProofDisplay and in the UI,
- * no other action.
- */
-ProofDisplay.prototype.selectExpr = function(expr) {
-  var step = getProofStep(expr);
-  this.selection = step;
-  $(expr.node).addClass('selected');
-  step.selection = expr;
-  this.proofEditor && this.proofEditor.$node.addClass('hasSelection');
-  this.selectionChanged();
-};
-
-/**
- * Unconditionally deselect any selected expr in the
- * step, no other action.
- */
-ProofDisplay.prototype.deselectExpr = function(step) {
-  var expr = step.selection;
-  if (expr) {
-    $(expr.node).removeClass('selected');
-    step.selection = null;
-    this.proofEditor && this.proofEditor.$node.removeClass('hasSelection');
-    this.selectionChanged();
+  /**
+   * Returns the last step of this display, or a null
+   * value if the display is empty.
+   */
+  getLastStep() {
+    var steps = this.steps;
+    return steps[steps.length - 1];
   }
-};
 
-/**
- * Handler for click on a proof step.  Selects the current
- * step, deselecting any other.  Toggles the current one if
- * already selected.
- */
-ProofDisplay.prototype.handleStepClick = function(step) {
-  if (this.isSelectAllowed()) {
-    var selected = this.selection;
-    var expr = selected ? selected.selection : null;
-    this.deselectStep();
-    if (!(step == selected && !expr)) {
-      this.selectStep(step);
+  /**
+   * Notify that the proof has changed.
+   */
+  proofChanged() {
+    if (this.proofEditor) {
+      this.proofEditor._refresher.activate();
+      // This next only needed on account of rules.given as of 02/2017.
+      this.proofEditor.ruleMenu.refresh();
     }
   }
-};
 
-/**
- * Handles selection of an expression in a step.  Deselects any
- * selected expression in the ProofDisplay, and selects the given one
- * unless already selected.
- */
-ProofDisplay.prototype.handleExprClick = function(expr) {
-  const editor = this.proofEditor;
-  if (editor) {
-    // TODO: Fix this string to avoid variables with ".".
-    editor.$copyText.val(expr.toString());
-    editor.$copyText.select();
+  /**
+   * Notify that the selection has changed.
+   */
+  selectionChanged() {
+    const editor = this.proofEditor;
+    if (editor) {
+      editor.ruleMenu.refresh();
+    }
   }
-  if (this.isSelectAllowed()) {
+
+  /**
+   * Sets the steps of this proof control to be renderings of the ones
+   * in the given array of nonrenderable steps.
+   */
+  setSteps(steps) {
+    if (this.steps.length > 0) {
+      this.removeStepAndFollowing(this.steps[0]);
+    }
+    for (var i = 0; i < steps.length; i++) {
+      this.addStep(steps[i]);
+    }
+  }
+
+  /**
+   * Hides any suggested step, doing necessary bookkeeping.
+   */
+  hideSuggestion() {
+    var node = this.suggesting;
+    if (node) {
+      // This does not remove event listeners and data.  To be safe,
+      // they will be removed when the RuleMenu is updated.
+      $(node).detach();
+      this.suggesting = null;
+    }
+  }
+
+  /**
+   * Renders the given "real" proof step as a suggestion.  Returns a DOM
+   * node containing either the rendered step, or HTML with a suitable
+   * message.
+   */
+  stepSuggestion(step) {
+    // Rules that wind up doing nothing generally return one of their
+    // inputs, and that input would already be rendered.  This is a
+    // quick hack way to detect that.  Suggested steps have a rendering,
+    // but it is not attached to the document.
+    if (step.rendering && document.contains(step.rendering.stepNode)) {
+      return this.suggestionMessage('no change');
+    }
+    var rendered = step.rendering || this.renderStep(step);
+    if (rendered) {
+      rendered.stepNumber = this.steps.length + 1;
+      renderStepNumber(rendered);
+      const ed = this.proofEditor;
+      if (ed && ed.goalStatement) {
+        rendered.checkSubgoals(ed.goalStatement);
+      }
+      var node = rendered.stepNode;
+      $(node).addClass('stepSuggestion');
+      return node;
+    }
+    return this.suggestionMessage('failed to render step ' +
+                                  step.toUnicode());
+  }
+
+  /**
+   * Returns a DOM node with styling appropriate for a suggestion, given
+   * a string or other suitable argument to jQuery.append.
+   */
+  suggestionMessage(message) {
+    var $div = $('<div class="proofStep stepSuggestion stepMessage">');
+    $div.append(message);
+    return $div[0];
+  }
+
+  /**
+   * Inserts the given DOM node into the spot set aside for suggestions,
+   * i.e. after all the display's steps.
+   */
+  suggest(node) {
+    this.hideSuggestion();
+    $(this.stepsNode).append(node).scrollTop(1e9);
+    this.suggesting = node;
+  }
+
+
+  /**
+   * Create and return a (rendered) renderable step to display the given
+   * real step within the given display.  The returned step is not
+   * attached to the DOM.
+   *
+   * This also sets up event handlers for click and hover events within
+   * the step.  Does not insert the new node into the document.
+   *
+   * The rendering is structured as follows:
+   *
+   * - Each rendered expression and subexpression has a "node" property
+   *   that refers to a DOM node with its rendering.
+   *
+   * - A rendered step has an "original" property referring to the
+   *   unrendered proof step from which it was created.
+   *
+   * - A rendered step has a "proofDisplay" property referring to
+   *   the ProofDisplay it belongs to.
+   *
+   * - A rendered step has a set of "users", which are other rendered
+   *   steps that depend directly on the step via a single possibly
+   *   derived inference step.
+   *
+   * - When a rendered step has a subproof display open, its
+   *   "subproofDisplay" property refers to the subproof's ProofDisplay.
+   *
+   * - Creation of a rendered step adds a "rendering" property to the
+   *   original, so original proof steps can currently have only one
+   *   rendering at a time.
+   *
+   * - The given step's node has CSS class 'proofStep' and a 'proofStep'
+   *   data property that refers to the step.  Code elsewhere may assume
+   *   that a node renders a proof step iff it has the proofStep CSS
+   *   class.
+   *
+   * - Rendered steps have properties "stepNumber", a string identifying
+   *   the step number to display; and "hasLeftElision", a boolean true
+   *   to request omitting display of the LHS of an equation.
+   */
+  renderStep(step) {
+    var self = this;
+    assert(!step.rendering, 'Already rendered', step);
+    var copy = step.stepFullCopy();
+    copy.users = new Set();
+    copy.ordinal = step.ordinal;
+    step.rendering = copy;
+    copy.rendering = copy;
+    step.original = step;
+    copy.original = step;
+    copy.proofDisplay = this;
+    copy.subproofDisplay = null;
+    var node = this.renderStep1(copy);
+    $(node).addClass('noticeInsert');
+    // Reindent when inserted into the DOM:
+    node.oninsert = function() {
+      copy.wff.reIndent();
+      // All insertions of a rendered step immediately scroll the window
+      // to the very bottom.
+      $(self.stepsNode).scrollTop(1e9);
+    }
+    return $(node).data('proofStep');
+  }
+
+  /**
+   * Adds a rendering of the given "real" proof step to the end
+   * of the control's proof, assigning it the stepNumber for its
+   * position.
+   *
+   * Returns the rendered version, or null if adding to the
+   * proof display failed.
+   */
+  addStep(step) {
+    var self = this;
+    var rendered = self.renderStep(step);
+    $(self.stepsNode).append(rendered.stepNode);
+    this.steps.push(rendered);
+    rendered.stepNumber =  (this.prevStep
+                            ? '<span class=stepNumPlaceholder/>'
+                            : (Toy.showOrdinals
+                              ? step.ordinal
+                              : this.stepPrefix + this.steps.length));
+    renderStepNumber(rendered);
+    step.ruleDeps.forEach(function(s) {
+      if (self == getProofDisplay(s.rendering)) {
+        s.rendering.addUser(rendered);
+      }
+    });
+    this.proofChanged();
+    return rendered;
+  }
+
+  /**
+   * Adds to this proof display all unrendered dependencies
+   * of this regular step.
+   */
+  addDerivation(step) {
+    const self = this;
+    var steps = Toy.unrenderedDeps(step);
+    steps.forEach(function(s) {
+      self.addStep(s);
+    });
+  }
+
+  /**
+   * Finds a step belonging to this ProofDisplay that depends on the original
+   * of the given target step; or null if none found.
+   */
+  findDependent(target) {
+    var original = target.original;
+    for (var i = 0; i < this.steps.length; i++) {
+      var step = this.steps[i];
+      if (step.ruleDeps.indexOf(original) >= 0) {
+        return step;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Unconditionally remove the rendered step from this controller,
+   * deselecting it if selected.  Only triggers refreshing of menus if
+   * the step was selected.
+   */
+  removeLastStep() {
+    var self = this;
+    var steps = self.steps;
+    var index = steps.length - 1;
+    var step = steps[index];
+    if (self.selection === step) {
+      self.deselectStep();
+    }
+    clearSubproof(step);
+    // Remove highlighting by pretending the mouse moved out.
+    // Deleting the node will not trigger the mouse out event.
+    hoverStepSelector(step, 'out');
+    var display = getProofDisplay(step);
+    step.ruleDeps.forEach(function(s) {
+        if (getProofDisplay(s.rendering) == display) {
+          s.rendering.removeUser(step);
+        }
+      });
+    $(step.stepNode).remove();
+    step.original.rendering = null;
+    steps.length = index;
+  }
+
+  /**
+   * Remove from the proof display the given top-level rendered proof
+   * step and all other steps of the display that come after it.
+   */
+  removeStepAndFollowing(toRemove) {
+    var index = this.steps.indexOf(toRemove);
+    var steps = this.steps;
+    // Remove the last remaining step in each iteration so there is
+    // never a step that references a deleted or non-rendered step.
+    for (var i = steps.length - 1; i >= index; --i) {
+      this.removeLastStep();
+    }
+    this.proofChanged();
+  }
+
+  /**
+   * Remove just the given rendered step from this proof.
+   * The step must not have any rendered steps that depend on it.
+   */
+  removeStep(step) {
+    assert(step.users.size === 0, 'Cannot remove used step {1}', step);
+    // Works by removing from here down, then re-inserting.
+    var self = this;
+    var index = self.steps.indexOf(step);
+    var followers = self.steps.slice(index + 1);
+    const ed = this.proofEditor;
+    const $node = $(this.stepsNode);
+    var top = $node.scrollTop();
+    self.removeStepAndFollowing(step);
+    followers.forEach(function(s) { return self.addStep(s.original)});
+    // The insertions cause scrolling to bottom, and this hack
+    // overrides that with a later scroll back to previous top.
+    Toy.afterRepaint(() => $node.scrollTop(top));
+  }
+
+  /**
+   * Turn highlighting of expressions on or off by adding or removing
+   * handlers for their events.
+   */
+  setHoverHighlighting(state) {
+    var action = state ? 'on' : 'off';
+    var $node = $(this.node);
+    $node[action]('mouseover', exprHandleOver);
+    $node[action]('mouseout', exprHandleOut);
+    // If not actually handling "hover" events, prevent occurrences here
+    // from being handled by an ancestor.
+    var ignore = state ? 'off' : 'on';
+    $node[ignore]('mouseover', false);
+    $node[ignore]('mouseout', false);
+  }
+
+  /**
+   * Returns true iff this ProofDisplay is editable.
+   */
+  isEditable() {
+    return this._editable;
+  }
+
+  /**
+   * Makes the control editable or not by showing/hiding the
+   * editor button and flagging its state.  Also updates event
+   * handling accordingly.  Can turn on hoverHighlighting, but never
+   * turns it off.
+   */
+  setEditable(state) {
+    this._editable = state;
+    if (state) {
+      this.setHoverHighlighting(state);
+    }
+    $(this.node).toggleClass('editable', !!state);
+  }
+
+  /**
+   * Turns this control's select lock on or off.  When on, the lock
+   * prevents steps and expressions within this control from being
+   * selected.  This does not affect highlighting on hover.  This lock
+   * may be temporarily set for example when a rule has been chosen
+   * based on an existing selection and its form is displayed.
+   */
+  setSelectLock(state) {
+    this._selectLock = state;
+  }
+
+  /**
+   * Result is truthy if selection is currently accepted in this
+   * ProofDisplay, specifically when the control is editable and
+   * selection is not locked out.  Display of "popup" replacement
+   * expressions also keys off of this.
+   */
+  isSelectAllowed() {
+    return !this._selectLock && this.isEditable();
+  }
+
+
+  //// STEP SELECTION
+
+  // Whenever there is a selected step or term, the associated
+  // ProofEditor's root node is flagged with the CSS class
+  // "hasSelection", and the invariant is maintained by these functions.
+
+  // TODO: Use this CSS class to control which rule menus are offered in
+  // the UI.
+
+  /**
+   * Unconditionally flag the renderable step as selected within this
+   * ProofDisplay and in the UI, no other action.
+   */
+  selectStep(step) {
+    var $node = $(step.stepNode);
+    $node.addClass('selected');
+    $node.find('.checkbox').prop('checked', true);
+    this.selection = step;
+    this.proofEditor && this.proofEditor.$node.addClass('hasSelection');
+    this.selectionChanged();
+  }
+
+  /**
+   * Unconditionally deselect any selected step and any selected
+   * expression in it, in both the ProofDisplay and the UI.
+   */
+  deselectStep() {
+    var step = this.selection;
+    if (step) {
+      var $node = $(step.stepNode);
+      $node.removeClass('selected');
+      $node.find('.checkbox').prop('checked', false);
+      this.selection = null;
+      this.deselectExpr(step);
+      this.proofEditor && this.proofEditor.$node.removeClass('hasSelection');
+      this.selectionChanged();
+    }
+  }
+
+  /**
+   * Unconditionally select the expr in this ProofDisplay and in the UI,
+   * no other action.
+   */
+  selectExpr(expr) {
     var step = getProofStep(expr);
-    var selection = this.selection;
-    var oldExpr = selection ? selection.selection : null;
-    this.deselectStep();
-    if (expr != oldExpr) {
-      this.selectExpr(expr);
-    }
+    this.selection = step;
+    $(expr.node).addClass('selected');
+    step.selection = expr;
+    this.proofEditor && this.proofEditor.$node.addClass('hasSelection');
+    this.selectionChanged();
   }
-};
 
-
-////
-//// PROOF and STEP RENDERING
-////
-
-// String containing just the turnstile math character.  See
-// http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
-var _turnstile = '\u22a6';
-
-/**
- * Most of the work for renderStep gets done here.  The step
- * must be renderable.
- */
-ProofDisplay.prototype.renderStep1 = function(step) {
-  var self = this;
-
-  // Make an object for rendering of the whole step.
-  var $proofStep = $('<div class=proofStep>');
-  // This object will have the display of the step, step number, and
-  // all of its controls, everything except the step info display with
-  // rule name and such.  In some ways it would be nice for this to be
-  // a regular DIV with two inline-block children, but the first is
-  // itself a flex box with (vertically) centered items, and it does
-  // not align vertically with its sibling unless this is also a flex
-  // box also with centered children.
-  var $step = $('<span class=stepAndControls>');
-  $proofStep.append($step);
-  // If editable, add deleter.
-  if (self.isEditable()) {
-    $step.append('<button class="fa fa-120 fa-times-circle deleteStep"' +
-                 ' title="Delete step">');
-  }
-  // If the UI is configured for it, include the node for "?" or circled a.
-  if (Toy.showStepHoverMark) {
-    // The stepHoverMark is on the left, with an "info" symbol
-    // or an "assumed" symbol.
-    $step.append($('<span class=stepHoverMark>')
-                 // Here we have CSS classes fa and fa-fw with no
-                 // character specified.  The character is controlled by
-                 // logic.css, not necessarily an fa "icon".
-                 .append('<span class="fa fa-fw"></span>',
-                         // This is a place to display information (the full step)
-                         // when the stepHoverMark is hovered.
-                         '<div class="hoverInfoBox invisible"></div>'));
-  }
-  // If editable, add checkbox.
-  if (self.isEditable()) {
-    $step.append('<input type=checkbox class="stepSelector checkbox">');
-  }
-  const $numArea = ($('<span class="stepNumArea stepSelector">')
-                    .append('[<span class=stepNumber></span>]'));
-  // If the "hover mark" is not configured, put the hoverInfoBox
-  // inside the stepNumArea and show it on hover when the shift key is
-  // down, see below.
-  if (!Toy.showStepHoverMark) {
-    $numArea.append('<div class="hoverInfoBox invisible"></div>');
-  }
-  // This span is highlighted when the whole step is hovered or selected.
-  const $stepAndNum = ($('<span class=stepAndNum>')
-                       .append($numArea));
-  $step.append($stepAndNum);
-  $proofStep.append('<span class=stepInfo></span>');
-  if (self.isEditable()) {
-    $proofStep.addClass('withDeleter');
-  }
-  $proofStep.data('proofStep', step);
-  step.stepNode = dom($proofStep);
-  var elide = wantLeftElision(step);
-  // This initializes hasLeftElision.
-  step.hasLeftElision = elide;
-  var $wff = $(renderWff(step));
-  hackOnRendering($wff);
-  $stepAndNum.append($('<wffblock->').append($wff));
-  $proofStep.find('.stepInfo').append(formattedStepInfo(step));
-
-  // Event handling:
-
-  // Expr hovering is already handled by delegation in
-  // ProofDisplay.setEditable.
-  //
-  // TODO: Consider using delegation more extensively.
-
-  const selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  function handleGeneralClick(event) {
-    var $expr = $(event.target).closest(selector) || $(event.target);
-    if ($expr.is('.fn') && !event.shiftKey) {
-      $expr = $expr.parent().closest(selector);
-    }
-    var expr = getExpr(dom($expr));
-    // Ignore clicks on tooltips, popups and such that may be
-    // descendants of the step's node.
+  /**
+   * Unconditionally deselect any selected expr in the
+   * step, no other action.
+   */
+  deselectExpr(step) {
+    var expr = step.selection;
     if (expr) {
-      self.handleExprClick(expr);
-      // Select only the innermost Expr.
-      // stopImmediatePropagation does not seem to be required here.
-      event.stopPropagation();
+      $(expr.node).removeClass('selected');
+      step.selection = null;
+      this.proofEditor && this.proofEditor.$node.removeClass('hasSelection');
+      this.selectionChanged();
     }
   }
-  $proofStep.on(TOUCHDOWN, selector, handleGeneralClick);
 
-  $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
-      hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
-    });
+  /**
+   * Handler for click on a proof step.  Selects the current
+   * step, deselecting any other.  Toggles the current one if
+   * already selected.
+   */
+  handleStepClick(step) {
+    if (this.isSelectAllowed()) {
+      var selected = this.selection;
+      var expr = selected ? selected.selection : null;
+      this.deselectStep();
+      if (!(step == selected && !expr)) {
+        this.selectStep(step);
+      }
+    }
+  }
 
-  $proofStep.on('mouseenter', '.stepNumArea', function(event) {
-      if (!Toy.showStepHoverMark && event.shiftKey) {
+  /**
+   * Handles selection of an expression in a step.  Deselects any
+   * selected expression in the ProofDisplay, and selects the given one
+   * unless already selected.
+   */
+  handleExprClick(expr) {
+    const editor = this.proofEditor;
+    if (editor) {
+      // TODO: Fix this string to avoid variables with ".".
+      editor.$copyText.val(expr.toString());
+      editor.$copyText.select();
+    }
+    if (this.isSelectAllowed()) {
+      var step = getProofStep(expr);
+      var selection = this.selection;
+      var oldExpr = selection ? selection.selection : null;
+      this.deselectStep();
+      if (expr != oldExpr) {
+        this.selectExpr(expr);
+      }
+    }
+  }
+
+  ////
+  //// PROOF and STEP RENDERING
+  ////
+
+  /**
+   * Most of the work for renderStep gets done here.  The step
+   * must be renderable.
+   */
+  renderStep1(step) {
+    var self = this;
+
+    // Make an object for rendering of the whole step.
+    var $proofStep = $('<div class=proofStep>');
+    // This object will have the display of the step, step number, and
+    // all of its controls, everything except the step info display with
+    // rule name and such.  In some ways it would be nice for this to be
+    // a regular DIV with two inline-block children, but the first is
+    // itself a flex box with (vertically) centered items, and it does
+    // not align vertically with its sibling unless this is also a flex
+    // box also with centered children.
+    var $step = $('<span class=stepAndControls>');
+    $proofStep.append($step);
+    // If editable, add deleter.
+    if (self.isEditable()) {
+      $step.append('<button class="fa fa-120 fa-times-circle deleteStep"' +
+                  ' title="Delete step">');
+    }
+    // If the UI is configured for it, include the node for "?" or circled a.
+    if (Toy.showStepHoverMark) {
+      // The stepHoverMark is on the left, with an "info" symbol
+      // or an "assumed" symbol.
+      $step.append($('<span class=stepHoverMark>')
+                  // Here we have CSS classes fa and fa-fw with no
+                  // character specified.  The character is controlled by
+                  // logic.css, not necessarily an fa "icon".
+                  .append('<span class="fa fa-fw"></span>',
+                          // This is a place to display information (the full step)
+                          // when the stepHoverMark is hovered.
+                          '<div class="hoverInfoBox invisible"></div>'));
+    }
+    // If editable, add checkbox.
+    if (self.isEditable()) {
+      $step.append('<input type=checkbox class="stepSelector checkbox">');
+    }
+    const $numArea = ($('<span class="stepNumArea stepSelector">')
+                      .append('[<span class=stepNumber></span>]'));
+    // If the "hover mark" is not configured, put the hoverInfoBox
+    // inside the stepNumArea and show it on hover when the shift key is
+    // down, see below.
+    if (!Toy.showStepHoverMark) {
+      $numArea.append('<div class="hoverInfoBox invisible"></div>');
+    }
+    // This span is highlighted when the whole step is hovered or selected.
+    const $stepAndNum = ($('<span class=stepAndNum>')
+                        .append($numArea));
+    $step.append($stepAndNum);
+    $proofStep.append('<span class=stepInfo></span>');
+    if (self.isEditable()) {
+      $proofStep.addClass('withDeleter');
+    }
+    $proofStep.data('proofStep', step);
+    step.stepNode = dom($proofStep);
+    var elide = wantLeftElision(step);
+    // This initializes hasLeftElision.
+    step.hasLeftElision = elide;
+    var $wff = $(renderWff(step));
+    hackOnRendering($wff);
+    $stepAndNum.append($('<wffblock->').append($wff));
+    $proofStep.find('.stepInfo').append(formattedStepInfo(step));
+
+    // Event handling:
+
+    // Expr hovering is already handled by delegation in
+    // ProofDisplay.setEditable.
+    //
+    // TODO: Consider using delegation more extensively.
+
+    const selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+    function handleGeneralClick(event) {
+      var $expr = $(event.target).closest(selector) || $(event.target);
+      if ($expr.is('.fn') && !event.shiftKey) {
+        $expr = $expr.parent().closest(selector);
+      }
+      var expr = getExpr(dom($expr));
+      // Ignore clicks on tooltips, popups and such that may be
+      // descendants of the step's node.
+      if (expr) {
+        self.handleExprClick(expr);
+        // Select only the innermost Expr.
+        // stopImmediatePropagation does not seem to be required here.
+        event.stopPropagation();
+      }
+    }
+    $proofStep.on(TOUCHDOWN, selector, handleGeneralClick);
+
+    $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
+        hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
+      });
+
+    $proofStep.on('mouseenter', '.stepNumArea', function(event) {
+        if (!Toy.showStepHoverMark && event.shiftKey) {
+          fillHoverInfoBox(self.proofEditor, step);
+        }
+      });
+    $proofStep.on('mouseleave', '.stepNumArea', function(event) {
+        $step.find('.hoverInfoBox').toggleClass('invisible', true);
+      });
+    $proofStep.on('mouseenter', '.ellipsis', function(event) {
         fillHoverInfoBox(self.proofEditor, step);
+      });
+    $proofStep.on('mouseleave', '.ellipsis', function(event) {
+        $step.find('.hoverInfoBox').toggleClass('invisible', true);
+      });
+
+    $proofStep.on('mouseenter', '.stepHoverMark', function(event) {
+        // If the stepHoverMark is not configured "in", this will not
+        // happen.
+        fillHoverInfoBox(self.proofEditor, step);
+      });
+    $proofStep.on('mouseleave', '.stepHoverMark', function(event) {
+        $step.find('.hoverInfoBox').toggleClass('invisible', true);
+      });
+    $proofStep.on(TOUCHDOWN, '.stepSelector', function(event) {
+      self.handleStepClick(step);
+    });
+
+    // Set up "hover" event handling on the stepNode.
+    $proofStep.on('mouseenter', function(event) {
+        hoverStep(step, 'in');
+    });
+    $proofStep.on('mouseleave', function(event) {
+        hoverStep(step, 'out');
+    });
+
+    // Deleter events
+    // If there is no deleter, this sets nothing up.
+    $proofStep.on('click', '.deleteStep', function(event) {
+      if (step.users.size === 0) {
+        // If the step has users the button is effectively disabled.
+        self.removeStep(step);
       }
     });
-  $proofStep.on('mouseleave', '.stepNumArea', function(event) {
-      $step.find('.hoverInfoBox').toggleClass('invisible', true);
-    });
-  $proofStep.on('mouseenter', '.ellipsis', function(event) {
-      fillHoverInfoBox(self.proofEditor, step);
-    });
-  $proofStep.on('mouseleave', '.ellipsis', function(event) {
-      $step.find('.hoverInfoBox').toggleClass('invisible', true);
-    });
 
-  $proofStep.on('mouseenter', '.stepHoverMark', function(event) {
-      // If the stepHoverMark is not configured "in", this will not
-      // happen.
-      fillHoverInfoBox(self.proofEditor, step);
-    });
-  $proofStep.on('mouseleave', '.stepHoverMark', function(event) {
-      $step.find('.hoverInfoBox').toggleClass('invisible', true);
-    });
-  $proofStep.on(TOUCHDOWN, '.stepSelector', function(event) {
-    self.handleStepClick(step);
-  });
+    // Select or deselect the checkbox solely through the step.
+    $proofStep.on('click', '.checkbox', function(event) { event.preventDefault(); });
 
-  // Set up "hover" event handling on the stepNode.
-  $proofStep.on('mouseenter', function(event) {
-      hoverStep(step, 'in');
-  });
-  $proofStep.on('mouseleave', function(event) {
-      hoverStep(step, 'out');
-  });
-
-  // Deleter events
-  // If there is no deleter, this sets nothing up.
-  $proofStep.on('click', '.deleteStep', function(event) {
-    if (step.users.size === 0) {
-      // If the step has users the button is effectively disabled.
-      self.removeStep(step);
+    // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
+    // are enabled.
+    if (Toy.modes.subproofs) {
+      $proofStep.on('click', 'span.ruleName.link', function(event) {
+        if (step.subproofDisplay) {
+          clearSubproof(step);
+        } else {
+          fillDetails(step);
+          // Track these events in Matomo.
+          Toy.trackAppEvent('ShowSubproof');
+          renderSubproof(step);
+        }
+      });
     }
-  });
-
-  // Select or deselect the checkbox solely through the step.
-  $proofStep.on('click', '.checkbox', function(event) { event.preventDefault(); });
-
-  // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
-  // are enabled.
-  if (Toy.modes.subproofs) {
-    $proofStep.on('click', 'span.ruleName.link', function(event) {
-      if (step.subproofDisplay) {
-        clearSubproof(step);
-      } else {
-        fillDetails(step);
-        // Track these events in Matomo.
-        Toy.trackAppEvent('ShowSubproof');
-        renderSubproof(step);
-      }
-    });
+    return dom($proofStep);
   }
-  return dom($proofStep);
-};
 
+}
+
+export interface Expr {
+  formatTerm();
+}
 /**
  * Builds and returns a potentially nested array if given a Call,
  * otherwise returns this.
@@ -965,8 +940,11 @@ Expr.prototype.formatTerm = function() {
   } else {
     return term;
   }
-};
+}
 
+export interface Expr {
+  indentTree();
+}
 /**
  * This is for debugging.  It returns a string that indicates the
  * levels of indenting for a term consisting of Calls and Atoms.
@@ -984,8 +962,11 @@ Expr.prototype.indentTree = function() {
     }
   };
   return cvt(this);
-};
+}
 
+export interface Expr {
+  reIndent(depth, portWidth);
+}
 /**
  * Redoes the indentation of the given rendered term.
  *
@@ -1116,7 +1097,7 @@ Expr.prototype.reIndent = function(depth, portWidth) {
   if (depth == 1 && $(top.node).find('.linebreak').length) {
     $step.find('.stepInfo').before('<br class=linebreak>');
   }
-};
+}
 
 /**
  * Fills in the details of a renderable step.  A no-op unless the step
@@ -1124,7 +1105,7 @@ Expr.prototype.reIndent = function(depth, portWidth) {
  * in which case this may set the details of the step and its
  * original.
  */
-function fillDetails(step) {
+export function fillDetails(step) {
   const original = step.original;
   // This code knows the structure of results produced by
   // asserted facts, either in getResult (when the proof is not
@@ -1175,7 +1156,7 @@ function fillDetails(step) {
  *   work by postprocessing or result in attachment of abandoned DOM
  *   nodes to parts of rendered steps.
  */
-function hackOnRendering($wff) {
+export function hackOnRendering($wff) {
   // Find exprs that have no other classes, such as fullExpr.
   var $exprs = $wff.find('[class=expr]');
   // Remove them from the DOM, so flex layout can work better, mainly
@@ -1197,7 +1178,7 @@ function hackOnRendering($wff) {
  * among its steps, this takes it to immediately follow the last
  * of the displayed steps.
  */
-function prevRenderedStep(step) {
+export function prevRenderedStep(step) {
   var proofDisplay = getProofDisplay(step);
   if (!proofDisplay) {
     return null;
@@ -1223,7 +1204,7 @@ function prevRenderedStep(step) {
  * prevRenderedStep with assumptions that are sameAs
  * the assumptions of the given step.
  */
-function sameAsPrevAsms(step) {
+export function sameAsPrevAsms(step) {
   if (step.isCall2('=>')) {
     const prev = prevRenderedStep(step);
     return (prev && prev.isCall2('=>') &&
@@ -1244,7 +1225,7 @@ function sameAsPrevAsms(step) {
  * the _next_ step modifies the LHS of this one, e.g. a rewrite using
  * the LHS.  That would allow the target site to be highlighted.
  */
-function wantLeftElision(step) {
+export function wantLeftElision(step) {
   // So-called left elision is currently disabled by the following
   // line of code. Comment it out to get previous behavior:
   return false;
@@ -1265,7 +1246,7 @@ function wantLeftElision(step) {
  * TODO: Consider fleshing out the concept of display with fewer
  * parentheses.
  */
-function renderWff(step) {
+export function renderWff(step) {
   var wff = step.wff;
   var $wff;
   if (['display', 'copy', 'addTheorem'].includes(step.ruleName)) {
@@ -1353,7 +1334,7 @@ function renderWff(step) {
                        ? renderWithElision(wff)
                        : dom(wff.renderTopConj(0)));
   }
-};
+}
 
 /**
  * Renders the given expr of the given step with left elision.  The
@@ -1364,7 +1345,7 @@ function renderWff(step) {
  * TODO: Consider changing this and its uses to precompute any special
  * rendering.
  */
-function renderWithElision(expr) {
+export function renderWithElision(expr) {
   expr.assertCall2();
   var $expr = exprJq(true);
   expr.node = dom($expr);
@@ -1381,7 +1362,7 @@ function renderWithElision(expr) {
  * Somewhat like renderWithElision, but with the ellipsis not visible,
  * just occupying space.
  */
-function renderWithElisionSpace(expr) {
+export function renderWithElisionSpace(expr) {
   expr.assertCall2();
   var $expr = exprJq();
   expr.node = dom($expr);
@@ -1391,6 +1372,9 @@ function renderWithElisionSpace(expr) {
   return dom($expr);
 }
 
+export interface Expr {
+  renderTopConj(minPower);
+}
 Expr.prototype.renderTopConj = function(minPower) {
   function annotateTopConj(expr) {
     if (expr.isCall2('&')) {
@@ -1399,13 +1383,13 @@ Expr.prototype.renderTopConj = function(minPower) {
   }
   annotateTopConj(this);
   return this.render(minPower);
-};
+}
 
 /**
  * Truthy iff the given term is a conjunction of allImplicit terms.
  * (This makes the whole term implicit.)
  */
-function allImplicit(expr, step) {
+export function allImplicit(expr, step) {
   return (expr.isTypeCond() ||
           (expr.isCall2('&') &&
            allImplicit(expr.getLeft(), step) && 
@@ -1416,7 +1400,7 @@ function allImplicit(expr, step) {
  * Build and return a jQuery of class "expr", and mark as "fullExpr"
  * if the optional "full" argument is truthy.
  */
-function exprJq(full) {
+export function exprJq(full?) {
   var $expr = $('<span class=expr></span>');
   if (full) {
     $expr.addClass('fullExpr');
@@ -1428,7 +1412,7 @@ function exprJq(full) {
  * Returns an array CSS class names to add to an Expr node for a
  * variable having the specified name.
  */
-function specialClasses(name) {
+export function specialClasses(name) {
   if (Toy.isVariableName(name)) {
     return ['italic'];
   }
@@ -1454,16 +1438,19 @@ function specialClasses(name) {
 /**
  * Create and return a text node containing a space.
  */
-function space() {
+export function space() {
   return document.createTextNode(' ');
 }
 
-function textNode(text) {
+export function textNode(text) {
   return document.createTextNode(text);
 }
 
 // NOTE that some methods on Expr and its subclasses appear here.
 
+export interface Expr {
+  renderTerm();
+}
 /**
  * Copies this non-rendered term and renders the result, returning a
  * DOM node containing the rendering.  This is called by the step
@@ -1481,8 +1468,11 @@ Expr.prototype.renderTerm = function() {
   const copy = this.copyWithTypes();
   const jq = copy.render(0);
   return jq[0];
-};
+}
 
+export interface Expr {
+  termDisplay();
+}
 /**
  * Returns an HTML string based on rendering with renderTerm
  * and enclosing the result in a span of class=term, for
@@ -1493,8 +1483,12 @@ Expr.prototype.termDisplay = function() {
   const html = this.renderTerm().outerHTML;
   return `<span class=term>${html}</span>`;
 
-};
+}
 
+
+export interface Expr {
+  render(minPower, isFn);
+}
 /**
  * Render this renderable term into a new DOM node, returning a
  * jQuery object for the node.  Sets the expression's "node" property
@@ -1533,14 +1527,14 @@ Atom.prototype.render = function(minPower, isFn) {
   }
   $expr.html(html);
   return $expr;
-};
+}
 
 // Private to effectivePower.
 var useParens = {
   '|': new Set(['&']),
   '=>': new Set(['=>', '=']),
   '==': new Set(['=>'])
-};
+}
 
 /**
  * Computes the effective precedence of the given outer binary
@@ -1552,7 +1546,7 @@ var useParens = {
  * The effect is to force parentheses around the inner expression if
  * it is an operand of the outer operator.
  */
-function effectivePower(op, inner) {
+export function effectivePower(op, inner) {
   if (inner.isCall2()) {
     var innerOp = inner.getBinOp();
     var specialOps = useParens[op.pname];
@@ -1658,7 +1652,7 @@ Call.prototype.render = function(minPower) {
     $expr.append(')');
   }
   return $expr;
-};
+}
 
 Lambda.prototype.render = function(minPower) {
   if (this.node) {
@@ -1684,8 +1678,11 @@ Lambda.prototype.render = function(minPower) {
     $expr.append(')');
   }
   return $expr;
-};
+}
 
+export interface Expr {
+  stepFullCopy();
+}
 /**
  * Copies this step into a renderable proof step, copying its wff
  * deeply.  Does not copy any information related to rendering.
@@ -1707,8 +1704,11 @@ Step.prototype.stepFullCopy = function() {
   // ruleDeps refers to originals of other steps.
   step.ruleDeps = this.ruleDeps;
   return step;
-};
+}
 
+export interface Expr {
+  addUser(user);
+}
 // In fact, this method is really for StepDisplay objects.
 Step.prototype.addUser = function(user) {
   this.users.add(user);
@@ -1716,8 +1716,11 @@ Step.prototype.addUser = function(user) {
   // It would be nice to do this, but in Chrome hover events
   // don't work right with this code.
   // $(this.stepNode).find('.deleteStep').prop('disabled', true);
-};
+}
 
+export interface Expr {
+  removeUser(user);
+}
 // Remove a user of the step.
 Step.prototype.removeUser = function(user) {
   this.users.delete(user);
@@ -1727,13 +1730,19 @@ Step.prototype.removeUser = function(user) {
     // don't work right with this code.
     // $(this.stepNode).find('.deleteStep').prop('disabled', false);
   }
-};
+}
 
+export interface Expr {
+  isRendered();
+}
 /**
  * Returns truthy value iff this Step object is rendered.
  */
 Step.prototype.isRendered = function() { return this == this.rendering; };
 
+export interface Expr {
+  shortForm();
+}
 /**
  * Removes "minor" conditions from the assumptions, returning an Expr.
  * Applied to a WFF, typically a Step.
@@ -1752,16 +1761,22 @@ Expr.prototype.shortForm = function() {
   } else {
     return this;
   }
-};
+}
 
+export interface Expr {
+  shortString();
+}
 /**
  * Returns a string presenting the "shortForm" of this WFF, with
  * outermost parens trimmed away.
  */
 Expr.prototype.shortString = function() {
   return Toy.trimParens(this.shortForm().toHtml());
-};
+}
 
+export interface Expr {
+  descendants();
+}
 /**
  * Given a rendered step, returns it and all rendered steps derived from
  * it, recursively, not including the given step.
@@ -1781,6 +1796,9 @@ Step.prototype.descendants = function() {
   return result;
 }
 
+export interface Atom {
+  deepCopy();
+}
 // deepCopy()
 //
 // Makes and returns a deep copy of this Expr, copying all parts
@@ -1792,17 +1810,23 @@ Step.prototype.descendants = function() {
 Atom.prototype.deepCopy = function() {
   // TODO: Consider whether it is best to use the pname here.
   return new Atom(this.pname);
-};
+}
 
+export interface Call {
+  deepCopy();
+}
 Call.prototype.deepCopy = function() {
   return new Call(this.fn.deepCopy(),
                   this.arg.deepCopy());
-};
+}
 
+export interface Lambda {
+  deepCopy();
+}
 Lambda.prototype.deepCopy = function() {
   return new Lambda(this.bound.deepCopy(),
                     this.body.deepCopy());
-};
+}
 
 /**
  * Returns an array of the plain steps leading up to and including the
@@ -1816,7 +1840,7 @@ Lambda.prototype.deepCopy = function() {
  * Dependencies are determined by the ruleDeps of steps encountered.
  * If any alleged dependency is not proved, this ignores it.
  */
-function unrenderedDeps(step) {
+export function unrenderedDeps(step) {
   var result = [];
   const visited = new Set();
   // Traverses the dependency graph, recording a copy of every step
@@ -1843,7 +1867,7 @@ function unrenderedDeps(step) {
  * subproofDisplay property of the step to the ProofDisplay for the
  * subproof.
  */
-function renderSubproof(step) {
+export function renderSubproof(step) {
   const $subproof = renderInference(step);
   const $step = $(step.stepNode);
   $step.addClass('hasSubproof');
@@ -1885,7 +1909,7 @@ function renderSubproof(step) {
  *
  * The second argument is true when no UI action is desired.
  */
-function clearSubproof(step, internal) {
+export function clearSubproof(step, internal?) {
   const controller = step.subproofDisplay;
   if (controller) {
     step.subproofDisplay = null;
@@ -1932,7 +1956,7 @@ function clearSubproof(step, internal) {
  * True iff step1 and step2 are rendered adjacent to each other,
  * with step1 first.
  */
-function adjacentSteps(step1, step2) {
+export function adjacentSteps(step1, step2) {
   step1 = step1.rendering;
   step2 = step2.rendering;
   var controller = getProofDisplay(step1);
@@ -1957,7 +1981,7 @@ function adjacentSteps(step1, step2) {
  * If there is no markup that refers to steps, formats other step
  * dependencies as "using step(s) ... ".
  */
-function formattedStepInfo(step) {
+export function formattedStepInfo(step) {
   var info = Toy.getRuleInfo(step);
   var description = info.description;
   var useDefault = true;
@@ -2028,7 +2052,7 @@ function formattedStepInfo(step) {
  * (or {bools}) displays as a comma-separated list of all those
  * inputs.  Unknown markup passes through, e.g. lambdas -- {x. f x}.
  */
-function expandMarkup(step, markup) {
+export function expandMarkup(step, markup) {
   function argStep(place) {
     var arg = step.ruleArgs[place];
     return arg.rendering || arg;
@@ -2129,7 +2153,7 @@ function expandMarkup(step, markup) {
  * Returns an HTML display of the given fact for step descriptions.
  * This bolds the main part of the fact.
  */
-function factDisplay(bool) {
+export function factDisplay(bool) {
   const asms = bool.getAsms();
   // Trim the main HTML if there are no asms.
   const html0 = bool.getMain().renderTerm().outerHTML;
@@ -2145,7 +2169,7 @@ function factDisplay(bool) {
  * dependencies as "in" and others as "using", but only when not
  * immediately preceding the given step.
  */
-function defaultStepRefs(step, description) {
+export function defaultStepRefs(step, description) {
   var siteRefs = [];
   var stepRefs = [];
   var args = step.ruleArgs;
@@ -2231,7 +2255,7 @@ var stepFormatters = {
     }
     return 'instance of tautology ' + taut.toHtml();
   }
-};
+}
 
 /**
  * Given a rendered proof step, renders a header and the proof steps
@@ -2248,7 +2272,7 @@ var stepFormatters = {
  *   The idea is to separate the concept of subproof from
  *   rendering.  Rule wrapper code might do this automatically.
  */
-function renderInference(step) {
+export function renderInference(step) {
   var steps = unrenderedDeps(step.details);
   var prefix = '';
   var stepNum = step.stepNumber;
@@ -2318,7 +2342,7 @@ function renderInference(step) {
  * then should also be given, with the number of steps counted during
  * execution of the proof.
  */
-function renderProof(step, where, millis, nSteps) {
+export function renderProof(step, where, millis, nSteps) {
   where = $(where);
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);
@@ -2343,7 +2367,7 @@ function renderProof(step, where, millis, nSteps) {
  * TODO: Re-think and rewrite this, probably using Toy.eachArgType.
  *   Indicate sites in steps in some user-friendly way.
  */
-function computeHeaderArgInfo(step) {
+export function computeHeaderArgInfo(step) {
   function mathSpan(html) {
     return '<span class=math>' + html + '</span>';
   }
@@ -2384,7 +2408,7 @@ function computeHeaderArgInfo(step) {
  * TODO: Eliminate this when there are no more artificial ordinals
  * due to creating assertions after the fact.
  */
-function computeFirstOrdinal(steps) {
+export function computeFirstOrdinal(steps) {
   var lowest = 0;
   for (var i = 0; i < steps.length; i++) {
     lowest = steps[i].getBase().ordinal;
@@ -2409,7 +2433,7 @@ function computeFirstOrdinal(steps) {
  * Gets the DOM node associated with the step, given a rendered Expr
  * within the step or its DOM node.  If no such, returns a nullish.
  */
-function getStepNode(expr) {
+export function getStepNode(expr) {
   const node = expr instanceof Toy.Expr ? expr.node : expr;
   return node.closest('.proofStep');
 }
@@ -2419,7 +2443,7 @@ function getStepNode(expr) {
  * in part into the given DOM Node.  Also accepts an Expr of
  * a rendered proof.  Returns null if there is none.
  */
-function getProofStep(node) {
+export function getProofStep(node) {
   const stepNode = getStepNode(node);
   return stepNode && $(stepNode).data('proofStep');
 }
@@ -2428,7 +2452,7 @@ function getProofStep(node) {
  * Gets the DOM node of a rendered proof given the node of
  * one of its steps or of an expression in a step.
  */
-function getStepsNode(node) {
+export function getStepsNode(node) {
   return dom($(node).closest('.proofSteps'));
 }
 
@@ -2438,7 +2462,7 @@ function getStepsNode(node) {
  * is currently not part of a ProofDisplay, but by convention should
  * contain only the top-level proof and its subproofs.
  */
-function getTopProofContainer(step) {
+export function getTopProofContainer(step) {
   return $(step.stepNode).closest('.proofEditor');
 }
 
@@ -2469,7 +2493,7 @@ export function getProofDisplay(expr) {
  * Expr whose node property is the given node.  Returns a falsy value
  * if there is none.
  */
-function getExpr(node) {
+export function getExpr(node) {
   // Go up to the proof step then look through all subexpressions.
   var step = getProofStep(node);
   return (step &&
@@ -2484,7 +2508,7 @@ function getExpr(node) {
  * Handle mouseovers on subexpressions.  The event target can
  * be any part of a proof node.
  */
-function exprHandleOver(event) {
+export function exprHandleOver(event) {
   const selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
   const target = event.target;
   const $target = $(target);
@@ -2516,12 +2540,12 @@ function exprHandleOver(event) {
     var path = proofStep.pathTo(function(expr) { return expr.node == target});
     hoverShowPath(proofStep, path);
   }
-};
+}
 
 /**
  * Handle mouseouts on subexpressions.
  */
-function exprHandleOut(event) {
+export function exprHandleOut(event) {
   // This appears to depend on mouseout events firing before the
   // related mouseenter event as described at
   // https://www.w3.org/TR/DOM-Level-3-Events/#events-mouseevent-event-order.
@@ -2540,14 +2564,14 @@ function exprHandleOut(event) {
     // Do nothing if there is no bottom panel.
     $display.html('');
   }
-};
+}
 
 /**
  * Adds the named CSS class to the DOM node.  For use in hover
  * handlers.  Currently does nothing if node is null, which can occur
  * when terms are not visible.
  */
-function addClass(node, className) {
+export function addClass(node, className) {
   node && $(node).addClass(className);
 }
 
@@ -2555,7 +2579,7 @@ function addClass(node, className) {
  * Removes the named CSS class from the DOM node.
  * For use in hover handlers.
  */
-function removeClass(node, className) {
+export function removeClass(node, className) {
   node && $(node).removeClass(className);
 }
 
@@ -2563,7 +2587,7 @@ function removeClass(node, className) {
  * Defines how to display the hovered path.  Highlighting of the
  * DOM node is handled elsewhere.
  */
-function hoverShowPath(wff, path) {
+export function hoverShowPath(wff, path) {
   var $display = $('#hoverPath');
   if ($display.length) {
     // If there is no bottom panel, do nothing.
@@ -2577,7 +2601,7 @@ function hoverShowPath(wff, path) {
  * Event handler for "hover" events on proof steps.
  * Shows decorations such as the deleter.
  */
-function hoverStep(step, direction, event) {
+export function hoverStep(step, direction) {
   var action = direction == 'in' ? addClass : removeClass;
 
   // Always add or remove the "hover" class to the step node
@@ -2598,7 +2622,7 @@ function hoverStep(step, direction, event) {
  * entire step rather than just assumptions.  Also makes the box
  * visible.
  */
-function fillHoverInfoBox(proofEditor, step) {
+export function fillHoverInfoBox(proofEditor, step) {
   var $box = $(step.stepNode).find('.hoverInfoBox');
   if ($box.children().length == 0) {
     var copy = step.original.stepFullCopy();
@@ -2618,7 +2642,7 @@ function fillHoverInfoBox(proofEditor, step) {
  * highlighting inputs to the step, references to it, and steps
  * establishing assumptions used by it.
  */
-function hoverStepSelector(step, direction, event) {
+export function hoverStepSelector(step, direction) {
   var entering = direction === 'in';
 
   // Highlight or unhighlight the step and step number.
@@ -2665,7 +2689,7 @@ function hoverStepSelector(step, direction, event) {
 /**
  * Returns a hover handler function for the step if any, or null.
  */
-function getHoverHandler(step) {
+export function getHoverHandler(step) {
   var handler = hoverHandlers[step.ruleName];
   if (handler) {
     return handler;
@@ -2682,7 +2706,7 @@ function getHoverHandler(step) {
  * supplies the equation, which may be implicit in case of
  * rules that replace T with a step or a step's consequent.
  */
-function hoverAsRewriter(step, action) {
+export function hoverAsRewriter(step, action) {
   // This becomes the first ("target") dep or undefined if nonexistent.
   const target = step.ruleDeps[0];
   if (!target) {
@@ -2743,7 +2767,7 @@ function hoverAsRewriter(step, action) {
 /**
  * Hover handler for "r".
  */
-function hoverReplace(step, action) {
+export function hoverReplace(step, action) {
   hoverAsRewriter(step, action);
   var args = step.original.ruleArgs;
   var eqnStep = args[0].rendering;
@@ -2851,70 +2875,40 @@ var hoverHandlers = {
 
 //// Settable parameters
 
-Toy.showOrdinals = false;
-
-
-//// Export public names.
-
-Toy.keepScroll = keepScroll;
-Toy.eachArgType = eachArgType;
-Toy.stepPaths = stepPaths;
-Toy.stepSites = stepSites;
-Toy.getRightNeighbor = getRightNeighbor;
-
-Toy.ProofDisplay = ProofDisplay;
-Toy.unrenderedDeps = unrenderedDeps;
-Toy.renderInference = renderInference;
-Toy.renderProof = renderProof;
-Toy.fillDetails = fillDetails;
-
-Toy.getStepNode = getStepNode;
-Toy.getProofStep = getProofStep;
-Toy.getStepsNode = getStepsNode;
-Toy.getExpr = getExpr;
-Toy.getProofDisplay = getProofDisplay;
-
-// For debugging
-Toy._adjacentSteps = adjacentSteps;
-Toy._effectivePower = effectivePower;
-
-// For testing:
-Toy._formattedStepInfo = formattedStepInfo;
-Toy._expandMarkup = expandMarkup;
-Toy._specialClasses = specialClasses;
+export var showOrdinals = false;
 
 // Global parameter to enable hover highlighting everywhere.
-Toy.highlightAllHovers = true;
+export var highlightAllHovers = true;
 
 // Global parameter to suppress displaying assumptions such as "(R x)".
 // Not yet in use.
-Toy.suppressRealTypeDisplays = true;
+export var suppressRealTypeDisplays = true;
 
 // UI config parameter, see its usage.
-Toy.showStepHoverMark = false;
+export var showStepHoverMark = false;
 
 // Detect if the device has a touch screen, e.g. a tablet.
 // Mobile jQuery 1.1 does this same test.
-Toy.hasTouchEvents = 'ontouchend' in document;
+export var hasTouchEvents = 'ontouchend' in document;
 
 // Control whether to use an Autocompleter vs. plain SELECT element.
 // To turn on use of the AutoCompleter, remove "false &".  This
 // leaves it off in any case for touch screen systems.
-Toy.useAutocompleter = false && !Toy.hasTouchEvents;
+export var useAutocompleter = false && !Toy.hasTouchEvents;
 
 // Global parameter to suppress GUI selection of function names
 // and the "Curried part" of an infix call.
-Toy.simplifiedSelections = true; // Alternatively: Toy.hasTouchEvents;
+export var simplifiedSelections = true; // Alternatively: Toy.hasTouchEvents;
 
 // Name of event when the user touches the screen or clicks the mouse.
 // Note: when using 'mousedown' as the TOUCHDOWN event Chrome has been
 // observed to unfocus the keyboard on the subsequent mouseup event,
 // an unwanted effect.
-var TOUCHDOWN = Toy.hasTouchEvents ? 'touchstart' : 'mousedown';
+const TOUCHDOWN = Toy.hasTouchEvents ? 'touchstart' : 'mousedown';
 
 // Override these properties on the page to get custom modes of
 // display and/or operation.
-Toy.modes = {
+export var modes = {
   subproofs: true
 };
 

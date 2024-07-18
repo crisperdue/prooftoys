@@ -9,7 +9,9 @@ interface Window {
   dCounter: number;
   idCount: number;
   Numtest: function;
+  Rtest: function;
   Tval: any;
+  clipboardData: any;
 }
 
 interface Element {
@@ -19,4 +21,19 @@ interface Element {
 
 interface Object {
   $$: string;
+}
+
+interface Error {
+  step: any;
+  from: any;
+}
+
+interface Function {
+  done: boolean;
+}
+
+interface Promise {
+  mq: any;
+  id: any;
+  canceled: any;
 }

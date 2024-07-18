@@ -198,6 +198,7 @@ export type EType = Atom | Call | Lambda;
 // they were given.  This means that all operations that transform
 // expressions must avoid copying except when necessary.
 
+
 // MASSIVE TODO: Bring in all of the doc strings / JSDoc comments.
 export interface Expr {
   fromStep: Expr;
@@ -210,7 +211,7 @@ export interface Expr {
   // get memos(): {};
   _withType(type: any): Expr;
   _typeFrom(expr: any): Expr;
-  toString(simply: any): any;
+  toString(simply?: any): any;
   show(level: any): any;
   toUnicode(simply: any): any;
   toHtml(trimmed: any): any;
@@ -255,9 +256,7 @@ export interface Expr {
   isAsmPath(path_arg: any): any;
   freeVars(): {};
   freeVarSet(): Set<any>;
-  /** Newly */
   newConstants(): Set<any>;
-  /** Absolutely. */
   mathVars(): {};
   mathVarConditions(expr: any): any;
   boundNames(path: any): {};
@@ -318,7 +317,7 @@ export interface Expr {
   searchTerms(test: any, path: any): any;
   walkPatterns(patternInfos: any, path_arg: any): void;
   toKey(): any;
-} 
+}
 
 /**
  * Superclass for terms of all kinds: Atom, Call, Lambda.
