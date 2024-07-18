@@ -1647,7 +1647,16 @@ export declare class ToyMap {
     return steps;
   }
 
-  export function proofData(regexes) {
+  // Export the name to be used by machine-generated file
+  // proof-data.js.
+  export let proofData = [];
+
+  /**
+   * Given an array of regexes, creates and returns proof
+   * data for all documents with names matching one or
+   * more of them.
+   */
+  export function docsProofData(regexes) {
     const docs = lsDocs().sort();
     const data = [];
     for (const docName of docs) {
@@ -1665,7 +1674,7 @@ export declare class ToyMap {
    * "exercises", these do not have order or dependencies.
    */
   export function dumpProofData() {
-    const data = proofData([/^\/equations[0-9/#]*$/,
+    const data = docsProofData([/^\/equations[0-9/#]*$/,
       /^\/lunar\/$/,
       /^\/fake-proof\/$/,
     ]);
