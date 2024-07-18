@@ -1380,7 +1380,18 @@ export var siteTypes = {
  * TODO: Rename this to e.g., RuleForm.
  *   Move $proofErrors into the ProofEditor.
  */
-function StepEditor(proofEditor) {
+export class StepEditor {
+  _proofEditor: ProofEditor;
+  proofDisplay: ProofDisplay;
+  clearer;
+  $form;
+  formShowing;
+  $proofErrors;
+  ruleName;
+  lastRuleTime;
+  lastRuleSteps;
+
+  constructor(proofEditor) {
   // Make this available to all inner functions.
   var self = this;
 
@@ -1425,16 +1436,16 @@ function StepEditor(proofEditor) {
 /**
  * Reports the HTML message as an error in the step editor.
  */
-StepEditor.prototype.error = function(message) {
+error(message) {
   this.report('<b>' + message + '</b>');
-};
+}
 
 /**
  * Report the error through the DOM and help the user debug in case it
  * has a "step" property.  The argument should be an Error object or
  * an HTML string.
  */
-StepEditor.prototype.report = function(error) {
+report(error) {
   var $proofErrors = this.$proofErrors;
   $proofErrors.html('<button class=clearer>X</button>');
   $proofErrors.show();
@@ -1448,20 +1459,20 @@ StepEditor.prototype.report = function(error) {
     // It should be a string.
     $proofErrors.append(error);
   }
-};
+}
 
 /**
  * Hides the error display.
  */
-StepEditor.prototype.clearError = function() {
+clearError() {
   this._proofEditor.$node.removeClass('hasDialog');
   this.$proofErrors.hide();
-};
+}
 
 /**
  * Shows the form for entering info for the selected rule.
  */
-StepEditor.prototype.showForm = function() {
+showForm() {
   this.$form.show();
   this.formShowing = true;
   this.proofDisplay.setSelectLock(true);
@@ -1471,17 +1482,17 @@ StepEditor.prototype.showForm = function() {
   // by tryRuleSoon, so it can safely defer running
   // its rule until after the next repaint.
   this._proofEditor.ruleMenu.suppressing = true;
-};
+}
 
 /**
  * Hides the rule entry form.
  */
-StepEditor.prototype.hideForm = function() {
+hideForm() {
   this.$form.hide();
   this.formShowing = false;
   this.proofDisplay.setSelectLock(false);
   this._proofEditor.$node.removeClass('ruleFormVisible');
-};
+}
 
 /**
  * Check that the given args Array is filled in with values that are
@@ -1491,7 +1502,7 @@ StepEditor.prototype.hideForm = function() {
  * false.  If the values are OK and some optional args are undefined,
  * truncate the args array to omit the unneeded undefined values.
  */
-StepEditor.prototype.checkArgs = function(args, minArgs, reportError) {
+checkArgs(args, minArgs, reportError) {
   // Check that the args are all filled in.
   var required = (typeof minArgs == 'number'
                   ? minArgs
@@ -1519,37 +1530,6 @@ StepEditor.prototype.checkArgs = function(args, minArgs, reportError) {
     }
   }
   return true;
-};
-
-/**
- * Computes whether a rule needs a "site" type as an input.
- */
-function usesSite(rule) {
-  var inputs = rule.info.inputs;
-  for (var type in inputs) {
-    if (type in siteTypes) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Adds class=step, class=term, etc. to each form element according to
- * its name -- same as the name, but stripping off any numeric suffix,
- * e.g. step2 => step.  Also prevents autocompletion of fields named
- * "term" because various sites add autosuggest entries to such
- * fields.
- *
- * TODO: Be smarter about autocompletion.
- */
-function addClassInfo(form) {
-  form.find('input').each(function() {
-      // Note: the pattern matches any string.
-      var className = this.name.match(/^(.*?)\d*$/)[1];
-      $(this).addClass(className);
-        $(this).attr('autocomplete', 'off');
-    });
 }
 
 /**
@@ -1559,7 +1539,7 @@ function addClassInfo(form) {
  *
  * Only call this if the rule does not use a site (usesSite).
  */
-StepEditor.prototype.addSelectionToForm = function(rule) {
+addSelectionToForm(rule) {
   var proofDisplay = this.proofDisplay;
   var step = proofDisplay.selection;
   if (step) {
@@ -1591,7 +1571,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
       }
     });
   }
-};
+}
 
 /**
  * Fill in arguments for the rule named by the ruleMenu from the
@@ -1601,7 +1581,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  * user any error message from calling fillFromForm.  Otherwise
  * just leaves the form up for the user to complete.
  */
-StepEditor.prototype.tryRuleFromForm = function() {
+tryRuleFromForm() {
   // TODO: Get it together on failure reporting here.
   const ruleName = this.ruleName;
   const rule = Toy.rules[ruleName];
@@ -1612,7 +1592,7 @@ StepEditor.prototype.tryRuleFromForm = function() {
     this.hideForm();
     tryRuleSoon(this, ruleName, args);
   }
-};
+}
 
 /**
  * Tries to run the given rule (function) with the given rule
@@ -1624,7 +1604,7 @@ StepEditor.prototype.tryRuleFromForm = function() {
  *
  * Use this only in tryRuleSoon.
  */
-StepEditor.prototype._tryRule = function(ruleName, args) {
+_tryRule(ruleName, args) {
   var self = this;
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
@@ -1745,7 +1725,7 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
  * Also fills any "ed:" input, so perhaps this could be named
  * argsFromContext.
  */
-StepEditor.prototype.argsFromSelection = function(ruleName) {
+argsFromSelection(ruleName) {
   var rule = Toy.rules[ruleName];
   var nargs = Math.max(rule.length, rule.info.maxArgs || 0);
   var args = new Array(nargs);
@@ -1801,7 +1781,7 @@ StepEditor.prototype.argsFromSelection = function(ruleName) {
  * Tries to fill in the arguments array with information from the form.
  * Returns true / false for success or failure.
  */
-StepEditor.prototype.fillFromForm = function(ruleName, args) {
+fillFromForm(ruleName, args) {
   var self = this;
   var rule = Toy.rules[ruleName];
   let success = true;
@@ -1846,7 +1826,7 @@ StepEditor.prototype.fillFromForm = function(ruleName, args) {
  * TODO: Make this behave consistently, e.g. for parsing terms,
  *   and make fillFromForm behave gracefully with it.
  */
-StepEditor.prototype.parseValue = function(value, type) {
+parseValue(value, type) {
   switch (type) {
   case 'step':
   case 'equation':
@@ -1901,6 +1881,38 @@ StepEditor.prototype.parseValue = function(value, type) {
     return new Error('Type not parseable: ' + type);
   }
 };
+}
+
+/**
+ * Computes whether a rule needs a "site" type as an input.
+ */
+function usesSite(rule) {
+  var inputs = rule.info.inputs;
+  for (var type in inputs) {
+    if (type in siteTypes) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Adds class=step, class=term, etc. to each form element according to
+ * its name -- same as the name, but stripping off any numeric suffix,
+ * e.g. step2 => step.  Also prevents autocompletion of fields named
+ * "term" because various sites add autosuggest entries to such
+ * fields.
+ *
+ * TODO: Be smarter about autocompletion.
+ */
+function addClassInfo(form) {
+  form.find('input').each(function() {
+      // Note: the pattern matches any string.
+      var className = this.name.match(/^(.*?)\d*$/)[1];
+      $(this).addClass(className);
+        $(this).attr('autocomplete', 'off');
+    });
+}
 
 /**
  * Requests running the rule with the given args as soon as the UI has
@@ -1945,7 +1957,7 @@ const addedSubgoals = (step, replacer, goal) => {
     });
   }
   return subgoals;
-};
+}
 
 /**
  * Supply this with an actual proof step.  If the rule has property
