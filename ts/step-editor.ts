@@ -17,12 +17,35 @@ const format = Toy.format;
 const dom = Toy.dom;
 const TermSet = Toy.TermSet;
 const rules = Toy.rules;
-const infixCall = Toy.infixCall;  
+const infixCall = Toy.infixCall;
 
+/** 
+ * If an exercise is set up, value is the exercise name, e.g. "nat",
+ * otherwise null.
+ */
+export var exerciseLoaded = null;
+
+/**
+ * Async utility function to print and return the
+ * proofState of the named exercise.  Currently unused.
+ */
+async function exerciseSteps(exName) {
+  let result;
+  await Toy.db.exercises.get(exName)
+    .then(data => {
+      if (data) {
+        console.log(data.proofState);
+        result = data.proofState;
+      } else {
+        console.log('not found');
+      }
+    });
+  return result;
+}
 
 //// PROOF EDITOR
 
-var proofEditors = new Set();
+export var proofEditors = new Set();
 
 // TODO: Use events and event handlers to make cleaner separation
 //   between ProofEditor, ProofDisplay, and StepEditor.  StepEditor
@@ -31,7 +54,7 @@ var proofEditors = new Set();
 //   when its list of steps changes.
 
 // Each instance has a unique, sequential numeric ID starting at 1.
-var nextProofEditorId = 1;
+export var nextProofEditorId = 1;
 
 /**
  * Construct a proof displayer/editor, which is a composite made from
@@ -468,6 +491,14 @@ ProofEditor.prototype.otherChanges = function() {
  * initialSteps, sets those up.
  */
 ProofEditor.prototype._initExercise = function(exName) {
+  /**
+   * Returns an array of ordinary proof steps that initialize an
+   * exercise based on setting the given wff as a goal.
+   */
+  function exerciseInits(stmt) {
+    const step = rules.goal(stmt);
+    return [step];
+  }
   const self = this;
   const db = Toy.db;
   const info = prepExercise(exName);
@@ -500,31 +531,313 @@ ProofEditor.prototype._initExercise = function(exName) {
 };
 
 /**
- * Returns an array of ordinary proof steps that initialize an
- * exercise based on setting the given wff as a goal.
+ * Build and return a UX trace control initializing dialog
+ * as a jQuery object.
  */
-function exerciseInits(stmt) {
-  const step = rules.goal(stmt);
-  return [step];
-}
+ProofEditor.prototype.$uxDialog = function() {
+  const raw = `
+    <div class="dialogWrapper uxDialog invisible">
+    <div class="dialog">
+    <span style="flex: auto; margin: 0 1em">
+    Will you kindly help advance Prooftoys usability
+    by enabling detailed tracing of your usage?
+    <i>You can opt out at any time.</i>
+    For more information, see the
+    <a href="/privacy/">privacy information</a> page.
+    </span>
+    <input type=button class=uxYes value=Yes>
+    <input type=button class=uxNo value=No>
+    </div>
+    </div>`;
+  const cooked = raw.replace(/^    /mg, '');
+  return $(cooked);
+};
 
 /**
- * Async utility function to print and return the
- * proofState of the named exercise.
+ * Sets the name of this editor's worksheet, (this.docName) and
+ * does associated bookkeeping for the UI.  This does not load or save
+ * any proof state.  (In most use cases one or the other should also
+ * be done.)
  */
-async function exerciseSteps(exName) {
-  let result;
-  await Toy.db.exercises.get(exName)
-    .then(data => {
-      if (data) {
-        console.log(data.proofState);
-        result = data.proofState;
-      } else {
-        console.log('not found');
+ProofEditor.prototype.syncToDocName = function(name) {
+  const self = this;
+  self.docName = name;
+  // Set the document name into all nodes of class wksName.
+  self.$node.find('.wksName').text(name);
+  // Remember the state of this editor.
+  // TODO: Replace the following with some form of state observation.
+  if (self.isEditable()) {
+    // Only note the state within this context if editing the proof,
+    // so that otherwise the document can be edited by other editors.
+    // (See Toy.isDocHeldFrom.)
+    Toy.noteState(self, {docName: self.docName});
+    const wff = (name.startsWith('(') &&
+                 Toy.catching(() => Toy.parse(name)));
+    self.goalStatement = wff instanceof Expr ? wff : null;
+  }
+  // Visiting the same page in another tab then will cause its proof
+  // editor to visit the same document as this one.
+  Toy.saveState(self, {docName: self.docName});
+};
+
+/**
+ * Attempts to open the named document in this proof editor, setting
+ * the editor's document name and loading its proof state.  Returns
+ * true iff the document is successfully loaded, false for failure,
+ * and null when the current theory needs to be unloaded first.
+ * Initiates unloading by reloading the page.
+ *
+ * If no conflicting theory is loaded, ensures that the real numbers
+ * are set up except if the proof goal indicates NN but not R.  In
+ * that case ensures that NN is set up.
+ */
+ProofEditor.prototype.openDoc = function(name) {
+  const goal = Toy.catching(() => Toy.parse(name));
+  if (!('noload' in this._options)) {
+    let needNN = false;
+    if (goal instanceof Expr) {
+      const names = goal.constantNames();
+      needNN = names.has('NN') && !names.has('R');
+      if (names.has('NN') && names.has('R')) {
+        console.warn('NN and R!?');
       }
-    });
-  return result;
-}
+    }
+    if ((needNN && Toy.realNumbersLoaded) ||
+        (!needNN && Toy.exerciseLoaded)) {
+      // Associate this proof editor with this document across
+      // page loads.
+      this.syncToDocName(name);
+      // Reload and start over.
+      Toy.sleep(0).then(() => location.reload());
+      // Indicate an inconclusive result.
+      return null;
+    }
+    if (needNN) {
+      // This loads all natural numbers theorems.
+      prepExercise('nat/');
+    } else if (!Toy.realNumbersLoaded) {
+      Toy.requireRealNumbers();
+    }
+  }
+  const proofData = Toy.readDoc(name);
+  // TODO: Check for possible active editing in another tab/window.
+  if (proofData) {
+    this.setEditable(true);
+    const steps = Toy.decodeSteps(proofData.proofState);
+    if (steps instanceof Error) {
+      // Write the problematic proof to a new document with ".err" in
+      // the name.
+      const errName = Toy.genDocName(`${name}.err`);
+      Toy.writeDoc(errName, {proofState: this.getStateString()});
+      // Show the truncated list of steps in the proof editor.
+      this.setSteps(steps.steps);
+      this.stepEditor.report(steps);
+      return false;
+    } else {
+      this.syncToDocName(name);
+      this.setSteps(steps);
+      return true;
+    }
+  } else {
+    return false;
+  }
+};
+
+/**
+ * Returns the name of the editor's current document.
+ */
+ProofEditor.prototype.getDocumentName = function() {
+  return this.docName;
+};
+
+/**
+ * Empties the proof and problem statement for a fresh start.
+ */
+ProofEditor.prototype.clear = function() {
+  this.showRules = [];
+  this.stepEditor.hideForm();
+  this.setSteps(this.initialSteps);
+};
+
+/**
+ * Recompute the problem givens from the first proof step if its rule
+ * name is "given".  Sets them to be all conjuncts of the RHS of the
+ * main part of the first step, set up as an equivalence by
+ * rules.given.
+ */
+ProofEditor.prototype._updateGivens = function() {
+  var self = this;
+  var steps = self.proofDisplay.steps;
+  self._givens.clear();
+  function add(given) { self._givens.add(given); }
+  if (steps.length > 0) {
+    var step = steps[0];
+    if (step.ruleName === 'given') {
+      step.wff.getMain().getRight().scanConjuncts(add);
+    }
+  }
+  self._updateGivenVars();
+};
+
+/**
+ * Update the givenVars to match the (possibly changed) set of givens
+ * of this problem.
+ */
+ProofEditor.prototype._updateGivenVars = function() {
+  // An object/set with names of all variables in any of the
+  // givens:
+  var vars = {};
+  this._givens.each(function(g) { $.extend(vars, g.freeVars()); });
+  this.givenVars = vars;
+};
+
+/**
+ * Add a step to the proof.
+ */
+ProofEditor.prototype.addStep = function(step) {
+  const rendered = this.proofDisplay.addStep(step);
+  const stmt = this.goalStatement;
+  if (stmt) {
+    rendered.checkSubgoals(stmt);
+  }
+};
+
+ProofEditor.prototype.getLastStep = function() {
+  return this.proofDisplay.getLastStep();
+};
+
+/**
+ * Gets the state of the proof, in string form.
+ */
+ProofEditor.prototype.getStateString = function() {
+  return Toy.encodeSteps(this.proofDisplay.steps);
+};
+
+/**
+ * Returns an array of string forms of the steps
+ * of this proof editor, usable as JSON.
+ */
+ProofEditor.prototype.getStepWffs = function() {
+  return this.steps.map(s => s.wff.toString());
+};
+
+ProofEditor.prototype.getJSONState = function() {
+  const v = {
+    proofState: this.getStateString(),
+    stepWffs: this.getStepWffs(),
+  };
+  return v;
+};
+
+/**
+ * Sets the state of the proof from a string as returned by
+ * getStateString.
+ */
+ProofEditor.prototype.setStateFromString = function(encoded) {
+  // TODO: Rename to setProofFromString.
+  var steps = encoded ? Toy.decodeSteps(encoded) : [];
+  this.setSteps(steps);
+};
+
+/**
+ * Sets the steps to the given array of non-renderable steps.
+ */
+ProofEditor.prototype.setSteps = function(steps) {
+  const setTheSteps = steps => {
+    // Note that the editor does not have its own
+    // removeStepAndFollowing method.
+    this.proofDisplay.setSteps([]);
+    for (var i = 0; i < steps.length; i++) {
+      this.addStep(steps[i]);
+    }
+  };
+  if (steps instanceof Error) {
+    setTheSteps(steps.steps);
+    this.setEditable(false);
+    this.toggleClass('proofLoadError', true);
+  } else {
+    setTheSteps(steps);
+    this.toggleClass('proofLoadError', false);
+  }
+};
+
+/**
+ * Save the proof state to the the worksheet controls text area and
+ * the document's data store.  Normally use the proofChanged method
+ * rather than calling this directly, to avoid redundant work.
+ */
+ProofEditor.prototype.saveProofState = function() {
+  const self = this;
+  const options = self._options;
+  var text = self.getStateString();
+  self._wksControls.setProofText(text);
+  if (self.docName) {
+    Toy.writeDoc(self.docName, {proofState: text});
+  } else if (options.exercise) {
+    Toy.db.exercises.put({exName: options.exercise, proofState: text})
+      .catch(reason => console.warn('Not put:', reason));
+  } else {
+    console.warn('State not saved');
+  }
+};
+
+/**
+ * Attempts to restore the proof state from the worksheet controls
+ * text area.
+ */
+ProofEditor.prototype.restoreState = function() {
+  var string = this._wksControls.getProofText();
+  this.setStateFromString(string);
+};
+
+/**
+ * Returns true iff this is editable.
+ */
+ProofEditor.prototype.isEditable = function() {
+  return this.proofDisplay.isEditable();
+};
+
+/**
+ * Turns editability of the proof editor on or off, currently
+ * affecting only the UI.
+ */
+ProofEditor.prototype.setEditable = function(value) {
+  this.toggleClass('editable', value);
+  // The following set the state of the display and hide or show the
+  // step editor.
+  this.proofDisplay.setEditable(value);
+};
+
+/**
+ * Toggles a CSS class on the main node of this proof editor.
+ */
+ProofEditor.prototype.toggleClass = function(className, truthy) {
+  this.$node.toggleClass(className, truthy);
+};
+
+/**
+ * Define the "givens" property as a virtual property.  Setting it has
+ * the side effect of modify the "givenVars" property as well, which
+ * should be treated as readonly.  If not set explicitly through the
+ * setter, givens will come from uses of the "given" rule.
+ */
+Object.defineProperty(ProofEditor.prototype, "givens", {
+    get: function() { return this._givens; },
+    // TODO: Check if the setter is ever used; clean up the semantics.
+    set: function(g) {
+      assert(this.proofDisplay.steps.length == 0, 'Proof is not empty');
+      var wff;
+      for (var i = 0; i < g.length; i++) {
+        var g1 = Toy.termify(g[i]);
+        this._givens.add(g1);
+        wff = (wff ? Toy.infixCall(wff, '&', g1) : g1);
+      }
+      if (wff) {
+        this.addStep(Toy.rules.given(wff));
+      }
+      this._updateGivenVars();
+    }
+  });
 
 /**
  * Based on the given "exercise/item" exercise name, adds the fact
@@ -563,10 +876,6 @@ function prepExercise(name) {
   Toy.exerciseLoaded = exName;
   return result;
 };
-
-// If an exercise is set up, value is the exercise name, e.g. "nat",
-// otherwise null.
-Toy.exerciseLoaded = null;
 
 /**
  * Builds and returns an object for the proofButtons DIV of the given
@@ -650,30 +959,6 @@ function buildProofButtons(editor) {
   };
   return result;
 }
-
-/**
- * Build and return a UX trace control initializing dialog
- * as a jQuery object.
- */
-ProofEditor.prototype.$uxDialog = function() {
-  const raw = `
-    <div class="dialogWrapper uxDialog invisible">
-    <div class="dialog">
-    <span style="flex: auto; margin: 0 1em">
-    Will you kindly help advance Prooftoys usability
-    by enabling detailed tracing of your usage?
-    <i>You can opt out at any time.</i>
-    For more information, see the
-    <a href="/privacy/">privacy information</a> page.
-    </span>
-    <input type=button class=uxYes value=Yes>
-    <input type=button class=uxNo value=No>
-    </div>
-    </div>`;
-  const cooked = raw.replace(/^    /mg, '');
-  return $(cooked);
-};
-
 
 /**
  * This builds and returns an object containing the full content of
@@ -999,293 +1284,6 @@ function makeButton(label, classes) {
                     label, classes || '');
 }
 
-/**
- * Sets the name of this editor's worksheet, (this.docName) and
- * does associated bookkeeping for the UI.  This does not load or save
- * any proof state.  (In most use cases one or the other should also
- * be done.)
- */
-ProofEditor.prototype.syncToDocName = function(name) {
-  const self = this;
-  self.docName = name;
-  // Set the document name into all nodes of class wksName.
-  self.$node.find('.wksName').text(name);
-  // Remember the state of this editor.
-  // TODO: Replace the following with some form of state observation.
-  if (self.isEditable()) {
-    // Only note the state within this context if editing the proof,
-    // so that otherwise the document can be edited by other editors.
-    // (See Toy.isDocHeldFrom.)
-    Toy.noteState(self, {docName: self.docName});
-    const wff = (name.startsWith('(') &&
-                 Toy.catching(() => Toy.parse(name)));
-    self.goalStatement = wff instanceof Expr ? wff : null;
-  }
-  // Visiting the same page in another tab then will cause its proof
-  // editor to visit the same document as this one.
-  Toy.saveState(self, {docName: self.docName});
-};
-
-/**
- * Attempts to open the named document in this proof editor, setting
- * the editor's document name and loading its proof state.  Returns
- * true iff the document is successfully loaded, false for failure,
- * and null when the current theory needs to be unloaded first.
- * Initiates unloading by reloading the page.
- *
- * If no conflicting theory is loaded, ensures that the real numbers
- * are set up except if the proof goal indicates NN but not R.  In
- * that case ensures that NN is set up.
- */
-ProofEditor.prototype.openDoc = function(name) {
-  const goal = Toy.catching(() => Toy.parse(name));
-  if (!('noload' in this._options)) {
-    let needNN = false;
-    if (goal instanceof Expr) {
-      const names = goal.constantNames();
-      needNN = names.has('NN') && !names.has('R');
-      if (names.has('NN') && names.has('R')) {
-        console.warn('NN and R!?');
-      }
-    }
-    if ((needNN && Toy.realNumbersLoaded) ||
-        (!needNN && Toy.exerciseLoaded)) {
-      // Associate this proof editor with this document across
-      // page loads.
-      this.syncToDocName(name);
-      // Reload and start over.
-      Toy.sleep(0).then(() => location.reload());
-      // Indicate an inconclusive result.
-      return null;
-    }
-    if (needNN) {
-      // This loads all natural numbers theorems.
-      prepExercise('nat/');
-    } else if (!Toy.realNumbersLoaded) {
-      Toy.requireRealNumbers();
-    }
-  }
-  const proofData = Toy.readDoc(name);
-  // TODO: Check for possible active editing in another tab/window.
-  if (proofData) {
-    this.setEditable(true);
-    const steps = Toy.decodeSteps(proofData.proofState);
-    if (steps instanceof Error) {
-      // Write the problematic proof to a new document with ".err" in
-      // the name.
-      const errName = Toy.genDocName(`${name}.err`);
-      Toy.writeDoc(errName, {proofState: this.getStateString()});
-      // Show the truncated list of steps in the proof editor.
-      this.setSteps(steps.steps);
-      this.stepEditor.report(steps);
-      return false;
-    } else {
-      this.syncToDocName(name);
-      this.setSteps(steps);
-      return true;
-    }
-  } else {
-    return false;
-  }
-};
-
-/**
- * Returns the name of the editor's current document.
- */
-ProofEditor.prototype.getDocumentName = function() {
-  return this.docName;
-};
-
-/**
- * Empties the proof and problem statement for a fresh start.
- */
-ProofEditor.prototype.clear = function() {
-  this.showRules = [];
-  this.stepEditor.hideForm();
-  this.setSteps(this.initialSteps);
-};
-
-/**
- * Define the "givens" property as a virtual property.  Setting it has
- * the side effect of modify the "givenVars" property as well, which
- * should be treated as readonly.  If not set explicitly through the
- * setter, givens will come from uses of the "given" rule.
- */
-Object.defineProperty(ProofEditor.prototype, "givens", {
-    get: function() { return this._givens; },
-    // TODO: Check if the setter is ever used; clean up the semantics.
-    set: function(g) {
-      assert(this.proofDisplay.steps.length == 0, 'Proof is not empty');
-      var wff;
-      for (var i = 0; i < g.length; i++) {
-        var g1 = Toy.termify(g[i]);
-        this._givens.add(g1);
-        wff = (wff ? Toy.infixCall(wff, '&', g1) : g1);
-      }
-      if (wff) {
-        this.addStep(Toy.rules.given(wff));
-      }
-      this._updateGivenVars();
-    }
-  });
-
-/**
- * Recompute the problem givens from the first proof step if its rule
- * name is "given".  Sets them to be all conjuncts of the RHS of the
- * main part of the first step, set up as an equivalence by
- * rules.given.
- */
-ProofEditor.prototype._updateGivens = function() {
-  var self = this;
-  var steps = self.proofDisplay.steps;
-  self._givens.clear();
-  function add(given) { self._givens.add(given); }
-  if (steps.length > 0) {
-    var step = steps[0];
-    if (step.ruleName === 'given') {
-      step.wff.getMain().getRight().scanConjuncts(add);
-    }
-  }
-  self._updateGivenVars();
-};
-
-/**
- * Update the givenVars to match the (possibly changed) set of givens
- * of this problem.
- */
-ProofEditor.prototype._updateGivenVars = function() {
-  // An object/set with names of all variables in any of the
-  // givens:
-  var vars = {};
-  this._givens.each(function(g) { $.extend(vars, g.freeVars()); });
-  this.givenVars = vars;
-};
-
-/**
- * Add a step to the proof.
- */
-ProofEditor.prototype.addStep = function(step) {
-  const rendered = this.proofDisplay.addStep(step);
-  const stmt = this.goalStatement;
-  if (stmt) {
-    rendered.checkSubgoals(stmt);
-  }
-};
-
-ProofEditor.prototype.getLastStep = function() {
-  return this.proofDisplay.getLastStep();
-};
-
-/**
- * Gets the state of the proof, in string form.
- */
-ProofEditor.prototype.getStateString = function() {
-  return Toy.encodeSteps(this.proofDisplay.steps);
-};
-
-/**
- * Returns an array of string forms of the steps
- * of this proof editor, usable as JSON.
- */
-ProofEditor.prototype.getStepWffs = function() {
-  return this.steps.map(s => s.wff.toString());
-};
-
-ProofEditor.prototype.getJSONState = function() {
-  const v = {
-    proofState: this.getStateString(),
-    stepWffs: this.getStepWffs(),
-  };
-  return v;
-};
-
-/**
- * Sets the state of the proof from a string as returned by
- * getStateString.
- */
-ProofEditor.prototype.setStateFromString = function(encoded) {
-  // TODO: Rename to setProofFromString.
-  var steps = encoded ? Toy.decodeSteps(encoded) : [];
-  this.setSteps(steps);
-};
-
-/**
- * Sets the steps to the given array of non-renderable steps.
- */
-ProofEditor.prototype.setSteps = function(steps) {
-  const setTheSteps = steps => {
-    // Note that the editor does not have its own
-    // removeStepAndFollowing method.
-    this.proofDisplay.setSteps([]);
-    for (var i = 0; i < steps.length; i++) {
-      this.addStep(steps[i]);
-    }
-  };
-  if (steps instanceof Error) {
-    setTheSteps(steps.steps);
-    this.setEditable(false);
-    this.toggleClass('proofLoadError', true);
-  } else {
-    setTheSteps(steps);
-    this.toggleClass('proofLoadError', false);
-  }
-};
-
-/**
- * Save the proof state to the the worksheet controls text area and
- * the document's data store.  Normally use the proofChanged method
- * rather than calling this directly, to avoid redundant work.
- */
-ProofEditor.prototype.saveProofState = function() {
-  const self = this;
-  const options = self._options;
-  var text = self.getStateString();
-  self._wksControls.setProofText(text);
-  if (self.docName) {
-    Toy.writeDoc(self.docName, {proofState: text});
-  } else if (options.exercise) {
-    Toy.db.exercises.put({exName: options.exercise, proofState: text})
-      .catch(reason => console.warn('Not put:', reason));
-  } else {
-    console.warn('State not saved');
-  }
-};
-
-/**
- * Attempts to restore the proof state from the worksheet controls
- * text area.
- */
-ProofEditor.prototype.restoreState = function() {
-  var string = this._wksControls.getProofText();
-  this.setStateFromString(string);
-};
-
-/**
- * Returns true iff this is editable.
- */
-ProofEditor.prototype.isEditable = function() {
-  return this.proofDisplay.isEditable();
-};
-
-/**
- * Turns editability of the proof editor on or off, currently
- * affecting only the UI.
- */
-ProofEditor.prototype.setEditable = function(value) {
-  this.toggleClass('editable', value);
-  // The following set the state of the display and hide or show the
-  // step editor.
-  this.proofDisplay.setEditable(value);
-};
-
-/**
- * Toggles a CSS class on the main node of this proof editor.
- */
-ProofEditor.prototype.toggleClass = function(className, truthy) {
-  this.$node.toggleClass(className, truthy);
-};
-
-
 //// PROOF STEP EDITOR
 
 // CSS class names beginning with "sted-" are reserved to
@@ -1585,26 +1583,6 @@ StepEditor.prototype.tryRuleFromForm = function() {
 };
 
 /**
- * Requests running the rule with the given args as soon as the UI has
- * opportunity to repaint, and indicates that the prover is working.
- */
-function tryRuleSoon(stepEditor, ruleName, args) {
-  args.forEach(function(arg) {
-      if (Toy.isProved(arg) && arg.isRendered()) {
-        // Really all step arguments to all steps everywhere should be
-        // non-renderable in the current implementation, but this situation
-        // is arguably a greater risk than others.
-        console.error('Argument step ' + arg.stepNumber + ' is renderable.');
-      }
-    });
-  stepEditor._proofEditor.$node.addClass('waitingForProver');
-  // Do not respond to menu mouse events until the rule has actually run.
-  stepEditor._proofEditor.ruleMenu.suppressing = true;
-  // Try running the rule once the UI shows that the prover is working.
-  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, ruleName, args));
-}
-
-/**
  * Tries to run the given rule (function) with the given rule
  * arguments, adding the result to this step editor's proof.  Catches
  * and reports any errors.  Reports there was nothing to do if the
@@ -1721,50 +1699,6 @@ StepEditor.prototype._tryRule = function(ruleName, args) {
   if (!deferCleanup) {
     cleanup();
   }
-};
-
-/**
- * Supply this with an actual proof step.  If the rule has property
- * 'autoSimplify', this applies the value of the property to the step
- * as the auto-simplification.  If it returns a falsy value it will be
- * treated as a no-op (identity function).
- *
- * Otherwise if the step's rule has a "site" argument and it references
- * the "assumptions side" of the step, simplify that side, else the
- * "focal part".
- *
- * TODO: Consider moving smarts about a "site" argument into
- *   simplifyFocalPart.
- */
-function autoSimplify(step) {
-  if (step.ruleArgs.length === 0) {
-    // It is an axiom or theorem without parameters.
-    // Simplification does not make sense, so don't do it.
-    return step;
-  }
-  var simplifier = Toy.getRuleInfo(step).autoSimplify;
-  if (simplifier) {
-    // Call the rule's simplifier.  To suppress simplification,
-    // supply a simplifier that does nothing.
-    return simplifier(step) || step;
-  }
-  return step.simplifyUsual();
-}
-
-/**
- * Simplify this step based on its target site, if any,
- * simplify the asm side if it refers into the asms, otherwise
- * the "focal part".  Hopefully this can be considered the
- * default style of autosimplification.
- *
- * TODO: Should this be a rule?
- */
-Step.prototype.simplifyUsual = function() {
-  const step = this;
-  const path = Toy.getStepSite(step);
-  return (path && step.isAsmSide(path)
-          ? Toy.rules.simplifySite(step, '/left')
-          : Toy.rules.simplifyFocalPart(step) || assert(false));
 };
 
 /**
@@ -1936,6 +1870,94 @@ StepEditor.prototype.parseValue = function(value, type) {
   }
 };
 
+/**
+ * Requests running the rule with the given args as soon as the UI has
+ * opportunity to repaint, and indicates that the prover is working.
+ */
+function tryRuleSoon(stepEditor, ruleName, args) {
+  args.forEach(function(arg) {
+      if (Toy.isProved(arg) && arg.isRendered()) {
+        // Really all step arguments to all steps everywhere should be
+        // non-renderable in the current implementation, but this situation
+        // is arguably a greater risk than others.
+        console.error('Argument step ' + arg.stepNumber + ' is renderable.');
+      }
+    });
+  stepEditor._proofEditor.$node.addClass('waitingForProver');
+  // Do not respond to menu mouse events until the rule has actually run.
+  stepEditor._proofEditor.ruleMenu.suppressing = true;
+  // Try running the rule once the UI shows that the prover is working.
+  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, ruleName, args));
+}
+
+// Computes an array of significant subgoals added to the given step
+// by the given "replacer" in case it is used to replace some part of
+// the step.  The goal is intended to be the proof goal, or may be
+// nullish.  Any assumptions of the replacer that are not among either
+// the step's assumptions or the goal's assumptions will be in the
+// result array.
+const addedSubgoals = (step, replacer, goal) => {
+  const subgoals = [];
+  const newAsms = replacer.getAsms();
+  if (newAsms) {
+    const goalAsms = goal ? goal.asmSet() : new TermSet();
+    const currentAsms = step.asmSet();
+    newAsms.scanConj(a => {
+      // Ignore asms that were expected (in the goal), or
+      // already in the input step.
+      if (a.likeSubgoal()) {
+        if (!goalAsms.has(a) && !currentAsms.has(a)) {
+          subgoals.push(a);
+        }
+      }
+    });
+  }
+  return subgoals;
+};
+
+/**
+ * Supply this with an actual proof step.  If the rule has property
+ * 'autoSimplify', this applies the value of the property to the step
+ * as the auto-simplification.  If it returns a falsy value it will be
+ * treated as a no-op (identity function).
+ *
+ * Otherwise if the step's rule has a "site" argument and it references
+ * the "assumptions side" of the step, simplify that side, else the
+ * "focal part".
+ *
+ * TODO: Consider moving smarts about a "site" argument into
+ *   simplifyFocalPart.
+ */
+function autoSimplify(step) {
+  if (step.ruleArgs.length === 0) {
+    // It is an axiom or theorem without parameters.
+    // Simplification does not make sense, so don't do it.
+    return step;
+  }
+  var simplifier = Toy.getRuleInfo(step).autoSimplify;
+  if (simplifier) {
+    // Call the rule's simplifier.  To suppress simplification,
+    // supply a simplifier that does nothing.
+    return simplifier(step) || step;
+  }
+  return step.simplifyUsual();
+}
+
+/**
+ * Simplify this step based on its target site, if any,
+ * simplify the asm side if it refers into the asms, otherwise
+ * the "focal part".  Hopefully this can be considered the
+ * default style of autosimplification.
+ *
+ * TODO: Should this be a rule?
+ */
+Step.prototype.simplifyUsual = function() {
+  const step = this;
+  const path = Toy.getStepSite(step);
+  return (path && step.isAsmSide(path)
+          ? Toy.rules.simplifySite(step, '/left')
+          : Toy.rules.simplifyFocalPart(step) || assert(false));
+};
 
 //// RULEMENU
 
@@ -2358,31 +2380,6 @@ RuleMenu.prototype._update = function() {
     var $right = rightTerm ? $(rightTerm.renderTerm()) : '?';
     $items.find('.menuRightNeighbor').append($right);
   }
-};
-
-// Computes an array of significant subgoals added to the given step
-// by the given "replacer" in case it is used to replace some part of
-// the step.  The goal is intended to be the proof goal, or may be
-// nullish.  Any assumptions of the replacer that are not among either
-// the step's assumptions or the goal's assumptions will be in the
-// result array.
-const addedSubgoals = (step, replacer, goal) => {
-  const subgoals = [];
-  const newAsms = replacer.getAsms();
-  if (newAsms) {
-    const goalAsms = goal ? goal.asmSet() : new TermSet();
-    const currentAsms = step.asmSet();
-    newAsms.scanConj(a => {
-      // Ignore asms that were expected (in the goal), or
-      // already in the input step.
-      if (a.likeSubgoal()) {
-        if (!goalAsms.has(a) && !currentAsms.has(a)) {
-          subgoals.push(a);
-        }
-      }
-    });
-  }
-  return subgoals;
 };
 
 /**
@@ -2961,6 +2958,6 @@ Toy.ProofEditor = ProofEditor;
 Toy.StepEditor = StepEditor;
 
 Toy.tryRuleSoon = tryRuleSoon;
-Toy.exerciseSteps = exerciseSteps;
+//Toy.exerciseSteps = exerciseSteps;
 
 }  // namespace;
