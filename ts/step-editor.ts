@@ -261,7 +261,7 @@ export class ProofEditor {
     this._refresher = new Toy.Refresher(changes => this.refresh());
     this._otherChanges = new Toy.Refresher(changes => this.otherChanges());
 
-    let proofData = null;
+    let data;
     
     // Create an editor record if none exists.
     const id = self.proofEditorId;
@@ -284,8 +284,8 @@ export class ProofEditor {
                           // that is greater than one.
                           : this.proofEditorId));
       // If there is a canned solution, show the "Solve" button.
-      proofData = Toy.findProofData(self.docName);
-      if (proofData) {
+      data = Toy.findProofData(self.docName);
+      if (data) {
         $solve.removeClass('hidden');
       }
       // Initialize editor content.
@@ -377,7 +377,7 @@ export class ProofEditor {
 
     $solve.on('click', function() {
       if (window.confirm('Replace contents with a pre-made solution?')) {
-        self.setSteps(Toy.unrenderedDeps(Toy.asProof(proofData.proof)()));
+        self.setSteps(Toy.unrenderedDeps(Toy.asProof(data.proof)()));
       }
     });
 
