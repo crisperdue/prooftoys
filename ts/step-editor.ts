@@ -99,7 +99,7 @@ var nextProofEditorId = 1;
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
  */
-function ProofEditor(options_arg={}) {
+export function ProofEditor(options_arg={}) {
 
   //// Initialize properties.
 

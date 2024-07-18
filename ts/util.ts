@@ -55,7 +55,7 @@ export declare class ToySet {
   superset(other: any): boolean;
   equals(other: any): boolean;
   remove(value: any): void;
-  each(fn: any, thisObj: any): any;
+  each(fn: any, thisObj?: any): any;
   isEmpty(): boolean;
   clear(): void;
   choose(): any;
@@ -896,8 +896,11 @@ export declare class ToyMap {
     }
   }
 
-  export var  alert = function(message) {
-    if (Toy.testing) {
+  /** Not sure just what this is for. */
+  export var testing = false;
+
+  export var alert = function(message) {
+    if (testing) {
       console.error('Alert: ' + message);
     } else {
       window.alert(message);
@@ -950,6 +953,7 @@ export declare class ToyMap {
    * True iff the arrays are the same length and elements are ==
    * at each index.
    */
+  // @ts-expect-error
   Array.equals = function(a1, a2) {
     // Optimize identity check.
     if (a1 === a2) {
@@ -1070,6 +1074,9 @@ export declare class ToyMap {
 
   export let thrown;
 
+  /** Helps you suppress debugging temporarily. */
+  export var proceeding = false;
+
   /**
    * Unconditionally throws an Error (used by assert).  Convenient, and
    * works properly with catchAborts.  If the first argument is an Error,
@@ -1096,7 +1103,7 @@ export declare class ToyMap {
       // The two code paths here enable us to suppress debugging when an
       // abort occurs with Toy.proceeding on.  (For this, in the
       // debugger request a pseudo-breakpoint that never pauses.)
-      if (Toy.proceeding) {
+      if (proceeding) {
         console.warn('Proceeding at:', e.message);
         throw e;  // You may ask the debugger not to pause here.
       } else {
@@ -1127,7 +1134,7 @@ export declare class ToyMap {
     } else if (typeof msg === 'string') {
       _abort({}, msg, ...args);
     } else {
-      _abort(msg, ...args);
+      _abort(msg, args[0], ...args.slice(1));
     }
   }
 
@@ -1190,7 +1197,7 @@ export declare class ToyMap {
    * TODO: Consider merging the two.
    */
   export function newError(...args) {
-    const e = error(...args);
+    const e = error.apply(null, ...args);
     return e;
   }
 
@@ -1466,7 +1473,7 @@ export declare class ToyMap {
    * as in JSON.stringify.  Uses a "space" value of 1 for human
    * readability.
    */
-  export function stringify(object, replacer) {
+  export function stringify(object, replacer?) {
     return JSON.stringify(object, replacer, 1);
   }
 
@@ -2778,11 +2785,11 @@ export declare class ToyMap {
    * From: https://stackoverflow.com/questions/400212/
    *   how-do-i-copy-to-the-clipboard-in-javascript
    */
-  function copyToClipboard(text) {
+  export function copyToClipboard(text) {
     if (window.clipboardData && window.clipboardData.setData) {
       // IE specific code path to prevent textarea being shown while
       // dialog is visible.
-      return clipboardData.setData("Text", text);
+      return window.clipboardData.setData("Text", text);
     } else if (document.queryCommandSupported &&
       document.queryCommandSupported("copy")) {
       var textarea = document.createElement("textarea");

@@ -2,8 +2,6 @@
 
 'use strict';
 
-window.Toy = window.Toy || {};
-
 // Prooftoys scripts should not depend on this file, though it may do
 // some default configuration.  At present this does not appear to
 // depend on any other Prooftoys script, so its functions can be used
@@ -26,14 +24,16 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 };
 
-Toy.insertSlogans = function() {
+export var quotes = [];
+
+ export function insertSlogans() {
   var slogan = 'Power tools for your math mind';
   var elt = document.getElementById('slogans');
   if (elt) {
     elt.innerHTML = slogan;
 
     // Get the collection of quotes.
-    Toy.quotes = [];
+    quotes = [];
     var quoteIndex = 0;
     // Splits the quote text into quotes and install them
     // into Toy.quotes in random order.
@@ -76,7 +76,7 @@ Toy.insertSlogans = function() {
  * Replaces ASCII math symbols in the given HTML text with HTML
  * entities for math, and with alphanumeric names in italics.
  */
-Toy.mathMarkup0 = function(text, title) {
+export function mathMarkup0(text, title) {
   // Substitutions for "forall" and "exists" consume a trailing blank,
   // helping to push them up next to following text.
   var rex =
@@ -165,10 +165,10 @@ Toy.mathMarkup0 = function(text, title) {
 };
 
 /**
- * Postprocess basic results of mathMarkup to keep operands of
+ * Postprocess basic results of mathMarkup0 to keep operands of
  * multiplication visually near the "center dot".
  */
-Toy.mathMarkup = function(text, title) {
+ export function mathMarkup(text, title=false) {
   const text0 = Toy.mathMarkup0(text, title);
   return text0.replace(/ &sdot; /g, '&sdot;');
 };
@@ -178,7 +178,7 @@ Toy.mathMarkup = function(text, title) {
  * by building DOM elements and getting their text, so probably
  * not the fastest thing in the world.
  */
-Toy.mathText = function(text) {
+ export function mathText(text) {
   return jQuery('<span>' + Toy.mathMarkup(text) + '</span>').text();
 };
 
@@ -193,7 +193,7 @@ Toy.mathText = function(text) {
  * HTML.  Hugo's Goldmark processor emits a data-lang attribute and a
  * language-xxx class if a language is given.)
  */
-Toy.mathifyAll = function() {
+ export function mathifyAll() {
   jQuery('code').replaceWith(function() {
     const content = $(this).text();
     const lang = this.dataset.lang;
@@ -223,7 +223,7 @@ Toy.mathifyAll = function() {
 // Note a visit by the user, fetching a nonexistent page with URI path
 // of current local date and time zone, but avoiding repetitious
 // fetches.  Date is in local time, ISO format.
-Toy.checkVisit = function() {
+ export function checkVisit() {
   // "sv" is Swedish (not Sweden), a locale using ISO format.
   const date = new Date().toLocaleDateString("sv");
   const tz0 = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -245,12 +245,12 @@ Toy.checkVisit = function() {
 
 // This will contain a map of query string parameter names
 // to their values.  Does not handle repeated parameters.
-Toy.queryParams = {};
+export var queryParams = {};
 
 // The "raw" params is similar, using the same parameter splitting,
 // but without decoding parameter values or replacing "+"
 // with space.
-Toy.rawQueryParams = {};
+export var rawQueryParams = {};
 
 ( function () {
   function decode(s) {
@@ -303,7 +303,7 @@ $(function() {
     // priority.
     $('div.proof-editor').each(function() {
       const options = this.dataset;
-      const editor = new Toy.ProofEditor(options);
+      const editor = new ProofEditor(options);
       $(this).append(editor.$node);
       window.proofEditor = editor;
     });
@@ -315,7 +315,7 @@ $(function() {
         if (!stepsInfo) {
           console.error('No steps for proof display', this);
         }
-        const display = new Toy.ProofDisplay();
+        const display = new ProofDisplay();
         window.proofDisplay = display;
         const decoded = Toy.decodeSteps(stepsInfo);
         if (decoded instanceof Error) {
