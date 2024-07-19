@@ -228,7 +228,6 @@ function drawBooleans() {
       });
 
   var cxtA = initCxt('canvasA');
-  window.cxt = cxtA;
   withinCircle(cxtA, function() {
       render(cxtA, greenCircle);
     });

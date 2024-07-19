@@ -448,6 +448,7 @@ Expr.prototype.annotate1 = function() {
         // from shared structure for variables.
         return term.type;
       }
+      // @ts-expect-error There is no constantNames variable!
       const ctype = constantNames.get(c.pname);
       if (ctype) {
         return ctype.clone();

@@ -324,8 +324,8 @@ function mergeStyle(cxt, style) {
   // Translation
   var translate = style.translate;
   if (translate) {
-    translateX = translate[0];
-    translateY = translate[1];
+    const translateX = translate[0];
+    const translateY = translate[1];
     cxt.translate(translateX, translateY);
   }
   
