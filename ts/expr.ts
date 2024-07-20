@@ -39,10 +39,99 @@ Toy.loaded.on('xutil', function() {
     infixCall = Toy.infixCall;
     parse = Toy.parse;
     lambda = Toy.lambda;
-  });
+});
+
+//// Exported type decls
+
+/** The actual instantiable types. */
+export type EType = Atom | Call | Lambda;
+
+//// Exported variables
+
+// Used with Toy.showTypes level 'testing'.  The map keys are type
+// variables and the values are integers starting at 1 to enable a
+// canonical presentation for testing.
+
+export const _typeNums = new Map();
+
+export let alphaAndOr = true;
+
+// Translations of names, applied during conversion to Unicode.
+// (When generating HTML and/or Unicode text.)
+export let unicodeNames = {
+  '==': '\u2261',     // Triple equal (equiv)
+  // or '==': '\u21d4',     // Two-headed horizontal double arrow.
+  '&': '\u2227',      // &and;
+  '|': '\u2228',      // &or;
+  'not': '\u00ac',    // &not;
+  '=>': '\u21d2',     // &rArr; ("implies") (\u27f9 is longer)
+  '=>>': '\u21db',    // rightwards triple arrow
+  '!=': '\u2260',     // &ne;
+  '<=': '\u2264',     // &le;
+  '>=': '\u2265',     // &ge;
+  'in': '\u2208',     // &in;
+  'notin': '\u2209',  // &notin;
+  '**': '**',         // Dont change to sdots.
+  '*': '\u22c5',      // &sdot;
+  '-': '\u2212',      // &minus;
+  '</': '</',         // Treat this as HTML.
+  '/': '\u2215',      // division slash
+  neg: '-',           // (different than "minus")
+  empty: '\u2205',    // Null set
+  iota: '\u2129',     // Inverted iota
+  none: '\u22a5',     // Bottom / "up tack"
+  CC: '\u2102',       // Complex numbers
+  R: '\u211d',        // Real numbers
+  NN: '\u2115',       // Natural numbers
+  QQ: '\u211a',       // Rational numbers
+  ZZ: '\u2124',       // Integers
+  forall: '\u2200',
+  exists: '\u2203',
+  exists1: '\u2203!'
+};
+
+/**
+ * For each substitution map that has expansions of terms into
+ * lambdas, a count of the number of expansions applied to
+ * each such term.  Maybe a good idea, but currently unused.
+ */
+export let betaExpansions = new WeakMap();
+
+/**
+ * Set of all names of constants that are used in any statement
+ * considered true in the theory.  Numeric literals other than 0 and 1
+ * are not considered names, but as abbreviations for expressions
+ * containing 0 and 1.
+ */
+export const namedConstants = new Set();
+
+export let showTypes;
 
 
-//// Assertions
+//// Internal variables
+
+// Controls generation of Unicode vs. ASCII strings, internal
+// to Expr.toString and Expr.toUnicode.
+var useUnicode = false;
+
+// Defines aliases that affect both printing and parsing.
+var aliases = {
+  // Note that limiting '==' to boolean inputs would make it more than
+  // just an alias as currently defined.
+  '==': '=',
+};
+
+
+// TODO: Probably remove this and nearestChain.
+var chainMap = new Map();
+{
+  const ops=[['+', '-'], ['*', '/'], ['&'], ['|']];
+  ops.forEach(a => a.forEach(op => chainMap.set(op, a)));
+}
+
+var _searchTermsOps = Toy.ownProperties({'+': true, '-': true, '=': true});
+
+//// Utility functions
 
 /**
  * Asserts that the expression is an equation (must have
@@ -55,6 +144,241 @@ export function assertEqn(expr) {
          && expr.fn.fn.name == '=',
          'Must be an equation: {1}', expr);
 }
+
+/**
+ * Is the given string a legal variable name?  Only names with a
+ * single lower-case letter and then a sequences of digits and/or
+ * underscores, or beginning with an underscore are variables, the
+ * rest are considered constants whether defined or not.
+ *
+ * Use the Expr.isVariable method where possible, as it may be
+ * implemented for higher performance.
+ */
+export function isVariableName(name) {
+  assert(typeof name == 'string', 
+         'isVariable - name must be a string: {1}', name);
+  return !specialConsts.has(name) && name.match(variableRegex);
+}
+
+/**
+ * Any (legal) name that is not a variable is considered a constant, which
+ * can be a named constant or literal constant.
+ */
+export function isConstantName(name) {
+  return !isVariableName(name);
+}
+
+/**
+ * Adds the given iterable (e.g. Set or Array) of names to the set of
+ * all named constants.
+ */
+export function addConstants(names) {
+  names.forEach(function(name) {
+      namedConstants.add(name);
+    });
+}
+
+/**
+ * Returns a truthy value iff the argument is a proof step.
+ */
+export function isProved(x) {
+  return x instanceof Expr && x.isProved();
+}
+
+/**
+ * Returns an equation with term as LHS and RHS having all "head" lambdas
+ * of the LHS beta reduced, just traversing "fn"s.
+ *
+ * TODO: Consider removing this as unused.  It is also an ugly piece
+ *   of code.
+ */
+export function multiReducer(term) {
+  const rules = Toy.rules;
+  let eqn = rules.eqSelf(term);
+  if (!(term instanceof Call)) {
+    return eqn;
+  }
+  // The path will be built as a reverse path, but all /fn so
+  // it will be the same as its reverse.
+  let path = Path.empty;
+  let x = term;
+  for (; x.fn instanceof Call; x = x.fn) {
+    path = new Path('fn', path);
+  }
+  while (x.fn instanceof Lambda) {
+    eqn = rules.reduce(eqn, new Path('right', path));
+    if (path.isEnd()) {
+      break;
+    }
+    path = path.rest;
+    x = eqn.getRight().get(path);
+  }
+  return eqn;
+}
+
+/**
+ * This attempts to confirm that the schema, a call to a function
+ * variable, with one or more arguments, constitutes a higher-order
+ * match with "expr", combined with an established substitution into
+ * the schema defined by the map for the given function variable "fn".
+ * If it does, returns a proved equation from the schema to a term
+ * that "matches" expr in this binding context, otherwise null.
+ * Internal to _matchAsSchema.
+ *
+ * As currently implemented, this does not actually beta reduce
+ * "expr".
+ */
+export function checkFnMatch(schema, fn, expr, map, bindings) {
+  const name = fn.name;
+  const lambdas = map[name];
+
+  // The path will be built as a reverse path, but all /fn so
+  // it will be the same as its reverse.
+  let path = Path.empty;
+  for (let term = schema;
+       term instanceof Call && term.fn instanceof Call;
+       term = term.fn) {
+    path = new Path('fn', path);
+  }
+  const reducer =
+        () => Toy.rules.consider(schema).andThen('instVar', lambdas, name);
+  let reduced = Toy.catching(reducer);
+  if (reduced instanceof Error) {
+    console.error(reduced);
+    return null;
+  }
+  while (path !== Path.empty) {
+    const reducible = reduced.getRight();
+    if (reducible.matches(expr, bindings)) {
+      return reduced;
+    }
+    if (reducible.isLambdaCall()) {
+      reduced = Toy.rules.reduce(reduced, '/right');
+    } else {
+      return null;
+    }
+    path = path.rest;
+  }
+}
+
+/**
+ * Given a schema that is a function call whose function is a
+ * variable, this attempts to build a lambda term or nested lambda
+ * terms to substitute for the variable, resulting in the given expr
+ * after also beta reducing the calls to those lambda(s).  Returns
+ * true and extends the map on success, as for _matchAsSchema.  On
+ * success, this works in the context of the given bound variable
+ * renamings from the schema to the matched term.  Internal to
+ * _matchAsSchema.
+ */
+export function addFnMatch(schema, fn, expr, map, renamings) {
+  // Key point: Suppose all variables bound in the context of the
+  // schema, whose counterparts of the same name occur free in expr,
+  // appear as actual arguments to the function, we can find a
+  // substitution.
+  var args = schema.args();
+  // These are free in expr, but may be bound in expr's context.
+  var exprVars = expr.freeVarSet();
+  // If any variable occurring (free) in expr is bound in expr's
+  // context and thus needs to have a bound variable here
+  // substituted for it, but that bound variable is not in the args,
+  // the substitution fails.
+  var findBindingValue = Toy.findBindingValue;
+  for (var name of exprVars) {
+    var b = findBindingValue(name, renamings);
+    if (b) {
+      var argName = b.from;
+      if (!args.find(arg => arg.isVariable() && arg.name == argName)) {
+        return false;
+      }
+    }
+  }
+
+  // Now we know the function call arguments are suitable.  Construct
+  // a lambda to substitute for the function variable.
+  var result = expr;
+  var arg;
+  // This will be the number of beta reductions to apply after the
+  // substitution.
+  var expansions = 0;
+  const vList = Array.from(exprVars);
+  while (args.length) {
+    // This is the next actual argument to the function variable.
+    var arg = args.pop();
+    if (arg.isVariable()) {
+      // This is non-null iff bound here.  Iff bound here, it
+      // corresponds to a variable bound in expr.
+      const exprName = getBinding(arg.name, renamings);
+      // If it is a fresh variable, it will be substituted nowhere.
+      var toBind = (exprName
+                    ? new Atom(exprName)
+                    : vList.length > 0
+                    ? new Atom(vList.pop())
+                    : expr.freshVar(arg.name));
+      result = new Lambda(toBind, result);
+      expansions++;
+    } else {
+      return false;
+    }
+  }
+  var existing = map[fn.name];
+  // Fail if there is an existing substitution and the computed
+  // result does not match it.
+  if (existing && !existing.matches(result)) {
+    return false;
+  }
+
+  if (expansions > 0) {
+    const bx = Toy.betaExpansions;
+    var xpanded = bx.get(map);
+    if (!xpanded) {
+      xpanded = {};
+      bx.set(map, xpanded);
+    }
+    xpanded[fn.name] = expansions;
+  }
+  // Substitute the lambda term for the function variable.
+  map[fn.name] = result;
+  // Report success without traversing this further.
+  return true;
+}
+
+
+/**
+ * Makes a new TermSet of all the conjuncts obtained by
+ * applying scanConjuncts to the given term, as for example
+ * making the assumptions of a step into a TermSet.
+ */
+export function makeConjunctionSet(term) {
+  var set = new TermSet();
+  term.scanConjuncts(function (t) { set.add(t); });
+  return set;
+}
+
+/**
+ * Given the wff of a rewrite rule, this returns true iff
+ * the rule is conditional and every free variable of the RHS
+ * also appears free in the LHS of the equation.  (If there
+ * is no equation, this takes it as LHS == T.
+ */
+export function neverWhenBound(rule) {
+  // Consider the locally free variables in the term to be matched,
+  // and a substitution that generates that term from some rewrite
+  // rule.  Each of those free variables was either free in the
+  // rewrite rule (and not replaced), or it was free in a replacement
+  // term of the substitution.  Thus if every free variable of the
+  // rule LHS also appears in its assumptions, then every free
+  // variable of the result of the substitution into the LHS also
+  // appears in the result of the substitution into the assumptions,
+  // and the rule cannot apply if any of them are bound in that
+  // context.
+  // 
+  return (rule.implies() &&
+          (!rule.getRight().isCall2('=') ||
+           Toy.setDiff(rule.getRight().freeVars(),
+                       rule.getLeft().freeVars()).size === 0));
+};
+
 
 //// TermSet and TermMap
 
@@ -87,7 +411,7 @@ export function TermSet(term?: Expr) {
   if (term) {
     this.add(term);
   }
-}  
+}
 Toy.extends_(TermSet, ToySet);
 
 export declare class TermMap extends ToyMap {
@@ -187,19 +511,255 @@ TermMap.prototype.set = function(term, name) {
   throw new Error('Unsupported: TermMap.set');
 };
 
-
 //// Expr -- the base class
-
-/** The actual instantiable types. */
-export type EType = Atom | Call | Lambda;
 
 // Note: Transformations on expressions that leave a given
 // subexpression the same return the identical subexpression object
 // they were given.  This means that all operations that transform
 // expressions must avoid copying except when necessary.
 
+/** Expr -- some method docs
+//
+//
+// Methods defined on expressions, but defined only in the subclasses:
+//
+// dump()
+//
+// Converts expression to a string like toString, but without special
+// handling of functions of more than one argument or infix operators.
+// A simple text format not dependent on styling options, usable for
+// keys in maps with Expr values.
+//
+// OOPS, this does not dump any type information, so it may conflate
+// terms that are not really the same.  It is not relied on by
+// deduction, so the flaw is non-fatal.
+//
+// Internal calls accept a Bindings object as an argument.
+// 
+//
+// subst(Expr replacement, String name)
+// 
+// Substitutes copies of the replacement expression for all (free)
+// occurrences of the given name in this expression.  For use in
+// logic, this expression must not bind any variables that occur free
+// in the replacement.
+//
+//
+// _subFree(Object map, Object newFreeVars)
+//
+// The map argument is an object mapping variable names to replacement
+// expressions.  Substitutes the corresponding replacement expression
+// for each free occurrence of each name in this Expr.  Also copies
+// type information to all newly-created terms as needed for the
+// operation of Axiom 4.
+//
+// newFreeVars must be given as an object / set of all names free in any
+// of the replacement expressions.
+//
+// To ensure no names are captured, renames all bound variables in
+// this that have the same name as any free variable in the
+// replacement terms.
+//
+// Note that Rule R can introduce previously free variables into a
+// scope where they become bound.
+//
+//
+// hasFreeName(name)
+// 
+// True iff the given variable or constant name (string) appears free
+// in this expression.  Does not match against pnames.
+//
+//
+// asArray()
+//
+// Converts an expression to an array with the function first,
+// followed by arguments.  If it is just a variable, returns
+// an array containing just that.
+//
+//
+// _addNames(map result)
+//
+// Adds all names occurring in this expression to the object/map, with
+// value of true for each, both free and bound names.
+//
+//
+// _addFreeVars(Set result, Bindings bindings)
+// 
+// Adds all variable names that occur free in this Expr to the result
+// Set.  Assumes that names in the Bindings object are bound in this
+// expression's lexical context.  Private helper for the freeVars
+// method.
+//
+//
+// _addNewConstants(map result, Bindings bindings)
+// 
+// Adds to the object/set all constant names that occur free in this
+// Expr and are "new" in the sense of isNewConstant.  Assumes that
+// names in the Bindings object are bound in this expression's lexical
+// context, even if they have the form of named constants (so constant
+// names could be used for bound variables if desired).  Private
+// helper for the newConstants method.
+//
+//
+// _boundNames(path, bindings)
+//
+// Returns a Bindings object (or null if no bindings) representing the
+// set of bindings in effect at the given path within this Expr, plus
+// the given bindings.  Binds name to variable Atom.
+//
+//
+// _addMathVars(bindings, set)
+//
+// Helper for Expr.mathVars.  Traverses this expression, adding to the
+// set names of all free variables that are arguments to math
+// operators -- or an argument to "=" or "!=" that have an expression
+// with a math operator as the other argument.
+// 
+//
+// replaceAt(path, xformer)
+//
+// Returns a copy of this expression.  If some part matches the path,
+// that part is replaced by the result of calling the xformer function
+// on it.
+//
+//
+// sameAs(expr)
+//
+// True iff all parts of this expression are identical to the
+// corresponding parts of the argument.  If present anywhere, types
+// must also match.  Type variable names may differ (only renamings).
+//
+//
+// matches(e2, bindings)
+//
+// Tests whether all components of this expression and e2 are the same
+// except for names of bound variables.  Names of constants and free
+// variables must match in each component.  Names of bound variables
+// may differ if the bindings map the name in this to the name in e2.
+// The bindings map from names of variables bound in expressions
+// containing this expression to corresponding variable names of the
+// expression containing e2.  Currently does not match types.
+//
+//
+// _traverse(fn, rpath)
+//
+// Applies the function to this expression, then recursively to any
+// subexpressions.  Does not descend into the variable binding parts
+// of Lambdas.  Used on rendered steps, perhaps also non-rendered.
+//
+// TODO: Consider how to support flexible paths better, with /main.
+//
+//
+// search(test, bindings)
+//
+// Searches for a subexpression of this that passes the given test,
+// given as a boolean function of one argument.  Returns the first
+// subexpression that passes the test, with this expression itself
+// tested first, followed by the rest in top-down, left-to-right
+// order, or null if there is none.  The search includes
+// variable bindings if bindings is truthy.
+//
+//
+// _path(pred, revPath)
+//
+// Searches for a subexpression of this that passes the test and is
+// NOT a variable binding.  Returns the "reverse path" to it from
+// this, with the last path segment first, added to the given revPath.
+// Search order is right to left (arg before fn in calls), but parents
+// before children.
+//
+//
+// _prettyPath(pred, path)
+//
+// Like _path, but for infix expressions produces /left, /right, etc.
+// rather than combinations of /fn and /arg; and returns a forward
+// path.
+//
+//
+// _bindingPath(pred, revPath)
+//
+// Searches for a subexpression of this that passes the test and is
+// the bound variable of a Lambda.  Returns the "reverse path" from
+// this to the Lambda, with the last path segment first, followed by
+// the given revPath.
+// 
+//
+// _checkSegment(path)
+//
+// Throws an error if the next segment of the path is not appropriate
+// to this type of Expr.
+//
+//
+// generalizeTF(expr2, newVar, bindings)
+//
+// Searches through this and expr2 for subexpressions in this that are
+// the constant T, and F at the same place in expr2.  Returns an
+// expression similar to this, but with newVar in those locations.
+// Throws an error unless this and expr2 have the same syntax tree
+// structure and variable names match everywhere except the T/F cases.
+// The newVar should not appear anywhere in this or expr2, to ensure
+// that the result will have this and expr2 as substitution instances.
+//
+// The optional bindings (used in recursive calls) map from names of
+// bound variables in expressions containing this, to names of
+// corresponding bound variables in expressions containing expr2.
+//
+// 
+// findAll(name, action1, expr2, action2)
+//
+// Apply the action function to every subexpression in this that is a
+// free variable with the given name, and action2 to the
+// subexpressions of expr2 at those same locations.  This method also
+// attempts to do the same traversal of expr2, and calls action2
+// where expr2 has a part corresponding to the part in expr1.
+//
+//
+// _matchAsSchema(expr, substitution, bindings)
+//
+// Checks that this expression matches the argument expression under
+// the given substitution (map from names in this to expressions in
+// expr).  The bindings indicate the variable bindings in effect for
+// this and the argument expression, mapping from variable name in
+// this to variable name in expr.
+//
+// Returns true iff it does and extends the substitution to a
+// new variable if needed to make this and the argument match.  If
+// this contains lambda expressions, it is smart about match failure
+// due to capturing of free variables in the expr, and smart about
+// using calls to function variables in this to enable substitution in
+// spite of capturing.  Matching here is as defined for the "matches"
+// method.
+//
+// Where needed and possible, this matches (boolean) terms with lambda
+// terms and attaches a %expansion property to the substitution, with
+// the names of each such predicate variable mapped to a count of the
+// number of beta reductions needed to match normally after
+// substitution.
+//
+//
+// _asPattern()
+//
+// Descend into this expression returning a term of similar structure
+// but with terms having __var property replaced with the value of
+// that property.  Helper for code (currently mergedHypotheses) that
+// tags subexpressions with __var property as part of creating a
+// pattern from them.
+//
+//
+// searchMost(fn, opt_path, opt_bindings)
+//
+// Tree walks though this Expr and its subexpressions, recursively,
+// calling the function to each one, passing it the term and a reverse
+// path from this term to that point until the function returns a
+// truthy value.  Descends first into the arg part to make the search
+// proceed right to left.  All subexpressions of Lambda terms receive
+// non-null bindings, mapping the name of the bound variable to the
+// lambda in which it is bound, innermost first.  Returns the first
+// truthy value returned from "fn" at any level.  If not given, this
+// treats the path and bindings as empty.
+*/
 
-// MASSIVE TODO: Bring in all of the doc strings / JSDoc comments.
+
 export interface Expr {
   fromStep: Expr;
 
@@ -375,268 +935,6 @@ export class Expr {
 }
 
 /**
- * Sets the type of this term, returning this. Only valid if no type
- * has been previously set.  Use with caution (in type inference
- * code).
- */
-Expr.prototype._withType = function(type) {
-  assert(!this.type, 'Type of {1} is already set', this);
-  this.__type = type;
-  return this;
-};
-  
-/**
- * Sets the type of this from another term, returning this. Only valid
- * if no type has been previously set.  Use with caution (in type
- * inference code).
- */
-Expr.prototype._typeFrom = function(expr) {
-  assert(!this.type, 'Type of {1} is already set', this);
-  this.__type = expr.type;
-  return this;
-};
-
-
-
-export interface Atom {
-  //constructor(name: any, position?: any);
-  // _pname: any;
-  // __name: any;
-  // pos: any;
-  // _value: any;
-  // set name(nm: any);
-  // get name(): any;
-  // set pname(pnm: any);
-  // get pname(): any;
-  _toString(): any;
-  unicodeName(): any;
-  toHtml(): any;
-  dump(): any;
-  _subFree(map: any, freeVars: any, allNames: any): any;
-  hasFreeName(name: any): boolean;
-  asArray(): Atom[];
-  _addNames(map: any): void;
-  _addFreeVars(set: any, bindings: any): void;
-  _addFreeVarSet: (set: any, bindings: any) => void;
-  _addNewConstants(set: any, bindings: any): void;
-  _boundNames(path: any, bindings: any): any;
-  replaceAt(path: any, xformer: any): any;
-  matches(expr: any, bindings: any): boolean;
-  _traverse(fn: any, rpath: any): void;
-  search(pred: any, bindings?: any): Atom;
-  generalizeTF(expr2: any, newVar: any, bindings: any): any;
-  _path(pred: any, revPath: any): any;
-  _prettyPath(pred: any, pth: any): any;
-  _bindingPath(pred: any, revPath: any): any;
-  _checkSegment(path: any): void;
-  findAll(name: any, action1: any, expr2: any, action2: any): void;
-  _matchAsSchema(expr: any, map: any, bindings: any): any;
-  _matchAsPattern(term: any, map: any): any;
-  _asPattern(term: any): any;
-  searchMost(fn: any, path: any, bindings: any): any;
-  parseName(): {
-      name: any;
-      sub: any;
-      type: any;
-  };
-  _nthArg(n: any);
-}
-
-/**
- * Make an Atom with the given name.  If a non-null integer position
- * is given, use it to record the index in the input stream.  If the
- * given name is in the "aliases" map, the given name becomes the
- * Atom's pname, and the Atom's name becomes the value of the alias.
- * Pnames affect only parsing and display, not the logic itself.
- *
- * An Atom object can represent a variable (free or bound) or a
- * constant, either literal or named (see isConstantName).
- *
- * CAUTION: This constructor is for internal use by code in this file
- * and implementations of methods on Expr, Atom, Call, and Lambda
- * classes only.  Use factory functions such as varify or constify as
- * the public APIs.
- *
- * TODO: Further reduce use of this too-primitive constructor.
- *
- * TODO: Make a separate type for tokens.
- */
-export class Atom extends Expr {
-  pos;
-  __pname;
-  __name;
-  _value;
-
-  constructor(name, position=null) {
-    super();
-    this.__pname = this.__name = name;
-    if (isConstantName(name))
-      this.pos = position;
-    if (aliases.hasOwnProperty(name)) {
-      this.__name = aliases[name];
-    }
-    // If the name represents an integer, sets the _value property to
-    // that integer, or if it represents a string, sets the _value
-    // property to the string.
-    //
-    // Variables have _value of "undefined" and named constants have
-    // _value of null.
-    this._value = isVariableName(name)
-      ? undefined
-      : isIntegerLiteral(name)
-      ? parseInt(name)
-      : name.charAt(0) === '"'
-      ? Toy.parseStringContent(name)
-      // Named constants:
-      : null;
-  }
-  get name() {
-    return this.__name;
-  }
-  set name(nm) {
-    abort('Readonly: name');
-  }
-  get pname() {
-    return this.__pname;
-  }
-  set pname(pnm) {
-    abort('Readonly: pname');
-  }
-}
-
-export interface Call extends Expr {
-  //constructor(fn: any, arg: any);
-  _fn: any;
-  _arg: any;
-  // set fn(v: any);
-  // get fn(): any;
-  // set arg(v: any);
-  // get arg(): any;
-  _toString(): any;
-  pathIntoChain(n: any, ops_arg: any): Path;
-  dump(): string;
-  _subFree(map: any, freeVars: any, allNames: any): Call;
-  hasFreeName(name: any): any;
-  asArray(): any;
-  _addNames(map: any): void;
-  _addFreeVars(set: any, bindings: any): void;
-  _addFreeVarSet(set: any, bindings: any): void;
-  _addNewConstants(set: any, bindings: any): void;
-  _boundNames(path: any, bindings: any): any;
-  replaceAt(path: any, xformer: any): any;
-  matches(expr: any, bindings?: any): any;
-  _traverse(fn: any, rpath: any): void;
-  search(pred: any, bindings?: any): any;
-  generalizeTF(expr2: any, newVar: any, bindings: any): Call;
-  _path(pred: any, revPath: any): any;
-  _prettyPath(pred: any, pth: any): any;
-  _bindingPath(pred: any, revPath: any): any;
-  _checkSegment(path: any): void;
-  findAll(name: any, action1: any, expr2: any, action2: any): void;
-  _matchAsSchema(expr: any, map: any, bindings: any): boolean;
-  _matchAsPattern(term: any, map: any): any;
-  _asPattern(term: any): any;
-  searchMost(fn: any, path: any, bindings: any): any;
-  _nthArg(n: any): any;
-}
-
-/**
- * Constructor for Call expressions.
- */
-export class Call extends Expr {
-  _fn;
-  _arg;
-
-  constructor(fn, arg) {
-    super();
-    this._fn = fn;
-    this._arg = arg;
-  }
-  get fn() {
-    return this._fn;
-  }
-  set fn(v) {
-    abort('Readonly: fn');
-  }
-  get arg() {
-    return this._arg;
-  }
-  set arg(v) {
-    abort('Readonly: arg');
-  }
-}
-
-export interface Lambda extends Expr {
-  // constructor(bound: any, body: any);
-  // __bound: any;
-  // __body: any;
-  // set bound(v: any);
-  // get bound(): any;
-  // set body(term: any);
-  // get body(): any;
-  _toString(): any;
-  dump(): string;
-  _subFree(map: any, freeVars: any, allNames: any): any;
-  hasFreeName(name: any): any;
-  asArray(): Lambda[];
-  _addNames(map: any): void;
-  _addFreeVars(set: any, bindings: any): void;
-  _addFreeVarSet(set: any, bindings: any): void;
-  _addNewConstants(set: any, bindings: any): void;
-  _boundNames(path: any, bindings: any): any;
-  replaceAt(path: any, xformer: any): any;
-  matches(expr: any, bindings: any): any;
-  _traverse(fn: any, rpath: any): void;
-  search(pred: any, bindings?: any): any;
-  generalizeTF(expr2: any, newVar: any, bindings: any): Lambda;
-  _path(pred: any, revPath: any): any;
-  _prettyPath(pred: any, pth: any): any;
-  _bindingPath(pred: any, revPath: any): any;
-  _checkSegment(path: any): void;
-  findAll(name: any, action1: any, expr2: any, action2: any): void;
-  _matchAsSchema(expr: any, map: any, bindings: any): any;
-  _matchAsPattern(term: any, map: any): any;
-  _asPattern(term: any): any;
-  searchMost(fn: any, path: any, bindings: any): any;
-  _nthArg(n: any): void;
-}
-
-/**
- * Make a variable binding from a Atom and an Expr.  Any occurrences
- * of the same variable in the body should already be represented
- * by the same Atom.
- */
-export class Lambda extends Expr {
-  __bound;
-  __body;
-
-  constructor(bound, body) {
-    super();
-    this.__bound = bound;
-    this.__body = body;
-  }
-  get bound() {
-    return this.__bound;
-  }
-  set bound(v) {
-    abort('Readonly: bound');
-  }
-  get body() {
-    return this.__body;
-  }
-  set body(term) {
-    abort('Readonly: body');
-  }
-}
-
-
-//// Methods for Expr-related objects
-
-// Controls generation of Unicode vs. ASCII strings, internal
-// to Expr.toString and Expr.toUnicode.
-var useUnicode = false;
-
-/**
  * Converts to a string.  If "simply", even operators
  * are presented without parentheses.
  */
@@ -651,13 +949,6 @@ Expr.prototype.toString = function(simply?) {
   const isInfix = Toy.isInfixDesired(this);
   return isInfix ? '(' + str + ')' : str;
 };
-
-// Used with Toy.showTypes level 'testing'.  The map keys are type
-// variables and the values are integers starting at 1 to enable a
-// canonical presentation for testing.
-export const _typeNums = new Map();
-
-export let showTypes;
 
 /**
  * Returns a string presenting this Expr or Step, including
@@ -683,7 +974,7 @@ Expr.prototype.show = function(level) {
  *
  * This is a bit of a misnomer right now.
  */
-Expr.prototype.toUnicode = function(simply) {
+Expr.prototype.toUnicode = function(simply?) {
   const saved = useUnicode;
   useUnicode = true;
   try {
@@ -706,6 +997,159 @@ Expr.prototype.toHtml = function(trimmed) {
   const html = this.toUnicode();
   const result = (trimmed && html[0] === '(') ? html.slice(1, -1) : html;
   return result;
+};
+
+/**
+ * Returns true iff this expression is a call to a function with the
+ * given name, with one argument.  Or if name is not given, a call to
+ * any named function.
+ */
+Expr.prototype.isCall1 = function(name?) {
+  if (this instanceof Call) {
+    return (this.fn instanceof Atom &&
+            (name == null || this.fn.name == name));
+  } else {
+    return false;
+  }
+};
+
+/**
+ * Returns true iff this expression is a call to a function
+ * with the given name, with two arguments.  Or if name is not given,
+ * a call to any named function.
+ */
+Expr.prototype.isCall2 = function(name?) {
+  if (this instanceof Call) {
+    var left = this.fn;
+    return left instanceof Call
+      && left.fn instanceof Atom
+      && (name == null || left.fn.name == name || left.fn.pname == name);
+  } else {
+    return false;
+  }
+};
+
+/**
+ * Tests whether this Expr is conditional.
+ */
+Expr.prototype.implies = function() {
+  return this.isCall2('=>');
+};
+
+/**
+ * True iff this is a call to a lambda expression.
+ */
+Expr.prototype.isLambdaCall = function() {
+  return this instanceof Call && this.fn instanceof Lambda;
+};
+
+/**
+ * Returns the nth "element" of this expression.  Recurs top down
+ * through function parts of calls until finding an Atom, which is
+ * considered element 0.  The arg part of that call is element 1,
+ * and the arg goes up by 1 for each level.  The effect is that a
+ * call written as (f a b c) gives the Atom "f" as element 0, "a"
+ * as element 1, "b" as element 2, and "c" as element 3.
+ */
+Expr.prototype.nthArg = function(n) {
+  var result = this._nthArg(n);
+  assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
+  return result;
+};
+
+/**
+ * Returns the LHS (left-hand side) of a function of two arguments.
+ */
+Expr.prototype.getLeft = function() {
+  return this.fn.arg;
+};
+
+/**
+ * Returns the RHS (right-hand side) of a function of two arguments.
+ */
+Expr.prototype.getRight = function() {
+  return this.arg;
+};
+
+/**
+ * Returns whether this is a Call with a function part that is also a
+ * Call.
+ */
+Expr.prototype.isBinOp = function() {
+  return this instanceof Call && this.fn instanceof Call;
+};
+
+/**
+ * Returns the function in a call that has two arguments.
+ */
+Expr.prototype.getBinOp = function() {
+  return this.fn.fn;
+};
+
+/**
+ * Gets the "main part" of a statement.  If the statement
+ * is a conditional gets its conclusion, otherwise the statement
+ * itself.
+ *
+ * TODO: Make this available for Step objects.
+ */
+Expr.prototype.getMain = function() {
+  return this.isCall2('=>') ? this.getRight() : this;
+};
+
+/**
+ * Returns the assumptions of a conditional, if any, else falsy.
+ */
+Expr.prototype.getAsms = function() {
+  return this.isCall2('=>') && this.getLeft();
+};
+
+Expr.prototype.isTypeTest = function() {
+  return (this.isCall1() &&
+          (this.fn.name === 'R' ||
+           this.fn.name === 'NN' ||
+           this.fn.name === 'ZZ'));
+};
+
+/**
+ * Returns truthy iff this looks like a subgoal.
+ */
+Expr.prototype.likeSubgoal = function() {
+  return (!this.isTypeTest() &&
+          !this.matchSchema('not (x = y)') &&
+          !this.matchSchema('x != y'));
+};
+
+/**
+ * Tests whether the given goal (wff) has a subgoal within its
+ * assumptions, currently defined as anything other than a real number
+ * assumption or an inequality condition.
+ */
+Expr.prototype.hasSubgoal = function() {
+  const asms = this.getAsms();
+  return asms && asms.scanConj(x => x.likeSubgoal());
+};
+
+/**
+ * Sets the type of this term, returning this. Only valid if no type
+ * has been previously set.  Use with caution (in type inference
+ * code).
+ */
+Expr.prototype._withType = function(type) {
+  assert(!this.type, 'Type of {1} is already set', this);
+  this.__type = type;
+  return this;
+};
+  
+/**
+ * Sets the type of this from another term, returning this. Only valid
+ * if no type has been previously set.  Use with caution (in type
+ * inference code).
+ */
+Expr.prototype._typeFrom = function(expr) {
+  assert(!this.type, 'Type of {1} is already set', this);
+  this.__type = expr.type;
+  return this;
 };
 
 /**
@@ -826,106 +1270,6 @@ Expr.prototype.occurrences = function(names) {
 };
 
 /**
- * Returns a Map object with the names of all free variables as keys,
- * and the value of each key being an Atom where that name occurs
- * free.  Order is "left to right", actually each function in a Call
- * before its arg, and the occurrence is the first in the order.
- */
-Expr.prototype.freeVarsMap = function() {
-  const byName = new Map();
-  const boundNames = [];
-  const traverse = term => {
-    const ct = term.constructor;
-    if (ct === Atom) {
-      if (term.isVariable() && !boundNames.includes(term.name)) {
-        byName.set(term.name, term);
-      }
-    } else if (ct === Call) {
-      traverse(term.arg);
-      traverse(term.fn);
-    } else {
-      const nm = term.bound.name;
-      boundNames.push(nm);
-      traverse(term.body);
-      boundNames.pop();
-    }
-  }
-  traverse(this);
-  return byName;
-};
-
-
-//// Atoms -- functions
-
-// Categorization of Atoms:
-//
-// Identifiers
-//   Variables (start with a single lowercase ASCII letter)
-//   Consts (such as sin, cos, forall, exists)
-// Literals (numeric, string, etc)
-// OpSyntax (+, -, etc)
-
-// All "opSyntax" Vars are operators, plus some designated
-// identifers, currently "forall" and "exists".
-
-// Pattern that matches identifiers, used in the tokenizer and
-// identifierRegex.  The tokenizer recognizes exactly things matching
-// this as being identifiers.  The system can create identifers not
-// matching this expression, but parses only these.  This in itself is
-// not a regex.
-export const identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
-
-// Names matching this regex are identifiers.
-// The trailing "$" ensures that the entire name is matched
-// up to any extensions for unique ID and/or type information.
-// Note that not all identifiers can be entered through the parser,
-// in particular ones with "." (generated bound names) or ":"
-// (for type information).
-var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
-
-// Variables in particular, not including identifiers for constants.
-// The "." and ":" provide for extension with bound variable unique
-// identifiers and type signatures.
-//
-// TODO: Make variable naming and subscripting consistent and
-// rational!  Currently variable names of a single alphabetic
-// character.
-var variableRegex = /^[a-zA-Z$][0-9_]*([.:]|$)|^_/;
-
-// Numeric literals.
-var numeralRegex = /^-?[0-9]+$/;
-
-// Constant names having the same form as a usual variable name.
-// TODO: Consider handling of other constants such as C, Q, Z, N,
-//   pi, and the imaginary unit.  Perhaps in context, R and
-//   potentially "i" can be treated as parse-level abbreviations
-//   for constants such as RR and ii with normal constant names.
-const specialConsts = new Set(['T', 'F', 'R', 'e']);
-
-/**
- * Is the given string a legal variable name?  Only names with a
- * single lower-case letter and then a sequences of digits and/or
- * underscores, or beginning with an underscore are variables, the
- * rest are considered constants whether defined or not.
- *
- * Use the Expr.isVariable method where possible, as it may be
- * implemented for higher performance.
- */
-export function isVariableName(name) {
-  assert(typeof name == 'string', 
-         'isVariable - name must be a string: {1}', name);
-  return !specialConsts.has(name) && name.match(variableRegex);
-}
-
-/**
- * Any (legal) name that is not a variable is considered a constant, which
- * can be a named constant or literal constant.
- */
-export function isConstantName(name) {
-  return !isVariableName(name);
-}
-
-/**
  * True iff this is an Atom named as a variable.
  */
 Expr.prototype.isVariable = function() {
@@ -1002,34 +1346,6 @@ Expr.prototype.isLiteral = function() {
 }
 
 /**
- * True iff the given string is an identifier (named variable or
- * constant).
- */
-export function isIdentifier(str) {
-  return !!str.match(identifierRegex);
-}
-
-export function isIntegerLiteral(name) {
-  return name.match(numeralRegex);
-}
-
-/**
- * Returns a truthy value iff the given term is a numeral, or it is
- * the quotient of two numerals.
- */
-export function isFraction(expr) {
-  return (expr.isNumeral() ||
-          (expr.isCall2('/') &&
-           expr.getLeft().isNumeral() &&
-           expr.getRight().isNumeral()));
-}
-
-/**
- * Double struck C N Q P R Z.
- */
-var moreLettersRegex = /^[\u2102\u2115\u2119\u211a\u211d\u2124]$/;
-
-/**
  * True iff this is a Atom that displays as an identifier.  This is
  * based on Unicode display, which may be a non-identifier in cases such
  * as "forall" and "exists", even when the internal name is an identifier.
@@ -1103,9 +1419,6 @@ Expr.prototype.isBoolConst = function() {
 Expr.prototype.isTypeCond = function() {
   return this.isCall1('R') && this.arg.isVariable();
 };
-
-
-// Other Expr methods.
 
 /**
  * Does this Expr have any variable(s)?
@@ -1436,7 +1749,6 @@ Expr.prototype.pathToFocalPart = function() {
                     : '/main');
 };
 
-
 /**
  * Returns truthy iff the path is to the assumptions (left)
  * side of a conditional.
@@ -1481,48 +1793,6 @@ Expr.prototype.isAsmPath = function(path_arg) {
   return isChainEnd(this.getLeft(), pp.rest);
 };
 
-var _assertionCounter = 1;
-
-
-////
-//// Methods that properly belong to Exprs that are proof steps
-////
-
-/**
- * TODO: Maybe make Step into a whole new class.  For now, it is just an
- * alias.  There will be some convenience methods such as getMain and
- * asmPart, but access to Expr properties and most methods will be
- * through the "wff" property.
- *
- * Step objects have a "wff" property, but an Expr will not.
- */
-
-export interface Step extends Expr {
-  getBase(): Expr;
-  asmPart(): any;
-  asmMap(): Map<any, any>;
-}
-
-// The value of Step is the value of Expr.
-export const Step = Expr;
-
-/**
- * Computes the "base instance" of a proof step.  Each level of
- * justification has its own Expr, all equal, but each with its
- * own justification and details.  This accesses the bottom level
- * step.
- */
-// @ts-ignore
-Step.prototype.getBase = function() {
-  var result = this;
-  while (result.details) {
-    result = result.details;
-  }
-  return result;
-};
-
-//// End of methods for proof steps
-
 /**
  * Finds and returns a plain object/map of free variable names in this
  * expression, from name to true.  In typical implementations
@@ -1554,30 +1824,10 @@ Expr.prototype.freeVarSet = function() {
 };
 
 /**
- * Set of all names of constants that are used in any statement
- * considered true in the theory.  Numeric literals other than 0 and 1
- * are not considered names, but as abbreviations for expressions
- * containing 0 and 1.
- */
-export const namedConstants = new Set();
-
-/**
- * Adds the given iterable (e.g. Set or Array) of names to the set of
- * all named constants.
- */
-export function addConstants(names) {
-  names.forEach(function(name) {
-      namedConstants.add(name);
-    });
-}
-
-type EClass = Atom | Call | Lambda;
-
-/**
  * Finds and returns a Set of names of constants in this expression
  * that are not in namedConstants.
  */
-Expr.prototype.newConstants = function(this: EClass) {
+Expr.prototype.newConstants = function(this: EType) {
   const names = new Set();
   this._addNewConstants(names, null);
   return names;
@@ -1671,244 +1921,99 @@ Expr.prototype.allNames = function() {
   this._addNames(byName);
   return byName;
 };
+/**
+ * If this term is a call, returns the first "fn" descendent that
+ * is not a Call (thus an atom or lambda), otherwise returns null.
+ */
+Expr.prototype.func = function() {
+  var term = this;
+  if (!(term instanceof Call)) {
+    return null;
+  }
+  while (term instanceof Call) {
+    term = term.fn;
+  }
+  return term;
+},
 
 /**
- * Returns whether this is a Call with a function part that is also a
- * Call.
+ * Returns an array of the actual arguments to the function that
+ * would be the result of applying "func" to this Expr.
  */
-Expr.prototype.isBinOp = function() {
-  return this instanceof Call && this.fn instanceof Call;
-};
-
-/**
- * Returns the function in a call that has two arguments.
- */
-Expr.prototype.getBinOp = function() {
-  return this.fn.fn;
-};
-
-/**
- * Returns the LHS (left-hand side) of a function of two arguments.
- */
-Expr.prototype.getLeft = function() {
-  return this.fn.arg;
-};
-
-/**
- * Returns the RHS (right-hand side) of a function of two arguments.
- */
-Expr.prototype.getRight = function() {
-  return this.arg;
-};
-
-/**
- * Gets the "main part" of a statement.  If the statement
- * is a conditional gets its conclusion, otherwise the statement
- * itself.
- *
- * TODO: Make this available for Step objects.
- */
-Expr.prototype.getMain = function() {
-  return this.isCall2('=>') ? this.getRight() : this;
-};
-
-/**
- * Returns the assumptions of a conditional, if any, else falsy.
- */
-Expr.prototype.getAsms = function() {
-  return this.isCall2('=>') && this.getLeft();
-};
-
-Expr.prototype.isTypeTest = function() {
-  return (this.isCall1() &&
-          (this.fn.name === 'R' ||
-           this.fn.name === 'NN' ||
-           this.fn.name === 'ZZ'));
-};
-
-/**
- * Returns truthy iff this looks like a subgoal.
- */
-Expr.prototype.likeSubgoal = function() {
-  return (!this.isTypeTest() &&
-          !this.matchSchema('not (x = y)') &&
-          !this.matchSchema('x != y'));
-};
-
-/**
- * Tests whether the given goal (wff) has a subgoal within its
- * assumptions, currently defined as anything other than a real number
- * assumption or an inequality condition.
- */
-Expr.prototype.hasSubgoal = function() {
-  const asms = this.getAsms();
-  return asms && asms.scanConj(x => x.likeSubgoal());
-};
-
-/**
- * Returns the nth "element" of this expression.  Recurs top down
- * through function parts of calls until finding an Atom, which is
- * considered element 0.  The arg part of that call is element 1,
- * and the arg goes up by 1 for each level.  The effect is that a
- * call written as (f a b c) gives the Atom "f" as element 0, "a"
- * as element 1, "b" as element 2, and "c" as element 3.
- */
-Expr.prototype.nthArg = function(n) {
-  var result = this._nthArg(n);
-  assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
+Expr.prototype.args = function() {
+  var term = this;
+  var result = [];
+  while (term instanceof Call) {
+    result.unshift(term.arg);
+    term = term.fn;
+  }
   return result;
-};
+},
 
 /**
- * Get the assumptions of this step if it has any, else null.
+ * Returns true iff this is a call to a function of two arguments that
+ * is normally rendered and parsed as an infix binary operator.
  */
-// @ts-ignore
-Step.prototype.asmPart = function() {
-  var wff = this.wff;
-  return wff.isCall2('=>') ? wff.getLeft() : null;
-};
+Expr.prototype.isBinOpCall = function() {
+  return this.isCall2() && isInfixDesired(this.getBinOp());
+},
 
 /**
- * Returns true iff this expression is a call to a function with the
- * given name, with one argument.  Or if name is not given, a call to
- * any named function.
+ * Returns an equivalent path that uses "left", "right", and "binop"
+ * to indicate subexpressions of binary operators where possible.
  */
-Expr.prototype.isCall1 = function(name) {
-  if (this instanceof Call) {
-    return (this.fn instanceof Atom &&
-            (name == null || this.fn.name == name));
-  } else {
-    return false;
+Expr.prototype.prettifyPath = function(p) {
+  if (p.isEnd()) {
+    return p;
   }
-};
-
-/**
- * Returns true iff this expression is a call to a function
- * with the given name, with two arguments.  Or if name is not given,
- * a call to any named function.
- */
-Expr.prototype.isCall2 = function(name) {
-  if (this instanceof Call) {
-    var left = this.fn;
-    return left instanceof Call
-      && left.fn instanceof Atom
-      && (name == null || left.fn.name == name || left.fn.pname == name);
-  } else {
-    return false;
-  }
-};
-
-/**
- * Tests whether this Expr is conditional.
- */
-Expr.prototype.implies = function() {
-  return this.isCall2('=>');
-};
-
-/**
- * True iff this is a call to a lambda expression.
- */
-Expr.prototype.isLambdaCall = function() {
-  return this instanceof Call && this.fn instanceof Lambda;
-};
-
-var exprMethods = {
-
-  /**
-   * If this term is a call, returns the first "fn" descendent that
-   * is not a Call (thus an atom or lambda), otherwise returns null.
-   */
-  func: function() {
-    var term = this;
-    if (!(term instanceof Call)) {
-      return null;
-    }
-    while (term instanceof Call) {
-      term = term.fn;
-    }
-    return term;
-  },
-
-  /**
-   * Returns an array of the actual arguments to the function that
-   * would be the result of applying "func" to this Expr.
-   */
-  args: function() {
-    var term = this;
-    var result = [];
-    while (term instanceof Call) {
-      result.unshift(term.arg);
-      term = term.fn;
-    }
-    return result;
-  },
-
-  /**
-   * Returns true iff this is a call to a function of two arguments that
-   * is normally rendered and parsed as an infix binary operator.
-   */
-  isBinOpCall: function() {
-    return this.isCall2() && isInfixDesired(this.getBinOp());
-  },
-
-  /**
-   * Returns an equivalent path that uses "left", "right", and "binop"
-   * to indicate subexpressions of binary operators where possible.
-   */
-  prettifyPath: function(p) {
-    if (p.isEnd()) {
-      return p;
-    }
-    var segment = p.segment;
-    var rest = p.rest;
-    if (this.isCall2() && isInfixDesired(this.getBinOp())) {
-      if (segment === 'arg') {
-        return new Path('right', this.getRight().prettifyPath(rest));
-      } else if (segment === 'fn') {
-        var seg2 = rest.segment;
-        if (seg2 === 'fn') {
-          return new Path('binop', this.getBinOp().prettifyPath(rest.rest));
-        } else if (seg2 === 'arg') {
-          return new Path('left', this.getLeft().prettifyPath(rest.rest));
-        }
+  var segment = p.segment;
+  var rest = p.rest;
+  if (this.isCall2() && isInfixDesired(this.getBinOp())) {
+    if (segment === 'arg') {
+      return new Path('right', this.getRight().prettifyPath(rest));
+    } else if (segment === 'fn') {
+      var seg2 = rest.segment;
+      if (seg2 === 'fn') {
+        return new Path('binop', this.getBinOp().prettifyPath(rest.rest));
+      } else if (seg2 === 'arg') {
+        return new Path('left', this.getLeft().prettifyPath(rest.rest));
       }
     }
-    // This expression and path segment are not a special case.
-    // Prettify the subexpression and path at the next level down.
-    var next = this.get(new Path(segment));
-    // Return a path with this segment and the prettified tail
-    // of this path.
-    return new Path(segment, next.prettifyPath(rest));
-  },
-
-  /**
-   * Is it an equation, possibly with assumptions?
-   */
-  isEquation: function() {
-    return (this.isCall2('=') ||
-            (this.isCall2('=>') && this.getRight().isCall2('=')));
-  },
-
-  /**
-   * Gets the left side of an equation, possibly with assumptions.
-   */
-  eqnLeft: function() {
-    var eqn = this.isCall2('=>') ? this.getRight() : this;
-    eqn.assertCall2('=');
-    return eqn.getLeft();
-  },
-  
-  /**
-   * Gets the right side of an equation, possibly with assumptions.
-   */
-  eqnRight: function() {
-    var eqn = this.isCall2('=>') ? this.getRight() : this;
-    eqn.assertCall2('=');
-    return eqn.getRight();
   }
+  // This expression and path segment are not a special case.
+  // Prettify the subexpression and path at the next level down.
+  var next = this.get(new Path(segment));
+  // Return a path with this segment and the prettified tail
+  // of this path.
+  return new Path(segment, next.prettifyPath(rest));
+},
 
-};
-Toy.addMethods(Expr, exprMethods);
+/**
+ * Is it an equation, possibly with assumptions?
+ */
+Expr.prototype.isEquation = function() {
+  return (this.isCall2('=') ||
+          (this.isCall2('=>') && this.getRight().isCall2('=')));
+},
+
+/**
+ * Gets the left side of an equation, possibly with assumptions.
+ */
+Expr.prototype.eqnLeft = function() {
+  var eqn = this.isCall2('=>') ? this.getRight() : this;
+  eqn.assertCall2('=');
+  return eqn.getLeft();
+},
+
+/**
+ * Gets the right side of an equation, possibly with assumptions.
+ */
+Expr.prototype.eqnRight = function() {
+  var eqn = this.isCall2('=>') ? this.getRight() : this;
+  eqn.assertCall2('=');
+  return eqn.getRight();
+}
+
 
 /**
  * Throw an error with message if this is not a call to a function
@@ -1918,9 +2023,9 @@ Toy.addMethods(Expr, exprMethods);
 Expr.prototype.assertCall1 = function(name) {
   assert(this.isCall1(name),
          (name === undefined
-          ? 'Not a 1-argument call: {1}'
-          : 'Not a 1-argument call to {2}: {1}'),
-         this, name);
+           ? 'Not a 1-argument call: {1}'
+           : 'Not a 1-argument call to {2}: {1}'),
+           this, name);
 };
 
 /**
@@ -1982,7 +2087,6 @@ Expr.prototype.revGet = function(rpath) {
     return term.descend(rpath.segment);
   }
 };
-    
 
 /**
  * Converts the argument into a path within this Expr.  Given a Path
@@ -2099,13 +2203,6 @@ Expr.prototype.isProved = function() {
   // A property only proof steps have.
   return !!this.ruleName;
 };
-
-/**
- * Returns a truthy value iff the argument is a proof step.
- */
-export function isProved(x) {
-  return x instanceof Expr && x.isProved();
-}
 
 /**
  * Coerces this Expr to one that is the same, but not proved by making
@@ -2376,13 +2473,6 @@ Expr.prototype.chainPaths = function(chainOp) {
   return result;
 };
 
-// TODO: Probably remove this and nearestChain.
-var chainMap = new Map();
-{
-  const ops=[['+', '-'], ['*', '/'], ['&'], ['|']];
-  ops.forEach(a => a.forEach(op => chainMap.set(op, a)));
-}
-
 /**
  * Returns the innermost chain, if any, that this term belongs to.  A
  * chain is a leftward sequence of terms with connected by binary
@@ -2622,28 +2712,6 @@ Expr.prototype.scanConj = function(action) {
 };
 
 /**
- * Returns a map from path string to term, containing all terms of the
- * step that are assumptions; empty if there are no assumptions.
- * The paths use /left and /right.
- */
-// @ts-ignore
-Step.prototype.asmMap = function() {
-  const scan = function(expr, pathStr) {
-    if (expr.isCall2('&')) {
-      scan(expr.getLeft(), pathStr + '/left');
-      asms.set(pathStr + '/right', expr.getRight());
-    } else {
-      asms.set(pathStr, expr);
-    }
-  };
-  const asms = new Map();
-  if (this.wff.isCall2('=>')) {
-    scan(this.getLeft(), '/left');
-  }
-  return asms;
-};
-
-/**
  * Taking this is a tree of disjuncts, applies the given action
  * function to each leaf node, in order from left to right.  If any
  * call returns a truthy value, that becomes immediately the result,
@@ -2674,17 +2742,6 @@ Expr.prototype.scanConjuncts = function(action) {
     return action(this);
   }
 };
-
-/**
- * Makes a new TermSet of all the conjuncts obtained by
- * applying scanConjuncts to the given term, as for example
- * making the assumptions of a step into a TermSet.
- */
-export function makeConjunctionSet(term) {
-  var set = new TermSet();
-  term.scanConjuncts(function (t) { set.add(t); });
-  return set;
-}
 
 /**
  * Build and return a TermSet containing the assumptions
@@ -2732,8 +2789,6 @@ Expr.prototype.transformConjuncts = function(xform) {
     return xform(this);
   }
 };
-
-var _searchTermsOps = Toy.ownProperties({'+': true, '-': true, '=': true});
 
 /**
  * Searches this Expr and then any (addition or subtraction)
@@ -2799,247 +2854,316 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 };
 
 /**
-// Expr
-//
-// Methods defined on expressions, but defined only in the subclasses:
-//
-// dump()
-//
-// Converts expression to a string like toString, but without special
-// handling of functions of more than one argument or infix operators.
-// A simple text format not dependent on styling options, usable for
-// keys in maps with Expr values.
-//
-// OOPS, this does not dump any type information, so it may conflate
-// terms that are not really the same.  It is not relied on by
-// deduction, so the flaw is non-fatal.
-//
-// Internal calls accept a Bindings object as an argument.
-// 
-//
-// subst(Expr replacement, String name)
-// 
-// Substitutes copies of the replacement expression for all (free)
-// occurrences of the given name in this expression.  For use in
-// logic, this expression must not bind any variables that occur free
-// in the replacement.
-//
-//
-// _subFree(Object map, Object newFreeVars)
-//
-// The map argument is an object mapping variable names to replacement
-// expressions.  Substitutes the corresponding replacement expression
-// for each free occurrence of each name in this Expr.  Also copies
-// type information to all newly-created terms as needed for the
-// operation of Axiom 4.
-//
-// newFreeVars must be given as an object / set of all names free in any
-// of the replacement expressions.
-//
-// To ensure no names are captured, renames all bound variables in
-// this that have the same name as any free variable in the
-// replacement terms.
-//
-// Note that Rule R can introduce previously free variables into a
-// scope where they become bound.
-//
-//
-// hasFreeName(name)
-// 
-// True iff the given variable or constant name (string) appears free
-// in this expression.  Does not match against pnames.
-//
-//
-// asArray()
-//
-// Converts an expression to an array with the function first,
-// followed by arguments.  If it is just a variable, returns
-// an array containing just that.
-//
-//
-// _addNames(map result)
-//
-// Adds all names occurring in this expression to the object/map, with
-// value of true for each, both free and bound names.
-//
-//
-// _addFreeVars(Set result, Bindings bindings)
-// 
-// Adds all variable names that occur free in this Expr to the result
-// Set.  Assumes that names in the Bindings object are bound in this
-// expression's lexical context.  Private helper for the freeVars
-// method.
-//
-//
-// _addNewConstants(map result, Bindings bindings)
-// 
-// Adds to the object/set all constant names that occur free in this
-// Expr and are "new" in the sense of isNewConstant.  Assumes that
-// names in the Bindings object are bound in this expression's lexical
-// context, even if they have the form of named constants (so constant
-// names could be used for bound variables if desired).  Private
-// helper for the newConstants method.
-//
-//
-// _boundNames(path, bindings)
-//
-// Returns a Bindings object (or null if no bindings) representing the
-// set of bindings in effect at the given path within this Expr, plus
-// the given bindings.  Binds name to variable Atom.
-//
-//
-// _addMathVars(bindings, set)
-//
-// Helper for Expr.mathVars.  Traverses this expression, adding to the
-// set names of all free variables that are arguments to math
-// operators -- or an argument to "=" or "!=" that have an expression
-// with a math operator as the other argument.
-// 
-//
-// replaceAt(path, xformer)
-//
-// Returns a copy of this expression.  If some part matches the path,
-// that part is replaced by the result of calling the xformer function
-// on it.
-//
-//
-// sameAs(expr)
-//
-// True iff all parts of this expression are identical to the
-// corresponding parts of the argument.  If present anywhere, types
-// must also match.  Type variable names may differ (only renamings).
-//
-//
-// matches(e2, bindings)
-//
-// Tests whether all components of this expression and e2 are the same
-// except for names of bound variables.  Names of constants and free
-// variables must match in each component.  Names of bound variables
-// may differ if the bindings map the name in this to the name in e2.
-// The bindings map from names of variables bound in expressions
-// containing this expression to corresponding variable names of the
-// expression containing e2.  Currently does not match types.
-//
-//
-// _traverse(fn, rpath)
-//
-// Applies the function to this expression, then recursively to any
-// subexpressions.  Does not descend into the variable binding parts
-// of Lambdas.  Used on rendered steps, perhaps also non-rendered.
-//
-// TODO: Consider how to support flexible paths better, with /main.
-//
-//
-// search(test, bindings)
-//
-// Searches for a subexpression of this that passes the given test,
-// given as a boolean function of one argument.  Returns the first
-// subexpression that passes the test, with this expression itself
-// tested first, followed by the rest in top-down, left-to-right
-// order, or null if there is none.  The search includes
-// variable bindings if bindings is truthy.
-//
-//
-// _path(pred, revPath)
-//
-// Searches for a subexpression of this that passes the test and is
-// NOT a variable binding.  Returns the "reverse path" to it from
-// this, with the last path segment first, added to the given revPath.
-// Search order is right to left (arg before fn in calls), but parents
-// before children.
-//
-//
-// _prettyPath(pred, path)
-//
-// Like _path, but for infix expressions produces /left, /right, etc.
-// rather than combinations of /fn and /arg; and returns a forward
-// path.
-//
-//
-// _bindingPath(pred, revPath)
-//
-// Searches for a subexpression of this that passes the test and is
-// the bound variable of a Lambda.  Returns the "reverse path" from
-// this to the Lambda, with the last path segment first, followed by
-// the given revPath.
-// 
-//
-// _checkSegment(path)
-//
-// Throws an error if the next segment of the path is not appropriate
-// to this type of Expr.
-//
-//
-// generalizeTF(expr2, newVar, bindings)
-//
-// Searches through this and expr2 for subexpressions in this that are
-// the constant T, and F at the same place in expr2.  Returns an
-// expression similar to this, but with newVar in those locations.
-// Throws an error unless this and expr2 have the same syntax tree
-// structure and variable names match everywhere except the T/F cases.
-// The newVar should not appear anywhere in this or expr2, to ensure
-// that the result will have this and expr2 as substitution instances.
-//
-// The optional bindings (used in recursive calls) map from names of
-// bound variables in expressions containing this, to names of
-// corresponding bound variables in expressions containing expr2.
-//
-// 
-// findAll(name, action1, expr2, action2)
-//
-// Apply the action function to every subexpression in this that is a
-// free variable with the given name, and action2 to the
-// subexpressions of expr2 at those same locations.  This method also
-// attempts to do the same traversal of expr2, and calls action2
-// where expr2 has a part corresponding to the part in expr1.
-//
-//
-// _matchAsSchema(expr, substitution, bindings)
-//
-// Checks that this expression matches the argument expression under
-// the given substitution (map from names in this to expressions in
-// expr).  The bindings indicate the variable bindings in effect for
-// this and the argument expression, mapping from variable name in
-// this to variable name in expr.
-//
-// Returns true iff it does and extends the substitution to a
-// new variable if needed to make this and the argument match.  If
-// this contains lambda expressions, it is smart about match failure
-// due to capturing of free variables in the expr, and smart about
-// using calls to function variables in this to enable substitution in
-// spite of capturing.  Matching here is as defined for the "matches"
-// method.
-//
-// Where needed and possible, this matches (boolean) terms with lambda
-// terms and attaches a %expansion property to the substitution, with
-// the names of each such predicate variable mapped to a count of the
-// number of beta reductions needed to match normally after
-// substitution.
-//
-//
-// _asPattern()
-//
-// Descend into this expression returning a term of similar structure
-// but with terms having __var property replaced with the value of
-// that property.  Helper for code (currently mergedHypotheses) that
-// tags subexpressions with __var property as part of creating a
-// pattern from them.
-//
-//
-// searchMost(fn, opt_path, opt_bindings)
-//
-// Tree walks though this Expr and its subexpressions, recursively,
-// calling the function to each one, passing it the term and a reverse
-// path from this term to that point until the function returns a
-// truthy value.  Descends first into the arg part to make the search
-// proceed right to left.  All subexpressions of Lambda terms receive
-// non-null bindings, mapping the name of the bound variable to the
-// lambda in which it is bound, innermost first.  Returns the first
-// truthy value returned from "fn" at any level.  If not given, this
-// treats the path and bindings as empty.
-*/
+ * Returns a Map object with the names of all free variables as keys,
+ * and the value of each key being an Atom where that name occurs
+ * free.  Order is "left to right", actually each function in a Call
+ * before its arg, and the occurrence is the first in the order.
+ */
+Expr.prototype.freeVarsMap = function() {
+  const byName = new Map();
+  const boundNames = [];
+  const traverse = term => {
+    const ct = term.constructor;
+    if (ct === Atom) {
+      if (term.isVariable() && !boundNames.includes(term.name)) {
+        byName.set(term.name, term);
+      }
+    } else if (ct === Call) {
+      traverse(term.arg);
+      traverse(term.fn);
+    } else {
+      const nm = term.bound.name;
+      boundNames.push(nm);
+      traverse(term.body);
+      boundNames.pop();
+    }
+  }
+  traverse(this);
+  return byName;
+};
 
-//// Methods for Atom
+/**
+ * The result of this method is very similar to toString, but this
+ * uses the "name" property of atoms, so it equates atoms that are
+ * aliases.  Intended for use in mapping stated references to facts
+ * with declared facts.  
+ *
+ * TODO: Consider properly handling type information here.
+ */
+Expr.prototype.toKey = function() {
+  const key = x => {
+    const c = x.constructor;
+    if (c === Atom) {
+      const isInfix = Toy.isInfixDesired(x);
+      return isInfix ? '(' + x.name + ')' : x.name;
+    } else if (c === Call) {
+      if (x.isCall2()) {
+        const op = x.getBinOp();
+        if (isInfixDesired(op)) {
+          return ('(' + key(x.getLeft()) + ' ' + op.name +
+                  ' ' + key(x.getRight()) + ')');
+        } else {
+          return ('(' + key(op) + ' ' + key(x.getLeft()) +
+                  ' ' + key(x.getRight()) + ')');
+        }
+      } else {
+        return '(' + key(x.fn) + ' ' + key(x.arg) + ')';
+      }
+    } else if (c === Lambda) {
+      return '{' + key(x.bound) + '. ' + key(x.body) + '}';
+    } else {
+      abort('Bad input: {1}', x);
+    }
+  }
+  return key(this);
+};
+
+/**
+ * Computes the "base instance" of a proof step.  Each level of
+ * justification has its own Expr, all equal, but each with its
+ * own justification and details.  This accesses the bottom level
+ * step.
+ */
+// @ts-ignore
+Expr.prototype.getBase = function() {
+  var result = this;
+  while (result.details) {
+    result = result.details;
+  }
+  return result;
+};
+
+/**
+ * Get the assumptions of this step if it has any, else null.
+ */
+// @ts-ignore
+Expr.prototype.asmPart = function() {
+  var wff = this.wff;
+  return wff.isCall2('=>') ? wff.getLeft() : null;
+};
+
+/**
+ * Returns a map from path string to term, containing all terms of the
+ * step that are assumptions; empty if there are no assumptions.
+ * The paths use /left and /right.
+ */
+// @ts-ignore
+Expr.prototype.asmMap = function() {
+  const scan = function(expr, pathStr) {
+    if (expr.isCall2('&')) {
+      scan(expr.getLeft(), pathStr + '/left');
+      asms.set(pathStr + '/right', expr.getRight());
+    } else {
+      asms.set(pathStr, expr);
+    }
+  };
+  const asms = new Map();
+  if (this.wff.isCall2('=>')) {
+    scan(this.getLeft(), '/left');
+  }
+  return asms;
+};
+
+
+//// Atoms -- functions
+
+// Categorization of Atoms:
+//
+// Identifiers
+//   Variables (start with a single lowercase ASCII letter)
+//   Consts (such as sin, cos, forall, exists)
+// Literals (numeric, string, etc)
+// OpSyntax (+, -, etc)
+
+// All "opSyntax" Vars are operators, plus some designated
+// identifers, currently "forall" and "exists".
+
+// Pattern that matches identifiers, used in the tokenizer and
+// identifierRegex.  The tokenizer recognizes exactly things matching
+// this as being identifiers.  The system can create identifers not
+// matching this expression, but parses only these.  This in itself is
+// not a regex.
+
+export const identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
+
+// Names matching this regex are identifiers.
+// The trailing "$" ensures that the entire name is matched
+// up to any extensions for unique ID and/or type information.
+// Note that not all identifiers can be entered through the parser,
+// in particular ones with "." (generated bound names) or ":"
+// (for type information).
+var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
+
+// Variables in particular, not including identifiers for constants.
+// The "." and ":" provide for extension with bound variable unique
+// identifiers and type signatures.
+//
+// TODO: Make variable naming and subscripting consistent and
+// rational!  Currently variable names of a single alphabetic
+// character.
+var variableRegex = /^[a-zA-Z$][0-9_]*([.:]|$)|^_/;
+
+// Numeric literals.
+var numeralRegex = /^-?[0-9]+$/;
+
+// Constant names having the same form as a usual variable name.
+// TODO: Consider handling of other constants such as C, Q, Z, N,
+//   pi, and the imaginary unit.  Perhaps in context, R and
+//   potentially "i" can be treated as parse-level abbreviations
+//   for constants such as RR and ii with normal constant names.
+const specialConsts = new Set(['T', 'F', 'R', 'e']);
+
+/**
+ * True iff the given string is an identifier (named variable or
+ * constant).
+ */
+export function isIdentifier(str) {
+  return !!str.match(identifierRegex);
+}
+
+export function isIntegerLiteral(name) {
+  return name.match(numeralRegex);
+}
+
+/**
+ * Returns a truthy value iff the given term is a numeral, or it is
+ * the quotient of two numerals.
+ */
+export function isFraction(expr) {
+  return (expr.isNumeral() ||
+          (expr.isCall2('/') &&
+           expr.getLeft().isNumeral() &&
+           expr.getRight().isNumeral()));
+}
+
+/**
+ * Double struck C N Q P R Z.
+ */
+var moreLettersRegex = /^[\u2102\u2115\u2119\u211a\u211d\u2124]$/;
+
+
+//// Step
+
+/**
+ * TODO: Maybe make Step into a whole new class.  For now, it is just an
+ * alias.  There will be some convenience methods such as getMain and
+ * asmPart, but access to Expr properties and most methods will be
+ * through the "wff" property.
+ *
+ * Step objects have a "wff" property, but an Expr will not.
+ */
+
+// The value of Step is the value of Expr.
+export const Step = Expr;
+
+
+//// Atom
+
+export interface Atom {
+  //constructor(name: any, position?: any);
+  // _pname: any;
+  // __name: any;
+  // pos: any;
+  // _value: any;
+  // set name(nm: any);
+  // get name(): any;
+  // set pname(pnm: any);
+  // get pname(): any;
+  _toString(): any;
+  unicodeName(): any;
+  toHtml(): any;
+  dump(): any;
+  _subFree(map: any, freeVars: any, allNames: any): any;
+  hasFreeName(name: any): boolean;
+  asArray(): Atom[];
+  _addNames(map: any): void;
+  _addFreeVars(set: any, bindings: any): void;
+  _addFreeVarSet: (set: any, bindings: any) => void;
+  _addNewConstants(set: any, bindings: any): void;
+  _boundNames(path: any, bindings: any): any;
+  replaceAt(path: any, xformer: any): any;
+  matches(expr: any, bindings: any): boolean;
+  _traverse(fn: any, rpath: any): void;
+  search(pred: any, bindings?: any): Atom;
+  generalizeTF(expr2: any, newVar: any, bindings: any): any;
+  _path(pred: any, revPath: any): any;
+  _prettyPath(pred: any, pth: any): any;
+  _bindingPath(pred: any, revPath: any): any;
+  _checkSegment(path: any): void;
+  findAll(name: any, action1: any, expr2: any, action2: any): void;
+  _matchAsSchema(expr: any, map: any, bindings: any): any;
+  _matchAsPattern(term: any, map: any): any;
+  _asPattern(term: any): any;
+  searchMost(fn: any, path: any, bindings: any): any;
+  parseName(): {
+      name: any;
+      sub: any;
+      type: any;
+  };
+  _nthArg(n: any);
+}
+
+/**
+ * Make an Atom with the given name.  If a non-null integer position
+ * is given, use it to record the index in the input stream.  If the
+ * given name is in the "aliases" map, the given name becomes the
+ * Atom's pname, and the Atom's name becomes the value of the alias.
+ * Pnames affect only parsing and display, not the logic itself.
+ *
+ * An Atom object can represent a variable (free or bound) or a
+ * constant, either literal or named (see isConstantName).
+ *
+ * CAUTION: This constructor is for internal use by code in this file
+ * and implementations of methods on Expr, Atom, Call, and Lambda
+ * classes only.  Use factory functions such as varify or constify as
+ * the public APIs.
+ *
+ * TODO: Further reduce use of this too-primitive constructor.
+ *
+ * TODO: Make a separate type for tokens.
+ */
+export class Atom extends Expr {
+  pos;
+  __pname;
+  __name;
+  _value;
+
+  constructor(name, position=null) {
+    super();
+    this.__pname = this.__name = name;
+    if (isConstantName(name))
+      this.pos = position;
+    if (aliases.hasOwnProperty(name)) {
+      this.__name = aliases[name];
+    }
+    // If the name represents an integer, sets the _value property to
+    // that integer, or if it represents a string, sets the _value
+    // property to the string.
+    //
+    // Variables have _value of "undefined" and named constants have
+    // _value of null.
+    this._value = isVariableName(name)
+      ? undefined
+      : isIntegerLiteral(name)
+      ? parseInt(name)
+      : name.charAt(0) === '"'
+      ? Toy.parseStringContent(name)
+      // Named constants:
+      : null;
+  }
+  get name() {
+    return this.__name;
+  }
+  set name(nm) {
+    abort('Readonly: name');
+  }
+  get pname() {
+    return this.__pname;
+  }
+  set pname(pnm) {
+    abort('Readonly: pname');
+  }
+}
 
 /**
  * If not producing Unicode, returns this Atom's pname.  If producing
@@ -3058,8 +3182,6 @@ Atom.prototype._toString = function() {
           ? text + ":" + this.type.toString()
           : text);
 };
-
-export let alphaAndOr = true;
 
 /**
  * Unicode rendering of the name of this Atom.
@@ -3092,47 +3214,6 @@ Atom.prototype.unicodeName = function() {
     }
   }
   return result;
-};
-
-// Translations of names, applied during conversion to Unicode.
-// (When generating HTML and/or Unicode text.)
-export let unicodeNames = {
-  '==': '\u2261',     // Triple equal (equiv)
-  // or '==': '\u21d4',     // Two-headed horizontal double arrow.
-  '&': '\u2227',      // &and;
-  '|': '\u2228',      // &or;
-  'not': '\u00ac',    // &not;
-  '=>': '\u21d2',     // &rArr; ("implies") (\u27f9 is longer)
-  '=>>': '\u21db',    // rightwards triple arrow
-  '!=': '\u2260',     // &ne;
-  '<=': '\u2264',     // &le;
-  '>=': '\u2265',     // &ge;
-  'in': '\u2208',     // &in;
-  'notin': '\u2209',  // &notin;
-  '**': '**',         // Dont change to sdots.
-  '*': '\u22c5',      // &sdot;
-  '-': '\u2212',      // &minus;
-  '</': '</',         // Treat this as HTML.
-  '/': '\u2215',      // division slash
-  neg: '-',           // (different than "minus")
-  empty: '\u2205',    // Null set
-  iota: '\u2129',     // Inverted iota
-  none: '\u22a5',     // Bottom / "up tack"
-  CC: '\u2102',       // Complex numbers
-  R: '\u211d',        // Real numbers
-  NN: '\u2115',       // Natural numbers
-  QQ: '\u211a',       // Rational numbers
-  ZZ: '\u2124',       // Integers
-  forall: '\u2200',
-  exists: '\u2203',
-  exists1: '\u2203!'
-};
-
-// Defines aliases that affect both printing and parsing.
-var aliases = {
-  // Note that limiting '==' to boolean inputs would make it more than
-  // just an alias as currently defined.
-  '==': '=',
 };
 
 // This is useful in itself, but Expr.toHtml does not invoke this
@@ -3338,6 +3419,27 @@ Atom.prototype.searchMost = function(fn, path, bindings) {
   return fn(this, path, bindings);
 };
 
+/**
+ * Parses the Atom's name into the base name (e.g. "x"), subscript if
+ * any (digits), and a type expression, returning information as an
+ * object with properties "name", "sub", and "type", which are
+ * undefined if not present.  The subscript is the part following and
+ * underscore or dot, if any, for names generated by genVar or
+ * _genBoundVar.
+ */
+Atom.prototype.parseName = function() {
+  var match = this.name.match(/^(.+?)([_.](.*?))?([:](.*))?$/);
+  return {name: match[1], sub: match[3], type: match[5]};
+};
+
+/**
+ * Returns the term found inside here, or if not found, the first
+ * index not seen.
+ */
+Atom.prototype._nthArg = function(n) {
+  return n == 0 ? this : 1;
+};
+
 
 //// Utilities for Atoms
 
@@ -3421,18 +3523,78 @@ function _genBoundVar(name, freeVars) {
   return new Atom(newName);
 }
 
+
+//// Call
+
 /**
- * Parses the Atom's name into the base name (e.g. "x"), subscript if
- * any (digits), and a type expression, returning information as an
- * object with properties "name", "sub", and "type", which are
- * undefined if not present.  The subscript is the part following and
- * underscore or dot, if any, for names generated by genVar or
- * _genBoundVar.
+ * 
+ * Keys in this object are legitimate paths to apply to a Call.
  */
-Atom.prototype.parseName = function() {
-  var match = this.name.match(/^(.+?)([_.](.*?))?([:](.*))?$/);
-  return {name: match[1], sub: match[3], type: match[5]};
-};
+var _callSegmentNames = {fn: true, arg: true};
+
+var _binopSegmentNames = {left: true, right: true, binop: true};
+
+export interface Call extends Expr {
+  //constructor(fn: any, arg: any);
+  _fn: any;
+  _arg: any;
+  // set fn(v: any);
+  // get fn(): any;
+  // set arg(v: any);
+  // get arg(): any;
+  _toString(): any;
+  pathIntoChain(n: any, ops_arg: any): Path;
+  dump(): string;
+  _subFree(map: any, freeVars: any, allNames: any): Call;
+  hasFreeName(name: any): any;
+  asArray(): any;
+  _addNames(map: any): void;
+  _addFreeVars(set: any, bindings: any): void;
+  _addFreeVarSet(set: any, bindings: any): void;
+  _addNewConstants(set: any, bindings: any): void;
+  _boundNames(path: any, bindings: any): any;
+  replaceAt(path: any, xformer: any): any;
+  matches(expr: any, bindings?: any): any;
+  _traverse(fn: any, rpath: any): void;
+  search(pred: any, bindings?: any): any;
+  generalizeTF(expr2: any, newVar: any, bindings: any): Call;
+  _path(pred: any, revPath: any): any;
+  _prettyPath(pred: any, pth: any): any;
+  _bindingPath(pred: any, revPath: any): any;
+  _checkSegment(path: any): void;
+  findAll(name: any, action1: any, expr2: any, action2: any): void;
+  _matchAsSchema(expr: any, map: any, bindings: any): boolean;
+  _matchAsPattern(term: any, map: any): any;
+  _asPattern(term: any): any;
+  searchMost(fn: any, path: any, bindings: any): any;
+  _nthArg(n: any): any;
+}
+
+/**
+ * Constructor for Call expressions.
+ */
+export class Call extends Expr {
+  _fn;
+  _arg;
+
+  constructor(fn, arg) {
+    super();
+    this._fn = fn;
+    this._arg = arg;
+  }
+  get fn() {
+    return this._fn;
+  }
+  set fn(v) {
+    abort('Readonly: fn');
+  }
+  get arg() {
+    return this._arg;
+  }
+  set arg(v) {
+    abort('Readonly: arg');
+  }
+}
 
 
 //// Methods for Call -- application of a function to an argument
@@ -3743,11 +3905,6 @@ Call.prototype._bindingPath = function(pred, revPath) {
           || this.arg._bindingPath(pred, new Path('arg', revPath)));
 };
 
-// Keys in this object are legitimate paths to apply to a Call.
-var _callSegmentNames = {fn: true, arg: true};
-
-var _binopSegmentNames = {left: true, right: true, binop: true};
-
 Call.prototype._checkSegment = function(path) {
   assert(this.isCall2()
          ? path.segment in _binopSegmentNames 
@@ -3793,171 +3950,6 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
   }
 };
 
-/**
- * Returns an equation with term as LHS and RHS having all "head" lambdas
- * of the LHS beta reduced, just traversing "fn"s.
- *
- * TODO: Consider removing this as unused.  It is also an ugly piece
- *   of code.
- */
-export function multiReducer(term) {
-  const rules = Toy.rules;
-  let eqn = rules.eqSelf(term);
-  if (!(term instanceof Call)) {
-    return eqn;
-  }
-  // The path will be built as a reverse path, but all /fn so
-  // it will be the same as its reverse.
-  let path = Path.empty;
-  let x = term;
-  for (; x.fn instanceof Call; x = x.fn) {
-    path = new Path('fn', path);
-  }
-  while (x.fn instanceof Lambda) {
-    eqn = rules.reduce(eqn, new Path('right', path));
-    if (path.isEnd()) {
-      break;
-    }
-    path = path.rest;
-    x = eqn.getRight().get(path);
-  }
-  return eqn;
-}
-
-/**
- * This attempts to confirm that the schema, a call to a function
- * variable, with one or more arguments, constitutes a higher-order
- * match with "expr", combined with an established substitution into
- * the schema defined by the map for the given function variable "fn".
- * If it does, returns a proved equation from the schema to a term
- * that "matches" expr in this binding context, otherwise null.
- * Internal to _matchAsSchema.
- *
- * As currently implemented, this does not actually beta reduce
- * "expr".
- */
-export function checkFnMatch(schema, fn, expr, map, bindings) {
-  const name = fn.name;
-  const lambdas = map[name];
-
-  // The path will be built as a reverse path, but all /fn so
-  // it will be the same as its reverse.
-  let path = Path.empty;
-  for (let term = schema;
-       term instanceof Call && term.fn instanceof Call;
-       term = term.fn) {
-    path = new Path('fn', path);
-  }
-  const reducer =
-        () => Toy.rules.consider(schema).andThen('instVar', lambdas, name);
-  let reduced = Toy.catching(reducer);
-  if (reduced instanceof Error) {
-    console.error(reduced);
-    return null;
-  }
-  while (path !== Path.empty) {
-    const reducible = reduced.getRight();
-    if (reducible.matches(expr, bindings)) {
-      return reduced;
-    }
-    if (reducible.isLambdaCall()) {
-      reduced = Toy.rules.reduce(reduced, '/right');
-    } else {
-      return null;
-    }
-    path = path.rest;
-  }
-}
-
-/**
- * For each substitution map that has expansions of terms into
- * lambdas, a count of the number of expansions applied to
- * each such term.  Maybe a good idea, but currently unused.
- */
-export let betaExpansions = new WeakMap();
-
-/**
- * Given a schema that is a function call whose function is a
- * variable, this attempts to build a lambda term or nested lambda
- * terms to substitute for the variable, resulting in the given expr
- * after also beta reducing the calls to those lambda(s).  Returns
- * true and extends the map on success, as for _matchAsSchema.  On
- * success, this works in the context of the given bound variable
- * renamings from the schema to the matched term.  Internal to
- * _matchAsSchema.
- */
-export function addFnMatch(schema, fn, expr, map, renamings) {
-  // Key point: Suppose all variables bound in the context of the
-  // schema, whose counterparts of the same name occur free in expr,
-  // appear as actual arguments to the function, we can find a
-  // substitution.
-  var args = schema.args();
-  // These are free in expr, but may be bound in expr's context.
-  var exprVars = expr.freeVarSet();
-  // If any variable occurring (free) in expr is bound in expr's
-  // context and thus needs to have a bound variable here
-  // substituted for it, but that bound variable is not in the args,
-  // the substitution fails.
-  var findBindingValue = Toy.findBindingValue;
-  for (var name of exprVars) {
-    var b = findBindingValue(name, renamings);
-    if (b) {
-      var argName = b.from;
-      if (!args.find(arg => arg.isVariable() && arg.name == argName)) {
-        return false;
-      }
-    }
-  }
-
-  // Now we know the function call arguments are suitable.  Construct
-  // a lambda to substitute for the function variable.
-  var result = expr;
-  var arg;
-  // This will be the number of beta reductions to apply after the
-  // substitution.
-  var expansions = 0;
-  const vList = Array.from(exprVars);
-  while (args.length) {
-    // This is the next actual argument to the function variable.
-    var arg = args.pop();
-    if (arg.isVariable()) {
-      // This is non-null iff bound here.  Iff bound here, it
-      // corresponds to a variable bound in expr.
-      const exprName = getBinding(arg.name, renamings);
-      // If it is a fresh variable, it will be substituted nowhere.
-      var toBind = (exprName
-                    ? new Atom(exprName)
-                    : vList.length > 0
-                    ? new Atom(vList.pop())
-                    : expr.freshVar(arg.name));
-      result = new Lambda(toBind, result);
-      expansions++;
-    } else {
-      return false;
-    }
-  }
-  var existing = map[fn.name];
-  // Fail if there is an existing substitution and the computed
-  // result does not match it.
-  if (existing && !existing.matches(result)) {
-    return false;
-  }
-
-  if (expansions > 0) {
-    const bx = Toy.betaExpansions;
-    var xpanded = bx.get(map);
-    if (!xpanded) {
-      xpanded = {};
-      bx.set(map, xpanded);
-    }
-    xpanded[fn.name] = expansions;
-  }
-  // Substitute the lambda term for the function variable.
-  map[fn.name] = result;
-  // Report success without traversing this further.
-  return true;
-}
-
 Call.prototype._matchAsPattern = function(term, map) {
   return (term instanceof Call &&
           this.fn._matchAsPattern(term.fn, map) &&
@@ -3976,6 +3968,82 @@ Call.prototype.searchMost = function(fn, path, bindings) {
           this.fn.searchMost(fn, new Path('fn', path), bindings));
 };
 
+Call.prototype._nthArg = function(n) {
+  var here = this.fn._nthArg(n);
+  if (here instanceof Expr) {
+    return here;
+  } else if (n == here) {
+    return this.arg;
+  } else {
+    return here + 1;
+  }
+};
+
+
+//// Lambda
+
+export interface Lambda extends Expr {
+  // constructor(bound: any, body: any);
+  // __bound: any;
+  // __body: any;
+  // set bound(v: any);
+  // get bound(): any;
+  // set body(term: any);
+  // get body(): any;
+  _toString(): any;
+  dump(): string;
+  _subFree(map: any, freeVars: any, allNames: any): any;
+  hasFreeName(name: any): any;
+  asArray(): Lambda[];
+  _addNames(map: any): void;
+  _addFreeVars(set: any, bindings: any): void;
+  _addFreeVarSet(set: any, bindings: any): void;
+  _addNewConstants(set: any, bindings: any): void;
+  _boundNames(path: any, bindings: any): any;
+  replaceAt(path: any, xformer: any): any;
+  matches(expr: any, bindings: any): any;
+  _traverse(fn: any, rpath: any): void;
+  search(pred: any, bindings?: any): any;
+  generalizeTF(expr2: any, newVar: any, bindings: any): Lambda;
+  _path(pred: any, revPath: any): any;
+  _prettyPath(pred: any, pth: any): any;
+  _bindingPath(pred: any, revPath: any): any;
+  _checkSegment(path: any): void;
+  findAll(name: any, action1: any, expr2: any, action2: any): void;
+  _matchAsSchema(expr: any, map: any, bindings: any): any;
+  _matchAsPattern(term: any, map: any): any;
+  _asPattern(term: any): any;
+  searchMost(fn: any, path: any, bindings: any): any;
+  _nthArg(n: any): void;
+}
+
+/**
+ * Make a variable binding from a Atom and an Expr.  Any occurrences
+ * of the same variable in the body should already be represented
+ * by the same Atom.
+ */
+export class Lambda extends Expr {
+  __bound;
+  __body;
+
+  constructor(bound, body) {
+    super();
+    this.__bound = bound;
+    this.__body = body;
+  }
+  get bound() {
+    return this.__bound;
+  }
+  set bound(v) {
+    abort('Readonly: bound');
+  }
+  get body() {
+    return this.__body;
+  }
+  set body(term) {
+    abort('Readonly: body');
+  }
+}
 
 //// Methods for Lambda -- variable bindings
 
@@ -4209,87 +4277,8 @@ Lambda.prototype.searchMost = function(fn, path, bindings) {
 
 // Private methods grouped by name.
 
-/**
- * Returns the term found inside here, or if not found, the first
- * index not seen.
- */
-Atom.prototype._nthArg = function(n) {
-  return n == 0 ? this : 1;
-};
-
-Call.prototype._nthArg = function(n) {
-  var here = this.fn._nthArg(n);
-  if (here instanceof Expr) {
-    return here;
-  } else if (n == here) {
-    return this.arg;
-  } else {
-    return here + 1;
-  }
-};
-
 Lambda.prototype._nthArg = function(n) {
   assert(false, 'Nth not relevant in lambdas');
-};
-
-/**
- * Given the wff of a rewrite rule, this returns true iff
- * the rule is conditional and every free variable of the RHS
- * also appears free in the LHS of the equation.  (If there
- * is no equation, this takes it as LHS == T.
- */
-export function neverWhenBound(rule) {
-  // Consider the locally free variables in the term to be matched,
-  // and a substitution that generates that term from some rewrite
-  // rule.  Each of those free variables was either free in the
-  // rewrite rule (and not replaced), or it was free in a replacement
-  // term of the substitution.  Thus if every free variable of the
-  // rule LHS also appears in its assumptions, then every free
-  // variable of the result of the substitution into the LHS also
-  // appears in the result of the substitution into the assumptions,
-  // and the rule cannot apply if any of them are bound in that
-  // context.
-  // 
-  return (rule.implies() &&
-          (!rule.getRight().isCall2('=') ||
-           Toy.setDiff(rule.getRight().freeVars(),
-                       rule.getLeft().freeVars()).size === 0));
-};
-
-// Methods.
-
-// The result of this method is very similar to toString, but this
-// uses the "name" property of atoms, so it equates atoms that are
-// aliases.  Intended for use in mapping stated references to facts
-// with declared facts.  
-//
-// TODO: Consider properly handling type information here.
-Expr.prototype.toKey = function() {
-  const key = x => {
-    const c = x.constructor;
-    if (c === Atom) {
-      const isInfix = Toy.isInfixDesired(x);
-      return isInfix ? '(' + x.name + ')' : x.name;
-    } else if (c === Call) {
-      if (x.isCall2()) {
-        const op = x.getBinOp();
-        if (isInfixDesired(op)) {
-          return ('(' + key(x.getLeft()) + ' ' + op.name +
-                  ' ' + key(x.getRight()) + ')');
-        } else {
-          return ('(' + key(op) + ' ' + key(x.getLeft()) +
-                  ' ' + key(x.getRight()) + ')');
-        }
-      } else {
-        return '(' + key(x.fn) + ' ' + key(x.arg) + ')';
-      }
-    } else if (c === Lambda) {
-      return '{' + key(x.bound) + '. ' + key(x.body) + '}';
-    } else {
-      abort('Bad input: {1}', x);
-    }
-  }
-  return key(this);
 };
 
 }  // namespace;
