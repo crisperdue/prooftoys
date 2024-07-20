@@ -771,130 +771,6 @@ TermMap.prototype.set = function(term, name) {
 // truthy value returned from "fn" at any level.  If not given, this
 // treats the path and bindings as empty.
 */
-
-
-export interface Foo1 {
-  fromStep: Expr;
-
-  matches(term: any, bindings?: any): boolean;
-  // __type: any;
-  // __memos: {};
-  // get type(): any;
-  // set memos(v: {});
-  // get memos(): {};
-  _withType(type: any): Expr;
-  _typeFrom(expr: Atom): Atom;
-  _typeFrom(expr: Call): Call;
-  _typeFrom(expr: Lambda): Lambda;
-  toString(simply?: any): any;
-  show(level: any): any;
-  toUnicode(simply?: boolean): string;
-  toHtml(trimmed: any): any;
-  in(list: any): boolean;
-  isAtomic(): boolean;
-  isRendered(): boolean;
-  locateFree(name: any): any[];
-  _locateFree(name: any, path: any, paths: any): void;
-  sameAs(other: any, andTypes?: boolean, exact?: boolean): any;
-  occurrences(names: any): Set<any>;
-  freeVarsMap(): Map<any, any>;
-  isVariable(): boolean;
-  isNamedConst(): boolean;
-  hasName(name: any): boolean;
-  constantNames(): Set<any>;
-  isConst(opt_name: any): boolean;
-  isLiteral(): boolean;
-  displaysIdentifier(): any;
-  isNumeral(): boolean;
-  getNumValue(): any;
-  isString(): boolean;
-  getStringValue(): any;
-  isBoolConst(): boolean;
-  isTypeCond(): any;
-  hasVars(): boolean;
-  isInfixCall(): any;
-  freshVar(name: any): Atom;
-  concat(expr: any, op: any): any;
-  matchPattern(pattern_arg: any): {};
-  pathToSchema(): any;
-  matchSchema(schema_arg: any): {};
-  unmappedVars(map: any): string[];
-  alphaMatch(expr_arg: any): any;
-  findSubst: (schema_arg: any) => {};
-  matchSchemaPart(path_arg: any, schema_arg: any, schema_part: any): {};
-  subFree(map_arg: any): any;
-  subFree1(replacement: any, name: any): any;
-  rename(map: any): any;
-  pathToFocalPart(): any;
-  isAsmSide(path_arg: any): any;
-  isMainSide(path_arg: any): boolean;
-  isAsmPath(path_arg: any): any;
-  freeVars(): {};
-  freeVarSet(): Set<any>;
-  newConstants(): Set<any>;
-  mathVars(): Record<string, true>;
-  _addMathVars(bindings, set: Record<string, true>): boolean;
-  mathVarConditions(expr: any): any;
-  boundNames(path: any): {};
-  freeBound(path: any): any;
-  allNames(): {};
-  isBinOp(): boolean;
-  getBinOp(): any;
-  getLeft(): any;
-  getRight(): any;
-  getMain(): any;
-  getAsms(): any;
-  isTypeTest(): boolean;
-  likeSubgoal(): boolean;
-  hasSubgoal(): any;
-  nthArg(n: any): any;
-  isCall1(name?: string): boolean;
-  isCall2(name?: string): boolean;
-  implies(): boolean;
-  isLambdaCall(): boolean;
-  assertCall1(name: any): void;
-  assertCall2(name: any): void;
-  repr(): any;
-  get(arg: any): Expr;
-  revGet(rpath: any): any;
-  asPath(arg: any): any;
-  descend(segment: any): any;
-  mainify(path: any): any;
-  isProved(): boolean;
-  asWff(): Expr;
-  pathTo(arg: any): any;
-  find(term_arg: any): any;
-  prettyPathTo(pred: any): any;
-  leftNeighborPath(path_arg: any, operators: any): any;
-  rightNeighborPath(path_arg: any, operators: any): any;
-  ancestors(path_arg: any): Expr[];
-  findParent(path_arg: any, test: any): any;
-  parentEqn(path: any): any;
-  chainTerms(chainOp: any): any[];
-  chainPaths(chainOp: any): Path[];
-  nearestChain(path: any): any;
-  movement(vbl_arg: any): {
-      from: any;
-      to: any;
-  };
-  pathToBinding(pred: any): any;
-  traverse(fn: any, rpath: any): void;
-  hasArgs(n: any): any;
-  argsPassed(): any;
-  funPart(): any;
-  hypLocater(hyp: any): any;
-  hypMover(toMove: any): any;
-  scanConj(action: any): any;
-  scanDisjuncts(action: any): any;
-  scanConjuncts(action: any): any;
-  asmSet(): any;
-  eachConjunct(action: any, rpath_arg: any): any;
-  transformConjuncts(xform: any): any;
-  searchTerms(test: any, path: any): any;
-  walkPatterns(patternInfos: any, path_arg: any): void;
-  toKey(): any;
-}
-
 /**
  * Superclass for terms of all kinds: Atom, Call, Lambda.
  * See internal comments for details.
@@ -3096,51 +2972,6 @@ export const Step = Expr;
 
 
 //// Atom
-
-export interface FooAtom {
-  //constructor(name: any, position?: any);
-  // _pname: any;
-  // __name: any;
-  // pos: any;
-  // _value: any;
-  // set name(nm: any);
-  // get name(): any;
-  // set pname(pnm: any);
-  // get pname(): any;
-  _toString(): any;
-  unicodeName(): any;
-  toHtml(): any;
-  dump(): any;
-  _subFree(map: any, freeVars: any, allNames: any): any;
-  hasFreeName(name: any): boolean;
-  asArray(): Atom[];
-  _addNames(map: any): void;
-  _addFreeVars(set: any, bindings: any): void;
-  _addFreeVarSet: (set: any, bindings: any) => void;
-  _addNewConstants(set: any, bindings: any): void;
-  _boundNames(path: any, bindings: any): any;
-  replaceAt(path: any, xformer: any): any;
-  matches(expr: any, bindings: any): boolean;
-  _traverse(fn: any, rpath: any): void;
-  search(pred: any, bindings?: any): Atom;
-  generalizeTF(expr2: any, newVar: any, bindings: any): any;
-  _path(pred: any, revPath: any): any;
-  _prettyPath(pred: any, pth: any): any;
-  _bindingPath(pred: any, revPath: any): any;
-  _checkSegment(path: any): void;
-  findAll(name: any, action1: any, expr2: any, action2: any): void;
-  _matchAsSchema(expr: any, map: any, bindings: any): any;
-  _matchAsPattern(term: any, map: any): any;
-  _asPattern(term: any): any;
-  searchMost(fn: any, path: any, bindings: any): any;
-  parseName(): {
-      name: any;
-      sub: any;
-      type: any;
-  };
-  _nthArg(n: any);
-}
-
 /**
  * Make an Atom with the given name.  If a non-null integer position
  * is given, use it to record the index in the input stream.  If the
@@ -3577,42 +3408,6 @@ var _callSegmentNames = {fn: true, arg: true};
 
 var _binopSegmentNames = {left: true, right: true, binop: true};
 
-export interface FooCall extends Expr {
-  //constructor(fn: any, arg: any);
-  _fn: any;
-  _arg: any;
-  // set fn(v: any);
-  // get fn(): any;
-  // set arg(v: any);
-  // get arg(): any;
-  _toString(): any;
-  pathIntoChain(n: any, ops_arg: any): Path;
-  dump(): string;
-  _subFree(map: any, freeVars: any, allNames: any): Call;
-  hasFreeName(name: any): any;
-  asArray(): any;
-  _addNames(map: any): void;
-  _addFreeVars(set: any, bindings: any): void;
-  _addFreeVarSet(set: any, bindings: any): void;
-  _addNewConstants(set: any, bindings: any): void;
-  _boundNames(path: any, bindings: any): any;
-  replaceAt(path: any, xformer: any): any;
-  matches(expr: any, bindings?: any): any;
-  _traverse(fn: any, rpath: any): void;
-  search(pred: any, bindings?: any): any;
-  generalizeTF(expr2: any, newVar: any, bindings: any): Call;
-  _path(pred: any, revPath: any): any;
-  _prettyPath(pred: any, pth: any): any;
-  _bindingPath(pred: any, revPath: any): any;
-  _checkSegment(path: any): void;
-  findAll(name: any, action1: any, expr2: any, action2: any): void;
-  _matchAsSchema(expr: any, map: any, bindings: any): boolean;
-  _matchAsPattern(term: any, map: any): any;
-  _asPattern(term: any): any;
-  searchMost(fn: any, path: any, bindings: any): any;
-  _nthArg(n: any): any;
-}
-
 /**
  * Constructor for Call expressions.
  */
@@ -4023,41 +3818,6 @@ _nthArg(n) {
 }
 
 //// Lambda
-
-export interface FooLambda extends Expr {
-  // constructor(bound: any, body: any);
-  // __bound: any;
-  // __body: any;
-  // set bound(v: any);
-  // get bound(): any;
-  // set body(term: any);
-  // get body(): any;
-  _toString(): any;
-  dump(): string;
-  _subFree(map: any, freeVars: any, allNames: any): any;
-  hasFreeName(name: any): any;
-  asArray(): Lambda[];
-  _addNames(map: any): void;
-  _addFreeVars(set: any, bindings: any): void;
-  _addFreeVarSet(set: any, bindings: any): void;
-  _addNewConstants(set: any, bindings: any): void;
-  _boundNames(path: any, bindings: any): any;
-  replaceAt(path: any, xformer: any): any;
-  matches(expr: any, bindings: any): any;
-  _traverse(fn: any, rpath: any): void;
-  search(pred: any, bindings?: any): any;
-  generalizeTF(expr2: any, newVar: any, bindings: any): Lambda;
-  _path(pred: any, revPath: any): any;
-  _prettyPath(pred: any, pth: any): any;
-  _bindingPath(pred: any, revPath: any): any;
-  _checkSegment(path: any): void;
-  findAll(name: any, action1: any, expr2: any, action2: any): void;
-  _matchAsSchema(expr: any, map: any, bindings: any): any;
-  _matchAsPattern(term: any, map: any): any;
-  _asPattern(term: any): any;
-  searchMost(fn: any, path: any, bindings: any): any;
-  _nthArg(n: any): void;
-}
 
 /**
  * Make a variable binding from a Atom and an Expr.  Any occurrences
