@@ -44,45 +44,6 @@ window.$ = function(x) {
 }
 jQuery.extend($, jQuery);
 
-export declare class ToySet {
-  constructor(stringifier?: any);
-  map: {};
-  stringifier: any;
-  add(value: any): this;
-  addAll(more: any): this;
-  has(value: any): any;
-  size(): number;
-  superset(other: any): boolean;
-  equals(other: any): boolean;
-  remove(value: any): void;
-  each(fn: any, thisObj?: any): any;
-  isEmpty(): boolean;
-  clear(): void;
-  choose(): any;
-  values(): any[];
-  toString(): any;
-}
-
-export declare namespace ToySet {
-  //function from_(container: any): any;
-}
-
-export declare class ToyMap {
-  constructor(stringifier: any, dfault: any);
-  map: {};
-  stringifier: any;
-  dfault: any;
-  set(key: any, value: any): void;
-  has(key: any): any;
-  get(key: any): any;
-  remove(key: any): void;
-  each(fn: any, thisObj: any): any;
-  size(): number;
-  isEmpty(): boolean;
-}
-
-//declare namespace ToyMap {}
-
   // This ensures that all of our scripts can refer to _paq even in
   // strict mode, and even if Matomo support is not loaded.  If Matomo
   // loads later, it will set up _paq when it loads because it checks
@@ -1821,18 +1782,26 @@ export declare class ToyMap {
 
   //// ToySet
 
-  export function ToySet(stringifier) {
-    this.map = {};
-    this.stringifier = stringifier || String;
-  }
-  // Toy['ToySet'] = ToySet;
+  export class ToySet{
+    map = {};
+    stringifier;
 
-  export var emptySet = Object.freeze(new ToySet());
+    /**
+     * Adds all of the elements of the container to a new ToySet
+     * and returns that.
+     */
+    static from_(container) {
+      return new ToySet().addAll(container);
+    };
+    
+    constructor(stringifier?) {
+      this.stringifier = stringifier || String;
+    }
 
   /**
    * Add an element, returning this.
    */
-  ToySet.prototype.add = function(value) {
+  add(value) {
     this.map[this.stringifier(value)] = value;
     return this;
   };
@@ -1841,7 +1810,7 @@ export declare class ToyMap {
    * Add all the values in the given array or ToySet to this ToySet.
    * Return this.
    */
-  ToySet.prototype.addAll = function(more) {
+  addAll(more) {
     var self = this;
     function add(value) { self.add(value); }
     if (more instanceof ToySet) {
@@ -1851,21 +1820,12 @@ export declare class ToyMap {
     }
     return self;
   };
-
-  /**
-   * Adds all of the elements of the container to a new ToySet
-   * and returns that.
-   */
-  
-  ToySet.from_ = function(container) {
-    return new ToySet().addAll(container);
-  };
   
 
   /**
    * Does the set contain the element (one with the same key)?
    */
-  ToySet.prototype.has = function(value) {
+  has(value) {
     return hasOwn(this.map, this.stringifier(value));
   };
 
@@ -1875,7 +1835,7 @@ export declare class ToyMap {
    * Returns a boolean value indicating whether this contains all the
    * elements of the other collection.
    */
-  ToySet.prototype.superset = function(other) {
+  superset(other) {
     var self = this;
     var result = true;
     other.each(function(o) {
@@ -1893,14 +1853,14 @@ export declare class ToyMap {
    *
    * TODO: Consider making more efficient.
    */
-  ToySet.prototype.equals = function(other) {
+  equals(other) {
     return this.size() === other.size() && this.superset(other);
   };
 
   /**
    * Remove the element.
    */
-  ToySet.prototype.remove = function(value) {
+  remove(value) {
     delete this.map[this.stringifier(value)];
   };
 
@@ -1911,7 +1871,7 @@ export declare class ToyMap {
    * returns any value other than "undefined" that value becomes the
    * return value of this method, and iteration ends.
    */
-  ToySet.prototype.each = function(fn, thisObj) {
+  each(fn, thisObj?) {
     var map = this.map
     for (var key in map) {
       var result = fn.call(thisObj, map[key], key);
@@ -1924,7 +1884,7 @@ export declare class ToyMap {
   /**
    * Count of distinct elements.
    */
-  ToySet.prototype.size = function() {
+  size() {
     var counter = 0;
     this.each(function() { counter++; });
     return counter;
@@ -1933,7 +1893,7 @@ export declare class ToyMap {
   /**
    * Is the set empty?
    */
-  ToySet.prototype.isEmpty = function() {
+  isEmpty() {
     for (var key in this.map) {
       return false;
     }
@@ -1943,7 +1903,7 @@ export declare class ToyMap {
   /**
    * Remove all members of this ToySet.
    */
-  ToySet.prototype.clear = function() {
+  clear() {
     var map = this.map;
     for (var key in map) {
       delete map[key];
@@ -1953,7 +1913,7 @@ export declare class ToyMap {
   /**
    * Returns an element of the set or undefined if the set is empty.
    */
-  ToySet.prototype.choose = function() {
+  choose() {
     for (var key in this.map) {
       return this.map[key];
     }
@@ -1962,16 +1922,20 @@ export declare class ToyMap {
   /**
    * Returns an iterable (actually an array) of the values in the ToySet.
    */
-  ToySet.prototype.values = function() {
+  values() {
     var result = [];
     this.each(x => void result.push(x));
     return result;
   };
 
-  ToySet.prototype.toString = function() {
+  toString() {
     var values = this.values().map(function(x) { return x.toString(); });
     return format('{1}({2})', this.constructor.name || '', values);
   };
+
+}
+  
+  export var emptySet = Object.freeze(new ToySet());
 
 
   //// ToyMap
@@ -1981,30 +1945,34 @@ export declare class ToyMap {
    * string, and a default value when getting a key that is not in the
    * map.  The default default is the undefined value.
    */
-  export function ToyMap(stringifier, dfault) {
-    this.map = {};
-    this.stringifier = stringifier || String;
-    this.dfault = dfault;
-  }
+  export class ToyMap {
+    map = {};
+    stringifier;
+    dfault;
+
+    constructor(stringifier, dfault?) {
+      this.stringifier = stringifier || String;
+      this.dfault = dfault;
+    }
 
   /**
    * Set the value of a map element.
    */
-  ToyMap.prototype.set = function(key, value) {
+  set(key, value) {
     this.map[this.stringifier(key)] = value;
   };
 
   /**
    * Does it have an element with matching key?
    */
-  ToyMap.prototype.has = function(key) {
+  has(key) {
     return hasOwn(this.map, this.stringifier(key));
   };
 
   /**
    * Gets the value at a key or undefined if no such element.
    */
-  ToyMap.prototype.get = function(key) {
+  get(key) {
     var map = this.map;
     var k = this.stringifier(key);
     return hasOwn(map, k) ? map[k] : this.dfault;
@@ -2013,7 +1981,7 @@ export declare class ToyMap {
   /**
    * Remove any element with matching key.
    */
-  ToyMap.prototype.remove = function(key) {
+  remove(key) {
     delete this.map[this.stringifier(key)];
   };
 
@@ -2023,7 +1991,7 @@ export declare class ToyMap {
    * function is not the undefined value, immediately returns that
    * value.
    */
-  ToyMap.prototype.each = function(fn, thisObj) {
+  each(fn, thisObj?) {
     var map = this.map
     for (var key in map) {
       var result = fn.call(thisObj, map[key], key);
@@ -2036,7 +2004,7 @@ export declare class ToyMap {
   /**
    * Number of distinct keys in the map.
    */
-  ToyMap.prototype.size = function() {
+  size() {
     var counter = 0;
     this.each(function() { counter++; });
     return counter;
@@ -2045,12 +2013,14 @@ export declare class ToyMap {
   /**
    * Is it empty?
    */
-  ToyMap.prototype.isEmpty = function() {
+  isEmpty() {
     for (var key in this.map) {
       return false;
     }
     return true;
   };
+
+}
 
   //// Array snapshots
 

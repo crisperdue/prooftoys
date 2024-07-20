@@ -97,7 +97,7 @@ const chainMap = new Map();
   ops.forEach(a => a.forEach(op => chainMap.set(op, a)));
 }
 
-const _searchTermsOps = Toy.ownProperties({'+': true, '-': true, '=': true});
+const _searchTermsOps = ownProperties({'+': true, '-': true, '=': true});
 
 //// Utility functions
 
@@ -384,14 +384,16 @@ export function identifyTerm(term) {
  * A TermSet is simply a set of terms distinguished by their "dump"s
  * as strings.  Variable scoping is not accounted for.
  */
-export function TermSet(term?: Expr) {
-  ToySet.call(this, identifyTerm);
-  if (term) {
-    this.add(term);
+export class TermSet extends ToySet {
+  constructor(term?: Expr) {
+    super(identifyTerm);
+    if (term) {
+      this.add(term);
+    }
   }
 }
-Toy.extends_(TermSet, ToySet);
 
+/*
 export declare class TermMap extends ToyMap {
   constructor();
   counter: number;
@@ -405,6 +407,7 @@ export declare class TermMap extends ToyMap {
   _set: any;
   set(term: any, name: any): never;
 }
+  */
 
 /**
  * A map from terms to a set of variables with standard names.  The
@@ -418,27 +421,28 @@ export declare class TermMap extends ToyMap {
  * only useful for helping to convert a wff to standard variable
  * names.
  */
-export function TermMap() {
-  ToyMap.call(this, identifyTerm);
-  this.counter = 1;
-  this.subst = {};
+export class TermMap extends ToyMap {
+  counter = 1;
+  subst = {};
   // Array of current bound variables, outermost first.
-  this.boundVars = [];
+  boundVars = [];
   // Arrays of variables and terms shadowed by currently bound variables,
   // in the same order as boundVars.  The vars are ones already generated
   // for this TermMap.  If a bound variable does not shadow an existing
   // mapping, the entries here are null.
-  this.shadowVars = [];
-  this.shadowTerms = [];
-}
-Toy.extends_(TermMap, ToyMap);
+  shadowVars = [];
+  shadowTerms = [];
+
+  constructor() {
+    super(identifyTerm);
+  }
 
 /**
  * Ensure the term is in this map.  If not already present, assign it
  * a new variable as its value.  In all cases return the Atom assigned
  * to the term.  Maintains the "subst" field as well.
  */
-TermMap.prototype.addTerm = function(term) {
+addTerm(term) {
   if (!this.has(term)) {
     var name = 'a' + this.counter++;
     this._set(term, new Atom(name));
@@ -451,7 +455,7 @@ TermMap.prototype.addTerm = function(term) {
  * Adds a new variable to the map for an inner binding and returns it.
  * The argument is the variable in the original Lambda.
  */
-TermMap.prototype.bindVar = function(vbl) {
+bindVar(vbl) {
   var name = 'a' + this.counter++
   var newVar = new Atom(name);
   this.boundVars.push(newVar);
@@ -473,7 +477,7 @@ TermMap.prototype.bindVar = function(vbl) {
  * the original expression, the bound variable had the same name as
  * one in an outer scope.
  */
-TermMap.prototype.unbind = function() {
+unbind() {
   var term = this.shadowTerms.pop();
   var v = this.shadowVars.pop();
   this.boundVars.pop();
@@ -483,11 +487,15 @@ TermMap.prototype.unbind = function() {
 };
 
 // Make TermMap.set private.
-TermMap.prototype._set = ToyMap.prototype.set;
+_set(term, name) {
+  return super.set(term, name);
+}
 
-TermMap.prototype.set = function(term, name) {
+set(term, name) {
   throw new Error('Unsupported: TermMap.set');
 };
+
+}
 
 //// Expr -- the base class
 
