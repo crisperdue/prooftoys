@@ -1,45 +1,10 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
+'use strict';
+
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 namespace Toy {
-
-'use strict';
-
-var Path = Toy.Path;
-var Bindings = Toy.Bindings;
-var getBinding = Toy.getBinding;
-const assert = Toy.assertTrue;
-var abort = Toy.abort;
-var check = Toy.check;
-var ToySet = Toy.ToySet;
-var ToyMap = Toy.ToyMap;
-
-// Code in this file may reference xutil.js, but handle forward
-// references properly.
-
-// Forward references to xutil.js.
-var termify;
-var isInfixDesired;
-var infixCall;
-var parse;
-var lambda;
-
-// Resolve variables defined in xutil.js.  In loaded modules, here
-// xutil.js, the call to "trigger" invokes handlers immediately.
-//
-// When using ES6 modules this initialization will no longer be
-// needed.
-//
-// TODO: Replace top-level usage of $(function ... ) with ordinary
-//   top-level execution except where we need the DOM available.
-Toy.loaded.on('xutil', function() {
-    termify = Toy.termify;
-    isInfixDesired = Toy.isInfixDesired;
-    infixCall = Toy.infixCall;
-    parse = Toy.parse;
-    lambda = Toy.lambda;
-});
 
 //// Type decls
 
@@ -61,7 +26,7 @@ export let alphaAndOr = true;
 
 // Translations of names, applied during conversion to Unicode.
 // (When generating HTML and/or Unicode text.)
-export let unicodeNames = {
+export const unicodeNames = {
   '==': '\u2261',     // Triple equal (equiv)
   // or '==': '\u21d4',     // Two-headed horizontal double arrow.
   '&': '\u2227',      // &and;
@@ -98,7 +63,7 @@ export let unicodeNames = {
  * lambdas, a count of the number of expansions applied to
  * each such term.  Maybe a good idea, but currently unused.
  */
-export let betaExpansions = new WeakMap();
+export const betaExpansions = new WeakMap();
 
 /**
  * Set of all names of constants that are used in any statement
@@ -118,7 +83,7 @@ export let showTypes;
 var useUnicode = false;
 
 // Defines aliases that affect both printing and parsing.
-var aliases = {
+const aliases = {
   // Note that limiting '==' to boolean inputs would make it more than
   // just an alias as currently defined.
   '==': '=',
@@ -126,13 +91,13 @@ var aliases = {
 
 
 // TODO: Probably remove this and nearestChain.
-var chainMap = new Map();
+const chainMap = new Map();
 {
   const ops=[['+', '-'], ['*', '/'], ['&'], ['|']];
   ops.forEach(a => a.forEach(op => chainMap.set(op, a)));
 }
 
-var _searchTermsOps = Toy.ownProperties({'+': true, '-': true, '=': true});
+const _searchTermsOps = Toy.ownProperties({'+': true, '-': true, '=': true});
 
 //// Utility functions
 
@@ -974,7 +939,7 @@ export abstract class Expr {
  * Returns the LHS (left-hand side) of a function of two arguments.
  */
  getLeft() {
-  // TODO: unsafe
+  // TODO: Fix - unsafe
   return (this as unknown as Call).fn.arg;
 };
 
@@ -982,7 +947,7 @@ export abstract class Expr {
  * Returns the RHS (right-hand side) of a function of two arguments.
  */
  getRight() {
-  // TODO: unsafe
+  // TODO: Fix - unsafe
   return (this as unknown as Call).arg;
 };
 
@@ -998,7 +963,7 @@ export abstract class Expr {
  * Returns the function in a call that has two arguments.
  */
  getBinOp() {
-  // TODO: unsafe
+  // TODO: Fix - unsafe
   return (this as any).fn.fn;
 };
 
@@ -1294,7 +1259,7 @@ export abstract class Expr {
  getNumValue() {
   var self = this;
   assert(this.isNumeral(), 'Not a numeral: {1}', self);
-  return (this as unknown as Atom)._value;  // TODO: unsafe
+  return (this as unknown as Atom)._value;  // TODO: Fix - unsafe
 }
 
 /**
@@ -1310,7 +1275,7 @@ export abstract class Expr {
  */
  getStringValue() {
   assert(this.isString(), 'Not a string literal: {1}', this);
-  return (this as unknown as Atom)._value;  // TODO: unsafe
+  return (this as unknown as Atom)._value;  // TODO: Fix - unsafe
 };
 
 /**
@@ -3313,9 +3278,7 @@ _addFreeVarSet(set, bindings?) {
 
 }
 
-// Atom.prototype._addFreeVarSet = Atom.prototype._addFreeVars;
-
-//// Utilities for Atoms
+//// Utilities applicable to Atoms
 
 /**
  * Return the Atom v, or if the argument is a string, create a new
@@ -3401,17 +3364,15 @@ function _genBoundVar(name, freeVars) {
 //// Call
 
 /**
- * 
- * Keys in this object are legitimate paths to apply to a Call.
- */
-var _callSegmentNames = {fn: true, arg: true};
-
-var _binopSegmentNames = {left: true, right: true, binop: true};
-
-/**
  * Constructor for Call expressions.
  */
 export class Call extends Expr {
+  /**
+   * Keys in this object are legitimate paths to apply to a Call.
+   */
+  static readonly _callSegmentNames = {fn: true, arg: true};
+  static readonly _binopSegmentNames = {left: true, right: true, binop: true};
+
   _fn;
   _arg;
 
@@ -3743,8 +3704,8 @@ _bindingPath(pred, revPath) {
 
 _checkSegment(path) {
   assert(this.isCall2()
-         ? path.segment in _binopSegmentNames 
-         : path.segment in _callSegmentNames,
+         ? path.segment in Call._binopSegmentNames 
+         : path.segment in Call._callSegmentNames,
          'Path segment {1} is not applicable to Call {2}', path.segment, this);
 };
 
