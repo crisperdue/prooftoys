@@ -343,6 +343,16 @@ export function addFnMatch(schema, fn, expr, map, renamings) {
   return true;
 }
 
+/**
+ * Check that the given number is within the range where integer
+ * arithmetic is exact, returning it if so, raising an Error if not.
+ */
+export function checkRange(number) {
+  assert(Math.abs(number) <= Toy.MAX_INT,
+         'Number out of range: {1}', number);
+  return number;
+}
+
 
 /**
  * Makes a new TermSet of all the conjuncts obtained by
@@ -760,7 +770,7 @@ TermMap.prototype.set = function(term, name) {
 */
 
 
-export interface Expr {
+export interface Foo1 {
   fromStep: Expr;
 
   matches(term: any, bindings?: any): boolean;
@@ -886,7 +896,7 @@ export interface Expr {
  * Superclass for terms of all kinds: Atom, Call, Lambda.
  * See internal comments for details.
  */
-export class Expr {
+export abstract class Expr {
   __type;
   __memos;
   wff;
@@ -899,6 +909,28 @@ export class Expr {
   ordinal;
   // If rendered:
   rendering;
+  // Necessary??
+  _string;
+
+  // Weird:
+  fromStep;
+  // Obsolete:
+  __var;
+
+  abstract _toString(foo?);
+  abstract _nthArg(n);
+  abstract _subFree(a, b, c);
+  abstract _addFreeVars(a, b);
+  abstract _addFreeVarSet(a, b);
+  abstract _boundNames(a, b);
+  abstract _addNames(a);
+  abstract _checkSegment(a);
+  abstract _prettyPath(a, b);
+  abstract _bindingPath(a, b);
+  abstract _path(a, b);
+  abstract _traverse(a, b);
+  abstract _addMathVars(a, b);
+  abstract matches(a): boolean;
 
   constructor() {
     this.__type = null;
@@ -932,13 +964,13 @@ export class Expr {
   set memos(v) {
     abort('Readonly: memos');
   }
-}
+
 
 /**
  * Converts to a string.  If "simply", even operators
  * are presented without parentheses.
  */
-Expr.prototype.toString = function(simply?) {
+ toString(simply?) {
   const str = this._toString();
   if (simply) {
     return str;
@@ -955,7 +987,7 @@ Expr.prototype.toString = function(simply?) {
  * type information for variables and potentially more.
  * Level defaults to 'vars', but can be 'atoms' or 'testing'.
  */
-Expr.prototype.show = function(level) {
+ show(level) {
   try {
     Toy.showTypes = level || 'testing';
     return this.toString();
@@ -974,7 +1006,7 @@ Expr.prototype.show = function(level) {
  *
  * This is a bit of a misnomer right now.
  */
-Expr.prototype.toUnicode = function(simply?) {
+ toUnicode(simply?) {
   const saved = useUnicode;
   useUnicode = true;
   try {
@@ -990,7 +1022,7 @@ Expr.prototype.toUnicode = function(simply?) {
  * If trimmed output is requested and there is a leading
  * open parenthesis, trim it and the closing one.
  */
-Expr.prototype.toHtml = function(trimmed) {
+ toHtml(trimmed) {
   // Really toUnicode does produce marked-up HTML for
   // e.g. exponentiation.  Since <, >, and & are separated by spaces,
   // this is adequate in practice.
@@ -1004,7 +1036,7 @@ Expr.prototype.toHtml = function(trimmed) {
  * given name, with one argument.  Or if name is not given, a call to
  * any named function.
  */
-Expr.prototype.isCall1 = function(name?) {
+ isCall1(name?): this is Call {
   if (this instanceof Call) {
     return (this.fn instanceof Atom &&
             (name == null || this.fn.name == name));
@@ -1018,7 +1050,7 @@ Expr.prototype.isCall1 = function(name?) {
  * with the given name, with two arguments.  Or if name is not given,
  * a call to any named function.
  */
-Expr.prototype.isCall2 = function(name?) {
+ isCall2(name?): this is Call {
   if (this instanceof Call) {
     var left = this.fn;
     return left instanceof Call
@@ -1032,14 +1064,14 @@ Expr.prototype.isCall2 = function(name?) {
 /**
  * Tests whether this Expr is conditional.
  */
-Expr.prototype.implies = function() {
+ implies() {
   return this.isCall2('=>');
 };
 
 /**
  * True iff this is a call to a lambda expression.
  */
-Expr.prototype.isLambdaCall = function() {
+ isLambdaCall() {
   return this instanceof Call && this.fn instanceof Lambda;
 };
 
@@ -1051,7 +1083,7 @@ Expr.prototype.isLambdaCall = function() {
  * call written as (f a b c) gives the Atom "f" as element 0, "a"
  * as element 1, "b" as element 2, and "c" as element 3.
  */
-Expr.prototype.nthArg = function(n) {
+ nthArg(n) {
   var result = this._nthArg(n);
   assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
   return result;
@@ -1060,14 +1092,14 @@ Expr.prototype.nthArg = function(n) {
 /**
  * Returns the LHS (left-hand side) of a function of two arguments.
  */
-Expr.prototype.getLeft = function() {
+ getLeft() {
   return this.fn.arg;
 };
 
 /**
  * Returns the RHS (right-hand side) of a function of two arguments.
  */
-Expr.prototype.getRight = function() {
+ getRight() {
   return this.arg;
 };
 
@@ -1075,14 +1107,14 @@ Expr.prototype.getRight = function() {
  * Returns whether this is a Call with a function part that is also a
  * Call.
  */
-Expr.prototype.isBinOp = function() {
+ isBinOp() {
   return this instanceof Call && this.fn instanceof Call;
 };
 
 /**
  * Returns the function in a call that has two arguments.
  */
-Expr.prototype.getBinOp = function() {
+ getBinOp() {
   return this.fn.fn;
 };
 
@@ -1093,18 +1125,18 @@ Expr.prototype.getBinOp = function() {
  *
  * TODO: Make this available for Step objects.
  */
-Expr.prototype.getMain = function() {
+ getMain() {
   return this.isCall2('=>') ? this.getRight() : this;
 };
 
 /**
  * Returns the assumptions of a conditional, if any, else falsy.
  */
-Expr.prototype.getAsms = function() {
+ getAsms() {
   return this.isCall2('=>') && this.getLeft();
 };
 
-Expr.prototype.isTypeTest = function() {
+ isTypeTest() {
   return (this.isCall1() &&
           (this.fn.name === 'R' ||
            this.fn.name === 'NN' ||
@@ -1114,7 +1146,7 @@ Expr.prototype.isTypeTest = function() {
 /**
  * Returns truthy iff this looks like a subgoal.
  */
-Expr.prototype.likeSubgoal = function() {
+ likeSubgoal() {
   return (!this.isTypeTest() &&
           !this.matchSchema('not (x = y)') &&
           !this.matchSchema('x != y'));
@@ -1125,7 +1157,7 @@ Expr.prototype.likeSubgoal = function() {
  * assumptions, currently defined as anything other than a real number
  * assumption or an inequality condition.
  */
-Expr.prototype.hasSubgoal = function() {
+ hasSubgoal() {
   const asms = this.getAsms();
   return asms && asms.scanConj(x => x.likeSubgoal());
 };
@@ -1135,7 +1167,7 @@ Expr.prototype.hasSubgoal = function() {
  * has been previously set.  Use with caution (in type inference
  * code).
  */
-Expr.prototype._withType = function(type) {
+ _withType(type) {
   assert(!this.type, 'Type of {1} is already set', this);
   this.__type = type;
   return this;
@@ -1146,7 +1178,7 @@ Expr.prototype._withType = function(type) {
  * if no type has been previously set.  Use with caution (in type
  * inference code).
  */
-Expr.prototype._typeFrom = function(expr) {
+ _typeFrom(expr) {
   assert(!this.type, 'Type of {1} is already set', this);
   this.__type = expr.type;
   return this;
@@ -1155,14 +1187,14 @@ Expr.prototype._typeFrom = function(expr) {
 /**
  * Tests if this is an Atom with name in the given list of strings.
  */
-Expr.prototype.in = function(list) {
+ in(list) {
   return this instanceof Atom && list.indexOf(this.name) >= 0;
 };
 
 /**
  * Returns true iff this term is atomic (a variable or constant).
  */
-Expr.prototype.isAtomic = function() {
+ isAtomic() {
   return this instanceof Atom;
 };
 
@@ -1170,7 +1202,7 @@ Expr.prototype.isAtomic = function() {
  * Truthy iff the given Expr (or step) is not only renderable,
  * but has a rendering.
  */
-Expr.prototype.isRendered = function() {
+ isRendered() {
   return !!this.node;
 };
 
@@ -1179,13 +1211,13 @@ Expr.prototype.isRendered = function() {
  * reverse paths to all of them as an Array.  The result paths
  * segments are all "fn", "arg", or "body", i.e. not prettified.
  */
-Expr.prototype.locateFree = function(name) {
+ locateFree(name) {
   var paths = [];
   this._locateFree(name, Path.empty, paths);
   return paths;
 }
 
-Expr.prototype._locateFree = function(name, path, paths) {
+ _locateFree(name, path, paths) {
   if (this instanceof Atom) {
     if (this.name === name) {
       paths.push(path);
@@ -1212,7 +1244,7 @@ Expr.prototype._locateFree = function(name, path, paths) {
  *
  * TODO: Allow names of bound variables to differ.
  */
-Expr.prototype.sameAs = function(other, andTypes=false, exact=false) {
+ sameAs(other, andTypes=false, exact=false) {
   // Based on the assumption that typed inputs are properly typed,
   // this only checks types of Atoms, because the types of the Atoms
   // determines all other types in the term.
@@ -1246,7 +1278,7 @@ Expr.prototype.sameAs = function(other, andTypes=false, exact=false) {
  * returning a Set of Atoms within this structure that represent free
  * occurrences of the names.
  */
-Expr.prototype.occurrences = function(names) {
+ occurrences(names) {
   const result = new Set();
   const search = term => {
     const c = term.constructor;
@@ -1272,7 +1304,7 @@ Expr.prototype.occurrences = function(names) {
 /**
  * True iff this is an Atom named as a variable.
  */
-Expr.prototype.isVariable = function() {
+ isVariable() {
   // this._value set in constructor.
   return this instanceof Atom && this._value === undefined;
 };
@@ -1283,7 +1315,7 @@ Expr.prototype.isVariable = function() {
  * empty string.  (With complex numbers, "i" becomes another named
  * constant that is also a literal.)
  */
-Expr.prototype.isNamedConst = function() {
+ isNamedConst() {
   // In some sense this check is optional:
   if (!(this instanceof Atom)) {
     return false;
@@ -1297,7 +1329,7 @@ Expr.prototype.isNamedConst = function() {
 /**
  * True iff this is a var with the given name.
  */
-Expr.prototype.hasName = function(name) {
+ hasName(name) {
   return this instanceof Atom && this.name === name;
 };
 
@@ -1305,7 +1337,7 @@ Expr.prototype.hasName = function(name) {
  * Returns a set of the names of named constants found within this
  * term.
  */
-Expr.prototype.constantNames = function() {
+ constantNames() {
   const result = new Set();
   const traverse = term => {
     const ct = term.constructor;
@@ -1330,7 +1362,7 @@ Expr.prototype.constantNames = function() {
  * True iff this is a Atom that is a constant.  If the optional name
  * is given, this constant must have the given name.
  */
-Expr.prototype.isConst = function(opt_name) {
+ isConst(opt_name?) {
   if (!(this instanceof Atom) || this._value === undefined) {
     return false;
   }
@@ -1340,7 +1372,7 @@ Expr.prototype.isConst = function(opt_name) {
 // True iff the expression is a literal constant.
 // Currently includes 0 and 1, though that probably
 // should change.
-Expr.prototype.isLiteral = function() {
+ isLiteral() {
   // Value must be neither null nor undefined.
   return this instanceof Atom && this._value != null;
 }
@@ -1352,7 +1384,7 @@ Expr.prototype.isLiteral = function() {
  * Currently includes double-struck letters for common numerical types.
  * TODO: Consider simply special-casing quantifier symbols instead of this.
  */
-Expr.prototype.displaysIdentifier = function() {
+ displaysIdentifier() {
   if (this instanceof Atom) {
     var uni = this.toUnicode();
     return (uni.match(identifierRegex) ||
@@ -1363,7 +1395,7 @@ Expr.prototype.displaysIdentifier = function() {
 /**
  * Is this a numeric literal?
  */
-Expr.prototype.isNumeral = function() {
+ isNumeral() {
   return this instanceof Atom && typeof this._value == 'number';
 };
 
@@ -1371,26 +1403,16 @@ Expr.prototype.isNumeral = function() {
  * Check that the given value is numeric, raise an error if not,
  * return the value if it is.
  */
-Expr.prototype.getNumValue = function() {
+ getNumValue() {
   var self = this;
   assert(this.isNumeral(), 'Not a numeral: {1}', self);
   return this._value;
 }
 
 /**
- * Check that the given number is within the range where integer
- * arithmetic is exact, returning it if so, raising an Error if not.
- */
-export function checkRange(number) {
-  assert(Math.abs(number) <= Toy.MAX_INT,
-         'Number out of range: {1}', number);
-  return number;
-}
-
-/**
  * Is this a string literal?
  */
-Expr.prototype.isString = function() {
+ isString() {
   return this instanceof Atom && typeof this._value == 'string';
 };
 
@@ -1398,7 +1420,7 @@ Expr.prototype.isString = function() {
  * Return the string value of a string literal.  Throws if not
  * a string literal.
  */
-Expr.prototype.getStringValue = function() {
+ getStringValue() {
   assert(this.isString(), 'Not a string literal: {1}', this);
   return this._value;
 };
@@ -1406,7 +1428,7 @@ Expr.prototype.getStringValue = function() {
 /**
  * This is a constant T or F.
  */
-Expr.prototype.isBoolConst = function() {
+ isBoolConst() {
   return (this instanceof Atom &&
           (this.name == 'T' || this.name == 'F'));
 };
@@ -1416,14 +1438,14 @@ Expr.prototype.isBoolConst = function() {
  * Currently this means just a call on R, but extension to other
  * types is intended.
  */
-Expr.prototype.isTypeCond = function() {
+ isTypeCond() {
   return this.isCall1('R') && this.arg.isVariable();
 };
 
 /**
  * Does this Expr have any variable(s)?
  */
-Expr.prototype.hasVars = function() {
+ hasVars() {
   var map = this.freeVars();
   return !Toy.isEmpty(map);
 };
@@ -1433,7 +1455,7 @@ Expr.prototype.hasVars = function() {
  * internally of the form ((op arg1) arg2), where op is a symbol
  * defined to display as infix.
  */
-Expr.prototype.isInfixCall = function() {
+ isInfixCall() {
   return (this instanceof Call
           && this.fn instanceof Call
           && this.fn.fn instanceof Atom
@@ -1445,7 +1467,7 @@ Expr.prototype.isInfixCall = function() {
  * this expression.  If a name is given, uses that name as the
  * starting point for the name of the new variable, otherwise "x".
  */
-Expr.prototype.freshVar = function(name) {
+ freshVar(name) {
   name = name || 'x';
   return genVar(name, this.freeVars());
 };
@@ -1458,7 +1480,7 @@ Expr.prototype.freshVar = function(name) {
  * the result has the form (((this op e1) op e2) ... ), where e1
  * ... are the operands of the expr argument taken as a chain.
  */
-Expr.prototype.concat = function(expr, op) {
+ concat(expr, op) {
   if (!expr) {
     return this;
   }
@@ -1487,7 +1509,7 @@ Expr.prototype.concat = function(expr, op) {
  * term also matches terms that differ from the first binding by
  * change of bound variable names.
  */
-Expr.prototype.matchPattern = function(pattern_arg) {
+ matchPattern(pattern_arg) {
   var pattern = termify(pattern_arg);
   var subst = {};
   var ok = pattern._matchAsPattern(this, subst, null);
@@ -1503,7 +1525,7 @@ Expr.prototype.matchPattern = function(pattern_arg) {
  *
  * This embodies a policy for rewriting.
  */
-Expr.prototype.pathToSchema = function() {
+ pathToSchema() {
   const self = this;
   const p = Toy.asPath;
   if (self.implies()) {
@@ -1542,7 +1564,7 @@ Expr.prototype.pathToSchema = function() {
  *   part of the substitution operation, as indicated by the extended
  *   information associated with the computed substitution.
  */
-Expr.prototype.matchSchema = function(schema_arg) {
+ matchSchema(schema_arg): (null | Record<string, Expr>) {
   const schema = schema_arg instanceof Expr ? schema_arg : parse(schema_arg);
   var substitution = {};
   var result = schema._matchAsSchema(this, substitution, null);
@@ -1554,7 +1576,7 @@ Expr.prototype.matchSchema = function(schema_arg) {
  * Expr whose names are not keys in the given map (plain object), in
  * lexicographic order.
  */
-Expr.prototype.unmappedVars = function(map) {
+ unmappedVars(map) {
   // Plain object, mapping from name to true.
   var allFree = this.freeVars();
   var result = [];
@@ -1574,7 +1596,7 @@ Expr.prototype.unmappedVars = function(map) {
  * Expr results in an Expr that "matches" the Expr argument of this
  * method.  This does not attempt to match types.
  */
-Expr.prototype.alphaMatch = function(expr_arg) {
+ alphaMatch(expr_arg) {
   var expr = termify(expr_arg);
   var subst = expr.matchSchema(this);
   if (!subst) {
@@ -1595,10 +1617,6 @@ Expr.prototype.alphaMatch = function(expr_arg) {
   return subst;
 };
 
-/**
- * Alternate name for Expr.matchSchema.  The argument is the schema.
- */
-Expr.prototype.findSubst = Expr.prototype.matchSchema;
 
 /**
  * Attempts to match part of this to part of the given schema.  The
@@ -1636,7 +1654,7 @@ Expr.prototype.findSubst = Expr.prototype.matchSchema;
  * TODO: Consider merging this with matchFactPart, creating something
  *   like applyMatchingFact.
  */
-Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
+ matchSchemaPart(path_arg, schema_arg, schema_part) {
   var schema = termify(schema_arg);
   var part = termify(schema_part);
   var targetPath = this.prettifyPath(this.asPath(path_arg));
@@ -1672,7 +1690,7 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  * present in the map, but does not check, update, or unify any
  * type information.  It is essentially first-order.
  */
-Expr.prototype.subFree = function(map_arg) {
+ subFree(map_arg) {
   var map = Object.create(null);
   // Object / set of names of variables that are free in some
   // term of the substitution.
@@ -1711,7 +1729,7 @@ Expr.prototype.subFree = function(map_arg) {
  * TODO: Consider implementing this independently of subFree, as this
  *   can be faster and cleaner.
  */
-Expr.prototype.subFree1 = function(replacement, name) {
+ subFree1(replacement, name) {
   return this.subFree(Toy.object0(name, replacement));
 };
 
@@ -1723,7 +1741,7 @@ Expr.prototype.subFree1 = function(replacement, name) {
  * result will be equivalent to the input term.  The result is
  * untyped.
  */
-Expr.prototype.rename = function(map) {
+ rename(map) {
   const rename = term => {
     const ct = term.constructor;
     if (ct === Atom) {
@@ -1742,7 +1760,7 @@ Expr.prototype.rename = function(map) {
  * part of the step; or if the main is an equivalence or
  * equality, returns the RHS of that.
  */
-Expr.prototype.pathToFocalPart = function() {
+ pathToFocalPart() {
   var main = this.getMain();
   return Toy.asPath(main.isCall2('=')
                     ? '/main/right'
@@ -1753,14 +1771,14 @@ Expr.prototype.pathToFocalPart = function() {
  * Returns truthy iff the path is to the assumptions (left)
  * side of a conditional.
  */
-Expr.prototype.isAsmSide = function(path_arg) {
+ isAsmSide(path_arg) {
   return this.implies() && this.asPath(path_arg).isLeft();
 };
 
 /**
  * Returns truthy iff the path is not to the "isAsmSide".
  */
-Expr.prototype.isMainSide = function(path_arg) {
+ isMainSide(path_arg) {
   return !this.isAsmSide(path_arg);
 };
 
@@ -1769,7 +1787,7 @@ Expr.prototype.isMainSide = function(path_arg) {
  * assumption in its assumptions chain.  Usually "this" is a whole
  * step.
  */
-Expr.prototype.isAsmPath = function(path_arg) {
+ isAsmPath(path_arg) {
   const path = this.asPath(path_arg);
   if (!this.implies() && path.isLeft()) {
     return false;
@@ -1800,7 +1818,7 @@ Expr.prototype.isAsmPath = function(path_arg) {
  * for the potential benefit of performance in things like tautology
  * checking.  For guaranteed ordering, see Expr.freeVarSet.
  */
-Expr.prototype.freeVars = function() {
+ freeVars() {
   // This method gets called a lot for substitutions.
   var byName = new Set<string>();
   this._addFreeVars(byName, null);
@@ -1817,7 +1835,7 @@ Expr.prototype.freeVars = function() {
  * names in traversal order of first occurrence, where function is
  * considered to come before arg in calls.
  */
-Expr.prototype.freeVarSet = function() {
+ freeVarSet() {
   var byName = new Set();
   this._addFreeVarSet(byName, null);
   return byName;
@@ -1827,7 +1845,7 @@ Expr.prototype.freeVarSet = function() {
  * Finds and returns a Set of names of constants in this expression
  * that are not in namedConstants.
  */
-Expr.prototype.newConstants = function(this: EType) {
+ newConstants(this: EType) {
   const names = new Set();
   this._addNewConstants(names, null);
   return names;
@@ -1846,7 +1864,7 @@ Expr.prototype.newConstants = function(this: EType) {
  * TODO: Replace this with a system that provides default types
  *   for variables according to their names.
  */
-Expr.prototype.mathVars = function() {
+ mathVars() {
   var map:Record<string, true> = {}; 
   this._addMathVars(null, map);
   return map;
@@ -1863,7 +1881,7 @@ Expr.prototype.mathVars = function() {
  * If the optional expr is present, uses that as an initial conjunct
  * to add to.
  */
-Expr.prototype.mathVarConditions = function(this:Expr, expr) {
+ mathVarConditions(this:Expr, expr) {
   var real = new Atom('R');
   // Order the names for nice presentation.
   var names = [];
@@ -1889,7 +1907,7 @@ Expr.prototype.mathVarConditions = function(this:Expr, expr) {
  * expression at the location given by the path, represented by an
  * object/map from names to the variable Atom actually bound.
  */
-Expr.prototype.boundNames = function(path) {
+ boundNames(path) {
   path = this.asPath(path);
   var bindings = this._boundNames(path, null);
   var map = {};
@@ -1903,7 +1921,7 @@ Expr.prototype.boundNames = function(path) {
  * Returns a set of the names of variables that are free
  * in the term at the given path, but bound in that context.
  */
-Expr.prototype.freeBound = function(path) {
+ freeBound(path) {
   const target = this.get(path);
   if (target.isBoolean()) {
     const freeHere = target.freeVarSet();
@@ -1916,7 +1934,7 @@ Expr.prototype.freeBound = function(path) {
  * Finds and returns an object/map with all names occurring in this
  * expression as the keys, with values of "true".
  */
-Expr.prototype.allNames = function() {
+ allNames() {
   var byName = {};
   this._addNames(byName);
   return byName;
@@ -1925,7 +1943,7 @@ Expr.prototype.allNames = function() {
  * If this term is a call, returns the first "fn" descendent that
  * is not a Call (thus an atom or lambda), otherwise returns null.
  */
-Expr.prototype.func = function() {
+ func() {
   var term = this;
   if (!(term instanceof Call)) {
     return null;
@@ -1934,13 +1952,13 @@ Expr.prototype.func = function() {
     term = term.fn;
   }
   return term;
-},
+}
 
 /**
  * Returns an array of the actual arguments to the function that
  * would be the result of applying "func" to this Expr.
  */
-Expr.prototype.args = function() {
+ args() {
   var term = this;
   var result = [];
   while (term instanceof Call) {
@@ -1948,21 +1966,21 @@ Expr.prototype.args = function() {
     term = term.fn;
   }
   return result;
-},
+}
 
 /**
  * Returns true iff this is a call to a function of two arguments that
  * is normally rendered and parsed as an infix binary operator.
  */
-Expr.prototype.isBinOpCall = function() {
+ isBinOpCall() {
   return this.isCall2() && isInfixDesired(this.getBinOp());
-},
+}
 
 /**
  * Returns an equivalent path that uses "left", "right", and "binop"
  * to indicate subexpressions of binary operators where possible.
  */
-Expr.prototype.prettifyPath = function(p) {
+ prettifyPath(p) {
   if (p.isEnd()) {
     return p;
   }
@@ -1986,29 +2004,29 @@ Expr.prototype.prettifyPath = function(p) {
   // Return a path with this segment and the prettified tail
   // of this path.
   return new Path(segment, next.prettifyPath(rest));
-},
+}
 
 /**
  * Is it an equation, possibly with assumptions?
  */
-Expr.prototype.isEquation = function() {
+ isEquation() {
   return (this.isCall2('=') ||
           (this.isCall2('=>') && this.getRight().isCall2('=')));
-},
+}
 
 /**
  * Gets the left side of an equation, possibly with assumptions.
  */
-Expr.prototype.eqnLeft = function() {
+ eqnLeft() {
   var eqn = this.isCall2('=>') ? this.getRight() : this;
   eqn.assertCall2('=');
   return eqn.getLeft();
-},
+}
 
 /**
  * Gets the right side of an equation, possibly with assumptions.
  */
-Expr.prototype.eqnRight = function() {
+ eqnRight() {
   var eqn = this.isCall2('=>') ? this.getRight() : this;
   eqn.assertCall2('=');
   return eqn.getRight();
@@ -2020,7 +2038,7 @@ Expr.prototype.eqnRight = function() {
  * with the given name.  If no name is given, any named function will
  * do.
  */
-Expr.prototype.assertCall1 = function(name) {
+ assertCall1(name) {
   assert(this.isCall1(name),
          (name === undefined
            ? 'Not a 1-argument call: {1}'
@@ -2032,7 +2050,7 @@ Expr.prototype.assertCall1 = function(name) {
  * Throw an error if this is not a binary call to the named operator.
  * If no name is given, any named function will do.
  */
-Expr.prototype.assertCall2 = function(name) {
+ assertCall2(name) {
   if (this.isCall2(name)) {
     return;
   }
@@ -2055,7 +2073,7 @@ Expr.prototype.assertCall2 = function(name) {
 /**
  * Returns a string that identifies this expression.
  */
-Expr.prototype.repr = function() {
+ repr() {
   // Currently the same as toString.
   return this.toString();
 };
@@ -2064,7 +2082,7 @@ Expr.prototype.repr = function() {
  * Public version of "get", finding a subexpression from an argument
  * convertible to a path using Expr.asPath.
  */
-Expr.prototype.get = function(arg) {
+ get(arg) {
   let p = this.asPath(arg);
   let next = this;
   while (p !== Path.empty) {
@@ -2079,7 +2097,7 @@ Expr.prototype.get = function(arg) {
  * Returns the subterm at the given reverse path.  If the path does
  * not refer to a term, it is an error.
  */
-Expr.prototype.revGet = function(rpath) {
+ revGet(rpath) {
   if (rpath.isEnd()) {
     return this;
   } else {
@@ -2104,7 +2122,7 @@ Expr.prototype.revGet = function(rpath) {
  * Returns the resulting Path object, which will not start with a
  * /main segment.
  */
-Expr.prototype.asPath = function(arg) {
+ asPath(arg) {
   const self = this;
 
   // If the initial segment of the path is 'main' or 'rt'
@@ -2148,8 +2166,7 @@ Expr.prototype.asPath = function(arg) {
  * Return the subexpression of this referenced by
  * the given segment string.
  */
-Expr.prototype.descend = function(segment) {
-  assert(this !== Path.empty, 'Path is empty');
+ descend(segment) {
   if (this instanceof Call) {
     if (this.fn instanceof Call) {
       if (segment === 'left') {
@@ -2181,7 +2198,7 @@ Expr.prototype.descend = function(segment) {
  * place.  Rightward paths into a conditional replace /right or /arg
  * with /main.  Otherwise it prepends /main.
  */
-Expr.prototype.mainify = function(path) {
+ mainify(path) {
   if (path.segment == 'main') {
     return path;
   } else if (path.isRight() && this.implies()) {
@@ -2199,7 +2216,7 @@ Expr.prototype.mainify = function(path) {
  *
  * TODO: Remove this when there is a Step class.
  */
-Expr.prototype.isProved = function() {
+ isProved() {
   // A property only proof steps have.
   return !!this.ruleName;
 };
@@ -2210,7 +2227,7 @@ Expr.prototype.isProved = function() {
  * Also sets the "fromStep" property to this Step, providing easy
  * access to the step for generated facts, e.g. from arithFact.
  */
-Expr.prototype.asWff = function() {
+ asWff() {
   if (this.isProved()) {
     const wff = (this instanceof Call
                  ? new Call(this.fn, this.arg)._typeFrom(this)
@@ -2233,7 +2250,7 @@ Expr.prototype.asWff = function() {
  * instead.  Alternatively accepts a term to be matched with sameAs,
  * which may be given as a string.
  */
-Expr.prototype.pathTo = function(arg) {
+ pathTo(arg) {
   // TODO: Make a more efficient version that works directly with
   // forward paths.
   let test = arg;
@@ -2250,7 +2267,7 @@ Expr.prototype.pathTo = function(arg) {
  * given term, an Expr or string parsed to one.  Neither is taken as a
  * schma.  Returns a path to the term if found, or null.
  */
-Expr.prototype.find = function(term_arg) {
+ find(term_arg) {
   var term = termify(term_arg);
   function alike(x) {
     return x.matches(term);
@@ -2269,7 +2286,7 @@ Expr.prototype.find = function(term_arg) {
  * TODO: Consider also converting initial /right to /main
  *   and removing mainify.
  */
-Expr.prototype.prettyPathTo = function(pred) {
+ prettyPathTo(pred) {
   if (pred instanceof Expr) {
     var target = pred;
     pred = function(term) { return target == term; };
@@ -2291,7 +2308,7 @@ Expr.prototype.prettyPathTo = function(pred) {
  * The path may be given as a string.  Returns null if there is no
  * such left neighbor.
  */
-Expr.prototype.leftNeighborPath = function(path_arg, operators) {
+ leftNeighborPath(path_arg, operators) {
   var path = Toy.asPath(path_arg);
   if (path.isEnd()) {
     return null;
@@ -2318,7 +2335,7 @@ Expr.prototype.leftNeighborPath = function(path_arg, operators) {
  * Like leftNeighborPath, but gets a right neighbor expression if
  * there is one, or null if not.
  */
-Expr.prototype.rightNeighborPath = function(path_arg, operators) {
+ rightNeighborPath(path_arg, operators) {
   var path = Toy.asPath(path_arg);
   if (path.isEnd()) {
     return null;
@@ -2360,7 +2377,7 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
  * This traces through the path exactly as given, so if the path uses
  * segments such as /left or /binOp, it will skip terms in the result.
  */
-Expr.prototype.ancestors = function(path_arg) {
+ ancestors(path_arg) {
   let p = this.asPath(path_arg);
   let term = this;
   const result = [];
@@ -2381,7 +2398,7 @@ Expr.prototype.ancestors = function(path_arg) {
  * subexpression that passes the given test.  Returns null if none is
  * found.
  */
-Expr.prototype.findParent = function(path_arg, test) {
+ findParent(path_arg, test) {
   var p = this.asPath(path_arg);
   // Expression descended to so far.
   var term = this;
@@ -2407,7 +2424,7 @@ Expr.prototype.findParent = function(path_arg, test) {
 /**
  * Returns the parent subexpression that is a binary call to '=' (or '==')
  */
-Expr.prototype.parentEqn = function(path) {
+ parentEqn(path) {
   return this.findParent(path, function(term) { return term.isCall2('='); });
 };
 
@@ -2423,7 +2440,7 @@ Expr.prototype.parentEqn = function(path) {
  * rightward path segment, and the last one with a leftward path
  * segment.)
  */
-Expr.prototype.chainTerms = function(chainOp) {
+ chainTerms(chainOp) {
   const result = [];
   let node = this;
   if (node.isCall2(chainOp)) {
@@ -2449,7 +2466,7 @@ Expr.prototype.chainTerms = function(chainOp) {
  * a chain of calls to the given chainOp, as for chainTerms, but
  * returning paths rather than terms.
  */
-Expr.prototype.chainPaths = function(chainOp) {
+ chainPaths(chainOp) {
   const result = [];
   let node = this;
   if (node.isCall2(chainOp)) {
@@ -2482,7 +2499,7 @@ Expr.prototype.chainPaths = function(chainOp) {
  *
  * This descends through the path, 
  */
-Expr.prototype.nearestChain = function(path) {
+ nearestChain(path) {
   let p = Toy.asPath(path);
   if (p.isEnd()) {
     return null;
@@ -2551,7 +2568,7 @@ Expr.prototype.nearestChain = function(path) {
  *
  * The variable may be given as a string.  It could also be a term.
  */
-Expr.prototype.movement = function(vbl_arg) {
+ movement(vbl_arg) {
   const vbl = termify(vbl_arg);
   const left = this.eqnLeft();
   const right = this.eqnRight();
@@ -2568,7 +2585,7 @@ Expr.prototype.movement = function(vbl_arg) {
  * left-to-right order.  Alternatively accepts a term to be matched
  * against bound variables in this.
  */
-Expr.prototype.pathToBinding = function(pred) {
+ pathToBinding(pred) {
   if (pred instanceof Expr) {
     var target = pred;
     pred = function(term) { return target.matches(term); };
@@ -2591,7 +2608,7 @@ Expr.prototype.pathToBinding = function(pred) {
  * TODO: Consider replacing traverse and all of its uses with
  *   Expr.searchMost.
  */
-Expr.prototype.traverse = function(fn, rpath) {
+ traverse(fn, rpath) {
   this._traverse(fn, rpath || Path.empty);
 };
 
@@ -2600,7 +2617,7 @@ Expr.prototype.traverse = function(fn, rpath) {
  * N is at least 1.  Meaning to say this and N - 1 levels of calls
  * nested within its function part.
  */
-Expr.prototype.hasArgs = function(n) {
+ hasArgs(n) {
   return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
 };
 
@@ -2610,7 +2627,7 @@ Expr.prototype.hasArgs = function(n) {
  * calculating the depth to reach a Lambda or Atom.  Result is zero if
  * given a Lambda or Atom.
  */
-Expr.prototype.argsPassed = function() {
+ argsPassed() {
   return (this instanceof Call
           ? this.fn.argsPassed() + 1
           : 0);
@@ -2620,7 +2637,7 @@ Expr.prototype.argsPassed = function() {
  * Descends recursively into "fn" parts of this Expr to the first
  * Lambda or Atom, returning it.
  */
-Expr.prototype.funPart = function() {
+ funPart() {
   return (this instanceof Call ? this.fn.funPart() : this);
 };
 
@@ -2631,7 +2648,7 @@ Expr.prototype.funPart = function() {
  * and the rest are labeled hk ... h1 according to their position from
  * the right.
  */
-Expr.prototype.hypLocater = function(hyp) {
+ hypLocater(hyp) {
   var h = new Atom('h');
   // Note: positions start with 1 at the right end of the chain.
   function locater(self, pos) {
@@ -2667,7 +2684,7 @@ Expr.prototype.hypLocater = function(hyp) {
  *
  * TODO: Consider adding Step.eachAsm.
  */
-Expr.prototype.hypMover = function(toMove) {
+ hypMover(toMove) {
   // TODO: Re-implement to work with any conjunct in a tree of conjuncts,
   // replacing its occurrences by T and adding it to the end, then
   // deduplicating with conjunctionArranger.
@@ -2702,7 +2719,7 @@ Expr.prototype.hypMover = function(toMove) {
  * immediately becomes the value of the call.  Otherwise returns
  * the value of the last call to the action.
  */
-Expr.prototype.scanConj = function(action) {
+ scanConj(action) {
   if (this.isCall2('&')) {
     return (this.getLeft().scanConj(action) ||
             action(this.getRight()));
@@ -2718,7 +2735,7 @@ Expr.prototype.scanConj = function(action) {
  * stopping the tree traversal.  The action is applied only to leaf
  * nodes, i.e. ones that are not themselves disjunctions.
  */
-Expr.prototype.scanDisjuncts = function(action) {
+ scanDisjuncts(action) {
   if (this.isCall2('|')) {
     return (this.getLeft().scanDisjuncts(action) ||
             this.getRight().scanDisjuncts(action));
@@ -2734,7 +2751,7 @@ Expr.prototype.scanDisjuncts = function(action) {
  * stopping the tree traversal.  The action is applied only to leaf
  * nodes, i.e. nodes that are not themselves conjunctions.
  */
-Expr.prototype.scanConjuncts = function(action) {
+ scanConjuncts(action) {
   if (this.isCall2('&')) {
     return (this.getLeft().scanConjuncts(action) ||
             this.getRight().scanConjuncts(action));
@@ -2748,7 +2765,7 @@ Expr.prototype.scanConjuncts = function(action) {
  * of this wff.  If the wff is not conditional, returns
  * an empty set.
  */
-Expr.prototype.asmSet = function() {
+ asmSet() {
   return (this.isCall2('=>')
           ? Toy.makeConjunctionSet(this.getLeft())
           : new Toy.TermSet());
@@ -2761,7 +2778,7 @@ Expr.prototype.asmSet = function() {
  * path to refer to the subexpression.  If any action returns a truthy
  * value, immediately returns that value.  See also scanConj.
  */
-Expr.prototype.eachConjunct = function(action, rpath_arg) {
+ eachConjunct(action, rpath_arg) {
   const rpath = rpath_arg ? Toy.asPath(rpath_arg) : Path.empty;
   if (this.isCall2('&')) {
     return this.getLeft()
@@ -2780,7 +2797,7 @@ Expr.prototype.eachConjunct = function(action, rpath_arg) {
  *
  * TODO: Use or remove.
  */
-Expr.prototype.transformConjuncts = function(xform) {
+ transformConjuncts(xform) {
   if (this.isCall2('&')) {
     return infixCall(this.getLeft().transformConjuncts(xform),
                      '&',
@@ -2796,7 +2813,7 @@ Expr.prototype.transformConjuncts = function(xform) {
  * test function.  Returns the truthy value from the test, otherwise
  * a falsy value.
  */
-Expr.prototype.searchTerms = function(test, path) {
+ searchTerms(test, path) {
   if (!path) {
     path = Toy.asPath('');
   }
@@ -2826,7 +2843,7 @@ Expr.prototype.searchTerms = function(test, path) {
  * path passed to the path passed to any patternInfo function that may
  * be called.
  */
-Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
+ walkPatterns(patternInfos, path_arg) {
   var self = this;
   const cxtPath = path_arg || Path.empty;
   function handleTerm(schemaTerm, revPath) {
@@ -2859,7 +2876,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
  * free.  Order is "left to right", actually each function in a Call
  * before its arg, and the occurrence is the first in the order.
  */
-Expr.prototype.freeVarsMap = function() {
+ freeVarsMap() {
   const byName = new Map();
   const boundNames = [];
   const traverse = term => {
@@ -2890,7 +2907,7 @@ Expr.prototype.freeVarsMap = function() {
  *
  * TODO: Consider properly handling type information here.
  */
-Expr.prototype.toKey = function() {
+ toKey() {
   const key = x => {
     const c = x.constructor;
     if (c === Atom) {
@@ -2925,7 +2942,7 @@ Expr.prototype.toKey = function() {
  * step.
  */
 // @ts-ignore
-Expr.prototype.getBase = function() {
+ getBase() {
   var result = this;
   while (result.details) {
     result = result.details;
@@ -2937,7 +2954,7 @@ Expr.prototype.getBase = function() {
  * Get the assumptions of this step if it has any, else null.
  */
 // @ts-ignore
-Expr.prototype.asmPart = function() {
+ asmPart() {
   var wff = this.wff;
   return wff.isCall2('=>') ? wff.getLeft() : null;
 };
@@ -2948,7 +2965,7 @@ Expr.prototype.asmPart = function() {
  * The paths use /left and /right.
  */
 // @ts-ignore
-Expr.prototype.asmMap = function() {
+ asmMap() {
   const scan = function(expr, pathStr) {
     if (expr.isCall2('&')) {
       scan(expr.getLeft(), pathStr + '/left');
@@ -2963,7 +2980,11 @@ Expr.prototype.asmMap = function() {
   }
   return asms;
 };
-
+}
+/**
+ * Alternate name for Expr.matchSchema.  The argument is the schema.
+ */
+Expr.prototype.findSubst = Expr.prototype.matchSchema;
 
 //// Atoms -- functions
 
@@ -3059,7 +3080,7 @@ export const Step = Expr;
 
 //// Atom
 
-export interface Atom {
+export interface FooAtom {
   //constructor(name: any, position?: any);
   // _pname: any;
   // __name: any;
@@ -3163,14 +3184,14 @@ export class Atom extends Expr {
   set pname(pnm) {
     abort('Readonly: pname');
   }
-}
+
 
 /**
  * If not producing Unicode, returns this Atom's pname.  If producing
  * Unicode, and if the pname has a Unicode counterpart, returns that
  * counterpart, otherwise just the pname.  Boolean equality is "==".
  */
-Atom.prototype._toString = function() {
+_toString() {
   const text = (useUnicode
                 ? this.unicodeName()
                 : this.isEquivOp()
@@ -3187,7 +3208,7 @@ Atom.prototype._toString = function() {
  * Unicode rendering of the name of this Atom.
  * See also Atom.toHtml.
  */
-Atom.prototype.unicodeName = function() {
+unicodeName() {
   // Always show boolean equality as such.
   // Using pname helps here in some obsolescent usage.
   const name = this.isEquivOp() ? '==' : this.pname;
@@ -3219,7 +3240,7 @@ Atom.prototype.unicodeName = function() {
 // This is useful in itself, but Expr.toHtml does not invoke this
 // internally for Atoms, though rendering does so.
 // TODO: Fix Expr.toHtml. (?)
-Atom.prototype.toHtml = function() {
+toHtml() {
   // Always show boolean equality as such.
   // Using pname helps here in some obsolescent usage.
   const name = this.isEquivOp() ? '==' : this.pname;
@@ -3243,38 +3264,36 @@ Atom.prototype.toHtml = function() {
 
 // TODO: Consider whetheer it is worth fixing this to include type
 // information.
-Atom.prototype.dump = function() {
+dump() {
   return this.name;
 };
 
-Atom.prototype._subFree = function(map, freeVars, allNames) {
+_subFree(map, freeVars, allNames) {
   // Note that in some cases it is important not to copy this
   // Atom if not necessary, e.g. when used within Axiom 4.
   return map[this.name] || this;
 };
 
 
-Atom.prototype.hasFreeName = function(name) {
+hasFreeName(name) {
   return this.name == name;
 };
 
-Atom.prototype.asArray = function() {
+asArray() {
   return [this];
 };
 
-Atom.prototype._addNames = function(map) {
+_addNames(map) {
   map[this.name] = true;
 };
 
-Atom.prototype._addFreeVars = function(set, bindings) {
+_addFreeVars(set, bindings) {
   if (this.isVariable() && getBinding(this.name, bindings) == null) {
     set.add(this.name);
   }
 };
 
-Atom.prototype._addFreeVarSet = Atom.prototype._addFreeVars;
-
-Atom.prototype._addNewConstants = function(set, bindings) {
+_addNewConstants(set, bindings) {
   var name = this.name;
   if (this.isNamedConst() &&
       getBinding(name, bindings) == null &&
@@ -3283,7 +3302,7 @@ Atom.prototype._addNewConstants = function(set, bindings) {
   }
 };
 
-Atom.prototype._boundNames = function(path, bindings) {
+_boundNames(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
@@ -3291,15 +3310,15 @@ Atom.prototype._boundNames = function(path, bindings) {
   }
 };
 
-Atom.prototype._addMathVars = function(bindings, set) {
+_addMathVars(bindings, set) {
   return false;
 };
 
-Atom.prototype.replaceAt = function(path, xformer) {
+replaceAt(path, xformer) {
   return path.isMatch() ? xformer(this) : this;
 };
 
-Atom.prototype.matches = function(expr, bindings) {
+matches(expr, bindings?) {
   if (expr instanceof Atom) {
     var expectedName = getBinding(this.name, bindings) || this.name;
     return expr.name === expectedName;
@@ -3308,16 +3327,16 @@ Atom.prototype.matches = function(expr, bindings) {
   }
 };
 
-Atom.prototype._traverse = function(fn, rpath) {
+_traverse(fn, rpath) {
   fn(this, rpath);
 };
 
-Atom.prototype.search = function(pred, bindings?) {
+search(pred, bindings?) {
   var result = pred(this) ? this : null;
   return result;
 };
 
-Atom.prototype.generalizeTF = function(expr2, newVar, bindings) {
+generalizeTF(expr2, newVar, bindings) {
   if (!(expr2 instanceof Atom)) {
     throw new Error('Not a variable: ' + expr2);
   }
@@ -3334,31 +3353,31 @@ Atom.prototype.generalizeTF = function(expr2, newVar, bindings) {
   }
 };
 
-Atom.prototype._path = function(pred, revPath) {
+_path(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
-Atom.prototype._prettyPath = function(pred, pth) {
+_prettyPath(pred, pth) {
   return pred(this) ? pth : null;
 };
 
-Atom.prototype._bindingPath = function(pred, revPath) {
+_bindingPath(pred, revPath) {
   return null;
 };
 
-Atom.prototype._checkSegment = function(path) {
+_checkSegment(path) {
   assert(path === Path.empty,
          'Path {1} is not applicable to an Atom: {2}', path, this);
 };
 
-Atom.prototype.findAll = function(name, action1, expr2, action2) {
+findAll(name, action1, expr2, action2) {
   if (this.name == name) {
     action1(this);
     expr2 && action2(expr2);
   }
 };
 
-Atom.prototype._matchAsSchema = function(expr, map, bindings) {
+_matchAsSchema(expr, map, bindings) {
   // This method does not return true when matching a defined name
   // with an expression that matches its definition; thus it does not
   // treat definitions exactly as abbreviations.
@@ -3396,7 +3415,7 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   return false;
 };
 
-Atom.prototype._matchAsPattern = function(term, map) {
+_matchAsPattern(term, map) {
   if (this.isConst()) {
     return this.matches(term);
   } else {
@@ -3411,11 +3430,11 @@ Atom.prototype._matchAsPattern = function(term, map) {
   }
 };
 
-Atom.prototype._asPattern = function(term) {
+_asPattern(term) {
   return this.__var || this;
 };
 
-Atom.prototype.searchMost = function(fn, path, bindings) {
+searchMost(fn, path, bindings) {
   return fn(this, path, bindings);
 };
 
@@ -3427,7 +3446,7 @@ Atom.prototype.searchMost = function(fn, path, bindings) {
  * underscore or dot, if any, for names generated by genVar or
  * _genBoundVar.
  */
-Atom.prototype.parseName = function() {
+parseName() {
   var match = this.name.match(/^(.+?)([_.](.*?))?([:](.*))?$/);
   return {name: match[1], sub: match[3], type: match[5]};
 };
@@ -3436,10 +3455,13 @@ Atom.prototype.parseName = function() {
  * Returns the term found inside here, or if not found, the first
  * index not seen.
  */
-Atom.prototype._nthArg = function(n) {
+_nthArg(n) {
   return n == 0 ? this : 1;
 };
 
+}
+
+Atom.prototype._addFreeVarSet = Atom.prototype._addFreeVars;
 
 //// Utilities for Atoms
 
@@ -3534,7 +3556,7 @@ var _callSegmentNames = {fn: true, arg: true};
 
 var _binopSegmentNames = {left: true, right: true, binop: true};
 
-export interface Call extends Expr {
+export interface FooCall extends Expr {
   //constructor(fn: any, arg: any);
   _fn: any;
   _arg: any;
@@ -3594,12 +3616,10 @@ export class Call extends Expr {
   set arg(v) {
     abort('Readonly: arg');
   }
-}
-
 
 //// Methods for Call -- application of a function to an argument
 
-Call.prototype._toString = function() {
+_toString() {
   if (this._string) {
     return this._string;
   }
@@ -3629,7 +3649,7 @@ Call.prototype._toString = function() {
  * the place to rewrite.
  *
  */
-Call.prototype.pathIntoChain = function(n, ops_arg) {
+pathIntoChain(n, ops_arg) {
   // Every "chain" consists of at least one binary operator and at
   // least two operands, numbered starting from 0 on the right.  So n
   // operators support up to n+1 operands, but if there are n+1
@@ -3677,11 +3697,11 @@ Call.prototype.pathIntoChain = function(n, ops_arg) {
   return null;
 };
 
-Call.prototype.dump = function() {
+dump() {
   return '(' + this.fn.dump() + ' ' + this.arg.dump() + ')';
 };
 
-Call.prototype._subFree = function(map, freeVars, allNames) {
+_subFree(map, freeVars, allNames) {
   var fn = this.fn._subFree(map, freeVars, allNames);
   var arg = this.arg._subFree(map, freeVars, allNames);
   if (fn == this.fn && arg == this.arg) {
@@ -3691,39 +3711,39 @@ Call.prototype._subFree = function(map, freeVars, allNames) {
   }
 };
 
-Call.prototype.hasFreeName = function(name) {
+hasFreeName(name) {
   return this.fn.hasFreeName(name) || this.arg.hasFreeName(name);
 };
 
-Call.prototype.asArray = function() {
+asArray() {
   var result = this.fn.asArray();
   result.push(this.arg);
   return result;
 };
 
-Call.prototype._addNames = function(map) {
+_addNames(map) {
   this.fn._addNames(map);
   this.arg._addNames(map);
 };
 
-Call.prototype._addFreeVars = function(set, bindings) {
+_addFreeVars(set, bindings) {
   // Add the arg first to encourage right-to-left ordering in typical
   // implementation iteration.
   this.arg._addFreeVars(set, bindings);
   this.fn._addFreeVars(set, bindings);
 };
 
-Call.prototype._addFreeVarSet = function(set, bindings) {
+_addFreeVarSet(set, bindings) {
   this.fn._addFreeVarSet(set, bindings);
   this.arg._addFreeVarSet(set, bindings);
 };
 
-Call.prototype._addNewConstants = function(set, bindings) {
+_addNewConstants(set, bindings) {
   this.arg._addNewConstants(set, bindings);
   this.fn._addNewConstants(set, bindings);
 };
 
-Call.prototype._boundNames = function(path, bindings) {
+_boundNames(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
@@ -3731,7 +3751,7 @@ Call.prototype._boundNames = function(path, bindings) {
   }
 };
 
-Call.prototype._addMathVars = function(bindings, set) {
+_addMathVars(bindings, set) {
   var findBinding = Toy.findBinding;
   // TODO: Consider handling defined functions.
   function isFreeVar(v) {
@@ -3798,7 +3818,7 @@ Call.prototype._addMathVars = function(bindings, set) {
   }
 };
 
-Call.prototype.replaceAt = function(path, xformer) {
+replaceAt(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
   } else {
@@ -3827,7 +3847,7 @@ Call.prototype.replaceAt = function(path, xformer) {
   }
 };
 
-Call.prototype.matches = function(expr, bindings) {
+matches(expr, bindings?): boolean {
   if (expr === this && bindings === undefined) {
     return true;
   }
@@ -3839,20 +3859,20 @@ Call.prototype.matches = function(expr, bindings) {
   }
 };
 
-Call.prototype._traverse = function(fn, rpath) {
+_traverse(fn, rpath) {
   fn(this, rpath);
   this.arg._traverse(fn, new Path('arg', rpath));
   this.fn._traverse(fn, new Path('fn', rpath));
 };
 
-Call.prototype.search = function(pred, bindings?) {
+search(pred, bindings?) {
   var result = pred(this)
     ? this
     : this.fn.search(pred, bindings) || this.arg.search(pred, bindings);
   return result;
 };
 
-Call.prototype.generalizeTF = function(expr2, newVar, bindings) {
+generalizeTF(expr2, newVar, bindings) {
   if (!(expr2 instanceof Call)) {
     throw new Error('Not a Call: ' + expr2);
   }
@@ -3861,14 +3881,14 @@ Call.prototype.generalizeTF = function(expr2, newVar, bindings) {
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
-Call.prototype._path = function(pred, revPath) {
+_path(pred, revPath) {
   return pred(this)
     ? revPath
     : this.arg._path(pred, new Path('arg', revPath))
       || this.fn._path(pred, new Path('fn', revPath));
 };
 
-Call.prototype._prettyPath = function(pred, pth) {
+_prettyPath(pred, pth) {
   var p;
   if (pred(this)) {
     return pth;
@@ -3900,24 +3920,24 @@ Call.prototype._prettyPath = function(pred, pth) {
   }
 };
 
-Call.prototype._bindingPath = function(pred, revPath) {
+_bindingPath(pred, revPath) {
   return (this.fn._bindingPath(pred, new Path('fn', revPath))
           || this.arg._bindingPath(pred, new Path('arg', revPath)));
 };
 
-Call.prototype._checkSegment = function(path) {
+_checkSegment(path) {
   assert(this.isCall2()
          ? path.segment in _binopSegmentNames 
          : path.segment in _callSegmentNames,
          'Path segment {1} is not applicable to Call {2}', path.segment, this);
 };
 
-Call.prototype.findAll = function(name, action1, expr2, action2) {
+findAll(name, action1, expr2, action2) {
   this.fn.findAll(name, action1, expr2 && expr2.fn, action2);
   this.arg.findAll(name, action1, expr2 && expr2.arg, action2);
 };
 
-Call.prototype._matchAsSchema = function(expr, map, bindings) {
+_matchAsSchema(expr, map, bindings) {
   // If there is a match without introducing lambdas, use it.
   // Copy the substitution and restore it if necessary.
   var map2 = Object.assign({}, map);
@@ -3950,17 +3970,17 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
   }
 };
 
-Call.prototype._matchAsPattern = function(term, map) {
+_matchAsPattern(term, map) {
   return (term instanceof Call &&
           this.fn._matchAsPattern(term.fn, map) &&
           this.arg._matchAsPattern(term.arg, map));
 };
 
-Call.prototype._asPattern = function(term) {
+_asPattern(term) {
   return this.__var || new Call(this.fn._asPattern(), this.arg._asPattern());
 };
 
-Call.prototype.searchMost = function(fn, path, bindings) {
+searchMost(fn, path, bindings) {
   return (fn(this, path, bindings) ||
           // Try the arg first to help substitutions apply toward the
           // right sides of formulas.
@@ -3968,7 +3988,7 @@ Call.prototype.searchMost = function(fn, path, bindings) {
           this.fn.searchMost(fn, new Path('fn', path), bindings));
 };
 
-Call.prototype._nthArg = function(n) {
+_nthArg(n) {
   var here = this.fn._nthArg(n);
   if (here instanceof Expr) {
     return here;
@@ -3979,10 +3999,11 @@ Call.prototype._nthArg = function(n) {
   }
 };
 
+}
 
 //// Lambda
 
-export interface Lambda extends Expr {
+export interface FooLambda extends Expr {
   // constructor(bound: any, body: any);
   // __bound: any;
   // __body: any;
@@ -4043,11 +4064,11 @@ export class Lambda extends Expr {
   set body(term) {
     abort('Readonly: body');
   }
-}
+
 
 //// Methods for Lambda -- variable bindings
 
-Lambda.prototype._toString = function() {
+_toString() {
   if (this._string) {
     return this._string;
   }
@@ -4066,11 +4087,11 @@ Lambda.prototype._toString = function() {
   }
 };
 
-Lambda.prototype.dump = function() {
+dump() {
   return '{' + this.bound.dump() + '. ' + this.body.dump() + '}';
 };
 
-Lambda.prototype._subFree = function(map, freeVars, allNames) {
+_subFree(map, freeVars, allNames) {
   const boundName = this.bound.name;
   const savedRebinding = map[boundName];
   if (savedRebinding) {
@@ -4116,36 +4137,36 @@ Lambda.prototype._subFree = function(map, freeVars, allNames) {
   return result;
 };
 
-Lambda.prototype.hasFreeName = function(name) {
+hasFreeName(name) {
   return this.bound.name != name && this.body.hasFreeName(name);
 };
 
-Lambda.prototype.asArray = function() {
+asArray() {
   return [this];
 };
 
-Lambda.prototype._addNames = function(map) {
+_addNames(map) {
   map[this.bound.name] = true;
   this.body._addNames(map);
 };
 
-Lambda.prototype._addFreeVars = function(set, bindings) {
+_addFreeVars(set, bindings) {
   var name = this.bound.name;
   this.body._addFreeVars(set, new Bindings(name, true, bindings));
 };
 
-Lambda.prototype._addFreeVarSet = function(set, bindings) {
+_addFreeVarSet(set, bindings) {
   var name = this.bound.name;
   this.body._addFreeVarSet(set, new Bindings(name, true, bindings));
 };
 
 
-Lambda.prototype._addNewConstants = function(set, bindings) {
+_addNewConstants(set, bindings) {
   var name = this.bound.name;
   this.body._addNewConstants(set, new Bindings(name, true, bindings));
 };
 
-Lambda.prototype._boundNames = function(path, bindings) {
+_boundNames(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
@@ -4163,12 +4184,12 @@ Lambda.prototype._boundNames = function(path, bindings) {
   }
 };
 
-Lambda.prototype._addMathVars = function(bindings, set) {
+_addMathVars(bindings, set) {
   this.body._addMathVars(new Bindings(this.bound.name, true, bindings), set);
   return false;
 };
 
-Lambda.prototype.replaceAt = function(path, xformer) {
+replaceAt(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
   } else if (path.segment === 'body') {
@@ -4178,7 +4199,7 @@ Lambda.prototype.replaceAt = function(path, xformer) {
   this._checkSegment(path);
 };
 
-Lambda.prototype.matches = function(expr, bindings) {
+matches(expr, bindings) {
   if (expr === this && bindings === undefined) {
     return true;
   }
@@ -4190,13 +4211,13 @@ Lambda.prototype.matches = function(expr, bindings) {
   }
 };
 
-Lambda.prototype._traverse = function(fn, rpath) {
+_traverse(fn, rpath) {
   fn(this, rpath);
   // This does not descend into lambdas, though fn could potentially
   // do so.
 };
 
-Lambda.prototype.search = function(pred, bindings?) {
+search(pred, bindings?) {
   var result = pred(this)
     ? this
     : ((bindings && this.bound.search(pred, bindings))
@@ -4204,7 +4225,7 @@ Lambda.prototype.search = function(pred, bindings?) {
   return result;
 };
 
-Lambda.prototype.generalizeTF = function(expr2, newVar, bindings) {
+generalizeTF(expr2, newVar, bindings) {
   if (!(expr2 instanceof Lambda)) {
     throw new Error('Not a variable binding: ' + expr2);
   }
@@ -4213,13 +4234,13 @@ Lambda.prototype.generalizeTF = function(expr2, newVar, bindings) {
   return (body == this.body) ? this : new Lambda(this.bound, body);
 };
 
-Lambda.prototype._path = function(pred, revPath) {
+_path(pred, revPath) {
   return pred(this)
     ? revPath
     : this.body._path(pred, new Path('body', revPath));
 };
 
-Lambda.prototype._prettyPath = function(pred, pth) {
+_prettyPath(pred, pth) {
   if (pred(this)) {
     return pth;
   } else {
@@ -4228,26 +4249,26 @@ Lambda.prototype._prettyPath = function(pred, pth) {
   }
 };
 
-Lambda.prototype._bindingPath = function(pred, revPath) {
+_bindingPath(pred, revPath) {
   return (pred(this.bound)
           ? revPath
           : this.body._bindingPath(pred, new Path('body', revPath)));
 };
 
-Lambda.prototype._checkSegment = function(path) {
+_checkSegment(path) {
   var segment = path.segment;
   assert(segment === 'bound' || segment === 'body',
          'Path segment {1} is not applicable to a Lambda: {2}',
          segment, this);
 };
 
-Lambda.prototype.findAll = function(name, action1, expr2, action2) {
+findAll(name, action1, expr2, action2) {
   if (this.bound.name != name) {
     this.body.findAll(name, action1, expr2 && expr2.body, action2);
   }
 };
 
-Lambda.prototype._matchAsSchema = function(expr, map, bindings) {
+_matchAsSchema(expr, map, bindings) {
   if (expr instanceof Lambda) {
     var extended = new Bindings(this.bound.name, expr.bound.name, bindings);
     return this.body._matchAsSchema(expr.body, map, extended);
@@ -4256,7 +4277,7 @@ Lambda.prototype._matchAsSchema = function(expr, map, bindings) {
   }
 };
 
-Lambda.prototype._matchAsPattern = function(term, map) {
+_matchAsPattern(term, map) {
   // TODO: Consider supporting matches with lambdas differing only by
   //   change of bound variable names.  Such a match presumably would
   //   not create any bindings in the substitution.
@@ -4265,11 +4286,11 @@ Lambda.prototype._matchAsPattern = function(term, map) {
           this.body._matchAsPattern(term.body, map));
 };
 
-Lambda.prototype._asPattern = function(term) {
+_asPattern(term) {
   return this.__var || new Lambda(this.bound, this.body._asPattern());
 };
 
-Lambda.prototype.searchMost = function(fn, path, bindings) {
+searchMost(fn, path, bindings) {
   return (fn(this, path, bindings) ||
           this.body.searchMost(fn, new Path('body', path),
                                new Bindings(this.bound.name, this, bindings)));
@@ -4277,8 +4298,10 @@ Lambda.prototype.searchMost = function(fn, path, bindings) {
 
 // Private methods grouped by name.
 
-Lambda.prototype._nthArg = function(n) {
+_nthArg(n) {
   assert(false, 'Nth not relevant in lambdas');
 };
+
+}
 
 }  // namespace;
