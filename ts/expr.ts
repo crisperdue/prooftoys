@@ -41,10 +41,13 @@ Toy.loaded.on('xutil', function() {
     lambda = Toy.lambda;
 });
 
-//// Exported type decls
+//// Type decls
 
 /** The actual instantiable types. */
 export type EType = Atom | Call | Lambda;
+
+export type Call1 = Call & {fn: Atom, arg: Expr}
+export type Call2 = {fn: Call1, arg: Expr}
 
 //// Exported variables
 
@@ -908,6 +911,8 @@ export abstract class Expr {
   details;
   ordinal;
   // If rendered:
+  node;
+  // If not rendered:
   rendering;
   // Necessary??
   _string;
@@ -1036,7 +1041,7 @@ export abstract class Expr {
  * given name, with one argument.  Or if name is not given, a call to
  * any named function.
  */
- isCall1(name?): this is Call {
+ isCall1(name?): this is Call1 {
   if (this instanceof Call) {
     return (this.fn instanceof Atom &&
             (name == null || this.fn.name == name));
@@ -1050,7 +1055,7 @@ export abstract class Expr {
  * with the given name, with two arguments.  Or if name is not given,
  * a call to any named function.
  */
- isCall2(name?): this is Call {
+ isCall2(name?) {
   if (this instanceof Call) {
     var left = this.fn;
     return left instanceof Call
@@ -1093,14 +1098,16 @@ export abstract class Expr {
  * Returns the LHS (left-hand side) of a function of two arguments.
  */
  getLeft() {
-  return this.fn.arg;
+  // TODO: unsafe
+  return (this as unknown as Call).fn.arg;
 };
 
 /**
  * Returns the RHS (right-hand side) of a function of two arguments.
  */
  getRight() {
-  return this.arg;
+  // TODO: unsafe
+  return (this as unknown as Call).arg;
 };
 
 /**
@@ -1115,7 +1122,8 @@ export abstract class Expr {
  * Returns the function in a call that has two arguments.
  */
  getBinOp() {
-  return this.fn.fn;
+  // TODO: unsafe
+  return (this as any).fn.fn;
 };
 
 /**
@@ -1136,11 +1144,15 @@ export abstract class Expr {
   return this.isCall2('=>') && this.getLeft();
 };
 
- isTypeTest() {
-  return (this.isCall1() &&
-          (this.fn.name === 'R' ||
-           this.fn.name === 'NN' ||
-           this.fn.name === 'ZZ'));
+ isTypeTest(this) {
+  if (this.isCall1()) {
+    const self = this satisfies Call1;
+    return (self.fn.name === 'R' ||
+           self.fn.name === 'NN' ||
+           self.fn.name === 'ZZ');
+  } else {
+    return false;
+  }
 };
 
 /**
@@ -1406,7 +1418,7 @@ export abstract class Expr {
  getNumValue() {
   var self = this;
   assert(this.isNumeral(), 'Not a numeral: {1}', self);
-  return this._value;
+  return (this as unknown as Atom)._value;  // TODO: unsafe
 }
 
 /**
@@ -1422,7 +1434,7 @@ export abstract class Expr {
  */
  getStringValue() {
   assert(this.isString(), 'Not a string literal: {1}', this);
-  return this._value;
+  return (this as unknown as Atom)._value;  // TODO: unsafe
 };
 
 /**
@@ -1439,7 +1451,7 @@ export abstract class Expr {
  * types is intended.
  */
  isTypeCond() {
-  return this.isCall1('R') && this.arg.isVariable();
+  return this.isCall1('R') && (this satisfies Call1).arg.isVariable();
 };
 
 /**
@@ -1835,8 +1847,8 @@ export abstract class Expr {
  * names in traversal order of first occurrence, where function is
  * considered to come before arg in calls.
  */
- freeVarSet() {
-  var byName = new Set();
+ freeVarSet(): Set<string> {
+  var byName = new Set<string>();
   this._addFreeVarSet(byName, null);
   return byName;
 };
@@ -1943,7 +1955,7 @@ export abstract class Expr {
  * If this term is a call, returns the first "fn" descendent that
  * is not a Call (thus an atom or lambda), otherwise returns null.
  */
- func() {
+ func(): Atom | null {
   var term = this;
   if (!(term instanceof Call)) {
     return null;
@@ -1951,7 +1963,7 @@ export abstract class Expr {
   while (term instanceof Call) {
     term = term.fn;
   }
-  return term;
+  return term.constructor == Atom ? term : null;
 }
 
 /**
@@ -2980,11 +2992,16 @@ export abstract class Expr {
   }
   return asms;
 };
-}
+
+
 /**
- * Alternate name for Expr.matchSchema.  The argument is the schema.
+ * Alternate name for Expr.matchSchema.
  */
-Expr.prototype.findSubst = Expr.prototype.matchSchema;
+findSubst(schema) {
+  return this.matchSchema(schema);
+}
+
+}
 
 //// Atoms -- functions
 
@@ -3459,9 +3476,13 @@ _nthArg(n) {
   return n == 0 ? this : 1;
 };
 
+_addFreeVarSet(set, bindings?) {
+  this._addFreeVars(set, bindings);
 }
 
-Atom.prototype._addFreeVarSet = Atom.prototype._addFreeVars;
+}
+
+// Atom.prototype._addFreeVarSet = Atom.prototype._addFreeVars;
 
 //// Utilities for Atoms
 
@@ -3649,7 +3670,7 @@ _toString() {
  * the place to rewrite.
  *
  */
-pathIntoChain(n, ops_arg) {
+pathIntoChain(n, ops_arg: string | string[]) {
   // Every "chain" consists of at least one binary operator and at
   // least two operands, numbered starting from 0 on the right.  So n
   // operators support up to n+1 operands, but if there are n+1
@@ -4199,7 +4220,7 @@ replaceAt(path, xformer) {
   this._checkSegment(path);
 };
 
-matches(expr, bindings) {
+matches(expr, bindings?) {
   if (expr === this && bindings === undefined) {
     return true;
   }
