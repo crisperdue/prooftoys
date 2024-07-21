@@ -4,7 +4,7 @@ Prooftoys is a visual proof assistant and
 the engine behind Mathtoys (http://mathtoys.org).
 The Prooftoys implementation is based on [Alonzo Church's 
 simple type theory](http://plato.stanford.edu/entries/type-theory-church/)
-as formulated by 
+as formulated by Carnegie Mellon University
 [Professor Peter Andrews](http://gtps.math.cmu.edu/andrews.html)
 under the name [Q0](http://en.wikipedia.org/wiki/Q_zero).
 Simple type theory is suitable for construction
