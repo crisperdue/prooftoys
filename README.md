@@ -13,7 +13,8 @@ logic plus set theory.  It uses a minimum of
 simple, understandable concepts, expressing them with
 a handful of axioms and inference rules. 
 
-Prooftoys is implemented in JavaScript running in the user's
+Prooftoys is written in TypeScript, which runs as
+JavaScript in the user's
 web browser.  It is designed to be highly interactive and delivered
 to users through the Web, so they can play with it instantly.
 Prooftoys has a web site with pages for interacting with it
