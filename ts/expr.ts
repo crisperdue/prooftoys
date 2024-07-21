@@ -488,11 +488,7 @@ export class TermMap extends ToyMap {
 // they were given.  This means that all operations that transform
 // expressions must avoid copying except when necessary.
 
-/**
- * Superclass for terms of all kinds: Atom, Call, Lambda.
- * See internal comments for details.
-//
-// Some method docs
+/** Expr -- some method docs
 //
 //
 // Methods defined on expressions, but defined only in the subclasses:
@@ -732,6 +728,11 @@ export class TermMap extends ToyMap {
 // truthy value returned from "fn" at any level.  If not given, this
 // treats the path and bindings as empty.
 */
+
+/**
+ * Superclass for terms of all kinds: Atom, Call, Lambda.
+ * See comment just above this one for details.
+ */
 export abstract class Expr {
   __type;
   __memos;
