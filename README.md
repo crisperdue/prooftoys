@@ -28,7 +28,7 @@ http://github.com/crisperdue/prooftoys-site/.
 working high school algebra problems.  Its unique HTML and code is also
 on GitHub at http://github.com/crisperdue/mathtoys.
 
-## Embedding Prooftoys
+## Embedding Prooftoys in another website
 
 While in principle the two can be separated, the Prooftoys engine is intended to
 be integrated with its web-based user interface.  The two together _are_
