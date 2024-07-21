@@ -9,9 +9,7 @@
 //// theorem-proving.
 ////
 
-console.log('good morning');
-
-  namespace Toy {
+namespace Toy {
 
   // Alternative to jQuery $(fn).  Used by our own "$" function above.
   export var onReady = function(fn) {
@@ -539,26 +537,9 @@ console.log('good morning');
 
   // JavaScript is defined to use IEEE 64-bit floating point in "round
   // to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
-  // the greatest integer value we "allow".
+  // the greatest integer value we "allow".  Same as
+  // Number.MAX_SAFE_INTEGER.
   export var MAX_INT = Math.pow(2, 53) - 1;
-
-  /**
-   * Polyfill for the new standard Math.sign.
-   */
-  Math.sign = Math.sign || function(x) {
-    x = +x; // convert to a number
-    if (x === 0 || isNaN(x)) {
-      return x;
-    }
-    return x > 0 ? 1 : -1;
-  }
-
-  /**
-   * Polyfill for the new standard Math.trunc.
-   */
-  Math.trunc = Math.trunc || function(x) {
-    return x < 0 ? Math.ceil(x) : Math.floor(x);
-  }
 
   /**
    * Knuth-style div defined by the floor of the quotient.
