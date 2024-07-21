@@ -11,38 +11,38 @@
 
 console.log('good morning');
 
-namespace Toy {
+  namespace Toy {
 
-// Alternative to jQuery $(fn).  Used by our own "$" function above.
-export var onReady = function(fn) {
-  if (document.readyState === 'loading') {  // Loading hasn't finished yet
-    document.addEventListener('DOMContentLoaded', fn);
-  } else {  // DOMContentLoaded has already fired
-    fn();
-  }
-};
+  // Alternative to jQuery $(fn).  Used by our own "$" function above.
+  export var onReady = function(fn) {
+    if (document.readyState === 'loading') {  // Loading hasn't finished yet
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {  // DOMContentLoaded has already fired
+      fn();
+    }
+  };
 
-/**
- * Version of the jQuery $ function that type checks its input.
- * Overrides the definition from jQuery.
- */
-window.$ = function(x) {
-  // Assign to window.$ to ensure Toy.onReady is ready first. (!)
-  // I think it is a scoping issue.
-  if (arguments.length > 1) {
-    return jQuery.apply(null, arguments);
-  } else if (typeof x === 'function') {
-    return Toy.onReady(x);
-  } else if (typeof x === 'string' ||
-    x.nodeType ||
-    x === window ||
-    x instanceof jQuery) {
-    return jQuery(x);
-  } else {
-    throw new Error('Not a DOM node: ' + x);
+  /**
+   * Version of the jQuery $ function that type checks its input.
+   * Overrides the definition from jQuery.
+   */
+  window.$ = function(x) {
+    // Assign to window.$ to ensure Toy.onReady is ready first. (!)
+    // I think it is a scoping issue.
+    if (arguments.length > 1) {
+      return jQuery.apply(null, arguments);
+    } else if (typeof x === 'function') {
+      return Toy.onReady(x);
+    } else if (typeof x === 'string' ||
+      x.nodeType ||
+      x === window ||
+      x instanceof jQuery) {
+      return jQuery(x);
+    } else {
+      throw new Error('Not a DOM node: ' + x);
+    }
   }
-}
-jQuery.extend($, jQuery);
+  jQuery.extend($, jQuery);
 
   // This ensures that all of our scripts can refer to _paq even in
   // strict mode, and even if Matomo support is not loaded.  If Matomo
@@ -129,7 +129,7 @@ jQuery.extend($, jQuery);
     constructor.addMethods = function(properties) {
       jQuery.extend(constructor.prototype, properties);
     };
-  };
+  }
 
   /**
    * Adds some methods / properties to a class given the constructor.
@@ -189,7 +189,7 @@ jQuery.extend($, jQuery);
    */
   export function hasOwn(thing, name) {
     return ownProperty.call(thing, name);
-  };
+  }
 
   /**
    * Gets the named property if it is an own property, otherwise
@@ -197,7 +197,7 @@ jQuery.extend($, jQuery);
    */
   export function getOwn(thing, name) {
     return (hasOwn(thing, name) ? thing[name] : undefined);
-  };
+  }
 
   /**
    * Returns an object with no prototype, having the own properties
@@ -1796,145 +1796,145 @@ jQuery.extend($, jQuery);
     
     constructor(stringifier?) {
       this.stringifier = stringifier || String;
+      }
+
+    /**
+     * Add an element, returning this.
+     */
+    add(value) {
+      this.map[this.stringifier(value)] = value;
+      return this;
     }
 
-  /**
-   * Add an element, returning this.
-   */
-  add(value) {
-    this.map[this.stringifier(value)] = value;
-    return this;
-  };
-
-  /**
-   * Add all the values in the given array or ToySet to this ToySet.
-   * Return this.
-   */
-  addAll(more) {
-    var self = this;
-    function add(value) { self.add(value); }
-    if (more instanceof ToySet) {
-      more.each(add);
-    } else {
-      more.forEach(add);
+    /**
+     * Add all the values in the given array or ToySet to this ToySet.
+     * Return this.
+     */
+    addAll(more) {
+      var self = this;
+      function add(value) { self.add(value); }
+      if (more instanceof ToySet) {
+        more.each(add);
+      } else {
+        more.forEach(add);
+      }
+      return self;
     }
-    return self;
-  };
-  
+    
 
-  /**
-   * Does the set contain the element (one with the same key)?
-   */
-  has(value) {
-    return hasOwn(this.map, this.stringifier(value));
-  };
+    /**
+     * Does the set contain the element (one with the same key)?
+     */
+    has(value) {
+      return hasOwn(this.map, this.stringifier(value));
+    }
 
-  /**
-   * Applies to another collection that has an "each" method that
-   * iterates over its elements, exiting in case of a defined value.
-   * Returns a boolean value indicating whether this contains all the
-   * elements of the other collection.
-   */
-  superset(other) {
-    var self = this;
-    var result = true;
-    other.each(function(o) {
-      if (!self.has(o)) {
-        result = false;
+    /**
+     * Applies to another collection that has an "each" method that
+     * iterates over its elements, exiting in case of a defined value.
+     * Returns a boolean value indicating whether this contains all the
+     * elements of the other collection.
+     */
+    superset(other) {
+      var self = this;
+      var result = true;
+      other.each(function(o) {
+        if (!self.has(o)) {
+          result = false;
+          return false;
+        }
+      });
+      return result;
+    }
+
+    /**
+     * Returns true iff this and the argument set each contain all the
+     * elements of the other one.
+     *
+     * TODO: Consider making more efficient.
+     */
+    equals(other) {
+      return this.size() === other.size() && this.superset(other);
+    }
+
+    /**
+     * Remove the element.
+     */
+    remove(value) {
+      delete this.map[this.stringifier(value)];
+    }
+
+    /**
+     * Call the given function for each element of the set, passing the
+     * set element as its argument.  Use the optional thisObj as "this"
+     * for the calls, or "undefined" if it is not given.  If the function
+     * returns any value other than "undefined" that value becomes the
+     * return value of this method, and iteration ends.
+     */
+    each(fn, thisObj?) {
+      var map = this.map
+      for (var key in map) {
+        var result = fn.call(thisObj, map[key], key);
+        if (result !== undefined) {
+          return result;
+        }
+      }
+    }
+
+    /**
+     * Count of distinct elements.
+     */
+    size() {
+      var counter = 0;
+      this.each(function() { counter++; });
+      return counter;
+    }
+
+    /**
+     * Is the set empty?
+     */
+    isEmpty() {
+      for (var key in this.map) {
         return false;
       }
-    });
-    return result;
-  };
+      return true;
+    }
 
-  /**
-   * Returns true iff this and the argument set each contain all the
-   * elements of the other one.
-   *
-   * TODO: Consider making more efficient.
-   */
-  equals(other) {
-    return this.size() === other.size() && this.superset(other);
-  };
-
-  /**
-   * Remove the element.
-   */
-  remove(value) {
-    delete this.map[this.stringifier(value)];
-  };
-
-  /**
-   * Call the given function for each element of the set, passing the
-   * set element as its argument.  Use the optional thisObj as "this"
-   * for the calls, or "undefined" if it is not given.  If the function
-   * returns any value other than "undefined" that value becomes the
-   * return value of this method, and iteration ends.
-   */
-  each(fn, thisObj?) {
-    var map = this.map
-    for (var key in map) {
-      var result = fn.call(thisObj, map[key], key);
-      if (result !== undefined) {
-        return result;
+    /**
+     * Remove all members of this ToySet.
+     */
+    clear() {
+      var map = this.map;
+      for (var key in map) {
+        delete map[key];
       }
     }
-  };
 
-  /**
-   * Count of distinct elements.
-   */
-  size() {
-    var counter = 0;
-    this.each(function() { counter++; });
-    return counter;
-  };
-
-  /**
-   * Is the set empty?
-   */
-  isEmpty() {
-    for (var key in this.map) {
-      return false;
+    /**
+     * Returns an element of the set or undefined if the set is empty.
+     */
+    choose() {
+      for (var key in this.map) {
+        return this.map[key];
+      }
     }
-    return true;
-  };
 
-  /**
-   * Remove all members of this ToySet.
-   */
-  clear() {
-    var map = this.map;
-    for (var key in map) {
-      delete map[key];
+    /**
+     * Returns an iterable (actually an array) of the values in the ToySet.
+     */
+    values() {
+      var result = [];
+      this.each(x => void result.push(x));
+      return result;
     }
-  };
 
-  /**
-   * Returns an element of the set or undefined if the set is empty.
-   */
-  choose() {
-    for (var key in this.map) {
-      return this.map[key];
+    toString() {
+      var values = this.values().map(function(x) { return x.toString(); });
+      return format('{1}({2})', this.constructor.name || '', values);
     }
-  };
 
-  /**
-   * Returns an iterable (actually an array) of the values in the ToySet.
-   */
-  values() {
-    var result = [];
-    this.each(x => void result.push(x));
-    return result;
-  };
+  }
 
-  toString() {
-    var values = this.values().map(function(x) { return x.toString(); });
-    return format('{1}({2})', this.constructor.name || '', values);
-  };
-
-}
-  
   export var emptySet = Object.freeze(new ToySet());
 
 
@@ -1955,72 +1955,72 @@ jQuery.extend($, jQuery);
       this.dfault = dfault;
     }
 
-  /**
-   * Set the value of a map element.
-   */
-  set(key, value) {
-    this.map[this.stringifier(key)] = value;
-  };
+    /**
+     * Set the value of a map element.
+     */
+    set(key, value) {
+      this.map[this.stringifier(key)] = value;
+    }
 
-  /**
-   * Does it have an element with matching key?
-   */
-  has(key) {
-    return hasOwn(this.map, this.stringifier(key));
-  };
+    /**
+     * Does it have an element with matching key?
+     */
+    has(key) {
+      return hasOwn(this.map, this.stringifier(key));
+    }
 
-  /**
-   * Gets the value at a key or undefined if no such element.
-   */
-  get(key) {
-    var map = this.map;
-    var k = this.stringifier(key);
-    return hasOwn(map, k) ? map[k] : this.dfault;
-  };
+    /**
+     * Gets the value at a key or undefined if no such element.
+     */
+    get(key) {
+      var map = this.map;
+      var k = this.stringifier(key);
+      return hasOwn(map, k) ? map[k] : this.dfault;
+    }
 
-  /**
-   * Remove any element with matching key.
-   */
-  remove(key) {
-    delete this.map[this.stringifier(key)];
-  };
+    /**
+     * Remove any element with matching key.
+     */
+    remove(key) {
+      delete this.map[this.stringifier(key)];
+    }
 
-  /**
-   * Iterate over the map, allowing early return.  The fn receives a
-   * value and (string) key.  In any iteration where the value of the
-   * function is not the undefined value, immediately returns that
-   * value.
-   */
-  each(fn, thisObj?) {
-    var map = this.map
-    for (var key in map) {
-      var result = fn.call(thisObj, map[key], key);
-      if (result !== undefined) {
-        return result;
+    /**
+     * Iterate over the map, allowing early return.  The fn receives a
+     * value and (string) key.  In any iteration where the value of the
+     * function is not the undefined value, immediately returns that
+     * value.
+     */
+    each(fn, thisObj?) {
+      var map = this.map
+      for (var key in map) {
+        var result = fn.call(thisObj, map[key], key);
+        if (result !== undefined) {
+          return result;
+        }
       }
     }
-  };
 
-  /**
-   * Number of distinct keys in the map.
-   */
-  size() {
-    var counter = 0;
-    this.each(function() { counter++; });
-    return counter;
-  };
-
-  /**
-   * Is it empty?
-   */
-  isEmpty() {
-    for (var key in this.map) {
-      return false;
+    /**
+     * Number of distinct keys in the map.
+     */
+    size() {
+      var counter = 0;
+      this.each(function() { counter++; });
+      return counter;
     }
-    return true;
-  };
 
-}
+    /**
+     * Is it empty?
+     */
+    isEmpty() {
+      for (var key in this.map) {
+        return false;
+      }
+      return true;
+    }
+
+  }
 
   //// Array snapshots
 
@@ -2100,7 +2100,7 @@ jQuery.extend($, jQuery);
       const n = stacks.get(s);
       console.log('' + n + ' of ' + s);
     }
-  };
+  }
 
 
   //// Refresher class and deferred actions
@@ -2238,7 +2238,7 @@ jQuery.extend($, jQuery);
         addPendingAction(action);
       }
     });
-  };
+  }
 
   /**
    * A set of actions registered to run when the system event loop next
@@ -2350,7 +2350,7 @@ jQuery.extend($, jQuery);
   function _testTriangle(where, height, color) {
     var tt = makeTriangle(where, height, color);
     $('body').prepend(tt);
-  };
+  }
 
   //// Same origin policy
 
@@ -2913,7 +2913,7 @@ jQuery.extend($, jQuery);
   export function onResize(element, handler) {
     element.handleResize = handler;
     Toy.sizeObserver.observe(element);
-  };
+  }
 
   // This is a circled latin small letter i.
   // An "info" character without circle is available at &#x2139;
