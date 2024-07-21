@@ -36,7 +36,8 @@ intended for embedding in other websites.  Here is a sample page that shows
 a simple embedding of Prooftoys in a web page.
 
 The usage here is in the most straightforward form, suitable for development
-but entirely unoptimized.  For example the `.js` files are all unbundled.
+but entirely unoptimized.  For example the `.js` files are
+all loaded individually rather than being concatenated first.
 
 ````HTML
 <!doctype html>
