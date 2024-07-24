@@ -6,7 +6,12 @@
 
 /// <reference path="util.ts" />
 
+console.log('yoohoo');
+
 'use strict';
+
+/** Exported constructor */
+var Dexie;
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
@@ -54,7 +59,7 @@ export interface Expr {
  * or alternatively, never "arrange" them here, leaving that task
  * to rules such as "replace".
  */
-justify(ruleName, ruleArgs, deps?: Step[], retain?: boolean);
+justify(ruleName, ruleArgs, deps?: Steplike[], retain?: boolean);
 }
 Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   // Note: when splitting Step and Expr, make a version of this just

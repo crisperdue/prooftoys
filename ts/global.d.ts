@@ -13,10 +13,13 @@ interface Window {
   Tval: any;
   clipboardData: any;
   tippy;
+  noTooltipster: any;
+  noProofScripts: any;
 }
 
-interface Element {
+interface HTMLElement {
   onclick: function;
+  oninsert: function;
   handleResize: function;
 }
 

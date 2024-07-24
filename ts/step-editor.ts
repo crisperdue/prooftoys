@@ -348,8 +348,9 @@ export class ProofEditor {
     // set the localStorage item and start or stop session recording.
     self.$node.find('.uxBox').on('change', function() {
       Toy.setSessionRecording(this.checked);
-      $(document).find('.proofEditor .uxBox').each((ix, elt) => {
-        elt.checked = this.checked;
+      $(document).find('.proofEditor .uxBox' as "input")
+        .each((ix, elt) => {
+          elt.checked = this.checked;
       });
       Toy.trackAppEvent('UXTrace', this.checked ? 'on' : 'off');
     });
@@ -359,7 +360,7 @@ export class ProofEditor {
       const state = $(this).is('.uxYes');
       Toy.setSessionRecording(state);
       Toy.trackAppEvent('UXTrace', state ? 'on' : 'off');
-      $(document).find('.proofEditor .uxBox').each((ix, elt) => {
+      $(document).find('.proofEditor .uxBox' as "input").each((ix, elt) => {
         // This could result in a cascade of reporting the
         // same event.
         elt.checked = state;

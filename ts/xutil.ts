@@ -567,6 +567,36 @@ Expr.prototype.isIndividual = function() {
   return this.hasType() == individual;
 };
 
+export interface Atom {
+  /**
+   * True iff this Atom is the boolean equivalence operator.
+   */
+  isEquivOp(): boolean;
+  /**
+   * True iff this atom is a primitive constant.  In Prooftoys
+   * T and F are primitive along with equality and the1.
+   */
+  isPrimitive(): boolean;
+  /**
+   * True iff this Atom is a unary operator.
+   */
+  isUnary(): boolean;
+}
+Atom.prototype.isEquivOp = function() {
+  return this.name === '=' && isBooleanBinOp(this);
+}
+
+// Primitive constants.  Unlike textbook, these include T and F.
+var _primitives = {T: true, F: true, '=': true, the1: true};
+
+Atom.prototype.isPrimitive = function() {
+  return _primitives.hasOwnProperty(this.name);
+};
+
+Atom.prototype.isUnary = function() {
+  return getPrecedence(this) === unaryPower;
+}
+
 // Note that if the type of the replacement term has no type variables
 // in it, it can be used as-is with its types intact.  If the mating
 // results in a replacement with no variables, the result might
@@ -688,16 +718,6 @@ export function isBooleanBinOp(term) {
   }
 }
 
-export interface Atom {
-/**
- * True iff this Atom is the boolean equivalence operator.
- */
-  isEquivOp();
-}
-Atom.prototype.isEquivOp = function() {
-  return this.name === '=' && isBooleanBinOp(this);
-}
-
 /**
  * Function of any two things of the same type, with boolean result.
  * The input type defaults to a new type variable.
@@ -747,16 +767,6 @@ export const commonTypes =
    new FunctionType(boolean, boolean),
    new FunctionType(individual, boolean)
    ];
-
-// Primitive constants.  Unlike textbook, these include T and F.
-var _primitives = {T: true, F: true, '=': true, the1: true};
-
-export interface Atom {
-  isPrimitive(): boolean;
-}
-Atom.prototype.isPrimitive = function() {
-  return _primitives.hasOwnProperty(this.name);
-};
 
 // Types of constants here.
 //
@@ -1805,13 +1815,6 @@ export function isInfixDesired(atom) {
   }
   var p = getPrecedence(atom);
   return 0 < p && p < namePower;
-}
-
-/**
- * True iff this Atom is a unary operator.
- */
-Atom.prototype.isUnary = function() {
-  return getPrecedence(this) === unaryPower;
 }
 
 /**

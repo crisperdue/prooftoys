@@ -397,7 +397,7 @@ const decls = [
 // Any facts with "proof" changed to "pruf" can be removed.
 // In effect they are just comments or remnants.  
 decls.forEach(decl => {
-  delete decl.pruf;
+  delete decl['pruf'];
 });
 
 // Declare all the exercises.

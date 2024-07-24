@@ -2,6 +2,9 @@
 
 'use strict';
 
+/** Exported constructor */
+var tippy;
+
 // Prooftoys scripts should not depend on this file, though it may do
 // some default configuration.  At present this does not appear to
 // depend on any other Prooftoys script, so its functions can be used
@@ -271,11 +274,12 @@ export var rawQueryParams = {};
 
 // The element is a button inserted in partials/hamburger.html.
 // The button is styled "display: none" in wider page widths.
-const menuTrigger = document.querySelector('#toggle-main-menu-mobile');
+const menuTrigger =
+  document.querySelector('#toggle-main-menu-mobile' as "button");
 
 if (menuTrigger) {
   menuTrigger.onclick = function() {
-    const sidebar = document.querySelector('div.sidebar');
+    const sidebar = document.querySelector('div.sidebar' as "div");
     if (sidebar) {
       sidebar.classList.toggle('displayed');
       menuTrigger.classList.toggle('is-active');

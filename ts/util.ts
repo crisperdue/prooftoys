@@ -141,7 +141,7 @@ namespace Toy {
    * checking carefully that it is a jQuery singleton.
    * @type {function(jQuery): Element}
    */
-  export function dom($node) {
+  export function dom($node: JQuery) {
     if ($node instanceof jQuery) {
       if ($node.length === 0) {
         abort('No element');
@@ -2865,11 +2865,16 @@ namespace Toy {
 
   //// ELEMENT RESIZE HANDLERS
 
+  /** Interface for Element with "resize handler": */
+  interface Rsz extends Element {
+    handleResize?: Function;
+  }
+
   /**
    * This observer creation code is from an example in the
    * csswg draft.
    */
-  export let sizeObserver = new ResizeObserver(entries => {
+  let sizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
       /*
       let cs = window.getComputedStyle(entry.target);
@@ -2879,8 +2884,9 @@ namespace Toy {
       console.log(entry.borderBoxSize[0].inlineSize, ' is ', cs.width);
       console.log(entry.borderBoxSize[0].blockSize, ' is ', cs.height);
       */
-      if (entry.target.handleResize)
-        entry.target.handleResize(entry);
+      const target: Rsz = entry.target;
+      if (target.handleResize)
+        target.handleResize(entry);
     }
   });
 
@@ -2893,7 +2899,7 @@ namespace Toy {
    */
   export function onResize(element, handler) {
     element.handleResize = handler;
-    Toy.sizeObserver.observe(element);
+    sizeObserver.observe(element);
   }
 
   // This is a circled latin small letter i.

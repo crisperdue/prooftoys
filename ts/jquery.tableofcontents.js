@@ -2,6 +2,7 @@
 
   'use strict';
 
+  // @ts-expect-error
   $.fn.tableofcontents = function (options) {
     const settings = $.extend({
       // Elements to exclude
@@ -10,9 +11,9 @@
     // Use this to assign a unique name to each anchor created.
     var anchor_counter = 1;
     // Level established by a seen header tag.
-    var current_level;
+    var current_level = 1;
     // Level of first seen header tag.
-    var base_level = null;
+    var base_level = 1;
     // Will contain the HTML text for the TOC.
     var toc_html = "";
       

@@ -643,11 +643,4 @@ function messageForName(name, info) {
   return msg;
 }
 
-// For testing:
-Toy._eqnStatus = eqnStatus;
-Toy._analyzeConditions = analyzeConditions;
-Toy._analyze1Solution = analyze1Solution;
-Toy._analyzeSolutions = analyzeSolutions;
-Toy._isLowestTerms = isLowestTerms;
-
 }  // namespace;
