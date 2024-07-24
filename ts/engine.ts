@@ -59,7 +59,7 @@ export interface Expr {
  * or alternatively, never "arrange" them here, leaving that task
  * to rules such as "replace".
  */
-justify(ruleName, ruleArgs, deps?: Steplike[], retain?: boolean);
+justify(ruleName, ruleArgs, deps?: Step[], retain?: boolean);
 }
 Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   // Note: when splitting Step and Expr, make a version of this just
@@ -413,6 +413,14 @@ export var rules: Record<string, any> = {};
 //   If there is a precheck, see information on precheck, below.  If
 //   action2 is present, see information on it below.  Each rule must
 //   have action or action2, but not both.
+//   
+//   This property triggers installation of an "attempt" property
+//   on the generated rule.  If the rule has a precheck, "attempt"
+//   runs that, then the main part of the rule, or just
+//   the result of the precheck if that is falsy.  The action2
+//   property, next, also generates "attempt".  Either way,
+//   "attempt" returns a proof step on success, otherwise some
+//   failure indication from the rule.
 //
 // action2: if present, the action must return a continuation function
 //   on success.  The continuation returns a proved step.  This is not
@@ -426,12 +434,14 @@ export var rules: Record<string, any> = {};
 //   Also creates "attempt" and "attempt0" methods that run the
 //   continuation if a function is returned from "prep", otherwise
 //   returning the non-continuation result of the "prep".  Attempt0
-//   does not auto-justify the step.
+//   is the same except it does not auto-justify the step.
 //
 // proof: for a theorem (no args), use this instead of "action".  Do
 //   not call "justify", that is done automatically and the proof is
 //   memoized.  For a theorem, this may be given as an array of steps
 //   encoded as text in the usual manner.
+//
+//   In this case, running "attempt" is the same as the plain rule.
 //
 // name: name of the rule, axiom or theorem; required if it is a rule
 //   of inference with one or more arguments (see below).  Used to
@@ -460,8 +470,8 @@ export var rules: Record<string, any> = {};
 //   out inapplicable rules.
 //
 //   This is expected to return a falsy value if the rule
-//   is not applicable to the arguments, in which case the rule will
-//   fail with Toy.abort.  Otherwise it should return any data useful
+//   is not applicable to the arguments. (The  plain rule will
+//   fail with Toy.abort.)  Otherwise it should return any data useful
 //   to the main action function, which will have access to that
 //   result through the global temporary Toy._actionInfo.
 //

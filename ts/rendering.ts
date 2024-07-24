@@ -15,9 +15,6 @@ namespace Toy {
 // Use the application's assert function.
 var assert = Toy.assertTrue;
 
-// Misc utility functions are here.
-const dom = Toy.dom;
-
 // Make the main classes available without "Toy."
 var Expr = Toy.Expr;
 var Atom = Toy.Atom;
@@ -2475,7 +2472,7 @@ export function getTopProofContainer(step) {
  */
 export function getProofDisplay(expr) {
   if (expr instanceof Expr && expr.isProved()) {
-    return (expr.proofDisplay ||
+    return ((expr as RStep).proofDisplay ||
             (expr.rendering && expr.rendering.proofDisplay));
   } else {
     var node = expr instanceof Toy.Expr ? expr.node : expr;

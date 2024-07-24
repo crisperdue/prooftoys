@@ -1691,7 +1691,7 @@ export abstract class Expr {
    * that are not in namedConstants.
    */
   newConstants(this: EType) {
-    const names = new Set();
+    const names = new Set<string>();
     this._addNewConstants(names, null);
     return names;
   }
@@ -2061,7 +2061,7 @@ export abstract class Expr {
    *
    * TODO: Remove this when there is a Step class.
    */
-  isProved() {
+  isProved(): this is Step {
     // A property only proof steps have.
     return !!this.ruleName;
   }
@@ -2924,9 +2924,20 @@ var moreLettersRegex = /^[\u2102\u2115\u2119\u211a\u211d\u2124]$/;
  * Step objects have a "wff" property, but an Expr will not.
  */
 
-// The value of Step is the value of Expr.
+/** The value of Step is the value of Expr. */
 export const Step = Expr;
 
+/** A Step is an Expr with some data properties, including ruleName. */
+export interface Step extends Expr {
+  ruleName: string
+  // and more
+};
+
+/** RStep is a rendered step (not just renderable). */
+export interface RStep extends Step {
+  proofDisplay: ProofDisplay;
+  // and more
+}
 
 //// Atom
 /**
