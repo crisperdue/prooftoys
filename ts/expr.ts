@@ -1755,7 +1755,7 @@ export abstract class Expr {
   boundNames(path) {
     path = this.asPath(path);
     var bindings = this._boundNames(path, null);
-    var map = {};
+    var map: ObjectMap<Expr> = {};
     for (var more = bindings; more; more = more.more) {
       map[more.from] = more.to;
     }
@@ -1766,12 +1766,11 @@ export abstract class Expr {
    * Returns a set of the names of variables that are free
    * in the term at the given path, but bound in that context.
    */
-  freeBound(path) {
+  freeBound(path): Set<string> {
     const target = this.get(path);
-      return Toy.intersection(freeHere, boundHere);
-    }
     const freeHere = target.freeVarSet();
     const boundHere = Toy.asSet(this.boundNames(path));
+    return Toy.intersection(freeHere, boundHere) as Set<string>;
   }
 
   /**
@@ -2928,6 +2927,7 @@ export const Step = Expr;
 
 /** A Step is an Expr with some data properties, including ruleName. */
 export interface Step extends Expr {
+  wff: Expr;
   ruleName: string
   // and more
 };

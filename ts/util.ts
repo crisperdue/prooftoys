@@ -11,6 +11,10 @@
 
 namespace Toy {
 
+  export interface ObjectMap<T> {
+    [key: string]: T;
+  }
+
   // Alternative to jQuery $(fn).  Used by our own "$" function above.
   export var onReady = function(fn) {
     if (document.readyState === 'loading') {  // Loading hasn't finished yet

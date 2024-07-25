@@ -28,7 +28,10 @@ interface Object {
 }
 
 interface Error {
+  /** Specific step causing a problem */
   step: any;
+  /** Array of steps before problem in decodeSteps */
+  steps: any[];
   from: any;
 }
 

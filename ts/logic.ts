@@ -1553,7 +1553,7 @@ declare(
    //
    // The precheck just tests the free variables condition.  Note that
    // there are no bound variables in the context of an assumption.
-   precheck: function(step, path) {
+   precheck: function(step: Step, path) {
      return (step.get(path).isBoolean() &&
              step.wff.freeBound(path).size === 0);
    },
