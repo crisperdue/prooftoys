@@ -1768,11 +1768,10 @@ export abstract class Expr {
    */
   freeBound(path) {
     const target = this.get(path);
-    if (target.isBoolean()) {
-      const freeHere = target.freeVarSet();
-      const boundHere = Toy.asSet(this.boundNames(path));
       return Toy.intersection(freeHere, boundHere);
     }
+    const freeHere = target.freeVarSet();
+    const boundHere = Toy.asSet(this.boundNames(path));
   }
 
   /**
