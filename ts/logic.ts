@@ -2531,7 +2531,7 @@ declare(
   {name: 'trueBy1',
    action2: function(target, path, step) {
      const eqn = rules.rewriteOnly(step, '/main', 'p == (p == T)');
-     const result = rules.rewriteOnlyFrom(target, path, eqn);
+     const result = rules.rewriteOnlyFrom.attempt(target, path, eqn);
      return ok(result, () => result);
    },
    inputs: {site: 1, step: 3},

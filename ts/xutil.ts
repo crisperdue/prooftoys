@@ -2106,7 +2106,7 @@ export function decodeSteps(input) {
       return e;
     };
     if (rule) {
-      result = Toy.try_(() => rule.apply(rule.info, args));
+      result = Toy.try_(() => rule.attempt.apply(rule.info, args));
       if (result instanceof Toy.Step) {
         outSteps.push(result);
         continue;

@@ -742,6 +742,9 @@ export function addRule(info) {
       }
       return result.justify(name, []);
     };
+
+    // Make "<rule>.attempt" the same as the rule.
+    rule.attempt = rule;
     
     // Describe theorems as "theorem" by default.
     // The theorem name will be added as ruleName into the tooltip.
