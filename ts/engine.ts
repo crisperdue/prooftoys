@@ -943,10 +943,17 @@ export function declare(...declarations) {
 /**
  * Returns truthy iff the given result (of a rule attempt)
  * is truthy and not an Error.  Useful utility for tactics
- * to test applicability of rules.
+ * to test applicability of rules or to test if a rule
+ * attempt, i.e. <rule>.attempt(...) is successful.
  *
  * If a "more" continuation is given and the result is a success
- * ("ok"), returns the continuation, else the failure result.
+ * ("ok"), returns the continuation, else the failure result,
+ * for use in action2 rules.
+ * 
+ * The implementation is rather loose to support prep, precheck,
+ * and attempt all in one.
+ * 
+ * TODO: Rename the one with 2 arguments as ok2 (for action2 rules).
  */
 export function ok(status, more?) {
   if (more) {

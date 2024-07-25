@@ -1324,7 +1324,7 @@ namespace Toy {
   }
 
   /**
-   * Calls the given function, catching any aborts during the call.
+   * Calls the given function, "catching" any aborts during the call.
    * Returns the function value, or the thrown value if aborted.
    */
   export function try_(fn) {

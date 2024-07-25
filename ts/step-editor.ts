@@ -651,7 +651,7 @@ export class ProofEditor {
         const errName = Toy.genDocName(`${name}.err`);
         Toy.writeDoc(errName, {proofState: this.getStateString()});
         // Show the truncated list of steps in the proof editor.
-        this.setSteps(steps.steps);  // Bug?
+        this.setSteps(steps.steps);
         this.stepEditor.report(steps);
         return false;
       } else {

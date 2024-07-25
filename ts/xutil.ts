@@ -2100,9 +2100,6 @@ export function decodeSteps(input) {
                                      input: input,
                                      cause: err}},
                              '{1}', msg);
-      // console.error(e.self || e);
-      // This can be a good point to stop and debug.
-      // debugger;
       return e;
     };
     if (rule) {
