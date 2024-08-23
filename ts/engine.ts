@@ -4,10 +4,6 @@
 // and definitons, matching and fact management that can be separated
 // from actual deduction.
 
-/// <reference path="util.ts" />
-
-console.log('yoohoo');
-
 'use strict';
 
 /** Exported constructor */
