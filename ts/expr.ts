@@ -488,8 +488,8 @@ export class TermMap extends ToyMap {
 // they were given.  This means that all operations that transform
 // expressions must avoid copying except when necessary.
 
-/** Expr -- some method docs
-//
+
+// Expr -- some method docs
 //
 // Methods defined on expressions, but defined only in the subclasses:
 //
@@ -684,27 +684,20 @@ export class TermMap extends ToyMap {
 // where expr2 has a part corresponding to the part in expr1.
 //
 //
-// _matchAsSchema(expr, substitution, bindings)
+// _matchAsSchema(that, substitution, bindings)
 //
-// Checks that this expression matches the argument expression under
-// the given substitution (map from names in this to expressions in
-// expr).  The bindings indicate the variable bindings in effect for
-// this and the argument expression, mapping from variable name in
-// this to variable name in expr.
+// Checks that this expression matches the argument expression under the
+// given substitution (map from names in this to expressions in that).  The
+// bindings indicate the variable bindings in effect for this and the
+// argument expression, mapping from variable name in this to variable name
+// in that.
 //
-// Returns true iff it does and extends the substitution to a
-// new variable if needed to make this and the argument match.  If
-// this contains lambda expressions, it is smart about match failure
-// due to capturing of free variables in the expr, and smart about
-// using calls to function variables in this to enable substitution in
-// spite of capturing.  Matching here is as defined for the "matches"
-// method.
-//
-// Where needed and possible, this matches (boolean) terms with lambda
-// terms and attaches a %expansion property to the substitution, with
-// the names of each such predicate variable mapped to a count of the
-// number of beta reductions needed to match normally after
-// substitution.
+// Returns true iff they can match, and extends the substitution to map
+// all free variables of this.  Returns false if necessary to avoid
+// capturing 
+// variables in expr, and smart about using calls to function variables
+// in this to enable substitution in spite of capturing.  Matching here
+// is as defined for the "matches" method.
 //
 //
 // _asPattern()
@@ -727,7 +720,6 @@ export class TermMap extends ToyMap {
 // lambda in which it is bound, innermost first.  Returns the first
 // truthy value returned from "fn" at any level.  If not given, this
 // treats the path and bindings as empty.
-*/
 
 /**
  * Superclass for terms of all kinds: Atom, Call, Lambda.
@@ -3206,19 +3198,19 @@ export class Atom extends Expr {
       // corresponding bound variable in expr.
       return expr.name == boundTo;
     }
-    // When within the scope of any bound variables, check that the
-    // candidate substitution would not have to rename any variables in
-    // expr, as this kind of matching is not defined to include
-    // substitution into expr.
+    // Decline to map this free variable to a term that has any variable
+    // that is free within it, but bound in the current context.  (The
+    // "to" properties of the current bindings contain those bound
+    // names.)  "Substitute terms must only occur in contexts where all
+    // of their locally free variables are also free in context."
     var frees = bindings && expr.freeVars();
     for (var binding = bindings; binding; binding = binding.more) {
       if (frees[binding.to]) {
         return false;
       }
     }
-    // This is a free variable.  If it already has a defined substitute,
-    // check that it matches expr; otherwise add a mapping for it into
-    // the substitution.
+    // If this free variable is already mapped, check that its
+    // substitute matches expr; otherwise map it to expr.
     var mapped = map[name];
     if (mapped) {
       return expr.matches(mapped, bindings);
