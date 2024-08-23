@@ -366,6 +366,8 @@ export function neverWhenBound(rule) {
  *
  * TODO: Dump does not distinguish terms by type.
  *   Consider making it do so.
+ * TODO: Consider making "dump" insensitive to names of
+ *   bound variables.
  */
 export function identifyTerm(term) {
   // TODO: Eliminate term.memos in favor of a WeakMap.
@@ -499,6 +501,9 @@ export class TermMap extends ToyMap {
 // handling of functions of more than one argument or infix operators.
 // A simple text format not dependent on styling options, usable for
 // keys in maps with Expr values.
+//
+// TODO: Consider making it insensitive to bound variable names, so for
+//   example terms that match with "matches" have the same dump.
 //
 // OOPS, this does not dump any type information, so it may conflate
 // terms that are not really the same.  It is not relied on by
