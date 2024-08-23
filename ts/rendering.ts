@@ -1665,15 +1665,20 @@ Lambda.prototype.render = function(minPower) {
   const $body = this.body.render(0);
   const isSet = type.isSetType();
   if (isSet && !type.fromType.equal(Toy.boolean)) {
+    // Maps from non-boolean to boolean: render with braces
+    // and "dot".
     $expr.append('{');
     $expr.append(this.bound.render(0));
     $expr.append('. ');
     $expr.append($body);
     $expr.append('}');
   } else {
+    // Render with parens and arrow.
     $expr.append('(');
     $expr.append(this.bound.render(0));
-    $expr.append('. ');
+    // Unicode rightward arrow from bar ("mapsto"). See e.g.
+    // https://en.wikipedia.org/Function_(mathematics)#Arrow_notation
+    $expr.append(' \u21a6 ');
     $expr.append($body);
     $expr.append(')');
   }
