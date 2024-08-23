@@ -137,21 +137,24 @@ export function getRightNeighbor(step, term) {
 const _turnstile = '\u22a6';
 
 export interface Expr {
+  /**
+   * Processes a rendered step, searching for assumptions not in the
+   * given goal statement.  If the main part does not match the goal
+   * ("matches"), returns -1.  Otherwise flags the node of each such
+   * assumption node with an "unsolved" class if it has a node, and
+   * returns the number of unwanted assumptions as its value, so a
+   * result of 0 means that this is the desired result.
+   * 
+   * TODO: Allow asms to merely match (e.g. "matches") goal asms, to
+   *   nicely handle asms with bound vars.
+   */
   checkSubgoals(goalWff);
 }
-/**
- * Processes a rendered step, searching for assumptions not in the
- * given goal statement.  If the main part is not the same as the
- * goal, returns -1.  Otherwise flags the node of each such assumption
- * node with an "unsolved" class if it has a node, and returns the
- * number of unwanted assumptions as its value, so a result of 0
- * means that this is the desired result.
- */
 Expr.prototype.checkSubgoals = function(goalWff) {
   const self = this;
   const main = self.getMain();
   const goalMain = goalWff.getMain();
-  if (!goalMain.sameAs(main)) {
+  if (!goalMain.matches(main)) {
     return -1;
   }
   const asms = self.asmSet();
