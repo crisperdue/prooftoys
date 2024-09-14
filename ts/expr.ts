@@ -1631,7 +1631,7 @@ export abstract class Expr {
    */
   isAsmPath(path_arg) {
     const path = this.asPath(path_arg);
-    if (!this.implies() && path.isLeft()) {
+    if (!this.implies() || !path.isLeft()) {
       return false;
     }
     const pp = this.prettifyPath(path);
