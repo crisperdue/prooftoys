@@ -2646,7 +2646,7 @@ var testCase = {
       y: true
     }
     function status(eqn) {
-      return Toy._eqnStatus(termify(eqn), givenVars);
+      return Toy.eqnStatus(termify(eqn), givenVars);
     }
     assertEqual(null, status('R x'));
     assertEqual({}, status('x = 5'));
@@ -2659,7 +2659,7 @@ var testCase = {
   },
 
   testAnalyzeConditions: function() {
-    var analyze = Toy._analyzeConditions;
+    var analyze = Toy.analyzeConditions;
     var TermSet = Toy.TermSet;
     function ts(a) {
       var set = new TermSet();
@@ -2681,7 +2681,7 @@ var testCase = {
   },
 
   testAnalyzeSolutions: function() {
-    var analyze = Toy._analyzeSolutions;
+    var analyze = Toy.analyzeSolutions;
     var givenVars = {x: true, y: true, z: true};
     var disj = parse('x = 1 / y');
     var result = analyze(disj, givenVars);

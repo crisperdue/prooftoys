@@ -18,7 +18,7 @@ var TermSet = Toy.TermSet;
  *   others: other terms
  * Each conjunct is categorized as exactly one of these.
  */
-function analyzeConditions(expr, givens) {
+export function analyzeConditions(expr, givens) {
   var tcs = new TermSet();
   var givs = new TermSet();
   var others = new TermSet();
@@ -53,7 +53,7 @@ function analyzeConditions(expr, givens) {
  * free in the RHS, i.e. this term has the form of a solution for the
  * LHS variable in terms of the returned set of RHS variables.
  */ 
-function eqnStatus(eqn, givenVars) {
+export function eqnStatus(eqn, givenVars) {
   var parts = eqn.matchSchema('v = t');
   if (!parts) {
     return null;
@@ -151,7 +151,7 @@ function analyze1Solution(conj, givenVars) {
  * [{byVar: {x: {eqn: x2, using: {}}}, overages: {},
  *   tcs: TermSet(...), others: TermSet(...)}]
  */
-function analyzeSolutions(disj, givenVars) {
+export function analyzeSolutions(disj, givenVars) {
   var results = [];
   function analyze(term) { results.push(analyze1Solution(term, givenVars)); }
   disj.scanDisjuncts(analyze);
