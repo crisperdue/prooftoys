@@ -16,7 +16,7 @@
   {{ $pd := resources.Get "/pt/js/proof-data.js" }}
   {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nu $nn $st $re $so $pd }}
   {{ $allJS := resources.Concat "/js/all.js" $all }}
-  {{ if $.Site.IsServer }}
+  {{ if eq hugo.Environment "development" }}
     {{ range $all }}
       <!-- Experiment with "defer", though it does not function
            as advertised; see for example partials/jquery.html. -->
