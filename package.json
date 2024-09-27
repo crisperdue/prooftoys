@@ -1,0 +1,28 @@
+{
+  "name": "prooftoys",
+  "version": "1.0.0",
+  "description": "manage emitted import paths",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/jquery": "^3.5.30",
+    "dexie": "^4.0.8",
+    "jquery": "^3.7.1"
+  },
+  "imports": {
+    "#jquery": {
+      "default": "jquery.js"
+    },
+    "#dexie": {
+      "default": "dexie.js"
+    },
+    "#fubar": {
+      "default": "fubar.js"
+    }
+  },
+  "keywords": []
+}
