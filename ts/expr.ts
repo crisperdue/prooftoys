@@ -743,6 +743,7 @@ export abstract class Expr {
   ordinal;
   // If rendered:
   node;
+  stepNumber;
   // If not rendered:
   rendering;
   // Necessary??
