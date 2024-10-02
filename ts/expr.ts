@@ -55,7 +55,8 @@ export const unicodeNames = {
   ZZ: '\u2124',       // Integers
   forall: '\u2200',
   exists: '\u2203',
-  exists1: '\u2203!'
+  exists1: '\u2203!',
+  restrict: '\u21be',  // Restriction to domain; upward harpoon w rt barb
 };
 
 /**
