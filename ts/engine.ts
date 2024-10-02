@@ -6,8 +6,12 @@
 
 'use strict';
 
+// import type { Dexie } from "./dexie.d.ts";
+
+// import type { Dexie } from "dexie";
+
 /** Exported constructor */
-var Dexie;
+// var Dexie;
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
@@ -2801,21 +2805,6 @@ export function dumpFactResolutions() {
         });
     });
 }
-
-//// Database management
-
-export var db;
-
-$(function() {
-  db = new Dexie('Prooftoys');
-  db.version(1).stores({
-    prefs: '&key',
-    editors: '&id',
-    sheets: '&sheetName',
-    exercises: '&exName',
-  });
-  db.prefs.put({key: 'boo', value: 'far'});
-});
 
 // Settable variables, export right here:
 
