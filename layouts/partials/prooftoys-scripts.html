@@ -1,19 +1,19 @@
 <!-- In current form this emits script tag per source file -->
-  {{ $si := resources.Get "/pt/js/site.js" }}
-  {{ $ut := resources.Get "/pt/js/util.js" }}
-  {{ $tc := resources.Get "/pt/js/jquery.tableofcontents.js" }}
-  {{ $pre := resources.Get "/pt/js/prelim.js" }}
-  {{ $ex := resources.Get "/pt/js/expr.js" }}
-  {{ $xu := resources.Get "/pt/js/xutil.js" }}
-  {{ $en := resources.Get "/pt/js/engine.js" }}
-  {{ $un := resources.Get "/pt/js/unify.js" }}
-  {{ $lo := resources.Get "/pt/js/logic.js" }}
-  {{ $nu := resources.Get "/pt/js/numbers.js" }}
-  {{ $nn := resources.Get "/pt/js/natnums.js" }}
-  {{ $st := resources.Get "/pt/js/step-editor.js" }}
-  {{ $re := resources.Get "/pt/js/rendering.js" }}
-  {{ $so := resources.Get "/pt/js/solution-status.js" }}
-  {{ $pd := resources.Get "/pt/js/proof-data.js" }}
+  {{ $si := resources.Get "/js/site.js" }}
+  {{ $ut := resources.Get "/js/util.js" }}
+  {{ $tc := resources.Get "/js/jquery.tableofcontents.js" }}
+  {{ $pre := resources.Get "/js/prelim.js" }}
+  {{ $ex := resources.Get "/js/expr.js" }}
+  {{ $xu := resources.Get "/js/xutil.js" }}
+  {{ $en := resources.Get "/js/engine.js" }}
+  {{ $un := resources.Get "/js/unify.js" }}
+  {{ $lo := resources.Get "/js/logic.js" }}
+  {{ $nu := resources.Get "/js/numbers.js" }}
+  {{ $nn := resources.Get "/js/natnums.js" }}
+  {{ $st := resources.Get "/js/step-editor.js" }}
+  {{ $re := resources.Get "/js/rendering.js" }}
+  {{ $so := resources.Get "/js/solution-status.js" }}
+  {{ $pd := resources.Get "/js/proof-data.js" }}
   {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nu $nn $st $re $so $pd }}
   {{ $allJS := resources.Concat "/js/all.js" $all }}
   {{ if eq hugo.Environment "development" }}
@@ -26,7 +26,26 @@
     <script src="{{ $allJS.RelPermalink }}"></script>
   {{ end }}
 
-<script type=module>
-import Dexie from '{{ .Site.Params.dexie_url }}';
-window.Dexie = Dexie;
+  {{/* This specifies that a runtime import from
+       "js/<etc>" translates to a request for /pt/js/<etc>.
+        TODO: Translate path to just /js/<etc>, here and in
+          the uses below.
+    */}}
+<script type="importmap">
+  {
+    "imports": {
+      "js/": "/pt/js/"
+    }
+  }
 </script>
+
+{{ $db := resources.Get "/pt/js/db.js" }}
+<script type=module src="{{ $db.RelPermalink }}"></script>
+
+{{/* This stimulates Hugo to include dexie.js in the site.
+     TODO: Use Hugo to avoid having to check it in (in js/).
+     It could be accessed as dexie/dist/dexie.mjs, and Concat'ed
+     to /js/dexie.js.
+  */}}
+{{ $dx := resources.Get "/pt/js/dexie.js" }}
+<!-- {{ $dx.RelPermalink }}. Comment not emitted by Hugo. -->
