@@ -544,15 +544,4 @@ Path.prototype.remainder = function(path) {
   return self;
 };
 
-//// Export public names.
-
-Toy.Bindings = Bindings;
-Toy.numBindings = numBindings;
-Toy.findBinding = findBinding;
-Toy.findBindingValue = findBindingValue;
-Toy.getBinding = getBinding;
-
-Toy.Path = Path;
-Toy.asPath = asPath;
-
 }  // namespace;
