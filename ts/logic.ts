@@ -75,6 +75,8 @@ definition('(|) = {x. {y. if x T y}}');
 definition('(=>) = {x. {y. if x y T}}');
 
 definition('empty = {x. F}');
+// TODO: Rename none to nil and make None mean "equal to empty".
+//   Then we might define All, None, and Some.
 definition('none = the1 empty');
 definition('(?) = {p. {x. if p x none}}');
 
@@ -98,6 +100,9 @@ definition('negate = {p. {x. not (p x)}}');
 definition('strict = {f. f none = none}');
 definition('strict2 = {f. forall {x. f x none = none} & ' +
            'forall {x. f none x = none}}');
+
+// Restriction of a function to a domain / predicate:
+definition('restrict f p = {x. (p x) ? (f x)}');
 
 
 //// FACTS AND RULES
