@@ -3,6 +3,7 @@
 {
   "files": [
     "ts/global.d.ts",
+    "ts/db.ts",
     "ts/site.ts", 
     "ts/util.ts", 
     "ts/prelim.ts", 
@@ -29,30 +30,54 @@
     // "ts/nn.js",
     // "ts/sample-proofs.js",
     // "ts/worker.js",
+    // Tests: "tests/tests.js",
   ],
 
   "compilerOptions": {
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "target": "es2020",
-    // See https://github.com/RyanCavanaugh/project-references-demo
-    // Seems to need this whole library to be in a subfolder, e.g.
-    // modifies effect of outDir if rootDir is not ".".
-    // I.e. with "composite": true, outputs go to ts/js and ts/dts.
-    // But now I cannot reproduce this! Syntax of relative pathnames??
-    //
-    "composite": true,
+    // False value turns off incremental compilation,
+    // at least does not write tsconfig.tsbuildinfo.
+    "incremental": false,
     //
     // Directory structure
     "rootDir": "ts",
+    // Emit a .d.ts for every TS or JS file in the project.
     "declaration": true,
-    "declarationDir": "dts",
+    "declarationDir": "./dts",
     "outDir": "js",
     "lib": ["es2022", "dom", "dom.iterable"],
+    // For compilation speed over accuracy:
     "skipLibCheck": true,
-    "module": "commonjs",
-    "esModuleInterop": true,
+    "typeRoots": ["./node_modules/@types"],
+    // The paths here define lookups of modules at compiletime. The
+    // importmap in layouts/partials/prooftoys-scripts.html defines
+    // runtime lookups of module references of the same form we see
+    // here.
+    "paths": {
+        // This provides access to dexie.d.ts.
+        "js/*": ["./node_modules/dexie/dist/*"],
+     },
+    // Transform module paths using package.json.
+    // "resolvePackageJsonImports": true,
+    // "resolvePackageJsonExports": true,
+    // Output imports and exports just as written
+    // (Hopefully this does not affect "import type ... ".)
+    "module": "preserve",
+    // The "bundler" value seems to keep behavior simple for webapps.
+    "moduleResolution": "bundler",
+    // Retain all import statements except "import type ... ".
+    // "verbatimModuleSyntax": true,
+    // Do not accept mismatched case even if the file system
+    // doesn't care.
     "forceConsistentCasingInFileNames": true,
+    // This might be nice if consuming UMD/AMD modules.
+    // "esModuleInterop": true,
+    // Unfortunately causes namespaces to be disallowed.
+    // "verbatimModuleSyntax": true,
+    "importsNotUsedAsValues": "remove",
+    // "preserveValueImports": true,
     
     /* Projects */
     // "incremental": true,
@@ -71,7 +96,6 @@
     
     /* Modules */
     // "rootDir": "./",
-    // "moduleResolution": "node10",
     // "baseUrl": "./",
     // "paths": {},
     // "rootDirs": [],
@@ -114,7 +138,6 @@
     
     /* Interop Constraints */
     // "isolatedModules": true,
-    // "verbatimModuleSyntax": true,
     // "isolatedDeclarations": true,
     // "allowSyntheticDefaultImports": true,
     // "preserveSymlinks": true,
