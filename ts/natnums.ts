@@ -20,7 +20,7 @@ const Expr = Toy.Expr;
 const Atom = Toy.Atom;
 const Call = Toy.Call;
 const Lambda = Toy.Lambda;
-const noSimplify = Toy.noSimplify;  
+const noSimplify = Toy.noSimplify;
 
 
 const decls = [
