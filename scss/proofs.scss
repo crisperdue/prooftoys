@@ -25,10 +25,12 @@ b[videotip], b[imagetip] {
   padding: 0 2px;
 }
 
+// Unwanted assumption in goal-based proof.
+// See also .redBack in pt.scss.
 .expr.unsolved {
   font-weight: bold;
   color: crimson;
-  background-color: #ffe0e0;
+  background-color: #ffe8e8;
   // Use these for even more emphasis:
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
