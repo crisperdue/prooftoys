@@ -56,6 +56,7 @@ export const unicodeNames = {
   forall: '\u2200',
   exists: '\u2203',
   exists1: '\u2203!',
+  // We are currently using the "@" operator instead of "restrict"
   restrict: '\u21be',  // Restriction to domain; upward harpoon w rt barb
 };
 
@@ -2846,21 +2847,21 @@ export abstract class Expr {
 // All "opSyntax" Vars are operators, plus some designated
 // identifers, currently "forall" and "exists".
 
-// Pattern that matches identifiers, used in the tokenizer and
+// String pattern that matches identifiers, used in the tokenizer and
 // identifierRegex.  The tokenizer recognizes exactly things matching
 // this as being identifiers.  The system can create identifers not
-// matching this expression, but parses only these.  This in itself is
-// not a regex.
+// matching this expression, but parses only these.  Now with optional
+// terminal "?".
 
-export const identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
+export const identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*[?]?';
 
 // Names matching this regex are identifiers.
 // The trailing "$" ensures that the entire name is matched
 // up to any extensions for unique ID and/or type information.
 // Note that not all identifiers can be entered through the parser,
-// in particular ones with "." (generated bound names) or ":"
-// (for type information).
-var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
+// in particular ones with ":" for type information.  TODO: Remove the
+// ":" here.
+var identifierRegex = new RegExp('^' + identifierPattern + '([:]|$)');
 
 // Variables in particular, not including identifiers for constants.
 // The "." and ":" provide for extension with bound variable unique

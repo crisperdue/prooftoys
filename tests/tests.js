@@ -607,11 +607,10 @@ var testCase = {
 
   testToUnicode: function() {
     assertEqual('T', T.toUnicode());
-    assertEqual('a\u2081\u2080\u2089',  new Toy.Atom('a.109').toUnicode());
     // toUnicode does not automatically show types, but name
     // parsing, tested only here, does parse some type info.
     assertEqual('a', Toy.varify('a:R').toUnicode());
-    assertEqual('xx\u2083', new Toy.Atom('xx.3:RR').toUnicode());
+    assertEqual('xx', new Toy.Atom('xx:RR').toUnicode());
   },
 
   testExprIn: function() {
