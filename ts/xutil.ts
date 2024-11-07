@@ -929,10 +929,10 @@ export function definex(name_arg, fact) {
 // displays it accordingly as well, though inference rules look only at
 // the standard name ("=").
 //
-// Some common Vars are commonly displayed with non-ASCII characters.
+// Some common Atoms are commonly displayed with non-ASCII characters.
 // These also have ASCII input syntax, which is the form the parser
 // expects.  The internal form retains the input syntax, but the Unicode-
-// oriented displays both text and HTML show them as Unicode.
+// oriented displays, both text and HTML, show them as Unicode.
 
 // Tokens pattern, private to tokenize.
 var _tokens = new RegExp(['[(){}\\[\\]]',
@@ -1479,7 +1479,7 @@ var precedence = {
   'in': 20,
   'notin': 20,
   // Infix operator meaning "if condition then value else none".
-  '?': 25,
+  '??': 25,
   '+': 30,
   '-': 30,
   '*': 40,
@@ -1487,6 +1487,8 @@ var precedence = {
   div: 40,
   mod: 40,
   '**': 50,
+  // Restriction of a function to a domain
+  '@': 60,
   // Specials
   '(': 1000,
   '[': 1000,

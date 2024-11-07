@@ -78,7 +78,7 @@ definition('empty = {x. F}');
 // TODO: Rename none to nil and make None mean "equal to empty".
 //   Then we might define All, None, and Some.
 definition('none = the1 empty');
-definition('(?) = {p. {x. if p x none}}');
+definition('(??) = {p. {x. if p x none}}');
 
 definition('(in) = {x. {Y. Y x == T}}');
 
@@ -102,7 +102,7 @@ definition('strict2 = {f. forall {x. f x none = none} & ' +
            'forall {x. f none x = none}}');
 
 // Restriction of a function to a domain / predicate:
-definition('restrict f p = {x. (p x) ? (f x)}');
+definition('f @ p = {x. (p x) ?? (f x)}');
 
 
 //// FACTS AND RULES
