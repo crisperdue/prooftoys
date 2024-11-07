@@ -22,7 +22,7 @@ export var exerciseLoaded = null;
  * Async utility function to print and return the
  * proofState of the named exercise.  Currently unused.
  */
-async function exerciseSteps(exName) {
+export async function exerciseSteps(exName) {
   let result;
   await Toy.db.exercises.get(exName)
     .then(data => {
@@ -34,6 +34,34 @@ async function exerciseSteps(exName) {
       }
     });
   return result;
+}
+
+/**
+ * Dump to console all exercises in format for machines and maybe humans.
+ */
+export function dumpExercises() {
+  db.exercises.toArray().then(a => console.log(JSON.stringify(a, null, 1)))
+}
+
+// Cache for exercises data from the file.
+var exData;
+
+/**
+ * Asynchronously loads the exercise data from exercises.json and
+ * returns it as a Promise of an array image of the exercises database
+ * table.  Uses eval rather than JSON.parse for flexibility of format.
+ */
+export function exerData() {
+  return(
+    exData
+      ? new Promise(res => res(exData))
+      : fetch('/pt/exercises.json')
+          .then(response => response.text())
+          .then(tx => {
+            exData = eval(tx);
+            return exData;
+          })
+  );
 }
 
 //// PROOF EDITOR
