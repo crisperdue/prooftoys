@@ -4,6 +4,24 @@
   visibility: hidden;
 }
 
+
+// Styling for overlays -- covers entire viewport
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+
+// Modal dialog z-index, just above the overlay
+.modal {
+  z-index: 1001; /* 1 more than the overlay layer */
+}
+
+
 .ellipsis {
   color: #aaa;
   margin: 0px 5px;
