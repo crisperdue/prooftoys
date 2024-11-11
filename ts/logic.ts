@@ -908,7 +908,7 @@ declare(
   // Add a new named theorem to the rules.
   //
   // TODO: This and a few other commands change system state, and
-  //   similarly changes to the set of supporing "theory" files.  So
+  //   similarly changes to the set of supporting "theory" files.  So
   //   in some cases a page reload may be needed to refresh the state.
   //   We may want to annotate commands that change state, and track
   //   changes that can desynchronize the state.

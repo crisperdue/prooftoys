@@ -272,35 +272,6 @@ namespace Toy {
   realNumbersLoaded = true;
 
 //// THEOREMS AND RULES
-/*
-var rules = Toy.rules;
-var declare = Toy.declare;
-var definex = Toy.definex;
-const definition = Toy.definition;
-var basicSimpFacts = Toy.basicSimpFacts;
-
-var assert = Toy.assertTrue;
-var abort = Toy.abort;
-var memo = Toy.memo;
-
-//  Make some useful names available here.
-var assertEqn = Toy.assertEqn;
-var varify = Toy.varify;
-var constify = Toy.constify;
-var termify = Toy.termify;
-var call = Toy.call;
-var equal = Toy.equal;
-var implies = Toy.implies;
-var lambda = Toy.lambda;
-
-var Path = Toy.Path;
-var Expr = Toy.Expr;
-var Call = Toy.Call;
-var Lambda = Toy.lambda;
-var convert = Toy.convert;
-var applyToFocalPart = Toy.applyToFocalPart;
-var noSimplify = Toy.noSimplify;
-*/
 
 //// Field laws
 
@@ -4189,13 +4160,7 @@ declare(
    }
 );
 
-
-//// Utility functions
-
-// Interactive testing in context of this file.
-
 //// Inequality facts
-
 
 declare
   (
@@ -4216,6 +4181,8 @@ declare
     {statement: 'x >= y == y <= x',
     },
    );
+
+// Pi
 
 declare(
   {statement: 'R pi', axiom: true,
@@ -4494,7 +4461,7 @@ definition('odd x == ZZ x & not (even x)');
 // is true, otherwise 0.
 definition('true1 = {a. if a 1 0}');
 
-// This is an easy way to get arithRight into the list of simplifiers.
+// Add some numeric simplifiers.
 basicSimpFacts.push
   ({stmt: '@a + neg b = a - b',
     // This condition makes extra-sure there will be
@@ -4530,6 +4497,6 @@ basicSimpFacts.push
 // For testing (computed value).
 //Toy._ungroupingFacts = ungroupingFacts;
 
-};
+}; // End requireRealNumbers
 
 }
