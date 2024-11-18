@@ -2940,8 +2940,6 @@ Toy.testCase = testCase;
 // returned to idle, at least when running tests.
 $(function() {
 
-  Toy.requireRealNumbers();
-
   // Define a constant 'posNum', known to be a number greater than 0,
   // which is defined with an existential fact.
   Toy.definex('posNum', rules.witnessExists(rules.fact('1 > 0'), '/left'));

@@ -629,6 +629,7 @@ export class ProofEditor {
     Toy.saveState(self, {docName: self.docName});
   }
 
+
   /**
    * Attempts to open the named document in this proof editor, setting
    * the editor's document name and loading its proof state.  Returns
@@ -641,6 +642,7 @@ export class ProofEditor {
    * that case ensures that NN is set up.
    */
   openDoc(name) {
+    const self = this;
     const goal = Toy.catching(() => Toy.parse(name));
     if (!('noload' in this._options)) {
       let needNN = false;
@@ -661,34 +663,47 @@ export class ProofEditor {
         // Indicate an inconclusive result.
         return null;
       }
+      const numbersScript = '/js/numbers.js';
       if (needNN) {
         // This loads all natural numbers theorems.
         prepExercise('nat/');
-      } else if (!Toy.realNumbersLoaded) {
-        Toy.requireRealNumbers();
+        return doProof();
+      } else if (!Toy.requiredScripts.has(numbersScript)) {
+        // Load numbers.js dynamically, then asynchronously
+        // run the proof.
+        Toy.requireScript(numbersScript)
+          .then(() => {
+            doProof();
+          })
+          .catch(err => console.log(err));
+      } else {
+        doProof();
       }
     }
-    const proofData = Toy.readDoc(name);
-    // TODO: Check for possible active editing in another tab/window.
-    if (proofData) {
-      this.setEditable(true);
-      const steps = Toy.decodeSteps(proofData.proofState);
-      if (steps instanceof Error) {
-        // Write the problematic proof to a new document with ".err" in
-        // the name.
-        const errName = Toy.genDocName(`${name}.err`);
-        Toy.writeDoc(errName, {proofState: this.getStateString()});
-        // Show the truncated list of steps in the proof editor.
-        this.setSteps(steps.steps);
-        this.stepEditor.report(steps);
-        return false;
+    // Decode and run the proof recorded in the document.
+    function doProof() {
+      const proofData = Toy.readDoc(name);
+      // TODO: Check for possible active editing in another tab/window.
+      if (proofData) {
+        self.setEditable(true);
+        const steps = Toy.decodeSteps(proofData.proofState);
+        if (steps instanceof Error) {
+          // Write the problematic proof to a new document with ".err" in
+          // the name.
+          const errName = Toy.genDocName(`${name}.err`);
+          Toy.writeDoc(errName, {proofState: self.getStateString()});
+          // Show the truncated list of steps in the proof editor.
+          self.setSteps(steps.steps);
+          self.stepEditor.report(steps);
+          return false;
+        } else {
+          self.syncToDocName(name);
+          self.setSteps(steps);
+          return true;
+        }
       } else {
-        this.syncToDocName(name);
-        this.setSteps(steps);
-        return true;
+        return false;
       }
-    } else {
-      return false;
     }
   }
 

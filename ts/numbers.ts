@@ -260,16 +260,6 @@ namespace Toy {
         : []);
     return _ugFacts;
   }
-  
-
-  // Set all of this up immediately upon load, but avoiding changes
-  // to the global environment (except through the "Toy" namespace).
-  export function requireRealNumbers() {
-
-  if (realNumbersLoaded) {
-    return;
-  }
-  realNumbersLoaded = true;
 
 //// THEOREMS AND RULES
 
@@ -4497,6 +4487,5 @@ basicSimpFacts.push
 // For testing (computed value).
 //Toy._ungroupingFacts = ungroupingFacts;
 
-}; // End requireRealNumbers
 
 }
