@@ -13,6 +13,7 @@
     "ts/unify.ts",
     "ts/logic.ts",
     "ts/numbers.ts",
+    "ts/derivatives.ts",
     "ts/natnums.ts",
     "ts/step-editor.ts",
     "ts/rendering.ts",
