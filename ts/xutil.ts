@@ -1061,7 +1061,9 @@ export function justParse(input) {
  * Same as justParse, but throws errors with low-level messages.
  * The second argument is private to parseMin.
  */
-export function justParse1(input, aboveToken?) {
+export function justParse1(input) {
+  // A token of precedence 0.
+  var endToken = new Atom('(end)');
   var tokens = input;
 
   /**
@@ -1159,7 +1161,7 @@ export function justParse1(input, aboveToken?) {
         next();
         return t1;
       } else {
-        expr = mustParseAbove(aboveWhat);
+        expr = mustParseAbove(endToken);
         expect(')');
         return expr;
       }
@@ -1167,7 +1169,7 @@ export function justParse1(input, aboveToken?) {
       var id = next();
       assert(id.isVariable(), 'Expected identifier, got ' + id.name);
       expect('.');
-      var body = mustParseAbove(aboveWhat);
+      var body = mustParseAbove(endToken);
       expr = lambda(id, body);
       expect(name === '{' ? '}' : ']');
       return expr;
@@ -1243,26 +1245,14 @@ export function justParse1(input, aboveToken?) {
     // There should be at least one real token.
     abort('No parser input');
   }
-  // A token of precedence 0.
-  var aboveWhat = aboveToken || new Atom('(end)');
   // Parse an expression.  A special "(begin)" delimiter does not seem
   // to be required, though note this does not require or even allow a
   // closing paren.
-  var result = mustParseAbove(aboveWhat);
+  var result = mustParseAbove(endToken);
   if (tokens.length) {
     abort('Extra input: "' + tokens[0] + '"');
   }
   return result;
-}
-
-/**
- * Parses a minimal amount of input, such as a parenthesized
- * expression, without trying to find any type information.
- *
- * TODO: Currently unused; test this.
- */
-export function parseMin(input) {
-  return justParse1(input, new Atom('x'));
 }
 
 /**
