@@ -8,10 +8,8 @@
   {{ $en := resources.Get "/js/engine.js" }}
   {{ $un := resources.Get "/js/unify.js" }}
   {{ $lo := resources.Get "/js/logic.js" }}
-  {{/* $nu reference below forces generation. */}}
-  {{ $nu := resources.Get "/js/numbers.js" }}
-  {{/* $dv reference below forces generation. */}}
-  {{ $dv := resources.Get "/js/derivatives.js" }}
+  {{ (resources.Get "/js/numbers.js").Publish }}
+  {{ (resources.Get "/js/derivatives.js").Publish }}
   {{ $nn := resources.Get "/js/natnums.js" }}
   {{ $st := resources.Get "/js/step-editor.js" }}
   {{ $re := resources.Get "/js/rendering.js" }}
@@ -50,7 +48,4 @@
      It could be accessed as dexie/dist/dexie.mjs, and Concat'ed
      to /js/dexie.js.
   */}}
-{{ $dx := resources.Get "/pt/js/dexie.js" }}
-<!-- {{ $dx.RelPermalink }}. Comment not emitted by Hugo. -->
-<!-- {{ $dv.RelPermalink }}. Comment not emitted by Hugo. -->
-<!-- {{ $nu.RelPermalink }}. Comment not emitted by Hugo. -->
+{{ (resources.Get "/pt/js/dexie.js").Publish }}
