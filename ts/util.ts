@@ -1143,7 +1143,7 @@ namespace Toy {
    * TODO: Consider merging the two.
    */
   export function newError(...args) {
-    const e = error.apply(null, ...args);
+    const e = error.apply(null, args);
     return e;
   }
 
