@@ -631,7 +631,9 @@ declare(
   /**
    * The name "assertion" is used in displays to indicate that the
    * result of the inference is asserted without proof.  If given a
-   * string, parses it and uses the result as its input.
+   * string, parses it and uses the result as its input.  This registers
+   * the type of any constant name first seen in this assertion,
+   * permanantly fixing its type.
    *
    * TODO: Consider accepting an arg that disables registration
    *   of new constants here, e.g. for asserting definitions.

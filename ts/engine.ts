@@ -1025,6 +1025,10 @@ export function exercise(name, ...declarations) {
  * and condition2 is the result of substituting <var> for <name> in
  * the condition.  Of course the recorded fact could use exists1 in
  * place of exists.
+ * 
+ * This also registers the type of the new constant, fixing it
+ * permanently. Note that the first asserted statement containing
+ * the name of a constant also serves to register that constant's type.
  *
  * TODO: If there is an "exists1" fact, this should automatically
  * generate a fact, with proof, that anything having the property is
