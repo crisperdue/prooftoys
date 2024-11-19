@@ -1060,13 +1060,16 @@ export function exercise(name, ...declarations) {
  */
 export function definition(defn_arg) {
   const definitions = Toy.definitions;
-  const candidate: EType = termify(defn_arg).typedCopy();
+  let candidate: EType = justParse(defn_arg);
   // Free occurrences of names of constants that do not have
   // definitions.  We check this before adding any facts that
   // may reference the defined name.
   const news = candidate.newConstants();
   // This has the values in the set, in insertion order.
   const newList = Array.from(news);
+
+  // Check that there is exactly one new constant here, and that it
+  // appears only in the LHS of the equality.
   assert(newList.length > 0,
          'Definition {1} needs a fresh constant name.', defn_arg);
   assert(newList.length === 1,
@@ -1079,7 +1082,31 @@ export function definition(defn_arg) {
     assert(!rhsNames.has(name),
            'Definition of {1} refers to {1}', name);
   }
-  
+
+  // This checks for a definition in "infix form", with the new constant
+  // function or predicate in the middle of three Atoms on the left.  If
+  // so, register it as infix, and rearrange the LHS so it is prefix.
+  function handleInfix() {
+    let left = candidate.getLeft();
+    const parts = left.asArray();
+    // If the lhs side has the form v1 C v2, treat C as the constant
+    // being defined, and declare it with a default precedence.
+    if (parts.length == 3) {
+      const mid = parts[1];
+      if (mid.isNamedConst()) {
+        left = call(mid, parts[0], parts[2]);
+        addConstants([mid]);
+        const name = mid.name;
+        // Give it an explicit precedence, distinct from precedence of
+        // most other names.  Currently operators same as identifiers.
+        precedence[name] = 60;
+        candidate = infixCall(left, '=', candidate.getRight());
+      }
+    }
+  }
+  handleInfix();
+  // Now it is safe to calculate type information.
+  candidate = candidate.typedCopy();
   // Register the single new name as a constant.
   Toy.addConstants(newList);
   // Register the type of the new constant.
@@ -1087,8 +1114,8 @@ export function definition(defn_arg) {
   // Notice that all of this constant registration is done before the
   // definition is potentially asserted as true in normalizeDefn.
 
-  // Normalizing does some deduction, so defer it until logic
-  // is loaded.
+  // Normalizing does some deduction, so ensure it is done only after
+  // logic is loaded.
   const addFacts = () => {
     const defined = new Atom(name);
     // The defn is the definition in standard form: <constant> = <term>.
@@ -1153,7 +1180,7 @@ export function definition(defn_arg) {
  * Happily this makes good use of equations with "==", as for "in" /
  * "element of", defining a boolean-valued function (predicate).
  */
-function normalizeDefn(defn_arg) {
+function normalizeDefn(defn_arg: EType) {
   if (!defn_arg.isCall2('=')) {
     return defn_arg;
   }
