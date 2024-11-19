@@ -68,10 +68,12 @@ export const unicodeNames = {
 export const betaExpansions = new WeakMap();
 
 /**
- * Set of all names of constants that are used in any statement
- * considered true in the theory.  Numeric literals other than 0 and 1
- * are not considered names, but as abbreviations for expressions
- * containing 0 and 1.
+ * Once upon a time, this was a Set of all names of constants that are
+ * used in any statement considered true in the theory.  Numeric
+ * literals other than 0 and 1 are not considered names, but as
+ * abbreviations for expressions containing 0 and 1.
+ * 
+ * TODO: Remove this and its uses.
  */
 export const namedConstants = new Set();
 
@@ -568,9 +570,9 @@ export class TermMap extends ToyMap {
 // method.
 //
 //
-// _addNewConstants(map result, Bindings bindings)
+// _addNewConstants(Set result, Bindings bindings)
 // 
-// Adds to the object/set all constant names that occur free in this
+// Adds to the set all constant names that occur free in this
 // Expr and are "new" in the sense of isNewConstant.  Assumes that
 // names in the Bindings object are bound in this expression's lexical
 // context, even if they have the form of named constants (so constant
@@ -1155,10 +1157,10 @@ export abstract class Expr {
   }
 
   /**
-   * Returns boolean indicating if this is a named constant, an Atom
-   * that is not a variable, but not a literal except for 0, 1, or the
-   * empty string.  (With complex numbers, "i" becomes another named
-   * constant that is also a literal.)
+   * Returns boolean indicating if this is named as a constant: an Atom
+   * not named as a variable and not a literal. (Currently 0, 1, and the empty
+   * string are named constants.  With complex numbers, "ii"(?) becomes
+   * another named constant that is also a literal.)
    */
   isNamedConst() {
     // In some sense this check is optional:
@@ -1168,6 +1170,7 @@ export abstract class Expr {
     // If not an Atom or is a variable, _value is "undefined"
     // and this is not a named constant.
     var v = this._value;
+    // Null here means "named as a constant, not a variable."
     return v === null || v === 0 || v === 1 || v === '';
   }
 
@@ -1204,8 +1207,9 @@ export abstract class Expr {
   }
 
   /**
-   * True iff this is a Atom that is a constant.  If the optional name
-   * is given, this constant must have the given name.
+   * True iff this is an Atom that is a constant.  If the optional name
+   * is given, this constant must have the given name.  Includes
+   * literals.
    */
   isConst(opt_name?) {
     if (!(this instanceof Atom) || this._value === undefined) {
@@ -1798,8 +1802,9 @@ export abstract class Expr {
   }
 
   /**
-   * Returns an array of the actual arguments to the function that
-   * would be the result of applying "func" to this Expr.
+   * Returns an array of the actual argument terms of the call to the
+   * function that would be the result of applying "func" to this Expr.
+   * See also nthArg.
    */
   args() {
     var term = this;
@@ -2977,7 +2982,7 @@ export class Atom extends Expr {
     // property to the string.
     //
     // Variables have _value of "undefined" and named constants have
-    // _value of null.
+    // _value of null, based on the name.
     this._value = isVariableName(name)
       ? undefined
       : isIntegerLiteral(name)

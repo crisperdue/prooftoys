@@ -1444,8 +1444,10 @@ export const unaryPower = 200;
 // Alphanumeric names have this power unless specified otherwise.
 export var namePower = 100;
 
-// Precedence table for infix operators.
-var precedence = {
+// Precedence table for infix operators.  New functions and predicates
+// defined as infix have precedence 60 for identifiers and 70 if
+// spelled as an operator.
+export const precedence = {
   // Closing tokens have power 0 to make infix parsing return.
   '(end)': 0,
   ')': 0,
@@ -1477,8 +1479,10 @@ var precedence = {
   div: 40,
   mod: 40,
   '**': 50,
+  // Other infix identifiers: 60
+  // Other infix operators: 70
   // Restriction of a function to a domain
-  '@': 60,
+  '@': 70,
   // Specials
   '(': 1000,
   '[': 1000,
