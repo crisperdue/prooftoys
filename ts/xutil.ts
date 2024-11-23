@@ -1137,17 +1137,16 @@ export function justParse1(input) {
   }
 
   /**
-   * Parses zero or one expressions, stopping at the first operator
-   * token it sees that does not bind tighter than the given one.
-   * (Opening brackets cause recursive calls, so inner calls parse
-   * inner closing brackets.)  Returns the parsed expression or null
-   * if none is available.
+   * Attempts to parse exactly one expression, ignoring any left
+   * context. Returns the parsed expression or null if none is
+   * available, i.e. if the next token is not an opening bracket,
+   * a prefix operator, or a token with precedence of namePower.
    * 
    * This function is responsible for parsing a subexpression that was
    * preceded by an infix operator or opening "bracket", or start of
    * text.
    */
-  function parse1Above(lastOp) {
+  function tryParse1() {
     // This is a top-down operator precedence parser.
     var token = next();
     var name = token.name;
@@ -1201,14 +1200,15 @@ export function justParse1(input) {
 
   /**
    * Parses a sequence of one or more expressions, returning the one
-   * expression or an appropriate Call for a sequence of two or more.
-   * Throws an error if no expressions are available.
+   * expression or an appropriate Call for a sequence of two or more,
+   * and using precedence to determine the shape of the syntax tree.
+   * Throws an error if no expression is available.
    *
-   * This always stops before any (top-level) token that does not bind
-   * tighter than the given one.
+   * This stops before any (top-level) token that does not bind tighter
+   * than the given one. Aborts if no expression is available.
    */
   function mustParseAbove(lastOp) {
-    var left = parse1Above(lastOp);
+    var left = tryParse1();
     if (!left) {
       abort('Empty expression at ' + peek().pos);
     }
@@ -1224,7 +1224,7 @@ export function justParse1(input) {
           next();
           left = infixCall(left, token, mustParseAbove(token));
         } else {
-          var arg = parse1Above(lastOp);
+          var arg = tryParse1();
           if (!arg) {
             return left;
           }
@@ -1444,9 +1444,9 @@ export const unaryPower = 200;
 // Alphanumeric names have this power unless specified otherwise.
 export var namePower = 100;
 
-// Precedence table for infix operators.  New functions and predicates
-// defined as infix have precedence 60 for identifiers and 70 if
-// spelled as an operator.
+// Precedence table for infix operators. Values of 0 and 1000
+// indicate closing and opening brackets.  Null value means infix, but
+// not associative. Ordinary identifiers have 100.
 export const precedence = {
   // Closing tokens have power 0 to make infix parsing return.
   '(end)': 0,
