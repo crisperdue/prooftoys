@@ -1137,10 +1137,10 @@ export function justParse1(input) {
   }
 
   /**
-   * Attempts to parse exactly one expression, ignoring any left
+   * Attempts to parse one complete expression, ignoring any left
    * context. Returns the parsed expression or null if none is
-   * available, i.e. if the next token is not an opening bracket,
-   * a prefix operator, or a token with precedence of namePower.
+   * available, i.e. if the next token is not an opening bracket, a
+   * prefix operator, or a token with precedence of namePower.
    * 
    * This function is responsible for parsing a subexpression that was
    * preceded by an infix operator or opening "bracket", or start of
@@ -1199,7 +1199,8 @@ export function justParse1(input) {
   }
 
   /**
-   * Parses a sequence of one or more expressions, returning the one
+   * Parses a sequence of one or more expressions in the context of a
+   * given infix operator token or the "end token", returning the one
    * expression or an appropriate Call for a sequence of two or more,
    * and using precedence to determine the shape of the syntax tree.
    * Throws an error if no expression is available.
