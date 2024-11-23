@@ -1170,7 +1170,7 @@ export function justParse1(input) {
       expect('.');
       var body = mustParseAbove(endToken);
       expr = lambda(id, body);
-      expect(name === '{' ? '}' : ']');
+      expect('}');
       return expr;
     }
     var power = getPrecedence(token);
