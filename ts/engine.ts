@@ -1097,9 +1097,8 @@ export function definition(defn_arg) {
         left = call(mid, parts[0], parts[2]);
         addConstants([mid]);
         const name = mid.name;
-        // Give it an explicit precedence, distinct from precedence of
-        // most other names.  Currently operators same as identifiers.
-        precedence[name] = 60;
+        // Give it a default infix binding power.
+        precedence[name] = infixPower;
         candidate = infixCall(left, '=', candidate.getRight());
       }
     }

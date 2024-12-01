@@ -1200,10 +1200,11 @@ export function justParse1(input) {
 
   /**
    * Parses a sequence of one or more expressions in the context of a
-   * given infix operator token or the "end token", returning the one
-   * expression or an appropriate Call for a sequence of two or more,
-   * and using precedence to determine the shape of the syntax tree.
-   * Throws an error if no expression is available.
+   * given infix operator token to the left -- or the "end token" if
+   * there is none.  Returns the one expression or an appropriate Call
+   * for a sequence of two or more, and using precedence to determine
+   * the shape of the syntax tree. Throws an error if no expression is
+   * available.
    *
    * This stops before any (top-level) token that does not bind tighter
    * than the given one. Aborts if no expression is available.
@@ -1431,7 +1432,7 @@ export function getPrecedence(token) {
   } else {
     return (!Toy.isIdentifier(name) && !token.isLiteral()
             // It's written as an operator, give it the default precedence.
-            ? 40
+            ? infixPower
             // Otherwise it is a name.
             : namePower);
   }
@@ -1443,7 +1444,11 @@ export function getPrecedence(token) {
 export const unaryPower = 200;
 
 // Alphanumeric names have this power unless specified otherwise.
-export var namePower = 100;
+export const namePower = 100;
+
+// The default power for infix operators -- if name is defined with
+// infix notation or is not an identifier.
+export const infixPower = 70;
 
 // Precedence table for infix operators. Values of 0 and 1000
 // indicate closing and opening brackets.  Null value means infix, but
@@ -1457,6 +1462,8 @@ export const precedence = {
   // This is boolean equivalence.
   '==': 2,
   '=>': 11,
+  // Infix operator meaning "if condition then value else none".
+  '??': 12,
   '|': 13,
   '&': 15,
   // Unlike the book, equality binds tighter than implication.  This
@@ -1471,8 +1478,6 @@ export const precedence = {
   // Following Lean for precedence of "in" and "notin"
   'in': 20,
   'notin': 20,
-  // Infix operator meaning "if condition then value else none".
-  '??': 25,
   '+': 30,
   '-': 30,
   '*': 40,
@@ -1480,10 +1485,7 @@ export const precedence = {
   div: 40,
   mod: 40,
   '**': 50,
-  // Other infix identifiers: 60
-  // Other infix operators: 70
-  // Restriction of a function to a domain
-  '@': 70,
+  // Default infix: 70
   // Specials
   '(': 1000,
   '[': 1000,
@@ -2051,7 +2053,7 @@ export function encodeSteps(steps_arg) {
 
 /**
  * From the given input expression or string to be parsed, computes
- * and returns an array of steps, empty in case of failure.
+ * and returns an array of steps if successful.
  * The string may be a sequence of steps or "(steps <seq>)".
  *
  * Returns a (strict) Error in case of failure.
@@ -2092,7 +2094,8 @@ export function decodeSteps(input) {
                    : fmt('Rule {1} failed with args: {2}',
                          ruleName, args));
       console.error('Proof failed at', '' + stepTerm);
-      outSteps.forEach((s, i) => console.log((i+1)+':', s.toString()));
+      outSteps.forEach((s, i) => 
+        console.log((i+1)+':', s.toString(), s.ruleName, s.ruleArgs.$$));
       const e = Toy.newError({with: {steps: outSteps,
                                      input: input,
                                      cause: err}},
