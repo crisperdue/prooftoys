@@ -4,7 +4,8 @@
 
 namespace Toy {
 
-  export var realNumbersLoaded = false;
+  // Indicates that this module is loaded.
+  export var realNumbersLoaded = true;
 
   // Predefine some common constants.
   var T = constify('T');
@@ -205,7 +206,7 @@ namespace Toy {
     //   true, remove "nz" conditions that cause the side condition to
     //   be added when the fact is used.  When arithmetic includes the
     //   null element, remove all "nz" conditions.
-    if (realNumbersLoaded && term.isCall2() && term.getLeft().isCall2()) {
+    if (term.isCall2() && term.getLeft().isCall2()) {
       var op1 = term.getLeft().getBinOp().name;
       var op2 = term.getBinOp().name;
       if (((op1 === '+' || op1 === '-') &&
@@ -253,11 +254,9 @@ namespace Toy {
   let _ugFacts = null;
   function ungroupingFacts() {
     _ugFacts = _ugFacts ||
-      (realNumbersLoaded
-        ? regroupingFacts.map(function (fact) {
+      regroupingFacts.map(function (fact) {
             return Toy.commuteEqn(Toy.resolveToFact(fact));
-          })
-        : []);
+          });
     return _ugFacts;
   }
 
