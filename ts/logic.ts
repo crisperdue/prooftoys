@@ -5028,6 +5028,16 @@ declare(
   },
 );
 
+// Menu generator for chain0, chain1 and chain1Only. For chain0, works
+// from a selected step, taking its wff as the "target".  For chain1 and
+// chain1Only, works from a selected term that is the conclusion of a
+// conditional step, taking that term as the target. Searches through
+// recorded facts and proof steps, seeking ones that are conditional,
+// with the entire antecedent matching as a schema with the target term.
+//
+// For each match found, effectively replaces the target with a
+// substitution instance of the conclusion of the found fact or step.
+// For the chain1 variants, includes the selected step's assumptions.
 function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
   if (selTerm && (!selStep.implies() || selTerm !== selStep.getRight())) {
     return null;
@@ -5080,8 +5090,13 @@ function chainDescription(step) {
   }
 }
 
-// Only generates menu items for a selected conclusion of a step.
 function detachMenuGen(ruleName, selStep, selTerm, editor) {
+  // This only generates menu items when the conclusion of a step is
+  // selected.
+  // 
+  // TODO: Consider applying this when the whole wff of an unconditional
+  //   step is selected (not the step itself); also matching against
+  //   entire antecedents.  That should make the chain* rules obsolete.
   if (!selTerm || !selStep.implies() || selTerm !== selStep.getRight()) {
     return null;
   }
@@ -5194,17 +5209,19 @@ function detachDescription(step) {
 // against only the conclusion of the (conditional) step.
 //  
 // With chain0, the result is an instance of the conclusion of the
-// schema.  The result of chain1 is also an instance of the schema's
+// schema.  The conclusion of the result of chain1 is also an instance of the schema's
 // conclusion, but with the assumptions of the step carried over to
 // the result, and if the schema has the form (a => (b => c)), the
-// result has the same form, with the step assumptions replacing the
-// schema assumptions.
+// result has "a" and "b" conjoined.
 declare(
   // Forward reasoning: Chain a conditional step, matching its
   // conclusion with the left side of a conditional schema.  Available
   // interactively only through menuGen.  Interactively select a
   // proved step to match it against antecedents of conditional steps
   // and facts (schemas).  Expects both inputs to be conditionals.
+  //
+  // TODO: Consider eliminating this by extending detach so it can match
+  //   an entire antecedent.
   {name: 'chain1Only',
    action2: function(step, schema_arg) {
      const schema = termify(schema_arg);
@@ -5233,6 +5250,9 @@ declare(
   // Forward reasoning, like chain1Only, but where that returns
   // (a => (b => c)), this combines and simplifies "a" and "b"
   // as the assumptions.  Succeeds when chain1Only succeeds.
+  //
+  // TODO: Consider if this is useless. If anything perhaps keep
+  //   chain1Only.
   {name: 'chain1',
    action2: function(step, schema_arg) {
      const schema = termify(schema_arg);
@@ -5242,6 +5262,10 @@ declare(
        const withAsms = Toy.applyMatchingFact(chained, '',
                                               ['a => (b => c) == a & b => c'],
                                               'rewriteOnly');
+        if (withAsms) {
+          // This whole rule looks like a mistake; just use chain1Only??
+          debugger;
+        }
        const simpler = withAsms && rules.simplifyAsms(withAsms);
        return (() => simpler || chained);
      }
@@ -5281,19 +5305,22 @@ declare(
    menuGen: chainMenuGen,
   },
 
-  // Plan: Match the conclusion of a proved step with part of the
-  // given conditional schema step or fact statement, normally an
+  // Matches the conclusion of a conditional proved step with part of
+  // the given conditional schema step or fact statement, normally an
   // assumption.  This substitutes into the schema and drops the
-  // assumption, which is considered to be true.  Available
-  // interactively only through menuGen.
+  // assumption, which is now proved true.  Available interactively only
+  // through menuGen.
   //
-  // Named "plan" because schemas commonly have portions that
-  // do not participate in the match and so "show through" to
-  // the result of the step, producing a step suitable for use
-  // as a schema.
+  // Named in honor of "condensed detachment" and because it effectively
+  // removes ("detaches") an assumption from the fact.  This resembles
+  // the "cut" rule in Gentzen sequent calculus.
   //
-  // Note: See also forwardChain, which matches the entire step
-  // with an entire schema antecedent.
+  // Note that schemas commonly have portions that do not participate in
+  // the match and so "show through" to the result of the step,
+  // producing a step suitable for use as a schema.
+  //
+  // Compare with forwardChain, which matches the entire step with an
+  // entire schema antecedent, chain0, chain1, and chain1Only.
   {name: 'detach',
    action2: function(step, schema_arg, path_arg) {
      const schema = (Toy.isProved(schema_arg)
