@@ -37,10 +37,13 @@ export async function exerciseSteps(exName) {
 }
 
 /**
- * Dump to console all exercises in format for machines and maybe humans.
+ * Dump to a string all exercises in format for machines and maybe humans.
+ *
+ * TODO: Move, perhaps to db.js?
  */
-export function dumpExercises() {
-  db.exercises.toArray().then(a => console.log(JSON.stringify(a, null, 1)))
+export async function dumpExercises() {
+  const a = await db.exercises.toArray();
+  return JSON.stringify(a, null, 1);
 }
 
 // Cache for exercises data from the file.
