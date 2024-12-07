@@ -5117,7 +5117,7 @@ function detachMenuGen(ruleName, selStep, selTerm, editor) {
         const data = {
           ruleName,
           ruleArgs: [step, stmt, p],
-          html: `remove <b>${asmText}</b> from <b>${shortFact}</b>`,
+          html: `use as <b>${asmText}</b> in <b>${shortFact}</b>`,
         };
         results.push(data);
       }
@@ -5173,14 +5173,15 @@ function detachDescription(step) {
   const [inStep, schema, path] = step.ruleArgs;
   const rendering = schema.rendering;
   if (rendering) {
+    // The schema has a rendering as a step.
     const asmText = schema.get(path).termDisplay();
-    return `remove ${asmText};;` +
-      ` from step <span class=stepReference>${rendering.stepNumber}</span>`;
+    return `conclude ${asmText};;` +
+      ` in step <span class=stepReference>${rendering.stepNumber}</span>`;
   } else {
     const expanded = Toy.factExpansion(schema);
     const shortText = expanded.shortForm().termDisplay();
     const asmText = expanded.get(path).termDisplay();
-    return `remove ${asmText};; from ${shortText}`;
+    return `conclude ${asmText};; in ${shortText}`;
   }
 }
 
