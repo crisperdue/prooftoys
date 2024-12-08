@@ -2134,7 +2134,8 @@ namespace Toy {
    * Returns a promise that resolves to undefined after the given number of
    * milliseconds.
    */
-  export const sleep = millis => new Promise(resolve => setTimeout(resolve, millis));
+  export const sleep =
+    (millis) => new Promise(thenFn => setTimeout(thenFn, millis));
 
   /**
    * Do the action as soon as possible after giving the page a chance to
