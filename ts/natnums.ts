@@ -1,5 +1,9 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
+// This is the support for the Prooftoys version of the
+// Natural Numbers Game, plus a couple of miscellaneous proofs
+// that don't need real numbers, but otherwise don't belong here.
+
 'use strict';
 
 // Set everything up immediately on load, avoiding changes to
