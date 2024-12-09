@@ -2492,7 +2492,7 @@ let termRightData =
       factsA: [
         'neg a + b = b - a',
         'a + b = b + a',
-        '@a - b = neg b + a'
+        'a - b = neg b + a'
       ],
       factsB: [
         'a + b + c = a + c + b',
@@ -2567,7 +2567,7 @@ declare(
       ];
       var factsB = [
         'a + b = b + a',
-        '@a - b = neg b + a'
+        'a - b = neg b + a'
       ];
       // TODO: Factor this out, see also moveTermRight.
       //   Consider extending to be somewhat like findMatchingFact.
@@ -3287,7 +3287,7 @@ declare(
         .rewrite('/main/left', 'a + b = b + a');
     }
   },
-   {statement: '@a - b = neg b + a',
+   {statement: 'a - b = neg b + a',
     proof: function() {
       return rules.fact('@a + neg b = a - b')
       .andThen('eqnSwap')
