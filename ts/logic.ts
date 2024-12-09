@@ -5008,7 +5008,7 @@ declare(
         return simp(step);
       } else {
         if (Toy.isDistribFact && Toy.isDistribFact(stmt) &&
-            path.isMainSide()) {
+            step.isMainSide(path)) {
           return rules.simplifyProducts(step, path);
         } else {
           // Otherwise simplify as usual except for desimplifiers.
