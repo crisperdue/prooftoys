@@ -1047,11 +1047,11 @@ namespace Toy {
     const thrower: (e: any) => never = e => {
       Toy.thrown = e;
       // The two code paths here enable us to suppress debugging when an
-      // abort occurs with Toy.proceeding on.  (For this, in the
-      // debugger request a pseudo-breakpoint that never pauses.)
+      // abort occurs with Toy.proceeding on.
       if (proceeding) {
         console.warn('Proceeding at:', e.message);
-        throw e;  // You may ask the debugger not to pause here.
+        // A breakpoint here debugs even when proceeding.
+        unwind(e);
       } else {
         throw e;
       }
@@ -1198,10 +1198,10 @@ namespace Toy {
   // targets.
   export let targetID = 1;
 
-  // Unwind the stack.  You may want to tell the debugger to "Never
-  // Pause" here:
-  export function unwind() {
-    throw undefined;  // You may ask the debugger not to pause here.
+  // Unwind the stack by throwing the given value, ordinarily configured
+  // not to invoke the debugger.
+  export function unwind(value?) : never {
+    throw value;  // You may ask the debugger not to pause here.
   }
 
   /**
@@ -1241,6 +1241,7 @@ namespace Toy {
         // requested value and stop unwinding the stack.
         const v = exitValue;
         exitTarget = exitValue = undefined;
+        // Return from withExit without using catch.
         return v;
       }
     }
