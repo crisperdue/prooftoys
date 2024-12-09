@@ -3033,13 +3033,17 @@ function sendRule(name, args) {
 $(function () {
     var receiver = {
       actions: {
-        runRule: message =>
+        // TODO: Maybe rename to something like ruleSuggestion
+        //   or tryRule.
+        runRule: message => {
           // This rebinding is specifically for step suggestions,
           // which may fail for a wide variety of reasons.
-          Toy.rebind('proceeding', true, () => {
-            const value = Toy.rules[message.name].attempt( ...message.args);
-            return {value};
-          }),
+          let value;
+          const e = aborted(() => {
+            value = Toy.rules[message.name].attempt( ...message.args);
+          }, true);
+          return {value: e || value};
+        },
       }
     };
     var fakeWorker = new Toy.FakeRpcWorker(receiver);
