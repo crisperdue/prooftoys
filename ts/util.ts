@@ -1250,12 +1250,13 @@ namespace Toy {
   /**
    * Stops stack unwinding from any abort during the execution of the
    * given fn.  This calls fn, passing no arguments, and returning the
-   * thrown value iff the function throws, except if the thrown value is
-   * falsy, e.g. undefined, returns true.  This catches aborts, but not
+   * thrown value iff the function throws. (Or if the thrown value is
+   * falsy, e.g. undefined, returns true.)  This catches aborts, but not
    * exits.  If the function returns normally this returns false.
    *
-   * The optional second argument, defaulting to false, rebinds
-   * Toy.proceeding, which influences interaction of "abort" with the
+   * The optional second argument, defaulting to false, becomes a new
+   * binding for Toy.proceeding.  When abort runs and "proceeding" is
+   * truthy, it takes a code path normally configured not to enter the
    * debugger.
    *
    * This design has an advantage over passing a "catcher" function in
@@ -1263,8 +1264,11 @@ namespace Toy {
    * "return" or "break" right in the block.  For example this can be
    * used in a form such as if (catchAborts(...)) { <actions> }, where
    * the actions execute in case of an abort.
+   * 
+   * Caution: This traps "bare" throws, but cannot determine the thrown
+   * value.
    *
-   * TODO: Rename to "aborted".
+   * TODO: Rename to "aborted", see just below.
    */
   export function catchAborts(fn, proceed = false) {
     let success = false;
@@ -1285,6 +1289,9 @@ namespace Toy {
       }
     }
   }
+
+  // New name for catchAborts, see above.
+  export const aborted = catchAborts;
 
   //// ERRORS
 
