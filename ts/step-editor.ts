@@ -650,18 +650,26 @@ export class ProofEditor {
     if (!('noload' in this._options)) {
       let needNN = false;
       if (goal instanceof Expr) {
+        // When there is a goal and it mentions NN but not R,
+        // then set needNN to true.
         const names = goal.constantNames();
         needNN = names.has('NN') && !names.has('R');
         if (names.has('NN') && names.has('R')) {
           console.warn('NN and R!?');
         }
       }
+      // TODO: The checking for what to load is ill-conceived.
+      //   Instead, support editor options specifying the theories
+      //   needed.  All editors on the same page then must require
+      //   the samee theories.
       if ((needNN && Toy.realNumbersLoaded) ||
           (!needNN && Toy.exerciseLoaded)) {
-        // Associate this proof editor with this document across
+        // We need to unload some axioms, theorems, definitions, etc.
+        // that may be undesirable for some reason or other.
+        // So associate this proof editor with this document across
         // page loads.
         this.syncToDocName(name);
-        // Reload and start over.
+        // Reload the page and start over.
         Toy.sleep(0).then(() => location.reload());
         // Indicate an inconclusive result.
         return null;
@@ -671,16 +679,18 @@ export class ProofEditor {
         // This loads all natural numbers theorems.
         prepExercise('nat/');
         return doProof();
-      } else if (!Toy.requiredScripts.has(numbersScript)) {
-        // Load numbers.js dynamically, then asynchronously
+      } else {
+        // Ensure that numbers.js will be loaded, then asynchronously
         // run the proof.
         Toy.requireScript(numbersScript)
           .then(() => {
             doProof();
           })
-          .catch(err => console.log(err));
-      } else {
-        doProof();
+          .catch(err => console.warn(err));
+          // Caution: We don't exactly know that the proof will
+          // complete successfully, but we don't want to unload
+          // the current theory first either.
+          return !!Toy.readDoc(name);
       }
     }
     // Decode and run the proof recorded in the document.
