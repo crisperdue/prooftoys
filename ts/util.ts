@@ -2926,7 +2926,7 @@ namespace Toy {
    * TODO: Consider registering the URLs of all scripts successfully
    *   loaded.
    */
-  export function loadScript(url) {
+  export function loadScript(url) : any {
     let script = document.createElement('script');
     script.src = url;
     script.async = false;
@@ -2956,20 +2956,25 @@ namespace Toy {
    */
 
   // Set of URLs of scripts that have been required so far.
-  export const requiredScripts = new Set();
+  export const requiredScripts = new Map<string, Promise<any>>();
+
+  // Set of URLs of scripts for which loading has completed.
+  // export const loadedScripts = new Set();
 
   /**
    * If the given URL string has not previously been used in a call to
-   * requireScript, calls loadScript to load the script, otherwise does
-   * nothing. Returns the Promise from loadScript, else a Promise that
-   * immediately resolves to true.
+   * requireScript, calls loadScript to initiate loading of the script,
+   * and in any case returns the Promise for loading of that script.
+   * Usable even if loading of the script is already complete.
    */
   export function requireScript(url) {
-    if (!requiredScripts.has(url)) {
-      requiredScripts.add(url);
-      return loadScript(url);
+    const p = requiredScripts.get(url);
+    if (p) {
+      return p;
     } else {
-      return new Promise((resolve, reject) => resolve(true));
+      const p2 = loadScript(url);
+      requiredScripts.set(url, p2);
+      return p2;
     }
   }
 
