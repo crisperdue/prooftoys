@@ -815,7 +815,8 @@ input.varName, input.step, input.equation, input.implication {
 
     .mode {
         text-align: center;
-        padding: .2em 2em 0 2em;
+        padding: .5em 2em;
+        font-weight: 500;
     }
 
     .mode:hover {
