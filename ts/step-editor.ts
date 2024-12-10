@@ -18,6 +18,9 @@ export var rpcQueue;
  */
 export var exerciseLoaded = null;
 
+
+export const realNumbersScript = '/js/numbers.js';
+
 /**
  * Async utility function to print and return the
  * proofState of the named exercise.  Currently unused.
@@ -674,7 +677,6 @@ export class ProofEditor {
         // Indicate an inconclusive result.
         return null;
       }
-      const numbersScript = '/js/numbers.js';
       if (needNN) {
         // This loads all natural numbers theorems.
         prepExercise('nat/');
@@ -682,7 +684,7 @@ export class ProofEditor {
       } else {
         // Ensure that numbers.js will be loaded, then asynchronously
         // run the proof.
-        Toy.requireScript(numbersScript)
+        requireScript(realNumbersScript)
           .then(() => {
             doProof();
           })
@@ -1697,20 +1699,21 @@ export class StepEditor {
     // indicating failure, such as a rule that attempts to prove a
     // statement.
     if (result === true) {
+      // The was successful without affecting the proof.
       // Do nothing.
-    } else if (!(result instanceof Toy.Step)) {
+    } else if (!isProved(result)) {
       // It is possible to display more information about thrown
       // errors (aborts), but it may not be helpful to the user.
       const message = 'Rule failed:' + ruleName;
 
       console.warn(`Rule ${ruleName} failed`);
       if (result instanceof Error) {
-        console.warn(result.message);
+        console.warn(`Error: ${result.message}`);
       } else {
         console.warn('Result:', result);
       }
-
       this.report(message);
+      debugger;
     } else if (result.rendering) {
       // If there is already a rendering, Expr.justify must have found
       // that the "new" step was identical to one of its dependencies,
