@@ -2052,7 +2052,7 @@ Step.prototype.simplifyUsual = function() {
   const path = Toy.getStepSite(step);
   return (path && step.isAsmSide(path)
           ? Toy.rules.simplifySite(step, '/left')
-          : Toy.rules.simplifyFocalPart(step) || assert(false));
+          : Toy.simplifyStep(step) || assert(false));
 };
 
 //// RULEMENU
