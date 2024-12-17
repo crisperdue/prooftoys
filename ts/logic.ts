@@ -6897,11 +6897,17 @@ declare(
    }
   },
 
+  // Contraposition
   {statement: 'a => b == not b => not a',
    proof: function() {
      return rules.tautology('a => b == not b => not a');
    }
   },
+
+  // This can be more helpful than contraposition in the sense that b in
+  // the result need not be simplified.  The default simplier does not
+  // operate on asms, and b is an asm.
+  defTautology('a => not b == b => not a'),
 
   // Relationship between "implies" and "or"
   {statement: 'a => b == not a | b',
