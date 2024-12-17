@@ -2781,7 +2781,7 @@ function asFactProver(prover, goal) {
           okAsms = false;
         }
         if (!factAsms.superset(goalAsms)) {
-          console.error(
+          console.warn(
             'Ignoring unneeded assumptions in the fact statement.',
             '\nProved:', proved.toString(),
             '\nStated:', goal.toString()
