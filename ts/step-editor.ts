@@ -2256,7 +2256,12 @@ class RuleMenu {
       // A term is selected.  Find proof steps that can serve as rewrite
       // rules with the current situation / selection.
 
-      // Check a couple of characteristics of the schema.
+      /**
+       * Checks a couple of characteristics of the schema: unifiability
+       * of the selection's type with the schema's type; and if the
+       * selection is an equation, unifiability of the type of the "="
+       * in the selection and the "=" in the schema.
+       */
       const checkSchema = schema => {
         if (!Toy.coreUnifTypes(selection.type, schema.type)) {
           return false;
@@ -2268,7 +2273,6 @@ class RuleMenu {
         }
         return true;
       };
-            
 
       //
       // Search for steps that could rewrite the selection.

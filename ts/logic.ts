@@ -791,7 +791,7 @@ declare(
       const last = Toy.getProofDisplay(rendered).getLastStep();
       if (last == rendered || !last.matches(rendered)) {
         // The last step must match the selected one, but must
-        // be a different step.
+        // be a different step object.
         return false;
       }
       const derived = rendered.descendants();
@@ -2101,9 +2101,10 @@ declare(
 // Managing numeric type assumptions
 
 declare(
-  // Simplifies repeatedly using basicSimpFacts.  If the main part
-  // of the step is an equation, simplifies its right side, otherwise the
-  // entire main part, then runs simplifyAsms.
+  // Simplifies repeatedly using basicSimpFacts.  If the main part of
+  // the step is an equation, simplifies its right side, otherwise the
+  // entire main part, then runs simplifyAsms.  Frequently invoked by
+  // simplifyUsual.
   {name: 'simplifyFocalPart',
    action: function(step) {
       var visPath = step.pathToFocalPart();

@@ -1705,14 +1705,19 @@ export interface Expr {
    * Returns the appropriate subexpression of this to match against a
    * target site if this Expr is to be used as a rewriter.  Notice that
    * it is completely determined by the form of this Expr.
+   *
+   * If given an equation or conditional equation, this is its LHS.
+   * Otherwise if given a conditional, the RHS, otherwise the argument
+   * itself.
+   * 
+   * TODO: Consider a matchPart2 method that for equations returns the
+   *   entire equation part, else null.  That would support rewriting
+   *   equations to T.
    */
   matchPart();
 }
 Expr.prototype.matchPart = function() {
   const self = this;
-  // If given an equation or conditional equation, this is its
-  // LHS.  Otherwise if given a conditional, the RHS, otherwise
-  // the argument itself.
   return (self.isEquation()
           ? self.eqnLeft()
           : self.isCall2('=>')
@@ -2057,6 +2062,10 @@ export function encodeSteps(steps_arg) {
  * The string may be a sequence of steps or "(steps <seq>)".
  *
  * Returns a (strict) Error in case of failure.
+ * 
+ * TODO: Add function parameter to be called on each result step as it
+ *   is generated, so successful steps can be rendered immediately in
+ *   case execution of the next step invokes the debugger.
  */
 export function decodeSteps(input) {
   const parsed =
