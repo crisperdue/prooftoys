@@ -59,6 +59,8 @@ export const unicodeNames = {
   // We are currently using the "@" operator instead of "restrict"
   restrict: '\u21be',  // Restriction to domain; upward harpoon w rt barb
   'subset?': '\u2286', // Subset (or equal)
+  'intersect': '\u2229',
+  'union': '\u222a',
 };
 
 /**

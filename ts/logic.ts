@@ -7222,19 +7222,20 @@ declare(
    }
 );
 
-definition('intersect = {p. {q. {x. ((p x) & (q x))}}}');
+definition('p intersect q = {x. p x & q x}');
+definition('p union q = {x. p x | q x}');
 definition('p subset? q = forall {x. p x => q x}');
 
 declare(
-   {statement: '(p subset? q == (p = (intersect p q)))',
+   {statement: '(p subset? q == (p = (p intersect q)))',
     name: 'SubsetInter',
     proof: [
             '(1 fact "p subset? q = forall {x. p x => q x}")',
             '(2 rewrite (s 1) (path "/main/right/arg/body") (t ((a => b) == (a == (a & b)))))',
-            '(3 fact "(p x & q x) = intersect p q x")',
+            '(3 fact "(p x & q x) == (p intersect q) x")',
             '(4 rewriteOnlyFrom (s 2) (path "/main/right/arg/body/right") (s 3))',
             '(5 fact "forall {x. p x == q x} == p = q")',
-            '(6 instantiateVar (s 5) (path "/main/right/right") (t (intersect p q)))',
+            '(6 instantiateVar (s 5) (path "/main/right/right") (t (p intersect q)))',
             '(7 rewriteOnlyFrom (s 4) (path "/main/right") (s 6))'
             ]
    }
