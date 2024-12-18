@@ -1476,10 +1476,16 @@ Atom.prototype.render = function(minPower, isFn) {
   return $expr;
 }
 
-// Private to effectivePower.
+/**
+ * Key is the pname of an outer operator, and the value is a set of
+ * names of inner operators of higher or equal precedence to be
+ * parenthesized nevertheless.
+ * 
+ * Private to effectivePower.
+ */
 var useParens = {
   '|': new Set(['&']),
-  '=>': new Set(['=>', '=']),
+  '=>': new Set(['=>']),
   '==': new Set(['=>'])
 }
 
