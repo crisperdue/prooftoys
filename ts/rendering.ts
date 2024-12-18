@@ -405,9 +405,8 @@ export class ProofDisplay {
    *   that a node renders a proof step iff it has the proofStep CSS
    *   class.
    *
-   * - Rendered steps have properties "stepNumber", a string identifying
-   *   the step number to display; and "hasLeftElision", a boolean true
-   *   to request omitting display of the LHS of an equation.
+   * - Rendered steps has property "stepNumber", a string identifying
+   *   the step number to display.
    */
   renderStep(step) {
     var self = this;
@@ -777,9 +776,6 @@ export class ProofDisplay {
     }
     $proofStep.data('proofStep', step);
     step.stepNode = dom($proofStep);
-    var elide = wantLeftElision(step);
-    // This initializes hasLeftElision.
-    step.hasLeftElision = elide;
     var $wff = $(renderWff(step));
     hackOnRendering($wff);
     $stepAndNum.append($('<wffblock->').append($wff));
@@ -1215,30 +1211,6 @@ export function sameAsPrevAsms(step) {
 }
 
 /**
- * Returns true iff policy is to elide the LHS of the formula of the
- * given rendered step.  Current policy calls for elision if the main
- * parts of the given rendered step and the preceding rendered step
- * are both equations, possibly conditional equations, with the same
- * LHS.
- *
- * TODO: Consider the possibility of showing the whole step in case
- * the _next_ step modifies the LHS of this one, e.g. a rewrite using
- * the LHS.  That would allow the target site to be highlighted.
- */
-export function wantLeftElision(step) {
-  // So-called left elision is currently disabled by the following
-  // line of code. Comment it out to get previous behavior:
-  return false;
-  if (['display', 'copy'].includes(step.ruleName)) {
-    return false;
-  }
-  var prev = prevRenderedStep(step);
-  return (prev && prev.isEquation() && step.isEquation() &&
-          step.getMain().getLeft().matches(prev.getMain().getLeft()));
-}
-
-
-/**
  * Renders the top-level expression of a renderable step into a node,
  * returning the node.  Omits surrounding parens if the step is a
  * Call, as it usually is.
@@ -1279,32 +1251,34 @@ export function renderWff(step) {
 
     const power = Toy.getPrecedence(wff.getBinOp());
     // Render the main part.
-    const node = (step.hasLeftElision
-                  ? renderWithElision(mainPart)
-                  : dom(mainPart.renderTopConj(power + 1)));
+    const node = dom(mainPart.renderTopConj(power + 1));
 
     // In this case we want one more level of flexbox to ensure the
     // mainPart is a flexbox.  Specify it with a class.
     // TODO: Reconsider this.
     if (mainPart.isCall2('==')) {
+      // TODO: Probably all this flexbox stuff for indentation can be
+      //   removed.
       $(mainPart.node).addClass('flexBox');
     }
-    if (sameAsPrevAsms(step)) {
-      if (step.hasLeftElision) {
-        // Don't even render an ellipsis for the assumptions in this case.
-        return wff.node = node;
-      } else {
-        // Render the assumptions as an ellipsis.
+    
+    if (false && sameAsPrevAsms(step)) {
+        // In the past, if same as in the previous step, we would render
+        // assumptions as an ellipsis before trying to render that part
+        // of the step the usual way.
         asmPart.node = dom(exprJq()
                            .append('<span class=ellipsis>&hellip;</span>'));
-      }
     }
     mainPart.node = node;
-    // Now render the entire wff into a node.  The renderer will stop
-    // when it reaches the asmPart and when it reaches the mainPart,
-    // because they already have nodes.
+    // Now render the entire wff into a node.  The renderer will skip
+    // rendering of terms that already have nodes.
     $wff = step.wff.render(0);
     wff.node = dom($wff);
+    if (sameAsPrevAsms(step)) {
+      // The identical asms have been rendered normally, but if the same
+      // as in the previous step, now mark them as "faded".
+      $(asmPart.node).addClass('faded');
+    }
     return wff.node;
   } else if (wff.isCall2('==')) {
     // The WFF is a top-level equivalence.
@@ -1314,13 +1288,6 @@ export function renderWff(step) {
     const power = Toy.getPrecedence(wff.getBinOp());
     // Render the right part.
     const node = dom(right.renderTopConj(power + 1));
-
-    const prev = prevRenderedStep(step);
-    if (prev && prev.isCall2('==') && step.getLeft().sameAs(prev.getLeft())) {
-      // Render the LHS as an ellipsis.
-      left.node = dom(exprJq()
-                      .append('<span class=ellipsis>&hellip;</span>'));
-    }
     right.node = node;
     // Now render the entire wff into a node.  The renderer will stop
     // when it reaches the left and right parts, because they already
@@ -1330,37 +1297,14 @@ export function renderWff(step) {
     return wff.node;
   } else {
     // The step is not a conditional or equivalence.
-    return wff.node = (step.hasLeftElision
-                       ? renderWithElision(wff)
-                       : dom(wff.renderTopConj(0)));
+    return wff.node = dom(wff.renderTopConj(0));
   }
 }
 
 /**
- * Renders the given expr of the given step with left elision.  The
- * expr must be a call2, and this will treat the function/operator as
- * infix.  The result is a "fullExpr" node with the ellipsis display,
- * the operator, and the RHS of operator.
- *
- * TODO: Consider changing this and its uses to precompute any special
- * rendering.
- */
-export function renderWithElision(expr) {
-  expr.assertCall2();
-  var $expr = exprJq(true);
-  expr.node = dom($expr);
-  $expr.append('<span class=ellipsis>&hellip;</span> ',
-               // Display equivalences as equivs.  This eventually
-               // calls toUnicode, and if there is a type, displays
-               // appropriately.
-               expr.getBinOp().render(0, true), ' ',
-               expr.getRight().renderTopConj(0));
-  return dom($expr);
-}
-
-/**
- * Somewhat like renderWithElision, but with the ellipsis not visible,
- * just occupying space.
+ * The expr must be a call2, and this will treat the function/operator
+ * as infix.  The result is a "fullExpr" node with an ellipsis, the
+ * operator, and the RHS of operator.
  */
 export function renderWithElisionSpace(expr) {
   expr.assertCall2();
@@ -1372,6 +1316,9 @@ export function renderWithElisionSpace(expr) {
   return dom($expr);
 }
 
+/**
+ * TODO: Just use Expr.render instead, it is equivalent.
+ */
 export interface Expr {
   renderTopConj(minPower);
 }
@@ -1557,7 +1504,10 @@ export function effectivePower(op, inner) {
   return Toy.getPrecedence(op);
 }
 
-// minPower is the precedence required to do without parentheses.
+/**
+ * Renders a Call. The minPower is the precedence required to do so
+ * without parentheses.
+ */
 Call.prototype.render = function(minPower) {
   if (this.node) {
     return $(this.node);
