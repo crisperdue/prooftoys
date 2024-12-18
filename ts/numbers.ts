@@ -3298,7 +3298,8 @@ declare(
     proof: function() {
       return rules.fact('a + neg a = 0')
       .rewrite('/main/left', 'a + b = b + a');
-    }
+    },
+    simplifier: true,
   },
    {statement: 'neg (neg a) = a',
     proof: function() {

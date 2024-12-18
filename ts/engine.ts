@@ -2496,6 +2496,7 @@ export var basicSimpFacts: (string | Object)[] = [
                       'not T == F',
                       'not F == T',
                       '(a == T) == a',
+                      '(a == F) == not a',
                       'not (not a) == a',
                       'x = x == T',
                       'T => a == a',
