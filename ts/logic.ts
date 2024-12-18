@@ -1089,7 +1089,8 @@ declare(
     },
     tooltip: ('statement to take as given'),
     description: 'given',
-    labels: 'algebra basic'
+    labels: 'algebra basic',
+    autoSimplify: noSimplify,
   },
 
   // Add the conclusion of the wff to its assumptions to
@@ -1130,6 +1131,7 @@ declare(
    tooltip: ('proof starter'),
    description: 'start proof of;; {bool}',
    labels: 'basic',
+   autoSimplify: noSimplify,
   },
 
   {name: 'subgoal',
@@ -1171,7 +1173,8 @@ declare(
     menu: ' consider {term} in isolation',
     tooltip: ('prepare to transform term'),
     description: 'consider term in isolation',
-    labels: 'general algebra'
+    labels: 'general algebra',
+    autoSimplify: noSimplify,
   },
 
   // r5201a is not implemented.  It would be ambiguous in case the
@@ -3397,7 +3400,8 @@ declare(
     menu: 'assume (A &rArr; A)',
     tooltip: 'Statement to assume',
     description: 'assumption;; (A &rArr; A)',
-    labels: 'basic'
+    labels: 'basic',
+    autoSimplify: noSimplify,
   },
 
   // Assume the target boolean term, like considerPart, but making it
@@ -3411,7 +3415,8 @@ declare(
     menu: 'assume {term}',
     tooltip: ('assume term'),
     description: 'assume',
-    labels: 'basic'
+    labels: 'basic',
+    autoSimplify: noSimplify,
   },
 
   /**
@@ -3430,7 +3435,8 @@ declare(
     menu: 'assume explicitly (A &rArr; A)',
     tooltip: 'Statement to assume (show occurrences)',
     description: 'assume explicitly;; (A &rArr; A)',
-    labels: 'basic'
+    labels: 'basic',
+    autoSimplify: noSimplify,
   }
 
 );
@@ -3496,6 +3502,7 @@ declare(
       }
       return result.justify('andAssume', arguments, [step]);
     },
+    autoSimplify: noSimplify,
     inputs: {step: 1, bool: 2},
     form: ('Add assumption <input name=bool> in step <input name=step>'),
     menu: 'add assumption(s)',
