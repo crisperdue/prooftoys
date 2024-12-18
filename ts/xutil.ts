@@ -1466,6 +1466,7 @@ export const precedence = {
   '??': 12,
   '|': 13,
   '&': 15,
+
   // Unlike the book, equality binds tighter than implication.  This
   // way makes more sense when working with numbers for example.
   '=': 20,
@@ -1478,6 +1479,8 @@ export const precedence = {
   // Following Lean for precedence of "in" and "notin"
   'in': 20,
   'notin': 20,
+  'subset?': 20,
+
   '+': 30,
   '-': 30,
   '*': 40,
