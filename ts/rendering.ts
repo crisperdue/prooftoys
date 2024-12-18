@@ -1225,24 +1225,6 @@ export function renderWff(step) {
     // Just render everything in a couple of special cases.
     return dom(wff.renderTopConj(0));
 
-  } else if (step.ruleName === 'assume' ||
-      step.ruleName === 'consider' ||
-      step.ruleName === 'considerPart' ||
-      step.ruleName === 'given') {
-    // All of these omit some unnecessary part of the display for
-    // readability.
-    //
-    // The right side renders on the left here so any changes to it appear
-    // on the right side in following steps.
-    //
-    // Give the WFF its own node, but it won't be practical to select it
-    // because it has no "real estate" of its own.  In practice this just
-    // displays its RHS.
-    //
-    // Note that levels of nesting here are as in " ... == <rhs>"
-    // renderings, so the same levels of flexbox nesting works for both.
-    wff.node = renderWithElisionSpace(wff);
-    return wff.node;
   } else if (wff.isCall2('=>')) {
     // There are assumptions.
 
