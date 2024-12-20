@@ -1930,16 +1930,21 @@ export abstract class Expr {
   }
 
   /**
-   * Public version of "get", finding a subexpression from an argument
-   * convertible to a path using Expr.asPath.
+   * Finds and returns a subexpression from an argument
+   * convertible to a path using Expr.asPath.  If there is no such
+   * subexpression, throws an Error except if optional argument "test"
+   * is truthy then returns null.
    */
-  get(arg) {
+  get(arg, test?) {
     let p = this.asPath(arg);
     let next = this;
     while (p !== Path.empty) {
       const seg = p.segment;
       p = p.rest;
-      next = next.descend(seg);
+      next = next.descend(seg, test);
+      if (!next) {
+        return null;
+      }
     }
     return next;
   }
@@ -2014,10 +2019,11 @@ export abstract class Expr {
   }
 
   /**
-   * Return the subexpression of this referenced by
-   * the given segment string.
+   * Return the subexpression of this referenced by the given segment
+   * string, throwing an Error if there is no such subexpression, or if
+   * the optional isTest is truthy, returns null in that case.
    */
-  descend(segment) {
+  descend(segment, isTest?) {
     if (this instanceof Call) {
       if (this.fn instanceof Call) {
         if (segment === 'left') {
@@ -2040,6 +2046,10 @@ export abstract class Expr {
         return this.body;
       }
     }
+    if (isTest) {
+      return null;
+    }
+    // Throws an Error.
     this._checkSegment(new Path(segment));
   }
 
