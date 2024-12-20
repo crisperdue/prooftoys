@@ -321,17 +321,9 @@ $(function() {
         }
         const display = new ProofDisplay();
         window.proofDisplay = display;
-        const decoded = Toy.decodeSteps(stepsInfo);
-        if (decoded instanceof Error) {
-          // TODO: Give the ordinary user at least a hint that
-          //   something went wrong.
-          console.error('Failed to decode steps:');
-          console.error(decoded);
-          display.setSteps([]);
-        } else {
-          display.setSteps(decoded);
-          $(this).append(display.node);
-        }
+        $(this).append(display.node);
+        // Add each step immediately when computed.
+        Toy.decodeSteps2(stepsInfo, step => display.addStep(step));
     });
   })
 });
