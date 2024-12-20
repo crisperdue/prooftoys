@@ -2064,11 +2064,7 @@ export function encodeSteps(steps_arg) {
  * and returns an array of steps if successful.
  * The string may be a sequence of steps or "(steps <seq>)".
  *
- * Returns a (strict) Error in case of failure.
- * 
- * TODO: Add function parameter to be called on each result step as it
- *   is generated, so successful steps can be rendered immediately in
- *   case execution of the next step invokes the debugger.
+ * Aborts in case of failure.
  */
 export function decodeSteps(input) {
   const parsed =
@@ -2096,34 +2092,15 @@ export function decodeSteps(input) {
     const rule = Toy.rules[ruleName];
     let result;
     let err;
-    const errOut = () => {
-      const fmt = Toy.format;
-      const msg = (!rule
-                   ? fmt('No such rule: {1}', ruleName)
-                   : !result
-                   ? fmt('No result from rule {1} with args {2}',
-                         ruleName, args)
-                   : fmt('Rule {1} failed with args: {2}',
-                         ruleName, args));
-      console.error('Proof failed at', '' + stepTerm);
-      outSteps.forEach((s, i) => 
-        console.log((i+1)+':', s.toString(), s.ruleName, s.ruleArgs.$$));
-      const e = Toy.newError({with: {steps: outSteps,
-                                     input: input,
-                                     cause: err}},
-                             '{1}', msg);
-      return e;
-    };
     if (rule) {
-      result = Toy.try_(() => rule.attempt.apply(rule.info, args));
-      if (result instanceof Toy.Step) {
+      result = rule.apply(rule.info, args);
+      if (isProved(result)) {
         outSteps.push(result);
-        continue;
       } else {
-        return errOut();
+        abort();
       }
     } else {
-      return errOut()
+      abort(`No such rule: ${rule}`);
     }
   }
   return outSteps;
