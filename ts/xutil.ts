@@ -2130,6 +2130,49 @@ export function decodeSteps(input) {
 }
 
 /**
+ * The input argument is like decodeSteps, and the callback
+ * is a function that will be called with the proved result of each
+ * of the input step descriptions, typically to insert it into the
+ * steps array of a ProofEditor.
+ */
+export function decodeSteps2(input, callback) {
+  const parsed =
+        (typeof input == 'string'
+         ? justParse(input.trim().startsWith('(steps')
+                     ? input
+                     : `(steps ${input})`)
+         : input);
+  const descriptions = parsed.asArray();
+  const outSteps = [];
+  for (let i = 1; i < descriptions.length; i++) {
+    let message = '';
+    // Ignore the first "description" by starting at 1.
+    const stepTerm = descriptions[i];
+    const stepInfo = stepTerm.asArray();
+    assert(stepInfo.shift().getNumValue() == i, function() {
+        return 'Mismatched step number in: ' + stepInfo;
+      });
+    const ruleName = stepInfo.shift().name;
+    // The remainder of the array is arguments to the rule.
+    const args = [];
+    stepInfo.forEach(function(info) {
+        args.push(decodeArg(info, outSteps));
+      });
+    const rule = Toy.rules[ruleName];
+    const result = rule.apply(rule.info, args);
+    if (Toy.isProved(result)) {
+      outSteps.push(result);
+      callback(result);
+    } else {
+      // Since the rule is applied, not just attempted,
+      // it should hopefully not return an error.
+      console.error(result);
+      abort('Internal error');
+    }
+  }
+}
+
+/**
  * Decodes an argument info Expr into an argument for a rule.
  * Argument info Exprs have one of the forms: (s <n>) for a step
  * number; (t <expr>) for a term; or (path <string>) for a path.
