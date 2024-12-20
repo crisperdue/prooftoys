@@ -203,7 +203,7 @@ export class ProofEditor {
     self.showRules = [];
     // Exercises often override the default empty value.
     self.initialSteps = options.steps
-      // TODO: Is there a better way to express this idea?
+      // TODO: Handle this much like data.proof.
       ? Toy.unrenderedDeps(Toy.asProof(options.steps)())
       : [];
 
@@ -412,7 +412,12 @@ export class ProofEditor {
 
     $solve.on('click', function() {
       if (window.confirm('Replace contents with a pre-made solution?')) {
-        self.setSteps(Toy.unrenderedDeps(Toy.asProof(data.proof)()));
+        self.setSteps([]);
+        // Yes, data.proof uses yet another format for the proof.
+        // Convert it to a single string.
+        const proofStr = ['(steps '].concat(data.proof, ')').join('\n');
+        // Add each step ASAP and support debugging.
+        decodeSteps2(proofStr, step => self.addStep(step));
       }
     });
 
