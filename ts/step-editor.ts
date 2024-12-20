@@ -690,39 +690,24 @@ export class ProofEditor {
         // Ensure that numbers.js will be loaded, then asynchronously
         // run the proof.
         requireScript(realNumbersScript)
-          .then(() => {
-            doProof();
-          })
-          .catch(err => console.warn(err));
+          .then(doProof);
           // Caution: We don't exactly know that the proof will
           // complete successfully, but we don't want to unload
           // the current theory first either.
           return !!Toy.readDoc(name);
       }
     }
-    // Decode and run the proof recorded in the document.
+    // Decode and run the proof recorded in the document, inserting
+    // each step ASAP.  Supports breakpoints on uncaught errors.
     function doProof() {
       const proofData = Toy.readDoc(name);
       // TODO: Check for possible active editing in another tab/window.
       if (proofData) {
         self.setEditable(true);
-        const steps = Toy.decodeSteps(proofData.proofState);
-        if (steps instanceof Error) {
-          // Write the problematic proof to a new document with ".err" in
-          // the name.
-          const errName = Toy.genDocName(`${name}.err`);
-          Toy.writeDoc(errName, {proofState: self.getStateString()});
-          // Show the truncated list of steps in the proof editor.
-          self.setSteps(steps.steps);
-          self.stepEditor.report(steps);
-          return false;
-        } else {
-          self.syncToDocName(name);
-          self.setSteps(steps);
-          return true;
-        }
-      } else {
-        return false;
+        self.setSteps([]);
+        Toy.decodeSteps2(proofData.proofState, step => self.addStep(step));
+        self.syncToDocName(name);
+        return true;
       }
     }
   }
@@ -776,7 +761,7 @@ export class ProofEditor {
   }
 
   /**
-   * Add a step to the proof.
+   * Add a (regular) step to the proof.
    */
   addStep(step) {
     const rendered = this.proofDisplay.addStep(step);
