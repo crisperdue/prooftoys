@@ -4896,9 +4896,10 @@ declare(
   // returns the result of that.
   {name: 'replacementFor',
    action2: function(step, path, eqn_arg, reduce=true) {
-     const target = step.get(path);
+     // This is the target term, or null if the path does not apply.
+     const target = step.get(path, true);
      const schema = Toy.schemaPart(eqn_arg);
-     const map = target.matchSchema(schema);
+     const map = target && target.matchSchema(schema);
      if (!map) {
        return newError('Fact not applicable: {1}', eqn_arg);
      }
