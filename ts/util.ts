@@ -1606,11 +1606,17 @@ namespace Toy {
   export let proofData = [];
 
   /**
-   * Given an array of regexes, creates and returns proof
-   * data for all documents with names matching one or
-   * more of them.
+   * Given an array of regexes, creates and returns proof data for all
+   * documents with names matching one or more of them.  If the array is
+   * empty, dumps data for a convenient default set.
    */
-  export function docsProofData(regexes) {
+  export function docsProofData(a) {
+    const regexes =
+      a.length 
+      ? a 
+      : [/^\/equations[0-9/#]*$/,
+         /^\/lunar\/$/,
+         /^\/fake-proof\/$/,];
     const docs = lsDocs().sort();
     const data = [];
     for (const docName of docs) {
@@ -1623,15 +1629,14 @@ namespace Toy {
 
   /**
    * This dumps out JSON to the console for proofs in worksheets with
-   * selected names.  Include this output in a file to build a database
-   * of proofs that can be loaded to solve problems.  Unlike official
-   * "exercises", these do not have order or dependencies.
+   * names matching any of the given regex arguments.  Include this
+   * output in a file to build a database of proofs that can be loaded
+   * to solve problems.  Unlike official "exercises", these do not have
+   * order or dependencies.  If given no arguments, dumps data for a
+   * convenient default set.
    */
-  export function dumpProofData() {
-    const data = docsProofData([/^\/equations[0-9/#]*$/,
-      /^\/lunar\/$/,
-      /^\/fake-proof\/$/,
-    ]);
+  export function dumpProofData(...regexes) {
+    const data = docsProofData(regexes);
     console.log('Toy.proofData =\n' +
       JSON.stringify(data, null, 1) + ';\n');
   }
