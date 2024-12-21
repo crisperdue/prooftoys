@@ -4948,7 +4948,8 @@ declare(
      const path = step.wff.asPath(path_arg);
      const fact = rules.fact(stmt_arg);
      const replacement =
-           rules.replacementFor.attempt0(step, path, fact, reduce);
+       isProved(fact) &&
+       rules.replacementFor.attempt0(step, path, fact, reduce);
      return ok(replacement, () =>
                rules.replace(step, path, replacement));
     },
@@ -4998,9 +4999,10 @@ declare(
       // Be careful to convert a possible search pattern into
       // an ordinary path _before_ replacing the target term.
       const path = step.asPath(path_arg);
-      // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      const replacement0 = rules.replacementFor.attempt0(step, path, fact);
+      const replacement0 =
+        isProved(fact) &&
+        rules.replacementFor.attempt0(step, path, fact);
       return ok(replacement0, () => {
         const replacement = rules.simplifyAsms(replacement0);
         const step2 = rules.replace(step, path, replacement);
