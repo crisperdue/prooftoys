@@ -702,12 +702,16 @@ namespace Toy {
    * it.  Useful for debugging values of expressions in arbitrary
    * contexts including expressions in return statements.
    */
-  export function debug(value) {
-    console.log('Value:', value);
-    if (value) {
-      console.log(' =', value.toString());
+  export function debug(msg?) {
+    if (msg) {
+      console.log(msg);
     }
+    console.log('Set "quit = <value>" and proceed to throw the value.')
+    let quit = false;
     debugger;
+    if (quit) {
+      throw quit;
+    }
     return value;
   }
 
