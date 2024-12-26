@@ -1126,7 +1126,6 @@ declare(
   // TODO: Prove this from x * y = 0 etc by deMorgan's Law.
   {name: 'factNonzeroProduct',
     statement: '@R x & R y => (x * y != 0 == x != 0 & y != 0)',
-    simplifier: true  // Good mainly for simplifying assumptions.
   },
 
   // Closure properties
@@ -1708,6 +1707,7 @@ Toy.asmSimplifiers.push
    'x ** 3 != 0 == x != 0',
    'x ** 4 != 0 == x != 0',
    'x ** 5 != 0 == x != 0',
+   '@R x & R y => (x * y != 0 == x != 0 & y != 0)',
    {apply: function(term, cxt) {
        return (isArithmetic(term) &&
                rules.arithSimpler.attempt(term));
