@@ -4958,8 +4958,8 @@ declare(
      const replacement =
        isProved(fact) &&
        rules.replacementFor.attempt0(step, path, fact, reduce);
-     return ok(replacement, () =>
-               rules.replace(step, path, replacement));
+     return ok(fact) && 
+      ok(replacement, () => rules.replace(step, path, replacement));
     },
     inputs: {site: 1, bool: 3},
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
@@ -5011,7 +5011,7 @@ declare(
       const replacement0 =
         isProved(fact) &&
         rules.replacementFor.attempt0(step, path, fact);
-      return ok(replacement0, () => {
+      return ok(fact) && ok(replacement0, () => {
         const replacement = rules.simplifyAsms(replacement0);
         const step2 = rules.replace(step, path, replacement);
         return rules.simplifyAsms(step2);
