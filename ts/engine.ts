@@ -784,7 +784,7 @@ export function addRule(info) {
             abort('Falsy result from rule {1}', name);
           }
         } else {
-          abort(Toy.errify(more, `Rule ${name} prep failed`));
+          abort(new Error(`Rule ${name} prep failed`, {cause: more}));
         }
       };
       // Set rule.prep to the "prep phase".
@@ -2877,7 +2877,8 @@ export function defTautology(statement) {
 //// SOME DEFINITIONS
 
 /**
- * Dumps out fact resolutions as a debugging aid.
+ * Dumps out fact resolutions as a debugging aid. Includes alternate
+ * namings of variables.
  */
 export function dumpFactResolutions() {
   const map = _resolutionsByKey;
@@ -2894,6 +2895,23 @@ export function dumpFactResolutions() {
           console.log('  from ' + resInfo.stmt);
           if (resInfo._expansion) {
             console.log('  as ' + resInfo._expansion);
+          }
+        });
+    });
+}
+
+/**
+ * Dump out all fact infos to the console.
+ */
+export function dumpFactInfos() {
+  const map = _resolutionsByKey;
+  map.forEach(function(list, k) {
+      let goal = null;
+      list.forEach(function(resItem) {
+          if (!goal) {
+            goal = resItem.factInfo.goal;
+            const cats = resItem.factInfo.categories;
+            console.log('  fact ' + resItem.factInfo.goal, cats);
           }
         });
     });
