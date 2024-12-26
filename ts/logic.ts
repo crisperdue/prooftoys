@@ -49,7 +49,7 @@ definition('forall = (=) {x. T}');
 // F need not be defined.
 definition('F == forall {x. x}');
 definition('not = (=) F');
-definition('x != y == not (x = y)');
+definition('x != y == not (x = y)', simplifiesNeither);
 definition('exists p == p != {x. F}');
 definition('exists1 p == exists {x. p = {y. y = x}}');
 
@@ -83,7 +83,7 @@ definition('(??) = {p. {x. if p x none}}');
 definition('(in) = {x. {Y. Y x == T}}');
 
 // The identity function
-definition('ident = {x. x}');
+definition('ident = {x. x}', simplifiesRight);
 
 // Collection has multiple elements:
 definition('multi = {p. exists {x. exists {y. p x & p y & x != y}}}');
@@ -94,7 +94,19 @@ definition('the = {p. if (exists1 p) (the1 p) none}');
 // This "negates" a predicate, returning a predicate whose value
 // is the negation of the value of the given predicate.  (Just one
 // argument!)
-definition('negate = {p. {x. not (p x)}}');
+definition('negate = {p. {x. not (p x)}}',
+  {simplifier: false, desimplifier: false});
+
+declare(
+  {statement: 'not (negate p x) == p x',
+   proof: function() {
+    return rules.consider('not (negate p x)')
+      .andThen('rewriteOnly', '/right/arg', 'negate p x == not (p x)')
+      .andThen('simplifySite', '/right');
+   },
+   simplifier: true,
+  },
+);
 
 // Strictness
 definition('strict = {f. f none = none}');
@@ -2179,10 +2191,13 @@ declare(
    action: function(step, path, opt_facts, asms=true) {
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.repeatedly(eqn, function(eqn) {
-          // This usage of /main is kind of cool in that it automatically
-          // adapts in case some versions of eqn have assumptions.
-          return rules._simplifyOnce(eqn, eqn.asPath('/main/right'), opt_facts);
-        });
+        if (eqn.size(1000) > 200) {
+          debug(`Is eqn too big?\n${eqn.$$}`);
+        }
+        // This usage of /main is kind of cool in that it automatically
+        // adapts in case some versions of eqn have assumptions.
+        return rules._simplifyOnce(eqn, eqn.asPath('/main/right'), opt_facts);
+      });
       if (eqn.sameAs(simpler)) {
         return step;
       } else {
@@ -7085,15 +7100,6 @@ declare(
      }
    },
 
-   {statement: '(negate p) x == not (p x)',
-    simplifier: true,
-    proof: function() {
-       return (rules.consider('(negate p) x')
-               .andThen('apply', '/right/fn')
-               .andThen('apply', '/right'));
-     }
-   },
-
    // This is the classic definition of the existential quantifier,
    // proved from a concise definition.
    {name: 'existDef',
@@ -7233,7 +7239,7 @@ declare(
    }
 );
 
-definition('p intersect q = {x. p x & q x}');
+definition('p intersect q = {x. p x & q x}', simplifiesNeither);
 definition('p union q = {x. p x | q x}');
 definition('p subset? q = forall {x. p x => q x}');
 
