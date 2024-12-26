@@ -1106,8 +1106,9 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
         left = call(mid, parts[0], parts[2]);
         addConstants([mid]);
         const name = mid.name;
-        // Give it a default infix binding power.
-        precedence[name] = infixPower;
+        // Give it a default infix binding power unless it
+        // already has a precedence.
+        precedence[name] || (precedence[name] = infixPower);
         candidate = infixCall(left, '=', candidate.getRight());
       }
     }
