@@ -4209,15 +4209,14 @@ declare(
 
 //// Square roots (sqrt)
 
-// This defines the concept of being "a" square root of x.
-definition('sqrts x = {y. 0 <= y & y * y = x}');  
+// This defines the general concept of being "a" square root of x.
+definition('sqrts x = {y. y * y = x}');  
 
 declare(
-  // sqrt exists, uniquely.
-  {statement: '@0 <= x == exists1 (sqrts x)'},  // Asserted
+  // sqrt exists, uniquely, for nonnegative real numbers.
+  {statement: '@0 <= x => exists1 (sqrts x)'},  // Asserted
 );
 
-// By this definition sqrt is "none" except for real numbers.
 definition('sqrt x = the (sqrts x)');
 
 declare(
