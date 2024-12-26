@@ -2887,7 +2887,8 @@ export function dumpFactResolutions() {
       list.forEach(function(resItem) {
           if (!goal) {
             goal = resItem.factInfo.goal;
-            console.log('  fact ' + resItem.factInfo.goal);
+            const cats = resItem.factInfo.categories;
+            console.log('  fact ' + resItem.factInfo.goal, cats);
           }
           const resInfo = resItem.resInfo;
           console.log('  from ' + resInfo.stmt);
