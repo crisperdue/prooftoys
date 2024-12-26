@@ -810,6 +810,28 @@ export abstract class Expr {
   }
 
   /**
+   * Returns the number of nodes in this Expr, up to an optional
+   * maximum.
+   * 
+   * @param max maximum size.  If this has more than this many nodes,
+   *   stops visiting and returns this maximum.  Defaults to MAX_INT.
+   */
+  size(max=MAX_INT) {
+    let total = 0;
+    const visit = (t) => {
+      if (total >= max) return;
+      total++;
+      const c = t.constructor;
+      if (c === Toy.Call)
+        visit(t.fn), visit(t.arg);
+      else if (c === Toy.Lambda)
+        visit(t.bound), visit(t.body);
+    }
+    visit(this);
+    return total;
+  }
+
+  /**
    * Converts to a string.  If "simply", even operators
    * are presented without parentheses.
    */
