@@ -1116,6 +1116,8 @@ namespace Toy {
    * Returns an Error.  If the error argument is an Error,
    * then that, else a new Error by formatting the message
    * and message args.
+   * 
+   * Unused?
    */
   export function errify(error, msg, ...args) {
     return (error instanceof Error

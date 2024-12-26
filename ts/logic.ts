@@ -2499,9 +2499,8 @@ declare(
   // step with [a == (a == T)], then rewriting the target term
   // with [a == T].
   //
-  // TODO: Make this be forgiving about differences in ordering
-  //   of assumptions.  (Differences in order should be fixable
-  //   using tautology instance proof of equality.)
+  // TODO: Consider making this be forgiving about differences in
+  //   ordering of assumptions.
   {name: 'trueBy0',
    action2: function(target, path, step) {
       const eqn = rules.rewriteOnly(step, '', 'p == (p == T)');
@@ -2512,6 +2511,9 @@ declare(
    autoSimplify: simplifyStep,
    toOffer: 'return term.isBoolean()',
    form: ('{term} instance of step <input name=step>'),
+
+   // The menu suggests this rule when a term is selected that is an
+   // instance of some entire step in the current proof.
    menuGen: function(ruleName, targetStep, term, editor) {
      const items = [];
      editor.steps.forEach((step, index) => {
@@ -2552,6 +2554,7 @@ declare(
    menu: 'replace known true part with T',
    description: 'true;; {in step siteStep} from step {step}',
    labels: 'basic',
+   // TODO: Add a menuGen for trueBy1.
   },
 
   // This takes two site arguments.  It finds a substitution into the
@@ -4897,6 +4900,11 @@ declare(
   {name: 'replacementFor',
    action2: function(step, path, eqn_arg, reduce=true) {
      // This is the target term, or null if the path does not apply.
+
+     // TODO: Use the optional argument to "get" much more often,
+     //   to check if a path is valid -- and handle the case where it is
+     //   not.
+
      const target = step.get(path, true);
      const schema = Toy.schemaPart(eqn_arg);
      const map = target && target.matchSchema(schema);

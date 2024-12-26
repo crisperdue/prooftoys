@@ -241,10 +241,19 @@ export function processLabels(labels) {
 // Constants related to description.
 const descriptors = new Set(['exists1', 'the', 'the1']);
 
-// Computes the fact's set of menu categories based on its metadata
-// and goal, and stores them as info.categories.  The categories are
-// like menus, but can be more fine-grained, each menu displaying a
-// characteristic set of categories.
+/**
+ * Computes the fact's set of menu categories based on its metadata
+ * and goal, and stores them as info.categories.  The categories are
+ * like menus, but can be more fine-grained, each menu displaying a
+ * characteristic set of categories.
+ * 
+ * Labels are the most fine-grained, each mapping to a category.
+ * The "default" category really means "compute", e.g. check
+ * if the fact refers to a definite description constant.
+ * 
+ * Calls to offerableFacts compare fact categories with menu categories
+ * to determine what facts are eligible for the current menu.
+ */
 function computeMenuCategories(info) {
   const stmt = info.goal;
   const categories = new Set;
@@ -258,7 +267,8 @@ function computeMenuCategories(info) {
   }
 
   if (categories.size === 0) {
-    // TODO: Consider moving this computation to fact registration time.
+    // Returns a truthy value iff stmt mentions any of the definite
+    // description constants.
     const introDescrip = () => {
       const factConsts = stmt.constantNames();
       return Toy.intersection(factConsts, descriptors).size > 0;
@@ -1213,15 +1223,21 @@ export function enableDefnFacts() {
 
 /**
  * This function only has effect for equational definitions
- * of the form <atom> = <term>, in Expr form.
+ * of the form <constant> = <term>, in Expr form.
+ * 
+ * If it is equational, this adds its converse, almost always as a
+ * simplifier.
  *
  * If it is a function definition (the term is a lambda), it generates
  * a basic equational fact for application of the function or
  * predicate to arguments.  In other words if f = {x. <term>},
  * generates the fact f x = <term>, and similarly if there are
  * multiple arguments.
+ * 
+ * Default arguments are: extra options as a plain object; and any
+ * extra, overriding options for the swapped fact.
  *
- * This is intended mainly for use from Toy.definition.
+ * This is intended for use from Toy.definition.
  */
 export function addDefnFacts(definition) {
   if (definition.isCall2('=') && definition.getLeft().isNamedConst()) {
