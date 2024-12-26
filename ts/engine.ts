@@ -2201,15 +2201,19 @@ export function arrange(step, path, context, facts) {
 }
 
 /**
- * Call the given function for each recorded fact, passing
- * it the info object stored for the fact.
+ * Call the given function for each recorded fact, passing it the info
+ * object stored for the fact.  Returns the number of times it called
+ * the function.
  */
 export function eachFact(fn) {
+  let counter = 0;
   _factsByKey.forEach(function(list) {
-      list.forEach(function(info) {
-          fn(info);
-        });
+    list.forEach(function(info) {
+      counter++;
+      fn(info);
     });
+  });
+  return counter;
 }
 
 /**
