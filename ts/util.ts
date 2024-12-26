@@ -178,6 +178,16 @@ namespace Toy {
       function(match) { return _HTML_MAP[match]; });
   };
 
+  /**
+   * Does simple escaping of regex syntax characters.  Does not try to
+   * handle every edge case.  In the future, RegExp.escape will be
+   * available as an option.
+   */
+  export function escapeRegex(string) {
+    // $& means the whole matched string
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
 
   //// PROPERTY ACCESS
 
