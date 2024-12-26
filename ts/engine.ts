@@ -695,29 +695,13 @@ export function addRule(info) {
 
     // Now statement and proof are both initialized.
     // We will now add a fact and potentially a swapped fact.
-
-    // Add it as a fact also, and potentially "swapped".
-    // A fact needs a statement, so we rely here on having a statement given.
-    //
-    // TODO: Use factProperties and remove this.
-    var factXferProps = {
-      axiom: true,
-      description: true,
-      simplifier: true,
-      desimplifier: true,
-      noSwap: true,
-      labels: true,
-      with: true,
-      converse: true
-    };
-    // Accept selected fact properties in the rule metadata.
-    var properties = {goal: statement, proof: proof} as Record<string, any>;
-    for (var k in factXferProps) {
+    var properties = {} as Record<string, any>;
+    for (var k in factProperties) {
       if (k in info) {
-        // Uncomment this for detailed tracing.
-        // console.warn('Adding', k, 'to', name);
         properties[k] = info[k];
       }
+      // The new goal and proof override ones in factProperties.
+      properties = { ...properties, goal: statement, proof: proof};
     }
     addFact(properties);
     if (!properties.noSwap) {
@@ -1068,7 +1052,22 @@ export function exercise(name, ...declarations) {
  *
  * Returns the newly-defined name.
  */
-export function definition(defn_arg) {
+export function definition(defn_arg, options?, swap_opts?) {
+  return definition_impl(true, defn_arg, options, swap_opts);
+}
+
+/**
+ * Asserts and registers just the fact explicitly stated here.
+ */
+export function definitionOnly(defn_arg) {
+  return definition_impl(false, defn_arg);
+}
+
+/**
+ * See "definition"; extended = true also asserts and records related
+ * facts.
+ */
+function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
   const definitions = Toy.definitions;
   let candidate: EType = justParse(defn_arg);
   // Free occurrences of names of constants that do not have
@@ -1123,12 +1122,15 @@ export function definition(defn_arg) {
   // Notice that all of this constant registration is done before the
   // definition is potentially asserted as true in normalizeDefn.
 
-  // Normalizing does some deduction, so ensure it is done only after
-  // logic is loaded.
+  // Adds the fact or facts associated with the definition.
   const addFacts = () => {
     const defined = new Atom(name);
-    // The defn is the definition in standard form: <constant> = <term>.
+    // Normalizing does some deduction, so ensure this runs only after
+    // logic is loaded.
     const defn = normalizeDefn(candidate);
+    // The defn is the definition in standard form: <constant> = <term>.
+
+    // Now assert the fundamental fact.
     // TODO: Is the best place to assert it?
     const assertion: EType = rules.assert(defn);
     if (defn.isCall2('=') && defn.getLeft().isNamedConst()) {
@@ -1144,13 +1146,18 @@ export function definition(defn_arg) {
     if (defn.isCall2('=') &&
         defn.getLeft().matches(defined) &&
         Toy.isEmpty(defn.getRight().newConstants())) {
+
       // It is a classic equational definition.
-      // Add it to the facts andthe definitions database.
-      addFact({goal: assertion, definition: true,
+      // Add it to the facts and the definitions database.
+      // It is (almost) always a desimplifier.
+      addFact({goal: assertion, definitional: true,
                desimplifier: !(assertion.getRight() instanceof Atom)});
       definitions[name] = assertion;
-      addDefnFacts(assertion);
+      if (extended) {
+        addDefnFacts(assertion, options, swap_opts);
+      }
     } else {
+
       // It is not a classic equational definition.
       var x = Toy.genVar('x', defn.allNames());
       // Substitute the fresh variable for the constant name.
@@ -1164,16 +1171,21 @@ export function definition(defn_arg) {
         assert(isRecordedFact(exists),
                'Definition {1} needs an existence fact.', defn);
       }
-      // Assert that the definition is true, and add to the definitions.
+
+      // Assert the non-equational statement and add it to the
+      // object/map of definitions.
       addFact({goal: defn, definition: true});
       definitions[name] = defn;
     }
   };
+
+  // Add the related facts now or later.
   if (deferringDefnFacts) {
     deferredDefnFacts.push(addFacts);
   } else {
     addFacts();
   }
+  // Return the name that is being defined.
   return name;
 }
 
@@ -1222,6 +1234,23 @@ export function enableDefnFacts() {
 }
 
 /**
+ * Options for simplification, aimed at calls to "definition",
+ * indicating simplification of the extra fact(s) created for functions
+ * and predicates.  "Left" here means the left side of the "f x y = ...
+ * " fact is simpler, "right" for the right side, and "neither" to
+ * register neither as a simplifier.
+ */
+export const simplifiesLeft = {desimplifier: true};
+/**
+ * In a definition f x y = ... is a simplifier.
+ */
+export const simplifiesRight = {simplifier: true};
+/**
+ * In a definition "f x y = ... " neither direction simplifies.
+ */
+export const simplifiesNeither = {simplifier: false, desimplifier: false};
+
+/**
  * This function only has effect for equational definitions
  * of the form <constant> = <term>, in Expr form.
  * 
@@ -1239,27 +1268,30 @@ export function enableDefnFacts() {
  *
  * This is intended for use from Toy.definition.
  */
-export function addDefnFacts(definition) {
+export function addDefnFacts(definition,
+    options_arg: Object={}, swapped_opts={}) {
   if (definition.isCall2('=') && definition.getLeft().isNamedConst()) {
-    // Add the converse as a simplifier.
+    // It has the form '<const> = ... '.
+    //
+    // Get its proved form.
     const eqn0 = rules.fact(definition);
     let eqn = eqn0;
     let lambda = eqn.getRight();
+    // Add its converse, usually as a simplifier.
     addSwappedFact({goal: definition,
-                    desimplifier: !(lambda instanceof Atom),
-                    definitional: true});
+      desimplifier: !(lambda instanceof Atom),
+      definitional: true});
+    // Convert it to traditional form "f x ... = ... ".
     while (lambda instanceof Lambda) {
       eqn = (rules.applyBoth(eqn, lambda.bound)
              .andThen('reduce', '/right'));
       lambda = eqn.getRight();
     }
-    // TODO: Consider adding a fact unconditionally, and treating
-    //   it automatically as a desimplifier.
     if (eqn != eqn0) {
-      // Flag the fact as being essentially the same as the definition
-      // of the function or predicate.
-      addFact({goal: eqn, definitional: true, desimplifier: true});
-      addSwappedFact({goal: eqn, definitional: true, simplifier: true});
+      // Now eqn is an equation with RHS not a Lambda.
+      const opts = {goal: eqn, definitional: true};
+      addFact({ ...opts, ...options_arg});
+      addSwappedFact({ ...opts, ...options_arg, ...swapped_opts});
     }
   }
 }
@@ -2663,6 +2695,12 @@ export function addFact(info) {
     console.warn('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
     if (info.simplifier) {
+      const main = info.goal.getMain();
+      if (main.isCall2('=')) {
+        if (main.getRight().size() >= main.getLeft().size()) {
+          console.warn('Does this really simplify?', info.goal.$$);
+        }
+      }
       // This puts a string onto basicSimpFacts for fast cached
       // lookups, but watch out for cases where toString and parse are
       // not inverses.
@@ -2698,7 +2736,8 @@ function setFactInfo(info) {
  *
  * If the fact to be swapped is a simplifier or desimplifier, the
  * newly-created fact will be appropriately labeled as the opposite,
- * and converses of primitive facts are also labeled as primitive.
+ * converses of primitive facts are also labeled as primitive, and
+ * "definitional" is also carried over.
  */  
 function addSwappedFact(info) {
   var stmt = info.goal;
@@ -2718,6 +2757,7 @@ function addSwappedFact(info) {
                    simplifier: !!info.desimplifier,
                    desimplifier: !!info.simplifier,
                    description: info.description,
+                   definitional: info.definitional,
                    labels: labels2
       };
       addFact(info2);
