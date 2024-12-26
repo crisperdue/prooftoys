@@ -1468,9 +1468,7 @@ export function factExpansion(stmt) {
 /**
  * This returns a factInfo object with information about the unique
  * recorded fact that the given statement can expand into, or
- * null if there is none.  The expansion will use free variables
- * from the given statement in place of ones from the declaration
- * of the fact.
+ * null if there is none.
  *
  * The statement can use different variable names than the fact,
  * and it may omit some kinds of assumptions if they are not required
@@ -1521,7 +1519,8 @@ export function resolveToFact(stmt) {
 /**
  * Returns true iff the given wff refers to a specific recorded fact
  * and has the same set of assumptions as in that fact, allowing
- * for differences in variable names.
+ * for differences in variable names, within the ability of
+ * resolveFactRef to identify variants of the same fact.
  */
 export function isRecordedFact(stmt) {
   // First check that the statement resolves to a specific fact.
@@ -1546,7 +1545,7 @@ export function proveResult(stmt) {
 }
 
 /**
- * Accepts an already-proved step or the full statement of some
+ * Accepts an already-proved step or a full statement of some
  * recorded fact.  Returns a proof of the step, or one like it except
  * for changes of names of variables including free variables.  Aborts
  * if the result of the proof does not match the stated goal or the
