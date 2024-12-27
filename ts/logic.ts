@@ -6381,6 +6381,7 @@ declare(
       const factInfo = resolveFactRef(wff);
       // Try ordinary registered facts.
       if (factInfo) {
+        factInfo.usage = (factInfo.usage || 0) + 1;
         var fact = Toy.getResult0(factInfo);
         // TODO: Consider computing the map more efficiently by
         //   factoring out computation of the map from factExpansion.

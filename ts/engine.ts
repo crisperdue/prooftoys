@@ -2902,15 +2902,20 @@ export function dumpFactResolutions() {
 /**
  * Dump out all fact infos to the console.
  */
-export function dumpFactInfos() {
+export function dumpFactInfos(minUsage=0) {
   const map = _resolutionsByKey;
   map.forEach(function(list, k) {
       let goal = null;
       list.forEach(function(resItem) {
           if (!goal) {
-            goal = resItem.factInfo.goal;
-            const cats = resItem.factInfo.categories;
-            console.log('  fact ' + resItem.factInfo.goal, cats);
+            const info = resItem.factInfo;
+            goal = info.goal;
+            const usage = info.usage || 0;
+            if (usage >= minUsage) {
+              const cats = info.categories;
+              console.log('fact ' + info.goal,
+                'usage', usage, cats);
+            }
           }
         });
     });
