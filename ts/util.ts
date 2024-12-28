@@ -1090,7 +1090,7 @@ namespace Toy {
     // TODO: Interpret options??
     /** @type {function(object, string, any[]): never} */
     function _abort(options, msg, ...args): never {
-      const e = new Error(Toy.format(msg || 'Oops', ...args));
+      const e = new Error(Toy.format(msg || 'Oops', ...args), options);
       let step;
       // Find a step argument if there is one.
       for (var i = 0; i < args.length; i++) {
@@ -1146,19 +1146,6 @@ namespace Toy {
       }
       return e;
     }
-  }
-
-  /**
-   * Returns an Error.  If the error argument is an Error,
-   * then that, else a new Error by formatting the message
-   * and message args.
-   * 
-   * Unused?
-   */
-  export function errify(error, msg, ...args) {
-    return (error instanceof Error
-      ? error
-      : new Error(Toy.format(msg, ...args)));
   }
 
   /**
