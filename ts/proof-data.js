@@ -104,17 +104,11 @@ Toy.proofData =
    "(6 rewrite (s 5) (path \"/right/right/right/left/right\") (t ((R a) => ((a + a) = (2 * a)))))",
    "(7 addThisToBoth (s 6) (path \"/right/right/right/left/right\"))",
    "(8 simplifySums (s 7) (path \"/right/right/right\"))",
-   "(9 rewrite (s 8) (path \"/right/right/right/left/left/left\") (t (((R a) & (R b)) => ((neg (a * b)) = ((neg a) * b)))))",
-   "(10 simplifyFocalPart (s 9))",
-   "(11 rewrite (s 10) (path \"/right/right/right/left/left\") (t ((((R a) & (R b)) & (R c)) => (((a * c) + (b * c)) = ((a + b) * c)))))",
-   "(12 simplifyFocalPart (s 11))",
-   "(13 subtractThisFromBoth (s 12) (path \"/right/right/right/right/right\"))",
-   "(14 simplifySums (s 13) (path \"/right/right/right\"))",
-   "(15 divideBothByThis (s 14) (path \"/right/right/right/right/left\"))",
-   "(16 simplifyProducts (s 15) (path \"/right/right/right\"))",
-   "(17 rewrite (s 16) (path \"/right/right/right\") (t ((x = y) == (y = x))))",
-   "(18 replaceConjunct (s 17) (path \"/right/right/left/right/right\"))",
-   "(19 simplifyFocalPart (s 18))"
+   "(9 rewrite (s 8) (path \"/right/right/right\") (t ((x = y) == (y = x))))",
+   "(10 subtractThisFromBoth (s 9) (path \"/right/right/right/left/right\"))",
+   "(11 simplifySums (s 10) (path \"/right/right/right\"))",
+   "(12 divideBothByThis (s 11) (path \"/right/right/right/left/left\"))",
+   "(13 simplifyProducts (s 12) (path \"/right/right/right\"))"
   ]
  },
  {
