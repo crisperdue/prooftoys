@@ -783,8 +783,11 @@ export function addRule(info) {
             // TODO: Consider how to better handle a falsy result.
             abort('Falsy result from rule {1}', name);
           }
+        } else if (more instanceof Error) {
+          abort(more);
         } else {
-          abort(new Error(`Rule ${name} prep failed`, {cause: more}));
+          // In this case the cause is allowable, but not very useful.
+          abort(error({cause: more}, `Rule ${name} prep failed`));
         }
       };
       // Set rule.prep to the "prep phase".
