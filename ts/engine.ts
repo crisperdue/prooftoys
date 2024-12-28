@@ -689,7 +689,11 @@ export function addRule(info) {
         return rules.assert(statement);
       }
       if (!info.axiom) {
-        console.warn('No proof, asserting', name || statement.toUnicode());
+        console.debug('%cNo proof:',
+          'background: #eef',
+          'asserting',
+          name || statement.toUnicode(),
+        );
       }
     }
 
