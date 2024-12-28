@@ -4921,10 +4921,15 @@ declare(
      //   not.
 
      const target = step.get(path, true);
+     if (!target) {
+       return Error(fmt`No term ${path} in ${step}\n (for ${eqn_arg})`);
+     }
      const schema = Toy.schemaPart(eqn_arg);
-     const map = target && target.matchSchema(schema);
+     const map = target.matchSchema(schema);
      if (!map) {
-       return newError('Fact not applicable: {1}', eqn_arg);
+       return Error(
+         fmt`Fact ${eqn_arg} not applicable\n to ${target}\n in ${step}\n at ${path}`
+       );
      }
      return () => {
        // Convert to an actual equation if necessary.
