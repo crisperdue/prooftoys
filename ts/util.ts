@@ -1120,7 +1120,12 @@ namespace Toy {
       Object.assign(e, props);
       // I think this is intended to support error chaining.
       if ('from' in options) {
-        e.from = options.from;
+        debugger;
+        e.cause = options.from;
+      }
+      // Error chaining
+      if ('cause' in options) {
+        e.cause = options.cause;
       }
       return e;
     }
