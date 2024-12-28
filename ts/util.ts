@@ -974,6 +974,23 @@ namespace Toy {
   }
 
   /**
+   * Tag function for formatting a la Prooftoys.  Returns a string with
+   * the values formatted a la ".$$".
+   */
+  export function fmt(strings, ...values) {
+    // This expects the number of strings to be one more than
+    // the number of values.
+    let result = strings[0];
+    for (let i = 1; i < strings.length; i++) {
+      const v = values[i - 1];
+      const str = v instanceof Object ? debugString(v) : v;
+      result += str;
+      result += strings[i];
+    }
+    return result;
+  }
+
+  /**
    * Returns a string derived from the format string and the object by
    * replacing occurrences of {<identifier>} in the format string by the
    * value of that property of the object.
