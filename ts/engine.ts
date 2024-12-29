@@ -2682,8 +2682,11 @@ export function addFact(info) {
       console.log('Defining',
                   Array.from(names).join(', '));
     } else {
-      console.log('In fact', info.goal.toString(), 'introducing constants:',
-                  Array.from(names).join(', '));
+      // See also rules.assert.
+      console.debug('%cIntroducing constants:',
+        'background: #eef',
+        Array.from(names).join(', '),
+        'in fact', info.goal.toString());
     }
     Toy.addConstants(names);
   }
