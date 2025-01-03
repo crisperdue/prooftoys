@@ -373,10 +373,14 @@ export interface Expr {
  * except that all occurrences of the semantically same variable are
  * represented by the same Atom, and occurrences of monomorphic
  * constants may also be shared, even with other formulas.
+ * 
+ * Internal use of this method in key inference primitives dictates that
+ * inputs to those primitives are fully typed if the (top-level) term
+ * received has a type.
  *
  * A side job of this method is to remove aliased constant names,
  * keeping their stated types.  The new Atom has the plain name of the
- * original, * with no alias, but picks up the type specified for the
+ * original, with no alias, but picks up the type specified for the
  * original's pname.  This currently applies only to "==".
  *
  * TODO: Document how and why this approach is (I think) adequate.

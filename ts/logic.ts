@@ -204,8 +204,9 @@ declare(
   /**
    * Generates an instance of Axiom 4 from an application of a lambda
    * expression to an argument expression, returning a term that
-   * expresses the equality of the input and its beta reduction,
-   * in other words, a substitution.
+   * expresses the equality of the input and its beta reduction, in
+   * other words, a substitution.  This will make a typed copy of its
+   * argument if it is not already typed.
    */
   {name: 'axiom4',
     action: function(call_arg) {
@@ -218,7 +219,7 @@ declare(
       var lambda = call.fn;
       const result =
         equal(call, lambda.body.axiom4Core(call.arg, lambda.bound));
-      // Carefully install a few bits of type information by hand.
+      // Carefully install a few bits of needed type information by hand.
       result.fn._withType(new Toy.FunctionType(call.type, Toy.boolean));
       result.fn.fn._withType(Toy.equalityType(call.type));
       result._withType(Toy.boolean);
@@ -250,9 +251,10 @@ export interface Expr {
   axiom4Core(repl, vbl);
 }
 /**
- * Given this well-typed term consisting of an application of a Lambda
- * to an arbitrary term, this returns the result of the substitution
- * of the term for the Lambda's bound variable.
+ * Given this well-typed term, taken as the body of a Lambda with bound
+ * variable vbl, this returns the result of the substitution of repl for
+ * that bound variable.  Inputs must be typed, and the output will also
+ * be typed.
  */
 Expr.prototype.axiom4Core = function(repl, vbl) {
   const body = this;
@@ -1540,6 +1542,7 @@ declare(
   // of the fact, and after applying the match substitution, the fact
   // LHS is the same as some assumption of the step.  The result step
   // replaces the target with T without adding any assumptions.
+  // TODO: Unused, remove.
   {name: 'impliedByAsm',
    action2: function(step, path_arg, fact) {
      if (!fact.getAsms()) {
