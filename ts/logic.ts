@@ -2762,7 +2762,7 @@ declare(
   // Optimized to avoid substitutions that have no effect, returning
   // its input, justified as "instMultiVars".
   {name: 'instMultiVars',
-    action: function(b, map, reduceFns) {
+    action: function(b, map, reduceFns?) {
       assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
       if (Toy.isEmpty(map)) {
@@ -7074,7 +7074,6 @@ declare(
 
    {statement: 'not (a != b) == (a = b)',
     simplifier: true,
-    converse: { labels: 'general' },
     proof: function() {
        return (rules.fact('a != b == not (a = b)')
                .rewrite('', 'a == b == (not a == not b)')
