@@ -3092,6 +3092,10 @@ declare(
           return Toy.rebind('tautExit', exit,
                             () => rules.tautology0(wff));
         });
+        if (Toy.isProved(result)) {
+          asmExtras(result as EType).size
+            && console.log('Asm extras in', result.$$);
+        }
       }
       if (Toy.isError(result)) {
         return Toy.newError('Not a tautology: {1} -- {2}',

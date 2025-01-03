@@ -2582,6 +2582,7 @@ var factProperties = {
   props: true,
   description: true,
   definitional: true,
+  asmExtras: true,
   // autoSimplify: true,
   // afterMatch: true,
   converse: true
@@ -2594,7 +2595,7 @@ var factProperties = {
  * synopsis property to generate a goal and the proof property as the
  * prover.  Top-level code, as in files of theorems, definitions, and
  * inference rules, should use addRule as it supports rules of
- * inference,and do additional useful work such as automatically
+ * inference,and does additional useful work such as automatically
  * adding appropriate swapped facts.  The goal as stored in the
  * database has type information.
  *
@@ -2631,6 +2632,10 @@ var factProperties = {
  *   "none" if none are given.
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
+ * 
+ * Computed output properties:
+ * 
+ * asmExtras: truthy if the asms have free vars not in the conclusion.
  */
 export function addFact(info) {
   // This function adds to the info and supplies it to setFactInfo.
@@ -2646,16 +2651,9 @@ export function addFact(info) {
                info.goal.typedCopy() ||
                mathParse(info.statement));
   const goal = info.goal;
-  if (goal.isCall2('=>')) {
-    const asmFrees = goal.getLeft().freeVarSet();
-    const mainFrees = goal.getMain().freeVarSet();
-    const asmExtras = Toy.setDiff(asmFrees, mainFrees);
-    if (asmExtras.size) {
-      console.log('Goal asms have extra free vars in', goal.$$);
-    }
-  }
-
-  for (var key in info) {
+  // Store this information for tautologies, too,.
+  asmExtras(goal) && (info.asmExtras = true);
+  for (let key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : 'goal?';
       console.warn('In fact', id, 'extra info key:', key);
@@ -2723,6 +2721,21 @@ export function addFact(info) {
     setFactInfo(info);
   }
   return info;
+}
+
+/**
+ * Returns the Set of variable names free in the asms of the statement
+ * wff that are not also free in the conclusion.
+ */
+export function asmExtras(stmt: EType) {
+  if (stmt.isCall2('=>')) {
+    const asmFrees = stmt.getLeft().freeVarSet();
+    const mainFrees = stmt.getMain().freeVarSet();
+    const asmExtras = Toy.setDiff(asmFrees, mainFrees);
+    return asmExtras;
+  } else {
+    return new Set();
+  }
 }
 
 /**
