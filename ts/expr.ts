@@ -505,38 +505,12 @@ export class TermMap extends ToyMap {
 
 // Note: Transformations on expressions that leave a given
 // subexpression the same return the identical subexpression object
-// they were given.  This means that all operations that transform
-// expressions must avoid copying except when necessary.
-
+// they were given.
 
 // Expr -- some method docs
 //
-// Methods defined on expressions, but defined only in the subclasses:
-//
-// dump()
-//
-// Converts expression to a string like toString, but without special
-// handling of functions of more than one argument or infix operators.
-// A simple text format not dependent on styling options, usable for
-// keys in maps with Expr values.
-//
-// TODO: Consider making it insensitive to bound variable names, so for
-//   example terms that match with "matches" have the same dump.
-//
-// OOPS, this does not dump any type information, so it may conflate
-// terms that are not really the same.  It is not relied on by
-// deduction, so the flaw is non-fatal.
-//
-// Internal calls accept a Bindings object as an argument.
-// 
-//
-// subst(Expr replacement, String name)
-// 
-// Substitutes copies of the replacement expression for all (free)
-// occurrences of the given name in this expression.  For use in
-// logic, this expression must not bind any variables that occur free
-// in the replacement.
-//
+// Internal methods applicable to expressions, but defined only in the
+// subclasses:
 //
 // _subFree(Object map, Object newFreeVars)
 //
@@ -555,19 +529,6 @@ export class TermMap extends ToyMap {
 //
 // Note that Rule R can introduce previously free variables into a
 // scope where they become bound.
-//
-//
-// hasFreeName(name)
-// 
-// True iff the given variable or constant name (string) appears free
-// in this expression.  Does not match against pnames.
-//
-//
-// asArray()
-//
-// Converts an expression to an array with the function first,
-// followed by arguments.  If it is just a variable, returns
-// an array containing just that.
 //
 //
 // _addNames(map result)
@@ -607,31 +568,6 @@ export class TermMap extends ToyMap {
 // set names of all free variables that are arguments to math
 // operators -- or an argument to "=" or "!=" that have an expression
 // with a math operator as the other argument.
-// 
-//
-// replaceAt(path, xformer)
-//
-// Returns a copy of this expression.  If some part matches the path,
-// that part is replaced by the result of calling the xformer function
-// on it.
-//
-//
-// sameAs(expr)
-//
-// True iff all parts of this expression are identical to the
-// corresponding parts of the argument.  If present anywhere, types
-// must also match.  Type variable names may differ (only renamings).
-//
-//
-// matches(e2, bindings)
-//
-// Tests whether all components of this expression and e2 are the same
-// except for names of bound variables.  Names of constants and free
-// variables must match in each component.  Names of bound variables
-// may differ if the bindings map the name in this to the name in e2.
-// The bindings map from names of variables bound in expressions
-// containing this expression to corresponding variable names of the
-// expression containing e2.  Currently does not match types.
 //
 //
 // _traverse(fn, rpath)
@@ -641,16 +577,6 @@ export class TermMap extends ToyMap {
 // of Lambdas.  Used on rendered steps, perhaps also non-rendered.
 //
 // TODO: Consider how to support flexible paths better, with /main.
-//
-//
-// search(test, bindings)
-//
-// Searches for a subexpression of this that passes the given test,
-// given as a boolean function of one argument.  Returns the first
-// subexpression that passes the test, with this expression itself
-// tested first, followed by the rest in top-down, left-to-right
-// order, or null if there is none.  The search includes
-// variable bindings if bindings is truthy.
 //
 //
 // _path(pred, revPath)
@@ -683,30 +609,6 @@ export class TermMap extends ToyMap {
 // to this type of Expr.
 //
 //
-// generalizeTF(expr2, newVar, bindings)
-//
-// Searches through this and expr2 for subexpressions in this that are
-// the constant T, and F at the same place in expr2.  Returns an
-// expression similar to this, but with newVar in those locations.
-// Throws an error unless this and expr2 have the same syntax tree
-// structure and variable names match everywhere except the T/F cases.
-// The newVar should not appear anywhere in this or expr2, to ensure
-// that the result will have this and expr2 as substitution instances.
-//
-// The optional bindings (used in recursive calls) map from names of
-// bound variables in expressions containing this, to names of
-// corresponding bound variables in expressions containing expr2.
-//
-// 
-// findAll(name, action1, expr2, action2)
-//
-// Apply the action function to every subexpression in this that is a
-// free variable with the given name, and action2 to the
-// subexpressions of expr2 at those same locations.  This method also
-// attempts to do the same traversal of expr2, and calls action2
-// where expr2 has a part corresponding to the part in expr1.
-//
-//
 // _matchAsSchema(that, substitution, bindings)
 //
 // Checks that this expression matches the argument expression under the
@@ -730,19 +632,6 @@ export class TermMap extends ToyMap {
 // that property.  Helper for code (currently mergedHypotheses) that
 // tags subexpressions with __var property as part of creating a
 // pattern from them.
-//
-//
-// searchMost(fn, opt_path, opt_bindings)
-//
-// Tree walks though this Expr and its subexpressions, recursively,
-// calling the function to each one, passing it the term and a reverse
-// path from this term to that point until the function returns a
-// truthy value.  Descends first into the arg part to make the search
-// proceed right to left.  All subexpressions of Lambda terms receive
-// non-null bindings, mapping the name of the bound variable to the
-// lambda in which it is bound, innermost first.  Returns the first
-// truthy value returned from "fn" at any level.  If not given, this
-// treats the path and bindings as empty.
 
 /**
  * Superclass for terms of all kinds: Atom, Call, Lambda.
@@ -785,7 +674,97 @@ export abstract class Expr {
   abstract _path(a, b);
   abstract _traverse(a, b);
   abstract _addMathVars(a, b);
+
+  /**
+   * When called with one argument, tests for equality up to names of
+   * bound variables.  Names of constants and free variables must match in
+   * each component.  Names of bound variables may differ if the bindings
+   * map the name in this to the name in e2. The bindings map from names
+   * of variables bound in expressions containing this expression to
+   * corresponding variable names of the expression containing e2.
+   * Currently does not match types.
+   */
   abstract matches(a): boolean;
+
+  /**
+   * Converts expression to a string like toString, but without special
+   * handling of functions of more than one argument or infix operators.
+   * A simple text format not dependent on styling options, usable for
+   * keys in maps with Expr values. * 
+   * TODO: Consider making it insensitive to bound variable names, so for
+   *   example terms that match with "matches" have the same dump. * 
+   * OOPS, this does not dump any type information, so it may conflate
+   * terms that are not really the same.  It is not relied on by
+   * deduction, so the flaw is non-fatal. * 
+   * Internal calls accept a Bindings object as an argument.
+   */
+  abstract dump(bindings?): string;
+
+  /**
+   * True iff the given variable or constant name (string) appears free
+   * in this expression.  Does not match against pnames.
+   */
+  abstract hasFreeName(name);
+
+  /**
+   * Converts an expression to an array with the function first,
+   * followed by arguments.  If it is just a variable, returns
+   * an array containing just that.
+   */
+  abstract asArray();
+
+  /**
+   * Returns a copy of this expression.  If some part matches the path,
+   * that part is replaced by the result of calling the xformer function
+   * on it.
+   */
+  abstract replaceAt(path, xformer);
+
+  /**
+   * Searches for a subexpression of this that passes the given test,
+   * given as a boolean function of one argument.  Returns the first
+   * subexpression that passes the test, with this expression itself
+   * tested first, followed by the rest in top-down, left-to-right
+   * order, or null if there is none.  The search includes
+   * variable bindings if bindings is truthy.
+   */
+  abstract search(test, bindings);
+
+  /**
+   * Searches through this and expr2 for subexpressions in this that are
+   * the constant T, and F at the same place in expr2.  Returns an
+   * expression similar to this, but with newVar in those locations.
+   * Throws an error unless this and expr2 have the same syntax tree
+   * structure and variable names match everywhere except the T/F cases.
+   * The newVar should not appear anywhere in this or expr2, to ensure
+   * that the result will have this and expr2 as substitution instances.   * 
+   * The optional bindings (used in recursive calls) map from names of
+   * bound variables in expressions containing this, to names of
+   * corresponding bound variables in expressions containing expr2.
+   */
+  abstract generalizeTF(expr2, newVar, bindings);
+
+  /**
+   * Apply the action function to every subexpression in this that is a
+   * free variable with the given name, and action2 to the
+   * subexpressions of expr2 at those same locations.  This method also
+   * attempts to do the same traversal of expr2, and calls action2
+   * where expr2 has a part corresponding to the part in expr1.
+   */
+  abstract findAll(name, action1, expr2, action2);
+
+  /**
+   * Tree walks though this Expr and its subexpressions, recursively,
+   * calling the function to each one, passing it the term and a reverse
+   * path from this term to that point until the function returns a
+   * truthy value.  Descends first into the arg part to make the search
+   * proceed right to left.  All subexpressions of Lambda terms receive
+   * non-null bindings, mapping the name of the bound variable to the
+   * lambda in which it is bound, innermost first.  Returns the first
+   * truthy value returned from "fn" at any level.  If not given, this
+   * treats the path and bindings as empty.
+   */
+  abstract searchMost(fn, opt_path, opt_bindings);
 
   constructor() {
     this.__type = null;
