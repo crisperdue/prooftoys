@@ -2400,7 +2400,7 @@ class RuleMenu {
         const shorty = statement.shortForm();
         const mainText = Toy.trimParens(shorty.toHtml());
         const blurb = (info.definitional
-                      ? 'definition of ' + statement.getLeft().func().name
+                      ? 'definition of ' + info.definitional
                       : 'using ' + mainText)
         html += (' <span class=description>' + blurb + '</span>');
         const $node = $('<span>').append(html);

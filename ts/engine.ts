@@ -1158,7 +1158,7 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
       // It is a classic equational definition.
       // Add it to the facts and the definitions database.
       // It is (almost) always a desimplifier.
-      addFact({goal: assertion, definitional: true,
+      addFact({goal: assertion, definitional: name,
                desimplifier: !(assertion.getRight() instanceof Atom)});
       definitions[name] = assertion;
       if (extended) {
@@ -1280,7 +1280,7 @@ export function addDefnFacts(definition,
     options_arg: Object={}, swapped_opts={}) {
   if (definition.isCall2('=') && definition.getLeft().isNamedConst()) {
     // It has the form '<const> = ... '.
-    //
+    const name = definition.getLeft().name;
     // Get its proved form.
     const eqn0 = rules.fact(definition);
     let eqn = eqn0;
@@ -1288,7 +1288,7 @@ export function addDefnFacts(definition,
     // Add its converse, usually as a simplifier.
     addSwappedFact({goal: definition,
       desimplifier: !(lambda instanceof Atom),
-      definitional: true});
+      definitional: name});
     // Convert it to traditional form "f x ... = ... ".
     while (lambda instanceof Lambda) {
       eqn = (rules.applyBoth(eqn, lambda.bound)
@@ -1297,7 +1297,7 @@ export function addDefnFacts(definition,
     }
     if (eqn != eqn0) {
       // Now eqn is an equation with RHS not a Lambda.
-      const opts = {goal: eqn, definitional: true};
+      const opts = {goal: eqn, definitional: name};
       addFact({ ...opts, ...options_arg});
       addSwappedFact({ ...opts, ...options_arg, ...swapped_opts});
     }
@@ -1479,7 +1479,7 @@ export function factExpansion(stmt) {
  *
  * The statement can use different variable names than the fact,
  * and it may omit some kinds of assumptions if they are not required
- * to uniquely identify a recorded fact.  Currenetly the given statement
+ * to uniquely identify a recorded fact.  Currently the given statement
  * may be able to omit type declarations on variables, such as (R x),
  * or nonzero checks on variables, and any of these that are included
  * can appear in any order.  Other assumptions, if included, may have
@@ -2623,7 +2623,7 @@ var factProperties = {
  *   Currently just affects the message.
  * definitional: the fact is "basically" a definition of a
  *   function or predicate.  Used for presentation of the fact
- *   in a menu.
+ *   in a menu.  Value is the defined name.
  * autoSimplify: if given, a simplifier function that takes the
  *   result of a rewrite with this fact as its input and applies it
  *   as the interactive auto-simplifier.
