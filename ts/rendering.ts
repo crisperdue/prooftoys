@@ -2035,6 +2035,9 @@ export function expandMarkup(step, markup) {
   // Does it look like {<word>} or {<text> <word>}, where <text> may
   // contain whitespace?
   var matches = markup.match(/^\{(.*? ?)([a-zA-Z0-9]+)\}$/);
+  if (!matches) {
+    return markup;
+  }
   var markupRest = matches[1];
   var markupName = matches[2];
   switch (markupName) {
