@@ -366,32 +366,32 @@ Expr.prototype.findUntyped = function() {
 };
 
 export interface Expr {
-/**
- * If this already has a type, return it without making a copy.
- * Otherwise makes and returns a well-typed copy of this, ignoring any
- * type information already present.  The result is a deep copy,
- * except that all occurrences of the semantically same variable are
- * represented by the same Atom, and occurrences of monomorphic
- * constants may also be shared, even with other formulas.
- * 
- * Internal use of this method in key inference primitives dictates that
- * inputs to those primitives are fully typed if the (top-level) term
- * received has a type.
- *
- * A side job of this method is to remove aliased constant names,
- * keeping their stated types.  The new Atom has the plain name of the
- * original, with no alias, but picks up the type specified for the
- * original's pname.  This currently applies only to "==".
- * 
- * TODO: Define the behavior in case it is not possible to make a
- *   properly typed copy.
- *
- * TODO: Document how and why this approach is (I think) adequate.
- *   Consider for example that a subterm may contain type information
- *   in its original context, that can become more general as part of
- *   this operation.  The term "f = g" in axiom3 seems an interesting
- *   case.
- */
+  /**
+   * If this already has a type, return it without making a copy.
+   * Otherwise makes and returns a well-typed copy of this, ignoring any
+   * type information already present.  The result is a deep copy,
+   * except that all occurrences of the semantically same variable are
+   * represented by the same Atom, and occurrences of monomorphic
+   * constants may also be shared, even with other formulas.
+   * 
+   * Internal use of this method in key inference primitives dictates that
+   * inputs to those primitives are fully typed if the (top-level) term
+   * received has a type.
+   *
+   * A side job of this method is to remove aliased constant names,
+   * keeping their stated types.  The new Atom has the plain name of the
+   * original, with no alias, but picks up the type specified for the
+   * original's pname.  This currently applies only to "==".
+   * 
+   * TODO: Define the behavior in case it is not possible to make a
+   *   properly typed copy.
+   *
+   * TODO: Document how and why this approach is (I think) adequate.
+   *   Consider for example that a subterm may contain type information
+   *   in its original context, that can become more general as part of
+   *   this operation.  The term "f = g" in axiom3 seems an interesting
+   *   case.
+   */
   typedCopy(mustCopy?: boolean);
 }
 Expr.prototype.typedCopy = function(mustCopy) {
