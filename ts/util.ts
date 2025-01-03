@@ -796,6 +796,10 @@ namespace Toy {
     if (o === undefined) {
       return 'undefined';
     }
+    if (typeof o === 'function') {
+      const name = o.name;
+      return `<function${name ? ' ' + name : ''}>`;
+    }
     if (Array.isArray(o)) {
       var list = [];
       for (var i = 0; i < o.length; i++) {
@@ -1080,7 +1084,7 @@ namespace Toy {
       // The two code paths here enable us to suppress debugging when an
       // abort occurs with Toy.proceeding on.
       if (proceeding) {
-        console.warn('Proceeding at:', e.message);
+        console.debug('Proceeding at:', e.message);
         // A breakpoint here debugs even when proceeding.
         unwind(e);
       } else {
