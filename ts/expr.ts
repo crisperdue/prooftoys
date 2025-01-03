@@ -195,9 +195,14 @@ export function multiReducer(term) {
  * This attempts to confirm that the schema, a call to a function
  * variable, with one or more arguments, constitutes a higher-order
  * match with "expr", combined with an established substitution into
- * the schema defined by the map for the given function variable "fn".
+ * the schema defined by the map from the given function variable "fn"
+ * to a potentially nested lambda term.
+ * 
  * If it does, returns a proved equation from the schema to a term
- * that "matches" expr in this binding context, otherwise null.
+ * that "matches" expr in this binding context, otherwise null, done by
+ * substituting the lambda term for the variable and reducing until it
+ * finds a match.
+ * 
  * Internal to _matchAsSchema.
  *
  * As currently implemented, this does not actually beta reduce
@@ -205,7 +210,11 @@ export function multiReducer(term) {
  */
 export function checkFnMatch(schema, fn, expr, map, bindings) {
   const name = fn.name;
+  // This is expected to be a potentially nested lambda term.
   const lambdas = map[name];
+  if (lambdas.constructor !== Lambda) {
+    return null;
+  }
 
   // The path will be built as a reverse path, but all /fn so
   // it will be the same as its reverse.
@@ -215,11 +224,12 @@ export function checkFnMatch(schema, fn, expr, map, bindings) {
        term = term.fn) {
     path = new Path('fn', path);
   }
-  const reducer =
-        () => Toy.rules.consider(schema).andThen('instVar', lambdas, name);
-  let reduced = Toy.catching(reducer);
+  let reduced = try_(() => {
+    // TODO: In HOL, substitutions call fail.
+    //   Consider how to handle that here.
+    rules.consider(schema).andThen('instVar', lambdas, name);
+  });
   if (reduced instanceof Error) {
-    console.error(reduced);
     return null;
   }
   while (path !== Path.empty) {
@@ -228,6 +238,7 @@ export function checkFnMatch(schema, fn, expr, map, bindings) {
       return reduced;
     }
     if (reducible.isLambdaCall()) {
+      // Reduce further.
       reduced = Toy.rules.reduce(reduced, '/right');
     } else {
       return null;
