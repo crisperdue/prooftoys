@@ -2883,8 +2883,7 @@ class RuleMenu {
 // This maps from menu name to a set of fact category names to be
 // presented in that mode.
 const catsOfMenu =
-      new Map([['none', new Set()],
-               ['algebra', new Set(['algebra'])],
+      new Map([['algebra', new Set(['algebra'])],
                ['general',
                 new Set(['general', 'simplifier', 'algebra'])],
                ['descriptors', new Set(['descriptors'])],
