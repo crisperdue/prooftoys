@@ -382,6 +382,9 @@ export interface Expr {
  * keeping their stated types.  The new Atom has the plain name of the
  * original, with no alias, but picks up the type specified for the
  * original's pname.  This currently applies only to "==".
+ * 
+ * TODO: Define the behavior in case it is not possible to make a
+ *   properly typed copy.
  *
  * TODO: Document how and why this approach is (I think) adequate.
  *   Consider for example that a subterm may contain type information

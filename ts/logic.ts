@@ -2754,6 +2754,7 @@ declare(
   // More like the book's 5221.  For each name in the map (a string),
   // substitutes the expression associated with it in the map, using
   // simultaneous substitution.  Parses string values in the map.
+  // Note that substitutions can fail type checking.
   //
   // If reduceFns is truthy, attempts to reduce (i.e. remove)
   // introduced lambdas using backReduce in support of higher-order
@@ -2761,6 +2762,8 @@ declare(
   //
   // Optimized to avoid substitutions that have no effect, returning
   // its input, justified as "instMultiVars".
+  //
+  // TODO: Check that uses of this check appropriately for errors.
   {name: 'instMultiVars',
     action: function(b, map, reduceFns?) {
       assert(map && map.constructor && map.constructor === Object,
