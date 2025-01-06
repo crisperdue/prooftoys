@@ -1323,6 +1323,7 @@ var _mathParsed = new Map();
  *   variables according to their names.
  */
 export function mathParse(arg) {
+  // TODO: Add math var conditions throughout.
   if (arg instanceof Expr) {
     return arg.typedCopy();
   }
@@ -1339,15 +1340,15 @@ export function mathParse(arg) {
   return result;
 }
 
-export interface Expr {
-  andMathVarConditions();
-}
 /**
  * Adds "math var conditions" as the rightmost assumptions of this
  * wff.
  *
  * TODO: It would be nice to be able to add them on the left.
  */
+export interface Expr {
+  andMathVarConditions(this: Expr);
+}
 Expr.prototype.andMathVarConditions = function() {
   var assume = this.mathVarConditions();
   if (assume) {

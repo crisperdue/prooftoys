@@ -8,8 +8,9 @@ namespace Toy {
 
 //// Type decls
 
+// TODO: Remove EType in favor of Expr.
 /** The actual instantiable types. */
-export type EType = Atom | Call | Lambda;
+export type EType = Expr;
 
 export type Call1 = Call & {fn: Atom, arg: Expr}
 export type Call2 = {fn: Call1, arg: Expr}
@@ -666,6 +667,7 @@ export abstract class Expr {
   abstract _subFree(a, b, c);
   abstract _addFreeVars(a, b);
   abstract _addFreeVarSet(a, b);
+  abstract _addNewConstants(names, bindings);
   abstract _boundNames(a, b);
   abstract _addNames(a);
   abstract _checkSegment(a);
@@ -1745,7 +1747,7 @@ export abstract class Expr {
    * If the optional expr is present, uses that as an initial conjunct
    * to add to.
    */
-  mathVarConditions(this:Expr, expr) {
+  mathVarConditions(this:Expr, expr?) {
     var real = new Atom('R');
     // Order the names for nice presentation.
     var names = [];
