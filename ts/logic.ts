@@ -1103,6 +1103,33 @@ declare(
     },
     tooltip: ('statement to take as given'),
     description: 'given',
+    labels: 'more',
+    autoSimplify: noSimplify,
+  },
+
+  // Like "consider", but for formulas (boolean-valued terms).
+  // Includes assumptions about real-valued variables.
+  // Special case: this is only offerable if there are no steps
+  // already in a proof.
+  {name: 'solveReal',
+    action: function(term: Expr) {
+      const asms = term.mathVarConditions();
+      let eqn = rules.eqSelf(term);
+      if (asms) {
+        eqn = eqn.andThen('andAssume', asms);
+      }
+      return eqn.justify('solveReal', arguments);
+    },
+    inputs: {term: 1},
+    form: 'Formula to take as given: <input name=term>',
+    menuGen: function(ruleName, step, term, proofEditor) {
+      // This rule is only available if the proof is currently empty.
+      return (proofEditor.proofDisplay.steps.length == 0
+              ? 'problem to solve (givens)'
+              : null);
+    },
+    tooltip: ('find real solution(s)'),
+    description: 'problem statement',
     labels: 'algebra basic',
     autoSimplify: noSimplify,
   },
