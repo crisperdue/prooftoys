@@ -316,6 +316,10 @@ $(function() {
     $('div.proof-display').each(function() {
         const data = this.dataset;
         const stepsInfo = data.steps;
+        const reals = data.requireReals;
+        if (reals != null) {
+          Toy.requireScript(Toy.realNumbersScript);
+        }
         if (!stepsInfo) {
           console.error('No steps for proof display', this);
         }
