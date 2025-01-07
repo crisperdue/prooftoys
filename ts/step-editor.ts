@@ -2192,13 +2192,15 @@ class RuleMenu {
     const stepEditor = proofEditor.stepEditor;
 
     const blurbs = {
-      general: 'Rewrites and other often-used actions:',
-      algebra: 'Combinations, some for basic algebra:',
-      descriptors: 'Unique existence and such:',
-      other: 'Advanced or less common:',
+      general: 'Rewrites and other often-used actions.',
+      algebra: 'Combinations, some for basic algebra.',
+      descriptors: 'Unique existence and such.',
+      other: 'Advanced or less common.',
     };
     const mode = proofEditor.showRuleType;
-    const blurb = blurbs[mode] || 'Actions:';
+    const blurb =
+      (blurbs[mode] || 'Actions:') + 
+      ' <span class=star>(&star; means the selected term.)</span>';
     if (blurb) {
       self.$title.html(blurb);
     }

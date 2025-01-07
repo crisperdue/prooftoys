@@ -969,6 +969,11 @@ input.copyText {
         /* The rule menu title contributes left and right borders, */
         border: 1px solid #bbf;
         border-width: 0 1px;
+
+        .star {
+          font-weight: normal;
+          white-space: nowrap;
+        }
     }
 
     .ruleMenu .scrollingMenu {
