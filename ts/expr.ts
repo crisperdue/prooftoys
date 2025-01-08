@@ -990,10 +990,10 @@ export abstract class Expr {
   }
 
   /**
-   * Returns the assumptions of a conditional, if any, else falsy.
+   * Returns the assumptions of a conditional, if any, else null.
    */
   getAsms() {
-    return this.isCall2('=>') && this.getLeft();
+    return this.isCall2('=>') ? this.getLeft() : null;
   }
 
   isTypeTest(this) {
@@ -1875,26 +1875,25 @@ export abstract class Expr {
    * Is it an equation, possibly with assumptions?
    */
   isEquation() {
-    return (this.isCall2('=') ||
-            (this.isCall2('=>') && this.getRight().isCall2('=')));
+    return this.getMain().isCall2('=');
   }
 
   /**
-   * Gets the left side of an equation, possibly with assumptions.
+   * Gets the left side of an equation, possibly with assumptions,
+   * or null if there is none.
    */
   eqnLeft() {
-    var eqn = this.isCall2('=>') ? this.getRight() : this;
-    eqn.assertCall2('=');
-    return eqn.getLeft();
+    const main = this.getMain();
+    return main.isCall2('=') ? main.getLeft() : null;
   }
 
   /**
-   * Gets the right side of an equation, possibly with assumptions.
+   * Gets the right side of an equation, possibly with assumptions, or
+   * null if there is none.
    */
   eqnRight() {
-    var eqn = this.isCall2('=>') ? this.getRight() : this;
-    eqn.assertCall2('=');
-    return eqn.getRight();
+    const main = this.getMain();
+    return main.isCall2('=') ? main.getRight() : null;
   }
 
 
