@@ -1196,18 +1196,22 @@ export function prevRenderedStep(step) {
 }
 
 /**
- * Returns boolean value, true iff the given step has a
- * prevRenderedStep with assumptions that are sameAs
- * the assumptions of the given step.
+ * Returns boolean value, true iff the given step has a prevRenderedStep
+ * with assumptions that are sameAs the assumptions of the given step.
  */
 export function sameAsPrevAsms(step) {
-  if (step.isCall2('=>')) {
-    const prev = prevRenderedStep(step);
-    return (prev && prev.isCall2('=>') &&
-            step.getLeft().sameAs(prev.getLeft()));
-  } else {
-    return false;
-  }
+  const asms = step.getAsms();
+  return asms && prevRenderedStep(step)?.getAsms()?.sameAs(asms);
+}
+
+/**
+ * Returns truthy iff the given step and its most recent rendered
+ * predecessor are both equational, with equation left hand sides
+ * "sameAs" each other.
+ */
+export function sameAsPrevEqnLeft(step) {
+  const left = step.eqnLeft();
+  return left && prevRenderedStep(step)?.eqnLeft()?.sameAs(left);
 }
 
 /**
@@ -1260,6 +1264,9 @@ export function renderWff(step) {
       // The identical asms have been rendered normally, but if the same
       // as in the previous step, now mark them as "faded".
       $(asmPart.node).addClass('faded');
+    }
+    if (sameAsPrevEqnLeft(step)) {
+      $(step.eqnLeft().node).addClass('faded');
     }
     return wff.node;
   } else if (wff.isCall2('==')) {
