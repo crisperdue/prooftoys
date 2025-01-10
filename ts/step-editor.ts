@@ -2030,10 +2030,11 @@ export interface Expr {
   simplifyUsual();
 }
 /**
- * Simplify this step based on its target site, if any,
- * simplify the asm side if it refers into the asms, otherwise
- * the "focal part".  Hopefully this can be considered the
- * default style of autosimplification.
+ * Simplify this step based on its target site, if any, simplify the asm
+ * side if it refers into the asms, otherwise the "focal part".  This is
+ * the default style of autosimplification.  It simplifies what is
+ * typically the largest part safe to simplify.  Simplifying the entire
+ * step can manage assumptions poorly.
  *
  * TODO: Should this be a rule?
  */
@@ -2042,7 +2043,7 @@ Step.prototype.simplifyUsual = function() {
   const path = Toy.getStepSite(step);
   return (path && step.isAsmSide(path)
           ? Toy.rules.simplifySite(step, '/left')
-          : Toy.simplifyStep(step) || assert(false));
+          : Toy.rules.simplifyFocalPart(step) || assert(false));
 };
 
 //// RULEMENU
