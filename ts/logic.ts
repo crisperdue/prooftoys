@@ -2146,10 +2146,12 @@ declare(
 // Managing numeric type assumptions
 
 declare(
-  // Simplifies repeatedly using basicSimpFacts.  If the main part of
-  // the step is an equation, simplifies its right side, otherwise the
-  // entire main part, then runs simplifyAsms.  Frequently invoked by
-  // simplifyUsual.
+  /**
+   * Simplifies repeatedly using basicSimpFacts.  If the main part of
+   * the step is an equation, simplifies its right side, otherwise the
+   * entire main part, then runs simplifyAsms.  Frequently invoked by
+   * simplifyUsual.
+   */
   {name: 'simplifyFocalPart',
    action: function(step) {
       var visPath = step.pathToFocalPart();
@@ -2367,8 +2369,8 @@ declare(
 );
 
 /**
- * Function callable to simplify an entire step.  Useful
- * as an autoSimplify function.
+ * Function callable to simplify an entire step.  Useful when there is
+ * no need to merge new assumptions added during simplification.
  */
 export function simplifyStep(step) {
   return rules.simplifySite(step, '');
@@ -2553,7 +2555,7 @@ declare(
       return ok(result, () => result);
    },
    inputs: {site: 1, step: 3},
-   autoSimplify: simplifyStep,
+   autoSimplify: simplifyStep,    // TODO: Maybe use the default instead.
    toOffer: 'return term.isBoolean()',
    form: ('{term} instance of step <input name=step>'),
 
@@ -2593,7 +2595,7 @@ declare(
      return ok(result, () => result);
    },
    inputs: {site: 1, step: 3},
-   autoSimplify: simplifyStep,
+   autoSimplify: simplifyStep,    // TODO: Maybe use the default instead.
    toOffer: 'return term.isBoolean()',
    form: ('Match {term} with (consequent of) step <input name=step>'),
    menu: 'replace known true part with T',
