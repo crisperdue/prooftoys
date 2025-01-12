@@ -933,20 +933,6 @@ export abstract class Expr {
   }
 
   /**
-   * Returns the nth "element" of this expression.  Recurs top down
-   * through function parts of calls until finding an Atom, which is
-   * considered element 0.  The arg part of that call is element 1,
-   * and the arg goes up by 1 for each level.  The effect is that a
-   * call written as (f a b c) gives the Atom "f" as element 0, "a"
-   * as element 1, "b" as element 2, and "c" as element 3.
-   */
-  nthArg(n) {
-    var result = this._nthArg(n);
-    assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
-    return result;
-  }
-
-  /**
    * Returns the LHS (left-hand side) of a function of two arguments.
    */
   getLeft() {
@@ -1834,6 +1820,49 @@ export abstract class Expr {
   }
 
   /**
+   * Returns the nth "element" of this expression.  Recurs top down
+   * through function parts of calls until finding an Atom, which is
+   * considered element 0.  The arg part of that call is element 1,
+   * and the arg goes up by 1 for each level.  The effect is that a
+   * call written as (f a b c) gives the Atom "f" as element 0, "a"
+   * as element 1, "b" as element 2, and "c" as element 3.
+   */
+  nthArg(n) {
+    var result = this._nthArg(n);
+    assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
+    return result;
+  }
+
+  /**
+   * True iff this expression is a Call with at least N arguments, where
+   * N is at least 1.  Meaning to say this and N - 1 levels of calls
+   * nested within its function part.
+   */
+  hasArgs(n) {
+    return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
+  }
+
+  /**
+   * Returns the number of arguments passed to the function in this
+   * Call.  The result is based on the structure of the Call, merely
+   * calculating the depth to reach a Lambda or Atom.  Result is zero if
+   * given a Lambda or Atom.
+   */
+  argsPassed() {
+    return (this instanceof Call
+            ? this.fn.argsPassed() + 1
+            : 0);
+  }
+
+  /**
+   * Descends recursively into "fn" parts of this Expr to the first
+   * Lambda or Atom, returning it.
+   */
+  funPart() {
+    return (this instanceof Call ? this.fn.funPart() : this);
+  }
+
+  /**
    * Returns true iff this is a call to a function of two arguments that
    * is normally rendered and parsed as an infix binary operator.
    */
@@ -2484,35 +2513,6 @@ export abstract class Expr {
    */
   traverse(fn, rpath) {
     this._traverse(fn, rpath || Path.empty);
-  }
-
-  /**
-   * True iff this expression is a Call with at least N arguments, where
-   * N is at least 1.  Meaning to say this and N - 1 levels of calls
-   * nested within its function part.
-   */
-  hasArgs(n) {
-    return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
-  }
-
-  /**
-   * Returns the number of arguments passed to the function in this
-   * Call.  The result is based on the structure of the Call, merely
-   * calculating the depth to reach a Lambda or Atom.  Result is zero if
-   * given a Lambda or Atom.
-   */
-  argsPassed() {
-    return (this instanceof Call
-            ? this.fn.argsPassed() + 1
-            : 0);
-  }
-
-  /**
-   * Descends recursively into "fn" parts of this Expr to the first
-   * Lambda or Atom, returning it.
-   */
-  funPart() {
-    return (this instanceof Call ? this.fn.funPart() : this);
   }
 
   /**
