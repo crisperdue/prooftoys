@@ -147,6 +147,8 @@ export declare namespace Path {
   // ?? export { _end as empty };
 }
 
+export type Pathable = Path | string;
+
 /**
  * Construct a Path from a segment string ('fn', 'arg', 'bound',
  * 'body', 'left', 'right', 'binop', or null) and an optional Path,
