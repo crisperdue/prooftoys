@@ -7104,149 +7104,150 @@ declare(
    }
   },
 
-   {statement: 'not (a != b) == (a = b)',
-    simplifier: true,
-    proof: function() {
-       return (rules.fact('a != b == not (a = b)')
-               .rewrite('', 'a == b == (not a == not b)')
-               .andThen('simplifySite', '/right'));
-     }
-   },
-
-   {statement: 'T == (x = x)',
-    desimplifier: true,
-    proof: function() {
-       return rules.eqT('x');
-     }
-   },
-
-   {statement: 'x in Y == Y x',
-    proof: function() {
-      return (rules.fact('x in Y == (Y x == T)')
+  {statement: 'not (a != b) == (a = b)',
+   simplifier: true,
+   proof: function() {
+      return (rules.fact('a != b == not (a = b)')
+              .rewrite('', 'a == b == (not a == not b)')
               .andThen('simplifySite', '/right'));
     }
-   },
+  },
 
-   {statement: 'negate p = {x. not (p x)}',
-    proof: function() {
-       return (rules.consider('negate p').andThen('apply', '/right'));
-     }
-   },
+  {statement: 'T == (x = x)',
+   desimplifier: true,
+   proof: function() {
+      return rules.eqT('x');
+    }
+  },
 
-   {statement: 'negate (negate p) = p',
-    simplifier: true,
-    proof: function() {
-       return (rules.consider('(negate (negate p)) x')
-               .andThen('simplifySite', '/right')
-               .andThen('toForall0', 'x')
-               .andThen('rewrite', '',
-                        'forall {x. q x == p x} == (q = p)'));
-     }
-   },
-
-   // This is the classic definition of the existential quantifier,
-   // proved from a concise definition.
-   {name: 'existDef',
-    statement: 'exists p == not (forall {x. not (p x)})',
-    proof: function() {
-       var all = (rules.axiom3()
-                  .andThen('instMultiVars', {f: 'p', g: '{x. F}'})
-                  .andThen('apply', '/right/arg/body/right')
-                  .rewrite('/right/arg/body', '(a == F) == (not a)'));
-       return (rules.eqSelf('exists p')
-               .andThen('useDefinition', '/right/fn')
-               .andThen('apply', '/right')
-               .rewrite('/right', 'x != y == not (x = y)')
-               .andThen('rewriteOnlyFrom', '/right/arg', all));
-     },
-    labels: 'general',
-    desimplifier: true
-   },
-
-   {statement: 'not (exists p) == forall {x. not (p x)}',
-    proof: function() {
-       return (rules.fact('exists p == not (forall {x. not (p x)})')
-               .andThen('rewriteOnly', '', 'a == b == (not a == not b)')
-               .andThen('simplifySite', '/right'));
-     }
-   },
-
-   // TODO: Consider if uses of "negate" like this might better use
-   //   {x. not (p x)} instead, and if p is a lambda, propagate its
-   //   bound variable upward to the binding of x, thus retaining a
-   //   name that appeared in the use of this fact.
-   {statement: 'exists p == not (forall (negate p))',
-    proof: function() {
-       return (rules.fact('exists p == not (forall {x. not (p x)})')
-               .andThen('rewriteOnly', '/right/arg/arg',
-                        '{x. not (p x)} = negate p'));
-     },
-    desimplifier: true
-   },
-
-   // TODO: QM: Eta expand "p".
-   {statement: 'exists {x. not (p x)} == not (forall p)',
-    proof: function() {
-       var step1 = (rules.fact('exists p == not (forall {x. not (p x)})')
-                    .andThen('instMultiVars', {p: 'negate p'})
-                    .andThen('rewriteOnly', '/left/arg', 'negate p = {x. not (p x)}'));
-       var loc1 = step1.find('negate p x');
-       return (step1.andThen('rewriteOnly', loc1, 'negate p x = not (p x)')
-               .andThen('simplifySite', '/right/arg')
-               .andThen('rewriteOnly', '/right/arg/arg', '{x. p x} = p'));
-     }
-   },
-
-   {statement: 'not (exists {x. not (p x)}) == forall p',
-    proof: function() {
-      return (rules.fact('exists {x. not (p x)} == not (forall p)')
-              .andThen('rewriteOnly', '', '(A == not B) == (not A == B)'));
-    },
-    simplifier: true,
-   },
-
-   // This has the core reasoning for 5242, existential generalization
-   // (EGen / witnessExists / 2126).
-   //
-   // TODO: Consider adding a rule that converts an arbitrary step with
-   //   selected term to an application of a lambda to the selected term.
-   //   The code for that is in witnessExists.
-   //
-   // TODO: Consider for each of the above, a rule that replaces
-   //   another occurrence of the same term with the new bound
-   //   variable.  For existential quantification, the rule may need to
-   //   look at the step from which the selected one is derived, to
-   //   determine whether it is such an occurrence.
-   {statement: 'p x => exists p',
-    proof: function() {
-       return (rules.r5225()
-               .andThen('instVar', '{x. not (p x)}', 'p')
-               .andThen('reduce', '/right')
-               .andThen('rewriteOnly', '',
-                        'a => not b == b => not a')
-               .andThen('rewriteOnly', '/right',
-                        'not (forall {x. not (p x)}) == exists p'));
-     }
-   },
-
-   {statement: 'exists {y. y = x}',
-    proof: function() {
-       return (rules.fact('p x => exists p')
-               .andThen('instVar', '{y. y = x}', 'p')
-               .andThen('reduce', '/left')
-               .andThen('simplifySite', ''));
-     }
-   },
-
-   {statement: 'exists {y. x = y}',
-    proof: function() {
-       // This could be derived from the previous, but here is a nice
-       // alternative proof.
-       return (rules.eqSelf('x')
-               .andThen('forwardChain', 'p x => exists p')
-               .andThen('rewriteOnly', '/arg', 'p = {x. p x}'));
-     }
+  {statement: 'x in Y == Y x',
+   proof: function() {
+     return (rules.fact('x in Y == (Y x == T)')
+             .andThen('simplifySite', '/right'));
    }
+  },
+
+  {statement: 'negate p = {x. not (p x)}',
+   proof: function() {
+      return (rules.consider('negate p').andThen('apply', '/right'));
+    }
+  },
+
+  {statement: 'negate (negate p) = p',
+   simplifier: true,
+   proof: function() {
+      return (rules.consider('(negate (negate p)) x')
+              .andThen('rewrite', '/right', 'negate p x == not (p x)')
+              .andThen('simplifySite', '/right')
+              .andThen('toForall0', 'x')
+              .andThen('rewrite', '',
+                       'forall {x. q x == p x} == (q = p)'));
+    }
+  },
+
+  // This is the classic definition of the existential quantifier,
+  // proved from a concise definition.
+  {name: 'existDef',
+   statement: 'exists p == not (forall {x. not (p x)})',
+   proof: function() {
+      var all = (rules.axiom3()
+                 .andThen('instMultiVars', {f: 'p', g: '{x. F}'})
+                 .andThen('apply', '/right/arg/body/right')
+                 .rewrite('/right/arg/body', '(a == F) == (not a)'));
+      return (rules.eqSelf('exists p')
+              .andThen('useDefinition', '/right/fn')
+              .andThen('apply', '/right')
+              .rewrite('/right', 'x != y == not (x = y)')
+              .andThen('rewriteOnlyFrom', '/right/arg', all));
+    },
+   labels: 'general',
+   desimplifier: true
+  },
+
+  {statement: 'not (exists p) == forall {x. not (p x)}',
+   proof: function() {
+      return (rules.fact('exists p == not (forall {x. not (p x)})')
+              .andThen('rewriteOnly', '', 'a == b == (not a == not b)')
+              .andThen('simplifySite', '/right'));
+    }
+  },
+
+  // TODO: Consider if uses of "negate" like this might better use
+  //   {x. not (p x)} instead, and if p is a lambda, propagate its
+  //   bound variable upward to the binding of x, thus retaining a
+  //   name that appeared in the use of this fact.
+  {statement: 'exists p == not (forall (negate p))',
+   proof: function() {
+      return (rules.fact('exists p == not (forall {x. not (p x)})')
+              .andThen('rewriteOnly', '/right/arg/arg',
+                       '{x. not (p x)} = negate p'));
+    },
+   desimplifier: true
+  },
+
+  // TODO: QM: Eta expand "p".
+  {statement: 'exists {x. not (p x)} == not (forall p)',
+   proof: function() {
+      var step1 = (rules.fact('exists p == not (forall {x. not (p x)})')
+                   .andThen('instMultiVars', {p: 'negate p'})
+                   .andThen('rewriteOnly', '/left/arg', 'negate p = {x. not (p x)}'));
+      var loc1 = step1.find('negate p x');
+      return (step1.andThen('rewriteOnly', loc1, 'negate p x = not (p x)')
+              .andThen('simplifySite', '/right/arg')
+              .andThen('rewriteOnly', '/right/arg/arg', '{x. p x} = p'));
+    }
+  },
+
+  {statement: 'not (exists {x. not (p x)}) == forall p',
+   proof: function() {
+     return (rules.fact('exists {x. not (p x)} == not (forall p)')
+             .andThen('rewriteOnly', '', '(A == not B) == (not A == B)'));
+   },
+   simplifier: true,
+  },
+
+  // This has the core reasoning for 5242, existential generalization
+  // (EGen / witnessExists / 2126).
+  //
+  // TODO: Consider adding a rule that converts an arbitrary step with
+  //   selected term to an application of a lambda to the selected term.
+  //   The code for that is in witnessExists.
+  //
+  // TODO: Consider for each of the above, a rule that replaces
+  //   another occurrence of the same term with the new bound
+  //   variable.  For existential quantification, the rule may need to
+  //   look at the step from which the selected one is derived, to
+  //   determine whether it is such an occurrence.
+  {statement: 'p x => exists p',
+   proof: function() {
+      return (rules.r5225()
+              .andThen('instVar', '{x. not (p x)}', 'p')
+              .andThen('reduce', '/right')
+              .andThen('rewriteOnly', '',
+                       'a => not b == b => not a')
+              .andThen('rewriteOnly', '/right',
+                       'not (forall {x. not (p x)}) == exists p'));
+    }
+  },
+
+  {statement: 'exists {y. y = x}',
+   proof: function() {
+      return (rules.fact('p x => exists p')
+              .andThen('instVar', '{y. y = x}', 'p')
+              .andThen('reduce', '/left')
+              .andThen('simplifySite', ''));
+    }
+  },
+
+  {statement: 'exists {y. x = y}',
+   proof: function() {
+      // This could be derived from the previous, but here is a nice
+      // alternative proof.
+      return (rules.eqSelf('x')
+              .andThen('forwardChain', 'p x => exists p')
+              .andThen('rewriteOnly', '/arg', 'p = {x. p x}'));
+    }
+  }
 );
 
 declare(
