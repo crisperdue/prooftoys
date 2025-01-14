@@ -277,6 +277,7 @@ wffblock- > * {
   border: 1px solid transparent;
   margin-left: 4em;
   margin-bottom: .4em;
+  user-select: none;
 }
 
 // Override the left margin just above to bring the stepAndNum back to the left.
