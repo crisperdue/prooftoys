@@ -1789,9 +1789,18 @@ export abstract class Expr {
     this._addNames(byName);
     return byName;
   }
+
+  /**
+   * Descends recursively into "fn" parts of this Expr to the first
+   * Lambda or Atom, returning it.
+   */
+  funPart() {
+    return (this instanceof Call ? this.fn.funPart() : this);
+  }
+  
   /**
    * If this term is a call, returns the first "fn" descendent that
-   * is not a Call (thus an atom or lambda), otherwise returns null.
+   * is an atom, otherwise returns null.
    */
   func(): Atom | null {
     var term = this;
@@ -1852,14 +1861,6 @@ export abstract class Expr {
     return (this instanceof Call
             ? this.fn.argsPassed() + 1
             : 0);
-  }
-
-  /**
-   * Descends recursively into "fn" parts of this Expr to the first
-   * Lambda or Atom, returning it.
-   */
-  funPart() {
-    return (this instanceof Call ? this.fn.funPart() : this);
   }
 
   /**
