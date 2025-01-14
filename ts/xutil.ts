@@ -1819,14 +1819,15 @@ export function lambda(bound, body) {
 }
 
 /**
- * This controls the policy over which function names are
- * to be rendered as infix.
+ * This controls the policy over which function names are to be rendered
+ * as infix.  Returns truthy iff the term is an Atom with infix
+ * precedence.
  */
-export function isInfixOp(atom) {
-  if (!(atom instanceof Atom)) {
+export function isInfixOp(term) {
+  if (!(term instanceof Atom)) {
     return false;
   }
-  var p = getPrecedence(atom);
+  var p = getPrecedence(term);
   return 0 < p && p < namePower;
 }
 
