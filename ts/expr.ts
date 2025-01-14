@@ -835,7 +835,7 @@ export abstract class Expr {
     // Parsing is generally strict about use of infix operators in other
     // contexts, so be sure to display them in parentheses by default.
     // Calls to functions that are infix operators can display as infix.
-    const isInfix = Toy.isInfixDesired(this);
+    const isInfix = Toy.isInfixOp(this);
     return isInfix ? '(' + str + ')' : str;
   }
 
@@ -1311,7 +1311,7 @@ export abstract class Expr {
     return (this instanceof Call
             && this.fn instanceof Call
             && this.fn.fn instanceof Atom
-            && isInfixDesired(this.fn.fn));
+            && isInfixOp(this.fn.fn));
   }
 
   /**
@@ -1829,7 +1829,7 @@ export abstract class Expr {
   }
 
   /**
-   * Returns the nth "element" of this expression.  Recurs top down
+   * Returns the nth "element" of this expression.  Recurs first down
    * through function parts of calls until finding an Atom, which is
    * considered element 0.  The arg part of that call is element 1,
    * and the arg goes up by 1 for each level.  The effect is that a
@@ -1868,7 +1868,7 @@ export abstract class Expr {
    * is normally rendered and parsed as an infix binary operator.
    */
   isBinOpCall() {
-    return this.isCall2() && isInfixDesired(this.getBinOp());
+    return this.isCall2() && isInfixOp(this.getBinOp());
   }
 
   /**
@@ -1882,7 +1882,7 @@ export abstract class Expr {
     }
     var segment = p.segment;
     var rest = p.rest;
-    if (this.isCall2() && isInfixDesired(this.getBinOp())) {
+    if (this.isCall2() && isInfixOp(this.getBinOp())) {
       if (segment === 'arg') {
         return new Path('right', this.getRight().prettifyPath(rest));
       } else if (segment === 'fn') {
@@ -2787,12 +2787,12 @@ export abstract class Expr {
     const key = x => {
       const c = x.constructor;
       if (c === Atom) {
-        const isInfix = Toy.isInfixDesired(x);
+        const isInfix = Toy.isInfixOp(x);
         return isInfix ? '(' + x.name + ')' : x.name;
       } else if (c === Call) {
         if (x.isCall2()) {
           const op = x.getBinOp();
-          if (isInfixDesired(op)) {
+          if (isInfixOp(op)) {
             return ('(' + key(x.getLeft()) + ' ' + op.name +
                     ' ' + key(x.getRight()) + ')');
           } else {
@@ -3436,7 +3436,7 @@ export class Call extends Expr {
     }
     if (this.isCall2()) {
       const op = this.getBinOp();
-      if (isInfixDesired(op)) {
+      if (isInfixOp(op)) {
         if (useUnicode && op.name == '**') {
           // Use HTML for exponentiation.  So "Unicode" here is
           // currently a misnomer.

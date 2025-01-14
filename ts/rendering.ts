@@ -1531,7 +1531,7 @@ Call.prototype.render = function(minPower) {
       return effectivePower(op, subExpr);
     }
     // This is a call on a named function of two arguments.
-    if (Toy.isInfixDesired(op)) {
+    if (Toy.isInfixOp(op)) {
       // Render as infix, e.g. "x + y"
       var left = this.getLeft();
       var right = this.getRight();
@@ -1567,7 +1567,7 @@ Call.prototype.render = function(minPower) {
       this.fn.node = dom($fn);
       $expr.append($fn, ' ', this.arg.render(Toy.namePower + 1));
     }
-  } else if (Toy.isInfixDesired(this.fn)) {
+  } else if (Toy.isInfixOp(this.fn)) {
     // Infix operator, but only one argument: render like "(+) x"
     // Parenthesize both function and argument if they are calls.
     $expr.append('(', this.fn.render(0), ') ',

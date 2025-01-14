@@ -1821,10 +1821,8 @@ export function lambda(bound, body) {
 /**
  * This controls the policy over which function names are
  * to be rendered as infix.
- *
- * TODO: Rename this to isInfixOp.
  */
-export function isInfixDesired(atom) {
+export function isInfixOp(atom) {
   if (!(atom instanceof Atom)) {
     return false;
   }
