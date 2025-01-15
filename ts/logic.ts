@@ -2223,7 +2223,7 @@ declare(
    action: function(step, path, opt_facts, asms=true) {
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.repeatedly(eqn, function(eqn) {
-        if (eqn.size(1000) > 200) {
+        if (eqn.size(1000) > 500) {
           debug(`Is eqn too big?\n${eqn.$$}`);
         }
         // This usage of /main is kind of cool in that it automatically
