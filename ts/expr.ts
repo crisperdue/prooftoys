@@ -879,7 +879,7 @@ export abstract class Expr {
    * If trimmed output is requested and there is a leading
    * open parenthesis, trim it and the closing one.
    */
-  toHtml(trimmed) {
+  toHtml(trimmed?) {
     // Really toUnicode does produce marked-up HTML for
     // e.g. exponentiation.  Since <, >, and & are separated by spaces,
     // this is adequate in practice.
@@ -1815,7 +1815,7 @@ export abstract class Expr {
 
   /**
    * Returns an array of the actual argument terms of the call to the
-   * function that would be the result of applying "func" to this Expr.
+   * function that would be the result of applying "funPart" to this Expr.
    * See also nthArg.
    */
   args() {
