@@ -77,6 +77,14 @@ img {
   box-shadow: #ccc 15px 10px 15px;
 }
 
+details > summary.block > :nth-child(1)::before {
+  content: "▸ ";
+}
+
+details[open] > summary.block > :nth-child(1)::before {
+  content: "▾ ";
+}
+
 /* Text wrapping */
 .nowrap {
   white-space: nowrap;
@@ -88,6 +96,10 @@ img {
 
 .pre {
   white-space: pre;
+}
+
+.block {
+  display: block;
 }
 
 .float {
