@@ -1597,83 +1597,102 @@ declare(
   },
 
   /**
-   * This assumes the selected boolean term, and removes the resulting
-   * T if it is in a conjunction.
+   * Applies if the boolean target term is the same as some assumption.
+   * Acts by rewriting it to T and removing the T if it is in a
+   * conjunction.
    */
   {name: 'assumed',
-   // This and "assumedEq" are very similar.
-   //
-   // The precheck just tests the free variables condition.  Note that
-   // there are no bound variables in the context of an assumption.
-   precheck: function(step: Step, path) {
-     return (step.get(path).isBoolean() &&
-             step.wff.freeBound(path).size === 0);
-   },
-   action: function(step, path_arg) {
-     const path = step.asPath(path_arg);
-     const target = step.get(path);
-     // TODO: Maybe use applyMatchingFact instead of this.
-     const tryRewrite = (step, path, eqn_arg) => {
-       const eqn = termify(eqn_arg);
-       const result = step.canRewrite(path, eqn);
-       return result && rules.rewrite(step, path, eqn);
-     };
-     const step1 = rules.assume(target);
-     const step2 = rules.trueBy1(step, path, step1);
-     let step5 = step2;
-     if (!path.isEnd()) {
-       const parentPath = step.prettifyPath(path).parent();
-       step5 = (tryRewrite(step2, parentPath, 'T & a == a') ||
-                tryRewrite(step2, parentPath, 'a & T == a') ||
-                step2);
-     }
-     return step5.justify('assumed', arguments, [step]);
+   action2: function(step, path) {
+    const action = () => {
+      const target = step.get(path);
+      const step1 = rules.assume(target);
+      const step2 = rules.trueBy1(step, path, step1);
+      const pretty = step.prettifyPath(path);
+      // Back up one level, in case the path points to the left or right
+      // operand of a conjunction.
+      const upPath = pretty.above();
+      const simpler =
+        (upPath &&
+          applyMatchingFact(step2, upPath, ['T & a == a', 'a & T == a']))
+        || step2;
+      return simpler;
+    };
+    return assumedPrep(step, path, false) && action;
    },
    inputs: {site: 1},
    labels: 'basic',
-   menuGen: function(ruleName, step, term, editor) {
-     const path = term && step.prettyPathTo(term);
-     if (term && rules.assumed.precheck(step, path)) {
-       const asms = step.wff.getAsms();
-       const goal = editor.goalStatement;
-       const gasms = goal && goal.getAsms();
-       const match = a => a.sameAs(term);
-       const likeAsm = (asms && !asms.scanConj(a => a == term) &&
-                        asms.scanConj(match));
-       const inGoal = gasms && gasms.scanConj(match);
-       const html =
-             (likeAsm
-              ? '  \u27ad <b>T</b> assumption'
-              : inGoal
-              ? '  \u27ad <b>T</b> (goal assumption)'
-              : '\u27ad <b>T</b> assuming &star;');
-       return [{html, ruleName,
-                ruleArgs: [step.original, path]
-               }];
-     }
+   menu: 'true by assumption',
+   description: step => {
+    const [s, p] = step.ruleArgs;
+    // Noted as "in goal" if not assumed in the step.
+    const inGoal = !assumedPrep(s, p, true);
+    const g = inGoal ? 'in goal' : '';
+    const term = s.get(p).toHtml(true);
+    return `assumed ${term} ${g}`;
    },
-   // TODO: Make the description more precise.
-   description: 'assuming &star;',
+   priority: 6,
   },
 
-/*
+  /**
+   * Applies if the boolean target term matches the negated part of a
+   * negated assumption, rewriting the target term to F.
+   */
   {name: 'assumedNot',
    // Like "assumed".
    action2: function(step, path) {
-     if (step.get(path).isBoolean() &&
-         step.wff.freeBound(path).size === 0) {
-       const s2 = rules.rewrite(step, path, 'a == not (not a)');
-       const path2 = path.concat('/arg');
-       const result = rules.assumed.attempt(s2, path2);
-       if (result) {
-         return () => result;
-       }
-     }
+    const action = (inStep) => {
+      const target = step.get(path);
+      const step1 = rules.assume(call('not', target));
+      const negated = rules.rewrite(step, path, 'a == not (not a)');
+      const step2 = rules.trueBy1(negated, path.concat('/arg'), step1);
+      let simpler = step2.andThen('rewriteOnly', path, 'not T == F');
+      return simpler;
+    };
+    return assumedPrep(step, path, true) && action;
    },
    inputs: {site: 1},
    labels: 'basic',
+   menu: 'false by assumption',
+   description: step => {
+    const [s, p] = step.ruleArgs;
+    // Noted as "in goal" if not assumed in the step.
+    const inGoal = !assumedPrep(s, p, true);
+    const g = inGoal ? 'in goal' : '';
+    const term = call('not', s.get(p)).toHtml(true);
+    return `false by assumed ${term} ${g}`;
+   },
+   priority: 5,
   },
-*/
+
+);
+
+/**
+ * Given a proof step and a path to a term in it, returns the
+ * continuation in case the term matches an assumption of the step, but
+ * is not one of the assumptions itself. A truthy third argument
+ * requests matching against an assumption that is its negation. If a
+ * goal wff is also given, also looks for such an assumption in the
+ * given goal.  Returns a truthy value on success.
+ */
+function assumedPrep(step: Expr, path_arg: Pathable,
+    negated: boolean = false, goal?: Expr) {
+  const path = step.prettifyPath(path_arg);
+  const target = step.get(path);
+  if (!target.isBoolean() || step.isAsmPath(path) ||
+      // No locally free vars are bound in context.
+      step.wff.freeBound(path).size > 0) {
+    return false;
+  }
+  const asms = step.wff.getAsms();
+  const gasms = goal?.getAsms();
+  const matcher =
+    negated 
+      ? asm => asm.isCall1('not') && asm.arg.matches(target)
+      : asm => asm.matches(target);
+  return asms?.scanConj(matcher) || gasms?.scanConj(matcher);
+}
+
+declare(
 
   // Finds a substitution to match the selection with the given term.
   // Returns falsy if none exists.  The menu suggests this when the
