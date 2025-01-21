@@ -1608,7 +1608,7 @@ Lambda.prototype.render = function(minPower) {
   this.node = dom($expr);
   const type = this.type;
   const $body = this.body.render(0);
-  const isSet = type.isSetType();
+  const isSet = type && type.isSetType();
   if (isSet && !type.fromType.equal(Toy.boolean)) {
     // Maps from non-boolean to boolean: render with braces
     // and "dot".
