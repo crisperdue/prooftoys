@@ -570,7 +570,11 @@ export class ProofEditor {
     }
     // Display steps saved in the database or else initial steps.
     db.exercises.get(exName)
-      .then(data => {
+      // Using soonDo here prevents Dexie from catching errors in its
+      // execution.  (The Dexie Promise "then" method wraps a catch
+      // around its callback.)  A consequence is that the code runs
+      // outside of the transaction, which is fine.
+      .then(data => soonDo(() => {
         console.log('Exercise in db:', data);
         const decoded = data && Toy.decodeSteps(data.proofState);
         if (decoded instanceof Error) {
@@ -579,7 +583,7 @@ export class ProofEditor {
         } else {
           self.setSteps(decoded || self.initialSteps);
         }
-      });
+      }));
     if (statement) {
       self.goalStatement = statement;
       // Display the exercise goal in the editor's header.
