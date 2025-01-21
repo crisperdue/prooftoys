@@ -2177,7 +2177,7 @@ export function decodeArg(info, steps) {
       // Step indexes are 1-based.
       return (steps[value.getNumValue() - 1]);
     case 't':
-      return (value);
+      return value.typedCopy();
     case 'path':
       // TODO: If there are two "args", decode as
       //   <asm> and <p>, where <p> is a path relative to the asm.
