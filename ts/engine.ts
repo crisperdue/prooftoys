@@ -966,13 +966,14 @@ export function ok(status, more?) {
 
 //// Exercises
   
-// This maps from an exercise name to its declarations.
+// This maps from an exercise name to all of its declarations.
 export var exercises = new Map();
 
 /**
- * Declares an exercise with a number of declarations.  This is like
- * the declarations function, but is specific to exercises and requires
- * the name of the exercise as its first argument.
+ * Declares a group of exercises.  This is like the "declare" function,
+ * but is specific to exercises and requires the name of the exercise as
+ * its first argument.  Some initial sequence of the declarations will
+ * execute to set up an individual problem within the exercise.
  */
 export function exercise(name, ...declarations) {
   const decls = exercises.get(name) || [];

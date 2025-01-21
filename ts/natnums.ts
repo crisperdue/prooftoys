@@ -26,7 +26,12 @@ const Call = Toy.Call;
 const Lambda = Toy.Lambda;
 const noSimplify = Toy.noSimplify;
 
-
+/**
+ * This array contains all the declarations related to the exercises
+ * that will be set up just below.  The order is important because each
+ * individual exercise depends only on the theory established up to its
+ * declaration, which is marked as "exertion".
+ */
 const decls = [
 
   // NN axioms; 1
@@ -404,7 +409,7 @@ decls.forEach(decl => {
   delete decl['pruf'];
 });
 
-// Declare all the exercises.
+// Now set up all the exercises in the "nat" group.
 Toy.exercise(
   'nat',
   ... decls

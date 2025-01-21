@@ -77,6 +77,11 @@ img {
   box-shadow: #ccc 15px 10px 15px;
 }
 
+// The styling here works with a custom Hugo shortcode to support
+// "summary" items containing a block element such as a header. The
+// shortcode adds a "block" class, and this gives the contained element,
+// e.g. header an open/closed triangle.
+// 
 details > summary.block > :nth-child(1)::before {
   content: "▸ ";
 }
