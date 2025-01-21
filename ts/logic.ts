@@ -1725,7 +1725,8 @@ declare(
            items.push({
              ruleName,
              ruleArgs: [step.original, step.prettyPathTo(term), gasm],
-             html: 'match with goal <input data-arg=2>'
+             html: 'match with goal <input data-arg=2>',
+             priority: 5,
            });
          }
        }
