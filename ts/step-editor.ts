@@ -928,19 +928,30 @@ function prepExercise(name) {
   const matches = name.match(/(.*?)\/(.*)/);
   assert(matches, `Not an exercise item name: ${name}`);
   const [_, exName, partName] = matches;
+  // This is all of the declarations for the given problem set name.
   const decls = Toy.exercises.get(exName);
   assert(decls, `No such exercise set: ${exName}`);
   let found = false;
+  // This will become a list of all declarations to run to set up the
+  // specific exercise.
   const keepers = [];
   for (const decl of decls) {
-    const thisName = decl.exertion;
+    // An "exertion" property serves to name the individual exercise
+    // within the problem set.
+    const foundName = decl.exertion;
     // This line copies the own properties.
     const info = { ...decl };
+    // Remove any "exertion" property from the copy.
     delete info.exertion;
     if (!Toy.isEmpty(info)) {
+      // A bare exertion with no declarations acts as if part of the
+      // previous decls.
+      //
+      // TODO: Disallow this form.
       keepers.push(info);
     }
-    if (thisName === partName) {
+    if (foundName === partName) {
+      // We found the specific exercise.  Search no further.
       found = true;
       break;
     }
