@@ -2177,7 +2177,7 @@ namespace Toy {
    * milliseconds.
    */
   export const sleep =
-    (millis) => new Promise(thenFn => setTimeout(thenFn, millis));
+    (millis = 0) => new Promise(thenFn => setTimeout(thenFn, millis));
 
   /**
    * Do the action as soon as possible after giving the page a chance to
