@@ -777,6 +777,10 @@ export class ProofDisplay {
     $proofStep.data('proofStep', step);
     step.stepNode = dom($proofStep);
     var $wff = $(renderWff(step));
+    // If step is eqn, same on both sides, fade the left.
+    if (step.isEquation() && step.eqnLeft().matches(step.eqnRight())) {
+      $(step.eqnLeft().node).addClass('faded');
+    }
     hackOnRendering($wff);
     $stepAndNum.append($('<wffblock->').append($wff));
     $proofStep.find('.stepInfo').append(formattedStepInfo(step));
@@ -1260,6 +1264,12 @@ export function renderWff(step) {
     // rendering of terms that already have nodes.
     $wff = step.wff.render(0);
     wff.node = dom($wff);
+
+    // Possibly fade less interesting parts.
+    if (step.getLeft().matches(step.getRight())) {
+      // Something implies itself.
+      $(step.getLeft().node).addClass('faded');
+    }
     if (sameAsPrevAsms(step)) {
       // The identical asms have been rendered normally, but if the same
       // as in the previous step, now mark them as "faded".
