@@ -263,6 +263,12 @@ p.utterances {
   font-size: 1rem;
   font-family: "Georgia serif";
   font-style: italic;
+
+  // Style anchors here as block, which goes well with giving them a
+  // solid background.  See the default baseof.html layout.
+  a {
+    display: block;
+  }
 }
 
 /* Customize the styling of blockquotes. */
