@@ -96,6 +96,26 @@ Toy.proofData =
  {
   "doc": "/equations2/",
   "proof": [
+    "(1 consider (t (((x + y) = 74) & (((2 * x) + (4 * y)) = 196))))",
+    "(2 subtractThisFromBoth (s 1) (path \"/main/right/left/left/right\"))",
+    "(3 simplifySums (s 2) (path \"/right/right/left\"))",
+    "(4 replaceConjunct (s 3) (path \"/right/right/right/left/left/right\"))",
+    "(5 rewrite (s 4) (path \"/right/right/right/left/left\") (t ((((R x) & (R y)) & (R z)) => ((x * (y + z)) = ((x * y) + (x * z))))))",
+    "(6 simplifyFocalPart (s 5))",
+    "(7 subtractThisFromBoth (s 6) (path \"/right/right/right/left/left/right\"))",
+    "(8 simplifySums (s 7) (path \"/right/right/right\"))",
+    "(9 arrangeTerm (s 8) (path \"/right/right/right/left/left\"))",
+    "(10 rewrite (s 9) (path \"/right/right/right/left\") (t ((((R a) & (R b)) & (R c)) => (((a * c) + (b * c)) = ((a + b) * c)))))",
+    "(11 simplifyFocalPart (s 10))",
+    "(12 divideBothByThis (s 11) (path \"/right/right/right/left/left\"))",
+    "(13 simplifyProducts (s 12) (path \"/right/right/right\"))",
+    "(14 replaceConjunct (s 13) (path \"/right/right/left/right/left/arg\"))",
+    "(15 simplifyFocalPart (s 14))"
+  ]
+ },
+ {
+  "doc": "/equations2/#2",
+  "proof": [
    "(1 consider (t (((x + y) = 5) & ((x - y) = 3))))",
    "(2 subtractThisFromBoth (s 1) (path \"/main/right/left/left/right\"))",
    "(3 simplifySite (s 2) (path \"/right/right/left/left\"))",
@@ -112,7 +132,7 @@ Toy.proofData =
   ]
  },
  {
-  "doc": "/equations2/#2",
+  "doc": "/equations2/#3",
   "proof": [
    "(1 consider (t ((((5 * x) - 22) = y) & (((2 * y) + x) = 33))))",
    "(2 rewrite (s 1) (path \"/main/right/left\") (t ((x = y) == (y = x))))",
@@ -130,7 +150,7 @@ Toy.proofData =
   ]
  },
  {
-  "doc": "/equations2/#3",
+  "doc": "/equations2/#4",
   "proof": [
    "(1 consider (t (((x - y) = 3) & ((y + 5) = x))))",
    "(2 rewrite (s 1) (path \"/main/right/right\") (t ((x = y) == (y = x))))",
