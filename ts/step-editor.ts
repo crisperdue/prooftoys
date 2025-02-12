@@ -1445,48 +1445,48 @@ export class StepEditor {
   lastRuleSteps;
 
   constructor(proofEditor) {
-  // Make this available to all inner functions.
-  var self = this;
+    // Make this available to all inner functions.
+    var self = this;
 
-  // TODO: Reconsider the distinction and the relationship between the
-  // StepEditor and ProofEditor.
-  self._proofEditor = proofEditor;
-  self.proofDisplay = proofEditor.proofDisplay;
+    // TODO: Reconsider the distinction and the relationship between the
+    // StepEditor and ProofEditor.
+    self._proofEditor = proofEditor;
+    self.proofDisplay = proofEditor.proofDisplay;
 
-  // Button to clear rule input, visible when a form is active.
-  self.clearer =
-    $('<button class="fa fa-120 fa-times-circle sted-clear" '+
-      'title="Clear the input">');
+    // Button to clear rule input, visible when a form is active.
+    self.clearer =
+      $('<button class="fa fa-120 fa-times-circle sted-clear" '+
+        'title="Clear the input">');
 
     // This is a "generic" form object that will be fleshed out with
     // fields specific to a rule later.
-  const $form = self.$form = $('<div class="ruleForm hidden"></div>');
+    const $form = self.$form = $('<div class="ruleForm hidden"></div>');
 
-  $form.append(self.clearer, '<span class=customForm></span>');
-  // Install event handlers.
-  self.clearer.on('click', function() {
-    self.hideForm();
-    self._proofEditor.ruleMenu.suppressing = false;
-  });
+    $form.append(self.clearer, '<span class=customForm></span>');
+    // Install event handlers.
+    self.clearer.on('click', function() {
+      self.hideForm();
+      self._proofEditor.ruleMenu.suppressing = false;
+    });
 
     // Clicking the button or hitting <enter> triggers trying the rule.
-  $form.append(' <button class=go>Go</button>');
-  self.$form.on('click', 'button.go', function() {
-    self.tryRuleFromForm();
-  });
-  // Keyboard events bubble to here from the inputs in the form.
-  self.$form.on('keydown', function(event) {
-    if (event.keyCode == 13) {
-      // <enter> key was hit
+    $form.append(' <button class=go>Go</button>');
+    self.$form.on('click', 'button.go', function() {
       self.tryRuleFromForm();
-    }
-  });
+    });
+    // Keyboard events bubble to here from the inputs in the form.
+    self.$form.on('keydown', function(event) {
+      if (event.keyCode == 13) {
+        // <enter> key was hit
+        self.tryRuleFromForm();
+      }
+    });
 
-  self.$proofErrors = $('<div class="proofErrors hidden"></div>');
-  // Always clear the errors when clicked.
-  self.$proofErrors.on('click', '.clearer', function() {
-    self.clearError();
-  });
+    self.$proofErrors = $('<div class="proofErrors hidden"></div>');
+    // Always clear the errors when clicked.
+    self.$proofErrors.on('click', '.clearer', function() {
+      self.clearError();
+    });
   }
 
   /**
