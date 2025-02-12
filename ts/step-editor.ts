@@ -1457,6 +1457,9 @@ export class StepEditor {
   self.clearer =
     $('<button class="fa fa-120 fa-times-circle sted-clear" '+
       'title="Clear the input">');
+
+    // This is a "generic" form object that will be fleshed out with
+    // fields specific to a rule later.
   const $form = self.$form = $('<div class="ruleForm hidden"></div>');
 
   $form.append(self.clearer, '<span class=customForm></span>');
@@ -1466,11 +1469,11 @@ export class StepEditor {
     self._proofEditor.ruleMenu.suppressing = false;
   });
 
+    // Clicking the button or hitting <enter> triggers trying the rule.
   $form.append(' <button class=go>Go</button>');
   self.$form.on('click', 'button.go', function() {
     self.tryRuleFromForm();
   });
-
   // Keyboard events bubble to here from the inputs in the form.
   self.$form.on('keydown', function(event) {
     if (event.keyCode == 13) {
@@ -1627,19 +1630,20 @@ export class StepEditor {
   }
 
   /**
-   * Fill in arguments for the rule named by the ruleMenu from the
-   * current selection and the rule's input form, and if successful set
-   * up actual execution and redisplay to occur after the UI has
-   * opportunity to repaint.  If reportFailure is true, shows the
-   * user any error message from calling fillFromForm.  Otherwise
-   * just leaves the form up for the user to complete.
+   * This fills in arguments for the rule named by the ruleMenu from the
+   * current selection and the rule's input form, and if the inputs look
+   * good, hides the form then arranges for execution and redisplay to
+   * occur after the UI has an opportunity to repaint. Otherwise leaves
+   * the form up.  Called by the form button and <enter> handlers.
    */
   tryRuleFromForm() {
     // TODO: Get it together on failure reporting here.
     const ruleName = this.ruleName;
     const rule = Toy.rules[ruleName];
     const minArgs = rule.info.minArgs;
+    // Some args may come from the selection.
     const args = this.argsFromSelection(ruleName);
+    // This adds content from the form to the args.
     if (this.fillFromForm(ruleName, args) &&
         this.checkArgs(args, minArgs, true)) {
       this.hideForm();
@@ -2436,6 +2440,8 @@ class RuleMenu {
         if (count === 0) {
           // If there are no significant new assumptions, give this
           // rewrite priority with an extra leading space.
+          //
+          // TODO: Consider facts that have priorities.
           html = ' ' + html;
         }
         const result = {
@@ -2506,6 +2512,11 @@ class RuleMenu {
    * Handler for selection of a menu item.  Overall purpose is to run
    * the appropriate rule from information already available, otherwise
    * to display an input form.
+   * 
+   * Arguments are the clicked node and the triggering event.  The
+   * (jQuery of) the node must have a ruleName data property, and may
+   * have a ruleArgs data property.  If ruleArgs is not present, this
+   * will supply args from any user selection.
    */
   handleMouseClickItem(node, event) {
     if (this.suppressing) {
@@ -2545,7 +2556,7 @@ class RuleMenu {
       }
 
       // Some args still need to be filled in; just show the rule's
-      // form.
+      // form. The form's event handlers will run the rule.
 
       var template = rule.info.form;
       // TODO: In the proof editor set up an event handler so the step editor
@@ -2578,8 +2589,7 @@ class RuleMenu {
         stepEditor.error(format('Rule needs a form: {1}', ruleName));
       }
     } else if (ruleName.slice(0, 5) === 'fact ') {
-      // TODO: Change over to using the usual ruleName and ruleArgs
-      //   approach rather than this hack.
+      // TODO: Verify that this case is unused, and remove.
       // 
       // Values "fact etc" indicate use of rules.rewrite, and
       // the desired fact is indicated by the rest of the value.
@@ -2953,13 +2963,12 @@ function acceptsSelection(step, ruleName) {
  * term is selected, and the menu's ProofEditor.
  *
  * This returns either a falsy value (including the empty string),
- * indicating the rule will not be offered, or a string with the menu
- * HTML, or an array, indicating multiple menu items for
- * this rule with the possibly selected step and term.
- * An array must contain strings or plain objects with properties:
+ * indicating the rule will not be offered, or a rule menu item,
+ * or an array containing strings and/or rule menu items.
+ * A rule menu item is a plain object with properties:
  *
  * ruleName: rule name string
- * ruleArgs: array of arguments to be passed to the rule
+ * ruleArgs (optional): array of arguments to be passed to the rule XXX
  * html: HTML string to be displayed.
  * $node: optional jQuery object containing a DOM node to insert.
  *   If given, the "html" only affects sorting.
