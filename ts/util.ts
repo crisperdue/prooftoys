@@ -54,8 +54,6 @@ namespace Toy {
     window._paq = undefined;
   }
 
-  var _paq;
-
   // TODO: Consider removing dependencies here on jQuery.
   // They look questionable anyway.
 
@@ -83,8 +81,15 @@ namespace Toy {
    * and possibly a number.
    */
   export var trackAppEvent = function(action, ...more) {
-    _paq && _paq.push(['trackEvent', 'App', action, ...more]);
-    console.log('App event:', action, ...more);
+    // Documentation for use of _paq.push is at
+    // https://developer.matomo.org/guides/tracking-javascript-guide
+    const _paq = window._paq;
+    if (_paq) {
+      _paq.push(['trackEvent', 'App', action, ...more]);
+      console.log('Sent App event:', action, ...more);
+    } else {
+      console.log('App event', action, ...more);
+    }
     return !!_paq;
   };
 
@@ -93,6 +98,7 @@ namespace Toy {
    * also stores the target state in Toy:uxOK.
    */
   export var setSessionRecording = function(on) {
+    const _paq = window._paq;
     localStorage.setItem('Toy:uxOK', on ? 'true' : 'false');
     _paq && _paq.push(['HeatmapSessionRecording::' +
       (on ? 'enable' : 'disable')]);
