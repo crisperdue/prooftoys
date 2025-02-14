@@ -2242,26 +2242,10 @@ class RuleMenu {
     var itemInfos = [];
 
     // Find inference rules that appear relevant to the current
-    // selection and proof status.
+    // selection and proof status.  Rule priorities default to 0.
     self.offerableRuleNames().forEach(function(ruleName) {
-        // Info is a string or array of strings.
-        var info = ruleMenuInfo(ruleName, selStep, selection, proofEditor);
-        if (typeof info === 'string') {
-          itemInfos.push({ruleName: ruleName, html: info});
-        } else if (Array.isArray(info)) {
-          // An array occurs when a rule may be used in multiple ways.
-          info.forEach(function(arg) {
-            if (arg.constructor === Object) {
-              itemInfos.push(arg);
-            } else {
-              console.error('Bad menu info:', arg);
-              debugger;
-            }
-          });
-        } else if (info) {
-          console.error('Bad menu info:', info);
-          debugger;
-        }
+        const infos = ruleMenuInfo(ruleName, selStep, selection, proofEditor);
+        itemInfos.push( ...infos);
     });
 
     if (selection) {
@@ -2288,7 +2272,8 @@ class RuleMenu {
 
       //
       // Search for steps that could rewrite the selection.
-      //
+      // Step item priorities default to 1, boosted for rewrites that
+      // add few new assumptions.
       proofEditor.steps.forEach((schemaStep, index) => {
         const submenu = proofEditor.showRuleType;
 
@@ -2343,10 +2328,14 @@ class RuleMenu {
         const subgoals =
               addedSubgoals(thisStep, eqn, proofEditor.goalStatement);
         const count = subgoals.length;
-        if (count === 0) {
+        let priority = 1;
+        if (count < 2) {
           // If there are no significant new assumptions, give this
-          // rewrite priority with an extra leading space.
-          html = ' ' + html;
+          // rewrite priority.
+          priority = priority - count + 2;
+        }
+        if (thisStep.isAsmPath(sitePath)) {
+          priority++;
         }
         const $node = $('<span>').append(html);
         $node.find('.resultTerm').append(repl.renderTerm());
@@ -2359,13 +2348,15 @@ class RuleMenu {
                         ruleArgs: [selStep.original, sitePath,
                                   schemaStep.original],
                         html: html,
+                        priority,
                         $node: $node
                       });
       });
 
       //
       // Search for registered facts that could rewrite the selection.
-      //
+      // Item priorities come from the fact priority if present, else a
+      // count of leading spaces in the menu string.
       self.offerableFacts().forEach(function(info) {
         // TODO: Factor out all of this checking and replacement term
         //   computation, then use it here and just above.
@@ -2418,13 +2409,14 @@ class RuleMenu {
 
         // The special character is a form of white right arrow.
         let html =
-            ' \u27ad <b class=resultTerm></b><input class=subgoals>';
+            '➭ <b class=resultTerm></b><input class=subgoals>';
         const shorty = statement.shortForm();
         const mainText = Toy.trimParens(shorty.toHtml());
+        const prefix = info.definitional ? '' : ' ';
         const blurb = (info.definitional
                       ? 'definition of ' + info.definitional
                       : 'using ' + mainText)
-        html += (' <span class=description>' + blurb + '</span>');
+        html = prefix + html + ' <span class=description>' + blurb + '</span>';
         const $node = $('<span>').append(html);
         const $resultTerm = $node.find('.resultTerm');
         $resultTerm.append(resultTerm.renderTerm());
@@ -2437,33 +2429,31 @@ class RuleMenu {
           $node.find('.subgoals')
             .append(` with ~${count} new subgoal${plural}`);
         }
-        if (count === 0) {
+        let priority = info.priority ?? html.match(/^ */).length;
+        if (count < 2) {
           // If there are no significant new assumptions, give this
-          // rewrite priority with an extra leading space.
-          //
-          // TODO: Consider facts that have priorities.
-          html = ' ' + html;
+          // rewrite extra priority.
+          priority = priority - count + 2;
+        }
+        if (thisStep.isAsmPath(sitePath)) {
+          priority++;
         }
         const result = {
           ruleName: 'rewrite',
           ruleArgs: [thisStep, sitePath, statement],
           html: html,
+          priority,
           $node: $node
         };
         itemInfos.push(result);
       });
     }
 
-    // Ensure that each info has a priority.
-    itemInfos.forEach(info => {
-      if (info.priority == undefined) {
-        // This sets the priority to the number of leading blanks.
-        info.priority = info.html.search(/[^ ]/);
-        // Remove any leading blanks.
-        info.html = info.html.slice(info.priority);
-      }
-    });
-
+    // Check that each info has a priority
+    for (const item of itemInfos) {
+      assert(item.priority != undefined), 'No priority: {1}', item);
+    }
+    
     // Sort the itemInfos.
     itemInfos.sort(function(a, b) {
       // We use leading spaces to influence sorting: items with
@@ -2474,6 +2464,8 @@ class RuleMenu {
       // If same priority, compare the HTML alphabetically.
       return diff !== 0 ? diff : a.html.localeCompare(b.html);
     });
+    // For debugging:
+    // console.log('Priorities:', itemInfos.map(i => i.priority).$$);
 
     // Generate menu items from itemInfos.
     // This can use item properties "$node" or "html",
@@ -2630,8 +2622,8 @@ class RuleMenu {
     const stepEditor = proofEditor.stepEditor;
     const ruleName = $node.data('ruleName');
     const ruleArgs = $node.data('ruleArgs');
-    // The rule may be undefined if the ruleName describes a fact.
     const rule = Toy.rules[ruleName];
+    assert(rule);
     var display = proofEditor.proofDisplay;
     // Note that this item is currently hovered.
     ruleMenu.hovering = node;
@@ -2653,20 +2645,14 @@ class RuleMenu {
       display.suggest(suggestion);
     } else if (!$node.data('promise')) {
       // The "promise" data property indicates that a request for a
-      // step has been issued.
-      var promise;
-      if (rule) {
-        // It is a rule other than a rewrite with fact.
-        var args = ruleArgs || stepEditor.argsFromSelection(ruleName);
-        if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
-          promise = sendRule(ruleName, args);
-        } else {
-          display.suggest(display.suggestionMessage('(needs user input)'));
-        }
+      // step for this menu item has already been issued.
+      var args = ruleArgs || stepEditor.argsFromSelection(ruleName);
+      if (!stepEditor.checkArgs(args, rule.info.minArgs, false)) {
+        // The rule requires user input.
+        display.suggest(display.suggestionMessage('(needs user input)'));
       } else {
-        console.warn('No such rule:', ruleName);
-      }
-      if (promise) {
+        // Ask for rule execution in the background.
+        const promise = sendRule(ruleName, args);
         // TODO: Support "real" RPCs that cross address spaces by
         //   additional encoding in the call and return.  In the call,
         //   encode step arguments to each rule as an "exact" reference
@@ -2958,28 +2944,63 @@ function acceptsSelection(step, ruleName) {
 }
 
 /**
- * Produces a rule menu entry from a ruleName.  Called with a
- * (rendered) step if there is a selection, the selected term if a
- * term is selected, and the menu's ProofEditor.
- *
- * This returns either a falsy value (including the empty string),
- * indicating the rule will not be offered, or a rule menu item,
- * or an array containing strings and/or rule menu items.
+ * Produces an array of rule menu items from a ruleName, (rendered) step
+ * if there is a selection, the selected term if a term is selected, and
+ * the menu's ProofEditor.  The step and term are falsy if there is no
+ * such selection.  Intended for uses from RuleMenu._update.
+ * 
  * A rule menu item is a plain object with properties:
  *
  * ruleName: rule name string
- * ruleArgs (optional): array of arguments to be passed to the rule XXX
+ * ruleArgs (optional): array of arguments to be passed to the rule.
+ *   When the rule has no menuGen property these will come from a form or
+ *   the user's selection.
  * html: HTML string to be displayed.
  * $node: optional jQuery object containing a DOM node to insert.
  *   If given, the "html" only affects sorting.
+ * priority: optional number
  * 
- * Strings in the return value should be HTML text.
+ * The returned array has at most one element unless the rule has a
+ * menuGen property.  In that case the result can be of any size.
  *
  * If there is a selected term, it can be formatted using {term} in
  * the rule's "menu" format string, or {right} for the term's
  * right-hand neighbor when there is one.
  */
 function ruleMenuInfo(ruleName, step, term, proofEditor) {
+  /**
+   * Uses the "menu" property or various fallback properties to try to
+   * compute a string to present as a menu item, or falsy if nothing is
+   * found.
+   */
+  function menuString(ruleInfo) {
+    if (Toy.isEmpty(ruleInfo.inputs)) {
+      // It is an axiom or theorem with no inputs.
+      // TODO: Consider supporting axioms and theorems only as facts.
+      //   This function only seems to be called when there is a form
+      //   property anyway.
+      if (ruleInfo.menu) {
+        return ruleInfo.menu;
+      }
+      var thm = Toy.getTheorem(ruleName);
+      var thmText = Toy.trimParens(thm.getMain().toHtml());
+      if (ruleInfo.axiom) {
+        return 'axiom ' + thmText;
+      } else {
+        return 'theorem ' + thmText;
+      }
+    } else {
+      // The rule takes inputs.
+      if (ruleInfo.menu) {
+        return Toy.format(ruleInfo.menu, formatArgs);
+      } else {
+        const tip = ruleInfo.basicTooltip;
+        // TODO: Reconcile use of math markup here vs. non-use in menus.
+        return tip && Toy.mathMarkup(ruleInfo.basicTooltip);
+      }
+    }
+  }
+
   // Set up convenient substitutions for occurrences of {term} and
   // {right} in menu format strings via Toy.format.  These support
   // deferral of the rendering and insertion of the rendering of the
@@ -2987,56 +3008,47 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
   // more convenient and the HTML has been converted to DOM structure.
   const formatArgs = {term: '<span class=menuSelected></span>',
                       right: '<span class=menuRightNeighbor></span>'};
-  const info = Toy.rules[ruleName].info;
-  const gen = info.menuGen;
+  const ruleInfo = rules[ruleName].info;
+  const html0 = menuString(ruleInfo) ?? '';
+  // Strip off leading blanks.
+  const [all, spaces, html] = html0.match(/^( *)(.*)$/s)
+  const priority = ruleInfo.priority ?? spaces.length;
+
+  const gen = ruleInfo.menuGen;
   if (gen) {
-    const items = gen(ruleName, step, term, proofEditor);
-    // Check that the menu items are well-formed.
-    if (Array.isArray(items)) {
-      for (const item of items) {
-        if (item.constructor === Object &&
-            (typeof item.ruleName === 'string') &&
-            (item.ruleArgs == null || Array.isArray(item.ruleArgs)) &&
-            typeof item.html === 'string') {
-          item.html = Toy.format(item.html, formatArgs);
-        } else {
-          console.error('Bad rule menu item:', item);
-          debugger;
-        }
+    // There is a menuGen property.
+    const g = gen(ruleName, step, term, proofEditor);
+    if (!g) {
+      return [];
+    }
+    const items = (g instanceof Array) ? g : [g];
+    /**
+     * Converts string items to objects.  In all cases checks validity and
+     * expands the placeholders.
+     */
+    const adjustItem = (item: any) => {
+      if (typeof item === 'string') {
+        return {ruleName, priority, html: format(item, formatArgs)};
       }
-    } else {
-      if (items && typeof items !== 'string') {
-        console.error('Bad menuGen result:', items);
-        debugger;
+      if (item.constructor === Object &&
+          (typeof item.ruleName === 'string') &&
+          (item.ruleArgs == null || Array.isArray(item.ruleArgs)) &&
+          typeof item.html === 'string') {
+        // Note that item priority overrides rule priority.
+        return {html: format(item.html, formatArgs), priority, ...item};
+      } else {
+        assert(false, 'Bad rule menu item: {1}', item);
       }
     }
-    return items;
+    return items.map(adjustItem);
   }
-  if (Toy.isEmpty(info.inputs)) {
-    // It is an axiom or theorem with no inputs.
-    // TODO: Consider supporting axioms and theorems only as facts.
-    //   This function only seems to be called when there is a form
-    //   property anyway.
-    if (info.menu) {
-      return info.menu;
-    }
-    var thm = Toy.getTheorem(ruleName);
-    var thmText = Toy.trimParens(thm.getMain().toHtml());
-    if (info.axiom) {
-      return 'axiom ' + thmText;
-    } else {
-      return 'theorem ' + thmText;
-    }
-  } else {
-    // The rule takes inputs.
-    if (info.menu) {
-      return Toy.format(info.menu, formatArgs);
-    } else {
-      const tip = info.basicTooltip;
-      // TODO: Reconcile use of math markup here vs. non-use in menus.
-      return tip && Toy.mathMarkup(info.basicTooltip);
-    }
+  // At this point there is no menuGen.
+  if (!html) {
+    return [];
   }
+  // TODO: Does not include ruleArgs.  The current implementation fills
+  // them from any selection or form later when the rule is invoked.
+  return [{ruleName, html, priority, $node: ruleInfo.$node}];
 }
 
 /**
