@@ -50,8 +50,8 @@ definition('forall = (=) {x. T}');
 definition('F == forall {x. x}');
 definition('not = (=) F');
 definition('x != y == not (x = y)', simplifiesNeither);
-definition('exists p == p != {x. F}');
-definition('exists1 p == exists {x. p = {y. y = x}}');
+definition('exists p == p != {x. F}', simplifiesLeft);
+definition('exists1 p == exists {x. p = {y. y = x}}', simplifiesLeft);
 
 // Adding definitions before use enables type checking to use the
 // known types of the constants.
