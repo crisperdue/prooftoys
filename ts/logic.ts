@@ -3981,9 +3981,16 @@ declare(
   {name: 'reduceQuant',
    precheck: function(step, path_arg) {
      const term = step.get(path_arg);
-     const map = term.matchSchema('q {x. p x}');
-     return map && map.q instanceof Atom &&
-       ['forall', 'exists'].includes(map.q.name);
+     const map = term.matchSchema('q t');
+     if (map && map.q instanceof Atom &&
+       ['forall', 'exists'].includes(map.q.name)) {
+        const t = map.t;
+        if (t instanceof Lambda) {
+          const nm = map.q.name == 'forall' ? '|' : '&';
+          return t.body.isCall2(nm);
+        }
+      }
+      // Otherwise the precheck fails.
    },
    action: function(step, path_arg) {
      const term = step.get(path_arg);
