@@ -1420,7 +1420,7 @@ declare(
         return null;
       }
     },
-    labels: 'basic',
+    labels: 'ignore',
     tooltip: ('Applies a function, named or not, to one or two arguments'),
     description: '=apply'
   },
@@ -1630,7 +1630,7 @@ declare(
     const term = s.get(p).toHtml(true);
     return `assumed ${term} ${g}`;
    },
-   priority: 6,
+   priority: 5,
   },
 
   /**
@@ -1676,7 +1676,9 @@ declare(
  */
 function assumedPrep(step: Expr, path_arg: Pathable,
     negated: boolean = false, goal?: Expr) {
-  const path = step.prettifyPath(path_arg);
+  // TODO: If negated, handle all the cases properly, e.g. when both A
+  // and not A are assumed.
+  let path = step.prettifyPath(path_arg);
   const target = step.get(path);
   if (!target.isBoolean() || step.isAsmPath(path) ||
       // No locally free vars are bound in context.
@@ -4059,8 +4061,8 @@ declare(
      return result.justify('reduceQuant', arguments, [step]);
    },
    inputs: {site: 1},
-   labels: 'basic',
-   menu: '   reduce quantifier scope',
+   labels: 'tactic',
+   menu: ' reduce quantifier scope',
    tooltip: 'reduce quantifier scope',
    description: 'reduce quantifier scope;; {in step siteStep}'
   },
@@ -4836,6 +4838,7 @@ declare(
    },
    // Remember, this rule is inline if eqn_arg is a step.
    inputs: {site: 1, bool: 3},
+   menu: 'replace using',
    description: 'instantiate {site} in step {siteStep} and replace using {shortFact}',
   },
 
@@ -5122,6 +5125,7 @@ declare(
     menu: 'rewrite using a fact',
     labels: 'other',
     isRewriter: true,
+    priority: 5,
     description: 'use;; {fact} {&nbsp;in step siteStep}'
   },
 );
@@ -5667,7 +5671,7 @@ declare(
     inputs: {site: 1},
     menu: ' extract {term} from assumptions',
     description: 'extract assumption;; {in step siteStep}',
-    labels: 'basic'
+    labels: 'uncommon'
   },
 
   // Like extractHypAt, accepting a term to be matched against the
@@ -7144,7 +7148,8 @@ declare(
    proof: function() {
      return (rules.fact('x in Y == (Y x == T)')
              .andThen('simplifySite', '/right'));
-   }
+   },
+   converse: {labels: 'uncommon'},
   },
 
   {statement: 'negate p = {x. not (p x)}',
