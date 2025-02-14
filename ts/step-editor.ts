@@ -2451,9 +2451,9 @@ class RuleMenu {
 
     // Check that each info has a priority
     for (const item of itemInfos) {
-      assert(item.priority != undefined), 'No priority: {1}', item);
+      assert(item.priority != undefined, 'No priority: {1}', item);
     }
-    
+
     // Sort the itemInfos.
     itemInfos.sort(function(a, b) {
       // We use leading spaces to influence sorting: items with
