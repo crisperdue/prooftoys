@@ -1195,7 +1195,7 @@ namespace Toy {
    * This calls its function argument, passing it no arguments, and
    * returns the function's value.
    */
-  const bind = f => f();
+  export const bind = f => f();
   export const let_ = f => f();
 
   // Calls the function with no arguments in a context where the given
