@@ -1979,6 +1979,7 @@ export function formattedStepInfo(step) {
   // TODO: Allow facts to be flagged as axioms so their displays
   //   can be distinguished from other facts, perhaps by simply
   //   omitting the 'proof' property.
+  var fa = 'fa fa-plus-square';
   var classes = (step.ruleName == 'fact' ||
                  (step.details &&
                   step.details.ruleName !== 'assert' &&
@@ -1986,9 +1987,9 @@ export function formattedStepInfo(step) {
                   // point in displaying in the link style.
                   !step.details.rendering &&
                   Toy.modes.subproofs)
-                 ? 'subproofExpander'
-                 : '');
-  const $expander = ($('<span>&plusb;</span>')
+                 ? `subproofExpander ${fa}`
+                 : `${fa}`);
+  const $expander = ($('<span>')
                       .prop({className: classes,
                         title: 'View step details'
                       }));

@@ -105,6 +105,7 @@ wffblock- > * {
     // Alternate border and shadow:
     border: 1px solid #aaa;
     box-shadow: #aaa 1px 1px 2px;
+    // overflow-anchor: none;  Can this tame unwanted scrolling?
 }
 
 // This causes all pointer events in the proof editor
@@ -574,11 +575,6 @@ span.ruleStats {
     font-family: StixGeneral, times;
 }
 
-.proofStep .stepNumber {
-  /* Like stepInfo */
-  color: #777;
-}
-
 .proofStep .stepNumArea {
   vertical-align: top;
     border: 1px solid transparent;
@@ -632,17 +628,17 @@ span.stepReference.referenced {
   border-color: #88F;
 }
 
-/* Rule name (or fact used for rewriting) */
-span.subproofExpander {
+/* Indicator to click to expand step details */
+.subproofExpander {
     color: #44e;
-    font-size: 1.2rem;
-    font-weight: 900;
+    // Increase the horizontal size to make it a bigger target.
+    padding: 0 8px;
     cursor: pointer;
 }
 
 /* To prevent clicks in rapid succession from highlighting text
    or activating a double click action. */
-span.subproofExpander, .noselect {
+.subproofExpander, .noselect {
   /* Including Safari-specific versions */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
