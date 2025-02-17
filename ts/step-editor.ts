@@ -445,11 +445,11 @@ export class ProofEditor {
           //   .stepAndNum is the main container for all exprs.
           //   .ruleMenu is the rules menu
           //   .above is the display of popups for quick access to rewrites
-          //   .ruleName.link pops subproof displays up and down
+          //   .subproofExpander pops subproof displays up and down
           //   .input, .button, and .select are typical form controls
           //   .wksControlsOuter is the main box for worksheet controls
           const selectors = ('.stepAndNum, .ruleMenu, .above, ' +
-                            '.ruleName.link, .inferenceDisplay, ' +
+                            '.subproofExpander, .inferenceDisplay, ' +
                             '.wksControlsOuter, input, button, select');
           // Mousedown in most places removes any step or expr selection.
           if (!within($target, selectors)) {

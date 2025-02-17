@@ -861,10 +861,10 @@ export class ProofDisplay {
     // Select or deselect the checkbox solely through the step.
     $proofStep.on('click', '.checkbox', function(event) { event.preventDefault(); });
 
-    // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
-    // are enabled.
+    // Clicking on a subproofExpander (if any) shows the subproof when
+    // subproofs are enabled.
     if (Toy.modes.subproofs) {
-      $proofStep.on('click', 'span.ruleName.link', function(event) {
+      $proofStep.on('click', 'span.subproofExpander', function(event) {
         if (step.subproofDisplay) {
           clearSubproof(step);
         } else {
@@ -1485,7 +1485,7 @@ Atom.prototype.render = function(minPower, isFn) {
 var useParens = {
   '|': new Set(['&']),
   '=>': new Set(['=>']),
-  '==': new Set(['=>'])
+  '==': new Set(['=>', '=='])
 }
 
 /**
@@ -1986,17 +1986,17 @@ export function formattedStepInfo(step) {
                   // point in displaying in the link style.
                   !step.details.rendering &&
                   Toy.modes.subproofs)
-                 ? 'ruleName link'
-                 : 'ruleName');
-  // black up-pointing small triangle
-  var hider = (classes === 'ruleName'
-               ? ''
-               : '<span class=subproofIndicator>\u25b4</span>');
+                 ? 'subproofExpander'
+                 : '');
+  const $expander = ($('<span>&plusb;</span>')
+                      .prop({className: classes,
+                        title: 'View step details'
+                      }));
   var $d1 = ($('<span>')
-             .prop({className: classes, title: info.tooltip})
-             .append(hider, ' ', d1, ' ', hider));
+             .prop({title: info.tooltip})
+             .append(d1));
   var stepRefs = useDefault ? defaultStepRefs(step, description) : '';
-  return $('<span>').append($d1, d2, stepRefs);
+  return $('<span>').append($expander, ' ', $d1, d2, stepRefs);
 }
 
 /**

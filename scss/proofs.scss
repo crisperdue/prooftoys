@@ -46,7 +46,8 @@ b[videotip], b[imagetip] {
 .expr.unsolved {
   font-weight: bold;
   color: crimson;
-  background-color: #ffe8e8;
+  background-color: hsl(30, 100%, 90%);
+  border-radius: 5px;
   // Use these for even more emphasis:
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
@@ -55,6 +56,7 @@ b[videotip], b[imagetip] {
 
 .expr.hover, .expr.hover .unsolved, .inShadow {
   background-color: hsl(200deg, 100%, 90%);
+  // border-radius: 5px;  Maybe?
 }
 
 wffblock- {
@@ -92,8 +94,9 @@ wffblock- > * {
 /* Proof displays -- rendering.js */
 
 .proofEditor {
+    color: black;
     position: relative;
-    line-height: 1.3;
+    line-height: 1.5;
     border: 2px solid #aaa;
     padding: 1em;
     border-radius: 12px;
@@ -185,10 +188,13 @@ wffblock- > * {
     padding: 1em;
     font-size: 1.1rem;
     clear: both;
-}
 
-.proofDisplay .link {
-    cursor: pointer;
+    // No border and less padding for nested proofDisplays.
+    .proofDisplay {
+      border: none;
+      padding: .5em;
+      padding-left: 1em;
+    }
 }
 
 /* Override some of the styles above within a ProofEditor */
@@ -210,6 +216,10 @@ wffblock- > * {
  */
 .proofDisplay .inferenceDisplay .proofDisplay {
   border-bottom: 3px solid transparent;
+}
+
+.inferenceDisplay .proofStep {
+  padding-left: .5em;
 }
 
 .proofDisplay.editable {
@@ -270,16 +280,18 @@ wffblock- > * {
 .proofStep {
   font-family: STIXGeneral, times, serif;
   border: 1px solid transparent;
-  margin-left: 4em;
-  margin-bottom: .4em;
+  margin-bottom: 1em;
   user-select: none;
+}
+
+.proofStep:last-child {
+  margin-bottom: 0;
 }
 
 // Override the left margin just above to bring the stepAndNum back to the left.
 // If the stepInfo flows down to another row, it will be indented.
 .proofStep .stepAndControls {
   white-space: pre;
-  margin-left: -4em;
 }
 
 .proofStep.stepSuggestion {
@@ -536,13 +548,25 @@ span.ruleStats {
 
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
-  display: inline-block;
+  display: block;
     white-space: normal;
-    margin-left: .3em;
+    // For both editor and plain display, the left margins are
+    // approximate.  For more accurate indentation, move the
+    // stepInfo inside the wffBlock.
+    margin-left: 3em;
     font-family: "Roboto Flex", sans-serif;
-    font-size: 90%;
-    color: #555;
-    background-color: #eef;
+    font-size: 85%;
+    color: #777;
+}
+
+// If editable, increase the margin since the controls are on the left.
+.proofDisplay.editable .proofStep .stepInfo {
+  margin-left: 6em;
+}
+
+// The extra margin applies only to top-level proof steps.
+.proofDisplay.editable .inferenceDisplay .proofStep .stepInfo {
+  margin-left: 3em;
 }
 
 /* Fact or term within a step description */
@@ -609,19 +633,19 @@ span.stepReference.referenced {
 }
 
 /* Rule name (or fact used for rewriting) */
-span.ruleName.link {
-    color: #88f;
+span.subproofExpander {
+    color: #44e;
+    font-size: 1.2rem;
+    font-weight: 900;
+    cursor: pointer;
 }
 
 /* To prevent clicks in rapid succession from highlighting text
    or activating a double click action. */
-span.ruleName.link, .noselect {
-  /* Including browser-specific versions */
+span.subproofExpander, .noselect {
+  /* Including Safari-specific versions */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: moz-none;
-  -ms-user-select: none;
   user-select: none;
 }
 
@@ -644,7 +668,8 @@ span.stepRef {
    to take precedence over the hover highlight. */
 .proofDisplay.editable .proofStep .expr.selected,
 .proofDisplay.editable .proofStep .expr.selected .unsolved {
-  background-color: hsl(200deg, 100%, 75%);
+  background-color: hsl(200, 100%, 80%);
+  border-radius: 5px;
 }
 
 /* Styling for special-case names */
