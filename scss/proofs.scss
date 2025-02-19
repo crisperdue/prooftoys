@@ -506,7 +506,7 @@ span.ruleStats {
 
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
-    color: #d9534f;
+    color: #f44;
     background-color: white;
     padding: 0;
     border: none;
@@ -630,7 +630,7 @@ span.stepReference.referenced {
 
 /* Indicator to click to expand step details */
 .subproofExpander {
-    color: #44e;
+    color: #66f;
     // Increase the horizontal size to make it a bigger target.
     padding: 0 8px;
     cursor: pointer;
@@ -982,10 +982,11 @@ input.copyText {
     .ruleMenuTitle {
         font-family: StixGeneral, times, serif;
         font-weight: bold;
+        background: hsl(120deg, 73%, 85%);
         padding: .2em .7em 0 .7em;
         /* The rule menu title contributes left and right borders, */
-        border: 1px solid #bbf;
-        border-width: 0 1px;
+        border: 1px solid #ccf;
+        border-top-width: 0;
 
         .star {
           font-weight: normal;
