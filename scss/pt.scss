@@ -385,10 +385,6 @@ table.binaryTruthTable td.truthy, table.binaryTruthTable td.falsy {
   border: 2px solid silver;
 }
 
-/* This needs to be less specific than a rule for class cellHighlight. */
-td.falsy {
-}
-
 table.binaryTruthTable th {
   font-weight: normal;
   text-align: center;

@@ -46,17 +46,25 @@ b[videotip], b[imagetip] {
 .expr.unsolved {
   font-weight: bold;
   color: crimson;
-  background-color: hsl(30, 100%, 90%);
+  background-color: hsl(30, 100%, 94%);
   border-radius: 5px;
+  outline: 1px solid #e88;
   // Use these for even more emphasis:
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
   // text-decoration-thickness: 2px;
 }
 
+// Hovered exprs.  This overrides "unsolved".
 .expr.hover, .expr.hover .unsolved, .inShadow {
   background-color: hsl(200deg, 100%, 90%);
-  // border-radius: 5px;  Maybe?
+  outline: .5px solid #004;
+}
+
+// Don't highlight hovers in the stepInfo area.
+.proofStep .stepInfo .expr {
+  background: inherit;
+  outline: none;
 }
 
 wffblock- {
@@ -602,7 +610,7 @@ span.stepNumber, span.stepReference {
 /* New value ("replacement expression") */
 .proofStep .new, .proofStep .new .unsolved {
   background-color: #afa;
-  border-color: #0d0;
+  outline: 1px solid #0d0;
 }
 
 /* Must be specific enough to override the silver/gray border. */
@@ -665,7 +673,7 @@ span.stepRef {
 .proofDisplay.editable .proofStep .expr.selected,
 .proofDisplay.editable .proofStep .expr.selected .unsolved {
   background-color: hsl(200, 100%, 80%);
-  border-radius: 5px;
+  outline: .5px solid #00d;
 }
 
 /* Styling for special-case names */
