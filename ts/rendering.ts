@@ -810,7 +810,8 @@ export class ProofDisplay {
     }
     $proofStep.on(TOUCHDOWN, selector, handleGeneralClick);
 
-    $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
+    $proofStep.on('mouseenter mouseleave',
+        '.stepSelector, .stepInfo', function(event) {
         hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
       });
 
