@@ -372,7 +372,7 @@ declare(
     // form: ('Replace with right side of step <input name=equation>'),
     tooltip: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
-    description: 'replace term;; {in step siteStep} {using step equation}',
+    description: 'replacing term;; {in step siteStep} {using step equation}',
     labels: 'primitive'
   },
 
@@ -668,7 +668,7 @@ declare(
     form: ('Assert <input name=bool>'),
     menu: 'assert without proof',
     labels: 'advanced',
-    description: 'assert',
+    description: 'assertion',
     tooltip: 'WFF to assert (possibly to prove later)'
   },
 
@@ -717,7 +717,7 @@ declare(
            + '<input name=step>'),
     menu: 'display in full',
     tooltip: 'display fully',
-    description: 'display fully;; {step step}',
+    description: 'displaying fully;; {step step}',
     labels: 'display'
   },
       
@@ -1082,7 +1082,7 @@ declare(
     menu: 'consider a term to transform (A = A)',
     toOffer: 'return step == null',
     tooltip: ('consider a term to transform'),
-    description: 'consider;; (A = A)',
+    description: 'considering;; (A = A)',
     labels: 'basic'
   },
 
@@ -1170,7 +1170,7 @@ declare(
      }
    },
    tooltip: ('proof starter'),
-   description: 'start proof of;; {bool}',
+   description: 'starting proof of;; {bool}',
    labels: 'basic',
    autoSimplify: noSimplify,
   },
@@ -1213,7 +1213,7 @@ declare(
     inputs: {site: 1},
     menu: ' consider {term} in isolation',
     tooltip: ('prepare to transform term'),
-    description: 'consider term in isolation',
+    description: 'considering term in isolation',
     labels: 'general algebra',
     autoSimplify: noSimplify,
   },
@@ -1511,7 +1511,7 @@ declare(
            + 'in step <input name=equation>'),
     menu: 'substitute for a variable in equation',
     tooltip: ('Instantiates a free variable in an equation.'),
-    description: 'substitute for {var}',
+    description: 'substituting for {var}',
     labels: 'primitive'
   },
 
@@ -1701,7 +1701,7 @@ declare(
   // selection can match a goal assumption.
   {name: 'matchTerm',
    inputs: {site: 1, term: 3},
-   description: 'match;; {site}  with {term}',
+   description: 'matching;; {site}  with {term}',
    labels: 'basic',
    action2: function(step, path, term) {
      const schema = step.get(path);
@@ -1916,7 +1916,7 @@ declare(
     form: ('Instantiate &forall; with term <input name=term>'),
     menu: 'instantiate &forall;',
     tooltip: ('In &forall;, instantiates the bound variable.'),
-    description: 'instantiate &forall;'
+    description: 'instantiating &forall;'
   },
 
   // From [A = B] deduce T = [A = B].
@@ -2182,7 +2182,7 @@ declare(
     },
     inputs: {step: 1},
     menu: 'simplify usual',
-    description: 'simplify usual;; {in step step}',
+    description: 'simplifying usual;; {in step step}',
     labels: 'uncommon',
   },
 
@@ -2202,7 +2202,7 @@ declare(
     inputs: {site: 1},
     minArgs: 2,
     menu: '  simplify {term}',
-    description: 'simplify;; {in step siteStep}',
+    description: 'simplifying;; {in step siteStep}',
     labels: 'algebra general'
   },
 
@@ -2215,7 +2215,7 @@ declare(
     },
     inputs: {site: 1},
     minArgs: 2,
-    description: 'simplify;; {in step siteStep}',
+    description: 'simplifying;; {in step siteStep}',
     labels: 'algebra general'
   },
 
@@ -2232,7 +2232,7 @@ declare(
     inputs: {site: 1, term: 3},
     menu: 'simplify {term} with fact',
     form: 'Simplify using term <input name=term>',
-    description: 'simplify using {term};; {in step siteStep}',
+    description: 'simplifying using {term};; {in step siteStep}',
     labels: 'other'
   },
 
@@ -2385,7 +2385,7 @@ declare(
     inputs: {step: 1},
     minArgs: 1,
     menu: 'simplify assumptions',
-    description: 'simplify assumptions;; {in step step}',
+    description: 'simplifying assumptions;; {in step step}',
     labels: 'general'
   }
 );
@@ -2535,7 +2535,7 @@ declare(
     form: ('Replace T with step <input name=step>'),
     menu: 'replace T with a whole true statement',
     tooltip: ('Replaces an occurrence of T with a true statement'),
-    description: 'replace T;; {in step siteStep} {with step step}',
+    description: 'replacing T;; {in step siteStep} {with step step}',
     labels: 'basic'
   },
 
@@ -2559,7 +2559,7 @@ declare(
     form: ('Replace T with step <input name=step>'),
     menu: 'replace T with a true conclusion',
     tooltip: ('Replaces T with the conclusion of a true statement'),
-    description: 'replace T;; {in step siteStep} {with step step}',
+    description: 'replacing T;; {in step siteStep} {with step step}',
     labels: 'basic'
   },
 
@@ -2780,7 +2780,7 @@ declare(
     menu: 'substitute for a free variable',
     tooltip: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
-    description: 'substitute for {var};; {in step step}',
+    description: 'substituting for {var};; {in step step}',
     labels: 'advanced'
   },
 
@@ -3060,7 +3060,7 @@ declare(
     form: 'Boolean term to simplify: <input name=term>',
     labels: 'uncommon',
     tooltip: ('simplify boolean'),
-    description: 'simplify boolean value'
+    description: 'simplifying boolean value'
   },
 
   // Attempts to evaluate a boolean expression.  The expression can
@@ -3124,7 +3124,7 @@ declare(
     form: 'Boolean term to evaluate: <input name=bool>',
     labels: 'uncommon',
     tooltip: ('evaluate a boolean term'),
-    description: 'calculate boolean value'
+    description: 'calculating boolean value'
   },
 
   // Proves that the wff is a tautology and returns the proved
@@ -3493,7 +3493,7 @@ declare(
     inputs: {site: 1},
     menu: 'assume {term}',
     tooltip: ('assume term'),
-    description: 'assume',
+    description: 'assuming',
     labels: 'basic',
     autoSimplify: noSimplify,
   },
@@ -3513,7 +3513,7 @@ declare(
     form: ('Assume <input name=bool> (value for A)'),
     menu: 'assume explicitly (A &rArr; A)',
     tooltip: 'Statement to assume (show occurrences)',
-    description: 'assume explicitly;; (A &rArr; A)',
+    description: 'assuming explicitly;; (A &rArr; A)',
     labels: 'basic',
     autoSimplify: noSimplify,
   }
@@ -3586,7 +3586,7 @@ declare(
     form: ('Add assumption <input name=bool> in step <input name=step>'),
     menu: 'add assumption(s)',
     labels: 'basic',
-    description: 'add assumption {bool};; {in step step}'
+    description: 'adding assumption {bool};; {in step step}'
   },
 
   // Given a boolean site and a condition, this conjoins "& condition"
@@ -3609,7 +3609,7 @@ declare(
    inputs: {site: 1, bool: 3},
    menuGen: null,
    labels: 'tactic',
-   description: 'add condition;; {in step siteStep}',
+   description: 'adding condition;; {in step siteStep}',
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
@@ -3657,7 +3657,7 @@ declare(
     labels: 'uncommon',
     tooltip: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
-    description: 'move forall'
+    description: 'moving forall'
   },
 
   // Given a variable v that is not free in the given wff A, and a wff
@@ -3684,7 +3684,7 @@ declare(
     menu: 'forall {v. A => B} => (A => forall {v. B})',
     tooltip: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
-    description: 'move forall',
+    description: 'moving forall',
     labels: 'uncommon'
   },
 
@@ -4071,7 +4071,7 @@ declare(
    labels: 'tactic',
    menu: ' reduce quantifier scope',
    tooltip: 'reduce quantifier scope',
-   description: 'reduce quantifier scope;; {in step siteStep}'
+   description: 'reducing quantifier scope;; {in step siteStep}'
   },
 
   // This removes an irrelevant assumption of the form <vbl> = <term>,
@@ -4156,7 +4156,7 @@ declare(
     form: (''),
     menu: '   drop irrelevant {term}',
     tooltip: 'Drop irrelevant assumption',
-    description: 'drop irrelevant {site};; {in step siteStep}'
+    description: 'dropping irrelevant {site};; {in step siteStep}'
   },
 
   // Removes an irrelevant type assumption at the target site, where v
@@ -4217,7 +4217,7 @@ declare(
     form: (''),
     menu: '  drop irrelevant {term}',
     tooltip: 'Drop irrelevant type assumption',
-    description: 'drop irrelevant {site};; {in step siteStep}'
+    description: 'dropping irrelevant {site};; {in step siteStep}'
   },
 
   // Rule P/Q for a single antecedent (5234).  The schema step must
@@ -4605,7 +4605,7 @@ declare(
       }
     },
     tooltip: ('Replaces an occurrence of a term with an equal term'),
-    description: 'replace {site};; {in step siteStep}',
+    description: 'replacing {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -4682,7 +4682,7 @@ declare(
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace using equation <input name=equation>'),
     menu: 'replace minimally using a step like {term} = . . .',
-    description: 'replace term;; {in step siteStep} {using step equation}',
+    description: 'replacing term;; {in step siteStep} {using step equation}',
     labels: 'primitive'
   },
 
@@ -4706,7 +4706,7 @@ declare(
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
     menu: 'replace using a step like {term} = . . .',
-    description: 'replace term;; {in step siteStep} {using step equation}',
+    description: 'replacing term;; {in step siteStep} {using step equation}',
     labels: 'other'
   },
 
@@ -4726,7 +4726,7 @@ declare(
     menu: 'replace using term like A = {term}',
     tooltip: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
-    description: 'replace term;; {in step siteStep} {using step equation}',
+    description: 'replacing term;; {in step siteStep} {using step equation}',
     labels: 'uncommon'
   },
 
@@ -4816,7 +4816,7 @@ declare(
         flatter = next;
       }
     },
-   description: 'merge new assumptions',
+   description: 'merging new assumptions',
   }
 );
 
@@ -4846,7 +4846,8 @@ declare(
    // Remember, this rule is inline if eqn_arg is a step.
    inputs: {site: 1, bool: 3},
    menu: 'replace using',
-   description: 'instantiate {site} in step {siteStep} and replace using {shortFact}',
+   description:
+     'instantiating {site} in step {siteStep}, replacing using {shortFact}',
   },
 
   // Replaces an instance of the target term using the given
@@ -4865,7 +4866,8 @@ declare(
                           arguments, [step, eqn_arg]);
    },
    inputs: {site: 1, equation: 3},
-   description: 'instantiate {site} in step {siteStep} and replace using step {equation}',
+   description:
+     'instantiating {site} in step {siteStep}, replacing using step {equation}',
   },
 
 );
@@ -5015,7 +5017,7 @@ declare(
    form: ('Equation to rewrite the site using step <input name=equation>'),
    menu: 'replacement for site',
    isRewriter: true,
-   description: 'substitute;; {into step equation} {to rewrite step siteStep}',
+   description: 'substituting;; {into step equation} {to rewrite step siteStep}',
    labels: 'uncommon'
   },
 
@@ -5054,7 +5056,7 @@ declare(
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
     menu: 'primitive rewrite using a fact',
     isRewriter: true,
-    description: 'use;; {fact} {&nbsp;in step siteStep}',
+    description: 'using;; {fact} {&nbsp;in step siteStep}',
     labels: 'other'
   },
 
@@ -5079,7 +5081,7 @@ declare(
     // TODO: Consider modifying descriptions of rewrite rules to
     //   say "replace" rather than "rewrite" when the substitution
     //   is empty, perhaps with a new {rewrite} directive.
-    description: 'rewrite;; {in step siteStep} {using step equation}',
+    description: 'rewriting;; {in step siteStep} {using step equation}',
     labels: 'advanced'
   },
 
@@ -5133,7 +5135,7 @@ declare(
     labels: 'other',
     isRewriter: true,
     priority: 5,
-    description: 'use;; {fact} {&nbsp;in step siteStep}'
+    description: 'using;; {fact} {&nbsp;in step siteStep}'
   },
 );
 
@@ -5195,7 +5197,7 @@ function chainDescription(step) {
     const rendering = schema.rendering;
     return `chain;; from step {step} with step ${rendering.stepNumber}`;
   } else {
-    return 'reason forward;; from step {step} with {fact}';
+    return 'reasoning forward;; from step {step} with {fact}';
   }
 }
 
@@ -5652,7 +5654,7 @@ declare(
     labels: 'uncommon',
     form: ('Conjunctions to merge: <input name=bool>'),
     menu: 'derives equation to merge chains of conjunctions',
-    description: 'merge conjunctions in {bool}'
+    description: 'merging conjunctions in {bool}'
   },    
 
   // Given a proof step of the form [a => b] and a path that refers to
@@ -5677,7 +5679,7 @@ declare(
     },
     inputs: {site: 1},
     menu: ' extract {term} from assumptions',
-    description: 'extract assumption;; {in step siteStep}',
+    description: 'extracting assumption;; {in step siteStep}',
     labels: 'uncommon'
   },
 
@@ -5706,7 +5708,7 @@ declare(
     inputs: {step: 1, bool: 2},
     menu: 'extract {term}',
     form: 'extract assumption <input name=bool> from step <input name=step>',
-    description: 'extract assumption {bool};; {in step step}',
+    description: 'extracting assumption {bool};; {in step step}',
     labels: 'uncommon',
     tooltip: 'extract an assumption'
   },
@@ -5724,7 +5726,7 @@ declare(
     },
     inputs: {site: 1},
     menu: ' isolate {term} as the only assumption',
-    description: 'isolate assumption;; {in step siteStep}',
+    description: 'isolating assumption;; {in step siteStep}',
     labels: 'basic'
   },
 
@@ -5753,7 +5755,7 @@ declare(
     inputs: {step: 1, bool: 2},
     menu: 'extract {term}',
     form: 'extract assumption <input name=bool> from step <input name=step>',
-    description: 'isolate assumption {bool};; {in step step}',
+    description: 'isolating assumption {bool};; {in step step}',
     labels: 'uncommon',
     tooltip: 'isolate an assumption'
   },
@@ -5775,7 +5777,7 @@ declare(
     inputs: {site: 1},
     menu: Toy.mathText('[a => (p => q)] to [a & p => q]'),
     labels: 'basic',
-    description: 'use {site} as an assumption;; {in step siteStep}'
+    description: 'using {site} as an assumption;; {in step siteStep}'
   },
 
   // Efficiently proves that the given chain of conjuncts imply the
@@ -5941,7 +5943,7 @@ declare(
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
     tooltip: 'remove redundant assumptions',
-    description: 'arrange assumptions;; in step {step}',
+    description: 'arranging assumptions;; in step {step}',
     labels: 'uncommon'
   },
 );
@@ -6094,7 +6096,7 @@ declare(
    },
    inputs: {site: 1},
    menu: '   move term {term} right',
-   description: 'move to the right',
+   description: 'moving to the right',
    labels: 'algebra',
   },
 
@@ -6107,7 +6109,7 @@ declare(
    },
    inputs: {site: 1},
    menu: '   move term {term} left',
-   description: 'move to the left',
+   description: 'moving to the left',
    labels: 'algebra',
   },
 
@@ -6143,7 +6145,7 @@ declare(
      return chain.length > 1;
    },
    menu: '   move term {term} rightmost',
-   description: 'move to rightmost',
+   description: 'moving to rightmost',
    labels: 'algebra',
   },
 
@@ -6174,7 +6176,7 @@ declare(
      return chain.length > 1;
    },
    menu: '   move term {term} leftmost',
-   description: 'move to leftmost',
+   description: 'moving to leftmost',
    labels: 'algebra',
   },
 
@@ -6309,7 +6311,7 @@ declare(
      
     inputs: {site: 1},
     menu: 'unbind',
-    description: 'unbind'
+    description: 'unbinding'
   },
 
   // Prove an equation asserting that two chains of conjunctions are
@@ -6706,7 +6708,7 @@ declare(
     },
     inputs: {site: 1},
     menu: "conclude existence from {term}",
-    description: 'witness existence',
+    description: 'witnessing existence',
     labels: 'basic'
    },
 

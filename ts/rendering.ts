@@ -2175,7 +2175,7 @@ var stepFormatters = {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];
     var target = step0.get(path);
-    return 'rename ' + target.bound;
+    return 'renaming ' + target.bound;
   },
   reduce: function(step) {
     var step0 = step.ruleArgs[0];
@@ -2184,7 +2184,7 @@ var stepFormatters = {
     var target = step0.get(path);
     assert(target instanceof Toy.Call);
     assert(target.fn instanceof Toy.Lambda);
-    return 'apply function of ' + target.fn.bound.toHtml();
+    return 'applying function of ' + target.fn.bound.toHtml();
   },
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   apply: function(step) {
@@ -2197,9 +2197,9 @@ var stepFormatters = {
       if (fn instanceof Toy.Lambda) {
         return 'apply function of ' + target.fn.bound.toHtml();
       } else if (target.isCall2()) {
-        return 'apply definition of ' + target.getBinOp().toUnicode();
+        return 'applying definition of ' + target.getBinOp().toUnicode();
       } else {
-        return 'apply definition of ' + fn.toUnicode();
+        return 'applying definition of ' + fn.toUnicode();
       }
     } else {
       return 'apply: not a Call';
@@ -2211,7 +2211,7 @@ var stepFormatters = {
     for (const key in map) {
       keys.push(key);
     }
-    return 'substitute for ' + keys.join(', ') + ';; {in step step}';
+    return 'substituting for ' + keys.join(', ') + ';; {in step step}';
   },
   tautInst: function(step) {
     var taut = step.ruleArgs[0];

@@ -1480,7 +1480,7 @@ declare
     form: ('Add <input name=term> to both sides of the equation'),
     menu: 'add to both sides',
     tooltip: ('add to both sides'),
-    description: 'add {term} to both sides;; {in step siteStep}',
+    description: 'adding {term} to both sides;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1503,7 +1503,7 @@ declare
     form: ('Subtract <input name=term> from both sides of the equation'),
     menu: 'subtract from both sides',
     tooltip: ('subtract from both sides'),
-    description: 'subtract {term} from both sides;; {in step siteStep}',
+    description: 'subtracting {term} from both sides;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1526,7 +1526,7 @@ declare
     form: ('Multiply both sides of the equation by <input name=term>'),
     menu: 'multiply both sides',
     tooltip: ('multiply both sides'),
-    description: 'multiply both sides by {term};; {in step siteStep}',
+    description: 'multiplying both sides by {term};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1549,7 +1549,7 @@ declare
     form: ('Divide both sides of the equation by <input name=term>'),
     menu: 'divide both sides',
     tooltip: ('divide both sides'),
-    description: 'divide both sides by {term};; {in step equation}',
+    description: 'dividing both sides by {term};; {in step equation}',
     labels: 'algebra'
   },
 
@@ -1572,7 +1572,7 @@ declare
     },
     toOffer: 'return term.isReal();',
     menu: ' add {term} to both sides',
-    description: 'add {site};; {in step siteStep}',
+    description: 'adding {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1593,7 +1593,7 @@ declare
     },
     toOffer: 'return term.isReal();',
     menu: ' subtract {term} from both sides',
-    description: 'subtract {site};; {in step siteStep}',
+    description: 'subtracting {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1614,7 +1614,7 @@ declare
     },
     toOffer: 'return term.isReal();',
     menu: ' multiply both sides by {term}',
-    description: 'multiply by {site};; {in step siteStep}',
+    description: 'multiplying by {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1635,7 +1635,7 @@ declare
     },
     toOffer: 'return term.isReal();',
     menu: ' divide both sides by {term}',
-    description: 'divide by {site};; {in step siteStep}',
+    description: 'dividing by {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1653,7 +1653,7 @@ declare
     form: ('To step <input name=equation1> add the sides' +
            ' of step <input name=equation2>'),
     menu: 'add the sides of an equation to this',
-    description: 'add the sides of steps {equation1} and {equation2}',
+    description: 'adding the sides of steps {equation1} and {equation2}',
     labels: 'algebra'
   },
 
@@ -1671,7 +1671,8 @@ declare
     form: ('From step <input name=equation1> subtract the sides' +
            ' of step <input name=equation2>'),
     menu: 'subtract an equation from this',
-    description: 'from step {equation1} subtract the sides of step {equation2}',
+    description:
+      'from step {equation1} subtracting the sides of step {equation2}',
     labels: 'algebra'
   }
 
@@ -1732,7 +1733,8 @@ declare(
          return step2;
        }
      }
-   }
+   },
+   description: 'simplifying products',
   },
 
   {name: 'simplifySums',
@@ -1749,7 +1751,8 @@ declare(
          return step2;
        }
      }
-   }
+   },
+   description: 'simplifying sums',
   }
 );
 
@@ -1770,7 +1773,7 @@ declare(
     inputs: {step: 1},
     form: ('Simplify negations in <input name=step>'),
     menu: 'simplify negations',
-    description: 'simplify negations',
+    description: 'simplifying negations',
     labels: 'algebra'
   },
 
@@ -1787,7 +1790,7 @@ declare(
     inputs: {step: 1},
     form: ('Convert - to + in step <input name=step>'),
     menu: 'convert - to +',
-    description: 'convert subtraction to addition',
+    description: 'converting subtraction to addition',
     labels: 'algebra'
   },
 
@@ -1809,7 +1812,7 @@ declare(
     inputs: {step: 1},
     form: ('Clean up the terms in step <input name=step>'),
     menu: 'clean up terms',
-    description: 'clean up each term',
+    description: 'cleaning up each term',
     labels: 'algebra'
   }
 );
@@ -1845,7 +1848,7 @@ declare
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
     menu: 'flatten sum {term}',
-    description: 'flatten sum;; {in step siteStep}',
+    description: 'flattening sum;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1886,7 +1889,7 @@ declare
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
     menu: 'collect like terms in {term}',
-    description: 'collect like terms;; {in step siteStep}',
+    description: 'collecting like terms;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1947,7 +1950,7 @@ declare
            ]}),
     inputs: {site: 1},
     menu: 'flatten product {term}',
-    description: 'flatten term;; {in step siteStep}',
+    description: 'flattening term;; {in step siteStep}',
     labels: 'algebra'
    },
 
@@ -2035,7 +2038,7 @@ declare
      },
      inputs: {site: 1},
      menu: 'make rightmost',
-     description: 'make rightmost',
+     description: 'making rightmost',
      labels: 'algebra'
     },
 
@@ -2191,7 +2194,7 @@ declare
      },
      inputs: {site: 1},
      menu: 'cancel by division',
-     description: 'cancel by division',
+     description: 'cancelling by division',
      labels: 'algebra'
     },
        
@@ -2462,7 +2465,7 @@ declare
     },
     inputs: {site: 1},
     menu: 'regroup sum',
-    description: 'regroup sum',
+    description: 'regrouping sum',
     labels: 'algebra'
   },
 
@@ -2481,7 +2484,7 @@ declare
     inputs: {site: 1},
     form: 'Regroup terms in step <input name=step>',
     menu: 'regroup sum',
-    description: 'regroup sum',
+    description: 'regrouping sum',
     labels: 'algebra'
    }
 );
@@ -2539,7 +2542,7 @@ declare(
     },
     inputs: {site: 1},
     menu: 'move {term} to the right',
-    description: 'move term right',
+    description: 'moving term right',
     labels: 'algebra'
   },
 
@@ -2584,7 +2587,7 @@ declare(
     },
     inputs: {site: 1},
     menu: 'move {term} to the left',
-    description: 'move term left',
+    description: 'moving term left',
     labels: 'algebra'
   },
 
@@ -2604,7 +2607,7 @@ declare(
     },
     inputs: {site: 1},
     menu: 'group {term} with {right}',
-    description: 'group to the right',
+    description: 'grouping to the right',
     labels: 'algebra'
   },
 
@@ -2629,7 +2632,7 @@ declare(
     },
     inputs: {site: 1},
     menu: 'ungroup {term}',
-    description: 'ungroup',
+    description: 'ungrouping',
     labels: 'algebra'
   },
 
@@ -2660,7 +2663,7 @@ declare(
     },
     inputs: {site: 1},
     menu: 'move term left as needed',
-    description: 'move term left as needed',
+    description: 'moving term left as needed',
     // Could be algebra, but this rule seems better for more advanced
     // students.
     labels: ''
@@ -2681,7 +2684,7 @@ declare(
     inputs: {site: 1, varName: 3},
     form: 'Group terms with variable <input name=varName>',
     menu: 'group terms',
-    description: 'group terms with {varName}'
+    description: 'grouping terms with {varName}'
   },
   */
 
@@ -2725,7 +2728,7 @@ declare
     },
     inputs: {site: 1},
     menu: '  reduce fraction {term}',
-    description: 'reduce fraction',
+    description: 'reducing fraction',
     labels: 'algebra'
   },
 
@@ -2764,7 +2767,7 @@ declare
       }
     },
     inputs: {site: 1},
-    description: 'divide out fraction',
+    description: 'dividing out fraction',
     // TODO: Remove this entirely in favor of reduceFraction.
     // menu: 'divide out {term}',
     labels: 'algebra'
@@ -3067,7 +3070,7 @@ declare(
     labels: 'tactic',
     inputs: {site: 1},
     menu: 'distribute from the left',
-    description: 'distribute from the left',
+    description: 'distributing from the left',
   },
 
   {name: 'distribRight',
@@ -3077,7 +3080,7 @@ declare(
     labels: 'tactic',
     inputs: {site: 1},
     menu: 'distribute from the right',
-    description: 'distribute from the right',
+    description: 'distributing from the right',
   },
 
   // This operates on a product with at least one operand that is a
@@ -3091,7 +3094,7 @@ declare(
    labels: 'tactic',
    inputs: {site: 1},
    menu: 'distribute both ways',
-   description: 'distribute both ways',
+   description: 'distributing both ways',
   },
 );
 
