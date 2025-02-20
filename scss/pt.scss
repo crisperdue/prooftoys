@@ -82,6 +82,14 @@ img {
   box-shadow: #ccc 15px 10px 15px;
 }
 
+// "tippytoys" tooltips theme
+.tippy-box[data-theme~=tippytoys] {
+  color: darkblue;
+  background-color: white;
+  border: 2px solid black;
+  border-radius: 5px;
+}
+
 // The styling here works with a custom Hugo shortcode to support
 // "summary" items containing a block element such as a header. The
 // shortcode adds a "block" class, and this gives the contained element,

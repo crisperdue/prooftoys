@@ -143,7 +143,7 @@ export interface Expr {
    * ("matches"), returns -1.  Otherwise flags the node of each such
    * assumption node with an "unsolved" class if it has a node, and
    * returns the number of unwanted assumptions as its value, so a
-   * result of 0 means that this is the desired result.
+   * result of 0 means that this step (term) is the desired goal.
    * 
    * TODO: Allow asms to merely match (e.g. "matches") goal asms, to
    *   nicely handle asms with bound vars.
@@ -165,6 +165,12 @@ Expr.prototype.checkSubgoals = function(goalWff) {
       found++;
       if (asm.node) {
         $(asm.node).addClass('unsolved');
+        window.tippy(asm.node, {
+          theme: 'tippytoys',
+          content:
+            'assumption to prove',
+          delay: [1000, 200],
+        });
       }
     }
   });

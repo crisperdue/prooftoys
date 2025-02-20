@@ -44,11 +44,10 @@ b[videotip], b[imagetip] {
 // Unwanted assumption in goal-based proof.
 // See also .redBack in pt.scss.
 .expr.unsolved {
-  font-weight: bold;
-  color: crimson;
-  background-color: hsl(30, 100%, 94%);
+  color: #e44;
+  // background-color: hsl(30, 100%, 94%);  if background
   border-radius: 5px;
-  outline: 1px solid #e88;
+  outline: 2px solid #e88;
   // Use these for even more emphasis:
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;

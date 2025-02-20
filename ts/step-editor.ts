@@ -1009,6 +1009,7 @@ function buildProofButtons(editor) {
   $proofButtons.append($ux);
   // Set up a fancy tooltip.
   const tp = window.tippy(dom($ux), {
+    theme: 'tippytoys',
     allowHTML: true,
     delay: 400,
     maxWidth: '500px',
@@ -1019,12 +1020,6 @@ function buildProofButtons(editor) {
      'We are grateful for your participation.<br><br>' +
      'For more information see the <i>privacy information</i> page.')
   });
-  $(tp.popper)
-    .find('.tippy-box')
-    .css({color: 'darkblue',
-          backgroundColor: 'white',
-          border: '2px solid black',
-          borderRadius: '5px'})
 
   // Main and worksheet controls event handlers
 
