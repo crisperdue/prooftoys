@@ -1194,7 +1194,7 @@ declare(
    inputs: {site: 1},
    form: 'Desired result: <input name=bool>',
    toOffer: 'return term.isBoolean()',
-   menu: ' use as subgoal',
+   menu: ' use {term} as subgoal',
    description: step => {
      const [s, p] = step.ruleArgs;
      const site = s.get(p);
@@ -2622,7 +2622,7 @@ declare(
    form: ('Match {term} with (consequent of) step <input name=step>'),
    menu: 'replace known true part with T',
    description: 'true;; {in step siteStep} from step {step}',
-   labels: 'basic',
+   labels: 'tactic',
    // TODO: Add a menuGen for trueBy1.
   },
 
@@ -3484,7 +3484,7 @@ declare(
   },
 
   // Assume the target boolean term, like considerPart, but making it
-  // an assumption.
+  // an assumption.  Currently has the same effect as subgoal.
   {name: 'assumePart',
     toOffer: 'return term.isBoolean()',
     action: function(step, path) {
@@ -3493,8 +3493,8 @@ declare(
     inputs: {site: 1},
     menu: 'assume {term}',
     tooltip: ('assume term'),
-    description: 'assuming',
-    labels: 'basic',
+    description: 'assuming {site}',
+    labels: 'ignore',
     autoSimplify: noSimplify,
   },
 
@@ -4846,6 +4846,8 @@ declare(
    // Remember, this rule is inline if eqn_arg is a step.
    inputs: {site: 1, bool: 3},
    menu: 'replace using',
+   // TODO: Unusuable from the UI iwthout a form.
+   labels: 'ignore',
    description:
      'instantiating {site} in step {siteStep}, replacing using {shortFact}',
   },
@@ -4866,6 +4868,8 @@ declare(
                           arguments, [step, eqn_arg]);
    },
    inputs: {site: 1, equation: 3},
+   labels: 'ignore',
+   // TODO: Unusable from the UI without a form.
    description:
      'instantiating {site} in step {siteStep}, replacing using step {equation}',
   },
@@ -7194,8 +7198,7 @@ declare(
               .rewrite('/right', 'x != y == not (x = y)')
               .andThen('rewriteOnlyFrom', '/right/arg', all));
     },
-   labels: 'general',
-   desimplifier: true
+    desimplifier: true
   },
 
   {statement: 'not (exists p) == forall {x. not (p x)}',
