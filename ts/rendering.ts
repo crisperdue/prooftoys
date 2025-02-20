@@ -164,13 +164,8 @@ Expr.prototype.checkSubgoals = function(goalWff) {
     if (!goalAsms.has(asm)) {
       found++;
       if (asm.node) {
-        $(asm.node).addClass('unsolved');
-        window.tippy(asm.node, {
-          theme: 'tippytoys',
-          content:
-            'assumption to prove',
-          delay: [1000, 200],
-        });
+        $(asm.node).addClass('unsolved')
+          .attr('title', 'Prove me?');
       }
     }
   });
