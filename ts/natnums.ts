@@ -188,7 +188,7 @@ const decls = [
    autoSimplify: noSimplify,
    inputs: {site: 1},
    menu: 'induction on {term}',
-   description: 'set up induction',
+   description: 'setting up induction',
   },
 
   // Theorems
