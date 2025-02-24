@@ -1559,7 +1559,12 @@ Call.prototype.render = function(minPower) {
         // Integer exponent: display as superscript without making
         // the exponent selectable by itself.  This makes it practical
         // to select the entire expression.
-        var $left = exprJq().append(left.render(thisPower(left)));
+        // TODO: Support selection of just the exponent using the shift
+        //   key, and then also render expressions in the exponent as
+        //   superscript, at least provided that they don't contain
+        //   exponents themselves.
+        const lpower = left instanceof Atom ? 1 : 200;
+        var $left = exprJq().append(left.render(lpower));
         $expr.append($left,
                      $('<sup>').append(right.getNumValue()));
       } else {
