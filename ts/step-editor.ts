@@ -72,6 +72,9 @@ export function exerData() {
 
 //// PROOF EDITOR
 
+/**
+ * This is the set of all ProofEditor instances on the page.
+ */
 export var proofEditors = new Set();
 
 // TODO: Use events and event handlers to make cleaner separation
@@ -230,7 +233,7 @@ export class ProofEditor {
     self.stepEditor = stepEditor;
     // This node provides a coordinate system for absolute positioning.
     // The tabindex lets it handle keyboard events.
-    const $formParent = $('<div tabindex=1 style="position: relative">');
+    const $formParent = $('<div tabindex="-1" style="position: relative">');
     $formParent.append(stepEditor.$form);
     $formParent.append('<div class=overlay></div>');
 
@@ -448,6 +451,7 @@ export class ProofEditor {
     function within($node, selector) {
       return $node.closest(selector).length > 0;
     }
+
     // Click in most areas of the document removes any step or expr
     // selection.
     $(document).on('click', function(event) {
@@ -477,6 +481,7 @@ export class ProofEditor {
           }
         }
       });
+
     // Click in most areas of the document hides the workspace controls.
     $(document).on('click', function(event) {
       const $target = $(event.target);
