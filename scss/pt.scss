@@ -35,15 +35,6 @@
    visibility: hidden;
  }
 
-sub, sup {
-  /* Browsers tend to size these for fractions, which makes */
-  /* them a bit bigger than this. */
-  // Google Chrome may override this with a user preference for
-  // minimum font size.  Use of "zoom:" can force a smaller
-  // size except in Firefox before version 126.
-  font-size: 60%;
-}
-
 sub {
   // This assumes use of reboot.css, which positions them relative,
   // aligned to the baseline.  The negative bottom moves it below
