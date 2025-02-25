@@ -7,8 +7,11 @@
   left: 0;
   height: 100%;
   width: 100%;
-  background-color: rgba(0,0,0,0.3);
+  background-color: rgba(0,0,0,0.2);
   z-index: 1000;
+  // The overlay will get pointer events.
+  pointer-events: auto;
+  visibility: hidden;
 }
 
 // Modal dialog z-index, just above the overlay
@@ -722,7 +725,20 @@ span.stepRef {
   padding: 1em;
   border: 2px solid DarkSeaGreen;
   border-radius: 5px;
-  z-index: 5;
+  // The rule form gets pointer events even when there is an overlay.
+  pointer-events: auto;
+  visibility: hidden;
+  z-index: 1001;
+}
+
+// The ruleFormVisible class makes the form and the
+// overlay both visible.
+.proofEditor.ruleFormVisible .ruleForm {
+  visibility: visible;
+}
+
+.proofEditor.ruleFormVisible .overlay {
+  visibility: visible;
 }
 
 // Container for error displays
@@ -1045,9 +1061,15 @@ input.copyText {
       font-style: normal;
     }
 
-    // Waiting for the prover to complete also dims
-    // the rule menu entries, just for consistent appearance.
-    &.ruleFormVisible .ruleMenu, &.waitingForProver {
+    // When the rule form is visible or the prover is working,
+    // pointer events are disabled in most of the proof editor.
+    &.ruleFormVisible, &.waitingForProver {
+      pointer-events: none;
+    }
+
+    // These circumstances also dim the rule menu entries, just for
+    // consistent appearance.
+    &.ruleFormVisible .ruleMenu, &.waitingForProver .ruleMenu {
         opacity: .5;
         transition: all .3s linear;
     }

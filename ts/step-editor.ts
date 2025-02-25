@@ -229,8 +229,10 @@ export class ProofEditor {
     const stepEditor = new StepEditor(this);
     self.stepEditor = stepEditor;
     // This node provides a coordinate system for absolute positioning.
-    const $formParent = $('<div style="position: relative">');
+    // The tabindex lets it handle keyboard events.
+    const $formParent = $('<div tabindex=1 style="position: relative">');
     $formParent.append(stepEditor.$form);
+    $formParent.append('<div class=overlay></div>');
 
     const proofButtons = buildProofButtons(self);
     self.$copyText = proofButtons.$copyText;
@@ -377,6 +379,24 @@ export class ProofEditor {
     }
 
     //// Event handlers
+
+    // This handler supports clicking almost anywhere to remove
+    // a data entry dialog.  
+    self.$node.find('.overlay').on('click', function() {
+      self.stepEditor.hideForm();
+    });
+
+    // This is a more modern way to make it easy to abort data
+    // entry using the escape key.
+    //
+    // Attaching to $formParent lets this handler run just once per
+    // keypress, but requires $formParent to have a tabindex.
+    // Attaching to $(document) fires this for each proof editor.
+    $formParent.on('keydown', function(event) {
+      if (event.key == 'Escape') {
+        self.stepEditor.hideForm();
+      }
+    });
 
     // When the user explicitly checks or unchecks the box,
     // set the localStorage item and start or stop session recording.
@@ -1455,13 +1475,12 @@ export class StepEditor {
 
     // This is a "generic" form object that will be fleshed out with
     // fields specific to a rule later.
-    const $form = self.$form = $('<div class="ruleForm hidden"></div>');
+    const $form = self.$form = $('<div class="ruleForm"></div>');
 
     $form.append(self.clearer, '<span class=customForm></span>');
     // Install event handlers.
     self.clearer.on('click', function() {
       self.hideForm();
-      self._proofEditor.ruleMenu.suppressing = false;
     });
 
     // Clicking the button or hitting <enter> triggers trying the rule.
@@ -1522,24 +1541,20 @@ export class StepEditor {
 
   /**
    * Shows the form for entering info for the selected rule.
+   * TODO: Consider just adding and removing the class to
+   *   implement show/hide.  Potentially stop propagation to
+   *   avoid (de-)selecting terms in the proof display.
    */
   showForm() {
-    this.$form.show();
     this.formShowing = true;
     this.proofDisplay.setSelectLock(true);
     this._proofEditor.$node.addClass('ruleFormVisible');
-    // Suppresses response to mouse events in the menu;
-    // important especially to suppress clicks, also done
-    // by tryRuleSoon, so it can safely defer running
-    // its rule until after the next repaint.
-    this._proofEditor.ruleMenu.suppressing = true;
   }
 
   /**
    * Hides the rule entry form.
    */
   hideForm() {
-    this.$form.hide();
     this.formShowing = false;
     this.proofDisplay.setSelectLock(false);
     this._proofEditor.$node.removeClass('ruleFormVisible');
@@ -1641,9 +1656,9 @@ export class StepEditor {
     // This adds content from the form to the args.
     if (this.fillFromForm(ruleName, args) &&
         this.checkArgs(args, minArgs, true)) {
-      this.hideForm();
       tryRuleSoon(this, ruleName, args);
     }
+    this.hideForm();
   }
 
   /**
@@ -1669,7 +1684,6 @@ export class StepEditor {
     const cleanup = () => {
       editor.proofDisplay.setSelectLock(false);
       editor.$node.removeClass('waitingForProver');
-      editor.ruleMenu.suppressing = false;
     }
     if (Toy.profileName) {
       // Collect CPU profiling information.
@@ -1831,7 +1845,8 @@ export class StepEditor {
   }
 
   /**
-   * Tries to fill in the arguments array with information from the form.
+   * Tries to fill in the arguments array with information from the form,
+   * using the rule's input descriptor and parsing values with parseValue.
    * Returns true / false for success or failure.
    */
   fillFromForm(ruleName, args) {
@@ -1853,7 +1868,7 @@ export class StepEditor {
         var inputs = rule.info.inputs;
         var argNum = which ? inputs[type][which - 1] : inputs[type];
         if (!argNum) {
-          throw new Error('Internal error: no input descriptor for type ' + type);
+          abort('Internal error: no input descriptor for type ' + type);
         }
         try {
           // Try to fill in the actual argument.
@@ -1981,8 +1996,6 @@ export function tryRuleSoon(stepEditor, ruleName, args) {
       }
     });
   stepEditor._proofEditor.$node.addClass('waitingForProver');
-  // Do not respond to menu mouse events until the rule has actually run.
-  stepEditor._proofEditor.ruleMenu.suppressing = true;
   // Try running the rule once the UI shows that the prover is working.
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, ruleName, args));
 }
@@ -2067,7 +2080,6 @@ class RuleMenu {
   _refresher;
   length: number;
   hovering;
-  suppressing: boolean;
   timer: number;
   $modeList;
   $node;
@@ -2098,9 +2110,6 @@ class RuleMenu {
     // A rule menu item node or null.  If the mouse is hovering over an
     // item at any given time, this will be it.
     self.hovering = null;
-    // True iff we are suppressing actions from menu item events
-    // (enter and click).
-    self.suppressing = false;
     // Timer (from setTimeout) that will run an action unless cleared by
     // mouse movement.  Helps detect "mouse still" conditions.
     self.timer = null;
@@ -2506,10 +2515,6 @@ class RuleMenu {
    * will supply args from any user selection.
    */
   handleMouseClickItem(node, event) {
-    if (this.suppressing) {
-      return;
-    }
-
     const proofEditor = this.proofEditor;
     let uxStatus = localStorage.getItem('Toy:uxOK');
     if (uxStatus == null) {
@@ -2607,10 +2612,6 @@ class RuleMenu {
    * Event handler for mouseenter events on RuleMenu items.
    */
   handleMouseEnterItem(node, event) {
-    if (this.suppressing) {
-      return;
-    }
-
     const ruleMenu = this;
     const $node = $(node);
     const proofEditor = ruleMenu.proofEditor;
