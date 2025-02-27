@@ -68,6 +68,62 @@ export function exerData() {
         });
 }
 
+//// Popups
+
+/**
+ * Set of nodes of popups not to be hidden by hidePopups.
+ * Currently used only for very ephemeral exemption, e.g.
+ * during event propagation.
+ */
+const exemptPopups = new Set();
+
+/**
+ * Remove "popups" from the document.
+ */
+function hidePopups(ev) {
+  if (ev.type == "click" || (ev.type == "keydown" && ev.key == "Escape")) {
+    $(document)
+      .find(".logicZone .proofEditor .poppedUp")
+      .filter((i, elt) => !exemptPopups.has(elt))
+      .removeClass("poppedUp");
+  }
+}
+
+function noHide(ev) {
+  ev.originalEvent['no-hide'] = true
+}
+
+/**
+ * Show the given node or jQuery as a "popup".  See also popDown and
+ * hidePopups.
+ */
+function showPopup(node) {
+  const $node = $(node);
+  $node.addClass('poppedUp');
+  // Ensure there is exactly one hidePopups handler for these events.
+  $(document).off('click', hidePopups);
+  $(document).off('keydown', hidePopups);
+  $(document).on('click', hidePopups);
+  $(document).on('keydown', hidePopups);
+  // Exempt this popup from being hidden by click or Esc,
+  // but re-enable those actions after return to the event loop.
+  const d = domify(node);
+  // Exempt this popup just until control returns to the main loop.
+  exemptPopups.add(d);
+  soonDo(() => exemptPopups.delete(d));
+}
+
+function hidePopup(node) {
+  $(node).removeClass('poppedUp');
+}
+
+/**
+ * The Right Way to disappear a popup.
+ */
+function popDown(node) {
+  $(node).removeClass('poppedUp');
+}
+
 //// PROOF EDITOR
 
 /**
@@ -230,10 +286,10 @@ export class ProofEditor {
     const stepEditor = new StepEditor(this);
     self.stepEditor = stepEditor;
     // This node provides a coordinate system for absolute positioning.
-    // The tabindex lets it handle keyboard events.
-    const $formParent = $('<div tabindex="-1" style="position: relative">');
+    // The tabindex lets it handle keyboard events. ???
+    const $formParent = $('<div xtabindex="-1" style="position: relative">');
     $formParent.append(stepEditor.$form);
-    $formParent.append('<div class=overlay></div>');
+    // $formParent.append('<div class=overlay></div>');
 
     const proofButtons = buildProofButtons(self);
     self.$copyText = proofButtons.$copyText;
@@ -334,7 +390,7 @@ export class ProofEditor {
       }
     }
 
-    // Initialize the uxBox state.
+    // Initialize the uxBox checkbox state.
     self.$node.find('.uxBox')
       .prop('checked', localStorage.getItem('Toy:uxOK') === 'true');
 
@@ -381,24 +437,6 @@ export class ProofEditor {
 
     //// Event handlers
 
-    // This handler supports clicking almost anywhere to remove
-    // a data entry dialog.  
-    self.$node.find('.overlay').on('click', function() {
-      self.stepEditor.hideForm();
-    });
-
-    // This is a more modern way to make it easy to abort data
-    // entry using the escape key.
-    //
-    // Attaching to $formParent lets this handler run just once per
-    // keypress, but requires $formParent to have a tabindex.
-    // Attaching to $(document) fires this for each proof editor.
-    $formParent.on('keydown', function(event) {
-      if (event.key == 'Escape') {
-        self.stepEditor.hideForm();
-      }
-    });
-
     // When the user explicitly checks or unchecks the box,
     // set the localStorage item and start or stop session recording.
     self.$node.find('.uxBox').on('change', function() {
@@ -420,8 +458,7 @@ export class ProofEditor {
         // same event.
         elt.checked = state;
       });
-      self.$node.removeClass('hasDialog');
-      self.$node.find('.uxDialog').addClass('invisible');
+      popDown(self.$node.find('.uxDialog'));
     });
 
     self.$node.find('.clearWork').on('click', function() {
@@ -452,7 +489,9 @@ export class ProofEditor {
 
     // Click in most areas of the document removes any step or expr
     // selection.
+    // TODO: Change document to self.$node.
     $(document).on('click', function(event) {
+
         if (!mainDisplay._selectLock) {
           // When a rule entry form is open, selection is locked.
           const $target = $(event.target);
@@ -481,18 +520,11 @@ export class ProofEditor {
       });
 
     // Click in most areas of the document hides the workspace controls.
+    // TODO: Change document to self.$node.
     $(document).on('click', function(event) {
       const $target = $(event.target);
       if (!within($target, '.wksControlsOuter, .proofButtons')) {
         self._wksControls.hide();
-      }
-      // Also hides the error report.  When the proof editor has a dialog
-      // box, most clicks within the editor do not hide the dialog.
-      if (!within($target,
-                  '.proofEditor.hasDialog, .proofErrors, ' +
-                  '.stepEditor, .ruleForm')) {
-        // TODO: Consider perhaps an editor reset() method.
-        self.stepEditor.clearError();
       }
     });
   }
@@ -1499,7 +1531,7 @@ export class StepEditor {
       }
     });
 
-    self.$proofErrors = $('<div class="proofErrors hidden"></div>');
+    self.$proofErrors = $('<div class="proofErrors invisible"></div>');
     // Always clear the errors when clicked.
     self.$proofErrors.on('click', '.clearer', function() {
       self.clearError();
@@ -1521,8 +1553,6 @@ export class StepEditor {
   report(error) {
     var $proofErrors = this.$proofErrors;
     $proofErrors.html('<button class=clearer>X</button>');
-    $proofErrors.show();
-    this._proofEditor.$node.addClass('hasDialog');
     if (error instanceof Error) {
       $proofErrors.append('<b>Error: ' + error.message + '</b>');
       if (error.step) {
@@ -1532,14 +1562,14 @@ export class StepEditor {
       // It should be a string.
       $proofErrors.append(error);
     }
+    showPopup($proofErrors);
   }
 
   /**
    * Hides the error display.
    */
   clearError() {
-    this._proofEditor.$node.removeClass('hasDialog');
-    this.$proofErrors.hide();
+    popDown(this.$proofErrors);
   }
 
   /**
@@ -1550,8 +1580,7 @@ export class StepEditor {
    */
   showForm() {
     this.formShowing = true;
-    this.proofDisplay.setSelectLock(true);
-    this._proofEditor.$node.addClass('ruleFormVisible');
+    showPopup(this.$form);
   }
 
   /**
@@ -1559,8 +1588,7 @@ export class StepEditor {
    */
   hideForm() {
     this.formShowing = false;
-    this.proofDisplay.setSelectLock(false);
-    this._proofEditor.$node.removeClass('ruleFormVisible');
+    hidePopup(this.$form);
   }
 
   /**
