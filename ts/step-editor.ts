@@ -58,16 +58,14 @@ var exData;
  * table.  Uses eval rather than JSON.parse for flexibility of format.
  */
 export function exerData() {
-  return(
-    exData
-      ? new Promise(res => res(exData))
-      : fetch('/pt/exercises.json')
-          .then(response => response.text())
-          .then(tx => {
-            exData = eval(tx);
-            return exData;
-          })
-  );
+  return exData
+    ? new Promise((res) => res(exData))
+    : fetch("/pt/exercises.json")
+        .then((response) => response.text())
+        .then((tx) => {
+          exData = eval(tx);
+          return exData;
+        });
 }
 
 //// PROOF EDITOR
