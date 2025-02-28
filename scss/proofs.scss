@@ -116,13 +116,11 @@ wffblock- > * {
     border: 1px solid #aaa;
     box-shadow: #aaa 1px 1px 2px;
     // overflow-anchor: none;  Can this tame unwanted scrolling?
-}
 
-// This causes all pointer events in the proof editor
-// to appear to come from the proof editor itself, which
-// makes it easy to identify and ignore them if needed.
-.proofEditor.hasDialog > * {
-  pointer-events: none;
+    // Displayed popup.
+    .poppedUp {
+      visibility: visible !important;
+    }
 }
 
 /* If an error in loading the proof editor, then show. */
@@ -753,6 +751,7 @@ span.stepRef {
   border: 2px solid DarkSeaGreen;
   border-radius: 5px;
   pointer-events: auto;
+  z-index: 1002;         // This large number may be obsolete.
 }
 
 // This is intended as a more general replacement
