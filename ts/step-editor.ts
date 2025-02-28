@@ -2547,16 +2547,19 @@ class RuleMenu {
    */
   handleMouseClickItem(node, event) {
     const proofEditor = this.proofEditor;
+    /* TODO: Consider reinstating this code or something like it,
+       perhaps conditional on the user already using the rule menu
+       several times.
     let uxStatus = localStorage.getItem('Toy:uxOK');
     if (uxStatus == null) {
       // On first use of the menu, if uxOK is unset,
       // get the user to set it explicitly, and ignore
       // the usual menu action.
       const $pnode = proofEditor.$node;
-      $pnode.find('.uxDialog').removeClass('invisible');
-      $pnode.addClass('hasDialog');
+      showPopup($pnode.find('.uxDialog'));
       return;
     }
+    */
 
     // Track these events in Matomo.
     Toy.trackAppEvent('MainMenu');
