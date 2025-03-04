@@ -38,8 +38,14 @@
 sub {
   // This assumes use of reboot.css, which positions them relative,
   // aligned to the baseline.  The negative bottom moves it below
-  // that baseline, relative to its own size.
+  // that baseline, relative to its own size.  Reboot.css uses -.25,
+  // which does not seem quite enough for math.
   bottom: -.3em;
+}
+
+sub, sup {
+  // Again overriding reboot.css, here 70% vs 75%.
+  font-size: 70%;
 }
 
 .hidden {
