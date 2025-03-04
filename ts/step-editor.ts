@@ -489,8 +489,7 @@ export class ProofEditor {
 
     // Click in most areas of the document removes any step or expr
     // selection.
-    // TODO: Change document to self.$node.
-    $(document).on('click', function(event) {
+    $(self.$node).on('click', function(event) {
 
         if (!mainDisplay._selectLock) {
           // When a rule entry form is open, selection is locked.
@@ -519,9 +518,8 @@ export class ProofEditor {
         }
       });
 
-    // Click in most areas of the document hides the workspace controls.
-    // TODO: Change document to self.$node.
-    $(document).on('click', function(event) {
+    // Click in most areas of the proof editor hides the workspace controls.
+    $(self.$node).on('click', function(event) {
       const $target = $(event.target);
       if (!within($target, '.wksControlsOuter, .proofButtons')) {
         self._wksControls.hide();
@@ -2379,6 +2377,9 @@ class RuleMenu {
           $node.find('.subgoals')
             .append(` with ~${count} new subgoal${plural}`);
         }
+        // TODO: At some point filter out results where the main part of
+        //   a step is replaced by T.  For rewrites that can be
+        //   determined from repl and the sitePath.
         itemInfos.push({ruleName: 'rewriteFrom',
                         ruleArgs: [selStep.original, sitePath,
                                   schemaStep.original],
@@ -2473,6 +2474,8 @@ class RuleMenu {
         if (thisStep.isAsmPath(sitePath)) {
           priority++;
         }
+        // TODO: Consider support for filtering by resultTerm and
+        //   sitePath.
         const result = {
           ruleName: 'rewrite',
           ruleArgs: [thisStep, sitePath, statement],
