@@ -78,7 +78,8 @@ export function exerData() {
 const exemptPopups = new Set();
 
 /**
- * Remove "popups" from the document.
+ * Hide all popups in case of an appropriate event.  Called as an event
+ * handler.
  */
 function hidePopups(ev) {
   if (ev.type == "click" || (ev.type == "keydown" && ev.key == "Escape")) {
@@ -87,10 +88,6 @@ function hidePopups(ev) {
       .filter((i, elt) => !exemptPopups.has(elt))
       .removeClass("poppedUp");
   }
-}
-
-function noHide(ev) {
-  ev.originalEvent['no-hide'] = true
 }
 
 /**
@@ -110,6 +107,8 @@ function showPopup(node) {
   const d = domify(node);
   // Exempt this popup just until control returns to the main loop.
   exemptPopups.add(d);
+  // We don't need this line if the popup is shown from a click or kbd
+  // event handler.
   soonDo(() => exemptPopups.delete(d));
 }
 
@@ -1518,11 +1517,13 @@ export class StepEditor {
 
     // Clicking the button or hitting <enter> triggers trying the rule.
     $form.append(' <button class=go>Go</button>');
-    self.$form.on('click', 'button.go', function() {
+    // Note that the document's click handler will remove this exemption.
+    $form.on('click', () => exemptPopups.add(domify($form)));
+    $form.on('click', 'button.go', function() {
       self.tryRuleFromForm();
     });
     // Keyboard events bubble to here from the inputs in the form.
-    self.$form.on('keydown', function(event) {
+    $form.on('keydown', function(event) {
       if (event.keyCode == 13) {
         // <enter> key was hit
         self.tryRuleFromForm();
