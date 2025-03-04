@@ -165,6 +165,13 @@ namespace Toy {
     }
   }
 
+  /**
+   * Coerce jQuery to node, leaving nodes as-is.
+   */
+  export function domify(node) {
+    return node instanceof jQuery ? node[0] : node;
+  }
+
   var _HTML_MAP = {
     '&': '&amp;',
     '<': '&lt;',
