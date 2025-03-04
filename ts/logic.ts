@@ -7043,7 +7043,8 @@ declare(
   {statement: '(a => b) & (b => a) == (a == b)',
    proof: function() {
      return rules.tautology('(a => b) & (b => a) == (a == b)');
-   }
+   },
+   simplifier: true,
   },
 
   // Equivalence by proving a conditional in both directions.

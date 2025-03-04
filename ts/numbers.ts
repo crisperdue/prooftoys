@@ -4034,7 +4034,8 @@ declare(
      return (rules.consider('x = y == u = v')
              .rewrite('/right', 'a == b == (not a == not b)')
              .andThen('simplifySite', '/right', ['not (x = y) == x != y']));
-   }
+   },
+   desimplifier: true,
   },
 
 );
