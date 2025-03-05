@@ -5206,6 +5206,9 @@ function chainDescription(step) {
 }
 
 function detachMenuGen(ruleName, selStep, selTerm, editor) {
+  // Menu generation for the detach is currently disabled.  It tends to
+  // produce results that are too large and hard to read.
+  return null;
   // This only generates menu items when the conclusion of a step is
   // selected.
   // 
