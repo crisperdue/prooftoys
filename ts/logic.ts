@@ -4612,13 +4612,14 @@ declare(
   // Version of Andrews Rule R' that uses a conditional rather than
   // hypotheses.  Uses a potentially conditional equation to replace a
   // term in a target step.  Replaces the target as done by r1, and
-  // describing the inputs as A => B = C, and D, produces a result
-  // that is schematically A => D', where D' is like D, with an
-  // occurrence of B replaced by C.  In other words, if the equation
-  // has assumptions, they are carried down, and no others.
+  // describing the inputs as A => B = C, and D, produces a result that
+  // is schematically A => D', where D' is like D, with an occurrence of
+  // B replaced by C.  In other words, if the equation has assumptions
+  // (A), they become the assumptions of the result.  If D has the form
+  // E => F, the result in this case has the form A => (E => F')
   //
-  // The "replace" rule (below) also merges any assumptions of D with
-  // the new assumptions A using arrangeAsms.
+  // The "replace" rule (below) is much like this one, but also merges
+  // any assumptions of D with the new assumptions A using arrangeAsms.
   {name: 'r2',
    // This precheck is commented out until proven useful.
    // This precheck tests for conflicting bindings, where a bound
@@ -5321,16 +5322,16 @@ function detachDescription(step) {
 // Chaining is a generalization of modus ponens that works with a step
 // and a conditional fact or step, which it uses as a schema to match.
 // The step argument concludes that an instance of the LHS of the
-// conditional schema is true, and chaining substitutes into the
-// schema to make them match.  Chain0 matches the schema antecedent
-// against the entire step, and chain1 matches the schema antecedent
+// conditional schema is true, and chaining substitutes into the schema
+// to make them match.  Chain0 matches the schema antecedent against the
+// entire step, while chain1 and chain1Only match the schema antecedent
 // against only the conclusion of the (conditional) step.
 //  
 // With chain0, the result is an instance of the conclusion of the
-// schema.  The conclusion of the result of chain1 is also an instance of the schema's
-// conclusion, but with the assumptions of the step carried over to
-// the result, and if the schema has the form (a => (b => c)), the
-// result has "a" and "b" conjoined.
+// schema.  The conclusion of the result of chain1 and chain1Only is
+// also an instance of the schema's conclusion, but with the assumptions
+// of the step carried over to the result. For chain1, if the result has
+// the form (a => (b => c)), the result has "a" and "b" conjoined.
 declare(
   // Forward reasoning: Chain a conditional step, matching its
   // conclusion with the left side of a conditional schema.  Available
