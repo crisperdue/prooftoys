@@ -5378,15 +5378,18 @@ declare(
      const onward = rules.chain1Only.prep(step, schema);
      if (onward) {
        const chained = onward();
-       const withAsms = Toy.applyMatchingFact(chained, '',
-                                              ['a => (b => c) == a & b => c'],
-                                              'rewriteOnly');
-        if (withAsms) {
-          // This whole rule looks like a mistake; just use chain1Only??
-          debugger;
-        }
+       const withAsms = Toy.applyMatchingFact(
+         chained,
+         '',
+         ['a => (b => c) == a & b => c'],
+         'rewriteOnly'
+       );
+       if (withAsms) {
+         // This whole rule looks like a mistake; just use chain1Only??
+         debugger;
+       }
        const simpler = withAsms && rules.simplifyAsms(withAsms);
-       return (() => simpler || chained);
+       return () => simpler || chained;
      }
    },
    labels: 'basic',
