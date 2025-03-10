@@ -5369,9 +5369,6 @@ declare(
   // Forward reasoning, like chain1Only, but where that returns
   // (a => (b => c)), this combines and simplifies "a" and "b"
   // as the assumptions.  Succeeds when chain1Only succeeds.
-  //
-  // TODO: Consider if this is useless. If anything perhaps keep
-  //   chain1Only.
   {name: 'chain1',
    action2: function(step, schema_arg) {
      const schema = termify(schema_arg);
@@ -5384,10 +5381,6 @@ declare(
          ['a => (b => c) == a & b => c'],
          'rewriteOnly'
        );
-       if (withAsms) {
-         // This whole rule looks like a mistake; just use chain1Only??
-         debugger;
-       }
        const simpler = withAsms && rules.simplifyAsms(withAsms);
        return () => simpler || chained;
      }
