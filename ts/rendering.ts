@@ -428,6 +428,7 @@ export class ProofDisplay {
       copy.wff.reIndent();
       // All insertions of a rendered step immediately scroll the window
       // to the very bottom.
+      // TODO: Consider using scrollIntoView.
       $(self.stepsNode).scrollTop(1e9);
     }
     return $(node).data('proofStep');
@@ -1717,13 +1718,17 @@ export interface Expr {
  * Removes "minor" conditions from the assumptions, returning an Expr.
  * Applied to a WFF, typically a Step.
  */
-Expr.prototype.shortForm = function() {
+Expr.prototype.shortForm = function () {
   const infix = Toy.infixCall;
   const asms = this.getAsms();
   let shorts = null;
   if (asms) {
-    asms.scanConj(asm => {
-      if (asm.likeSubgoal()) {
+    asms.scanConj((asm) => {
+      if (
+        !asm.matchSchema('R x') &&
+        !asm.matchSchema('not (x = y)') &&
+        !asm.matchSchema('x != y')
+      ) {
         shorts = shorts ? infix(shorts, '&', asm) : asm;
       }
     });
@@ -1731,7 +1736,7 @@ Expr.prototype.shortForm = function() {
   } else {
     return this;
   }
-}
+};
 
 export interface Expr {
   shortString();
@@ -1742,7 +1747,7 @@ export interface Expr {
  */
 Expr.prototype.shortString = function() {
   return Toy.trimParens(this.shortForm().toHtml());
-}
+};
 
 export interface Expr {
   descendants();
