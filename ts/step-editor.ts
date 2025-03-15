@@ -195,6 +195,8 @@ export var nextProofEditorId = 1;
  * givenVars: object/set keyed by names of variables free in the givens;
  *   read-only.
  * goalStatement: for proof exercises, a proof statement wff.
+ * proofData: If the document has proof data in proof-data.js, this
+ *   is the plain object defined for the document there.
  * solutions: If any of these expressions (or strings) is an alphaMatch
  *   with a step, announce the step as a solution.
  * standardSolution: Boolean.  If no explicit solutions given, but the
@@ -232,6 +234,7 @@ export class ProofEditor {
   fromDoc: boolean;
   exercise;
   docName;
+  proofData;
 
   constructor(options_arg:Record<string, any>={}) {
 
@@ -352,8 +355,6 @@ export class ProofEditor {
     // whenever it changes.
     this._refresher = new Toy.Refresher(changes => this.refresh());
     this._otherChanges = new Toy.Refresher(changes => this.otherChanges());
-
-    let data;
     
     // Create an editor record if none exists.
     const id = self.proofEditorId;
@@ -376,12 +377,12 @@ export class ProofEditor {
                           // that is greater than one.
                           : this.proofEditorId));
       // If there is a canned solution, show the "Solve" button.
-      data = Toy.findProofData(self.docName);
+      const data = self.proofData = Toy.findProofData(self.docName);
       if (data) {
         $solve.removeClass('hidden');
       }
       // Initialize editor content.
-      if (self.openDoc(self.docName)) {
+      if (self.openDoc(self.docName, true)) {
         // There is an existing saved document.
         self.fromDoc = true;
       } else if (self.initialSteps) {
@@ -472,9 +473,9 @@ export class ProofEditor {
         self.setSteps([]);
         // Yes, data.proof uses yet another format for the proof.
         // Convert it to a single string.
-        const proofStr = ['(steps '].concat(data.proof, ')').join('\n');
+        const stepsString = proofDataSteps(self.proofData);
         // Add each step ASAP and support debugging.
-        decodeSteps2(proofStr, step => self.addStep(step));
+        decodeSteps2(stepsString, step => self.addStep(step));
       }
     });
 
@@ -708,8 +709,11 @@ export class ProofEditor {
    * are set up except if the proof goal indicates NN but not R.  In
    * that case ensures that NN is set up.
    */
-  openDoc(name) {
+  openDoc(name: string, isInitial: boolean = false) {
     const self = this;
+    if (!isInitial && self._options.oneDoc) {
+      return false;
+    }
     const goal = Toy.catching(() => Toy.parse(name));
     if (!('noload' in this._options)) {
       let needNN = false;
@@ -964,6 +968,14 @@ Object.defineProperty(ProofEditor.prototype, "givens", {
       this._updateGivenVars();
     }
   });
+
+/**
+ * Converts a proofData record to a "steps" string with the proof.
+ * Decode this into an executable proof with decodeSteps(2).
+ */
+export function proofDataSteps(data) {
+  return ['(steps '].concat(data.proof, ')').join('\n');
+}
 
 /**
  * Based on the given "exercise/item" exercise name, adds the fact
