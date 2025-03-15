@@ -2208,8 +2208,29 @@ namespace Toy {
    * Returns a promise that resolves after allowing enough time
    * for a repaint to trigger.
    */
-  function allowRepaint() {
+  export function allowRepaint() {
     return sleep(10);
+  }
+
+  /**
+   * Calls the given callback with a milliseconds argument as supplied
+   * by requestAnimationFrame until the callback returns a falsy value.
+   * As a special case, calls it with a negative argument on the first
+   * iteration to indicate it is the first call.  Experimental.
+   */
+  export function animatedly(fn: (tm: number) => boolean | undefined) {
+    const f = (tm: number) => fn(tm) && requestAnimationFrame(f);
+    f(-1);
+  }
+
+  /**
+   * This uses requestAnimationFrame to run the action in the next
+   * animation frame, or right after the next repaint if the optional
+   * second argument is true.  Experimental.
+   */
+  export function verySoon(action: () => void, wait = false) {
+    let times = wait ? 1 : 0;
+    animatedly((tm) => times-- == 1 || (action(), false));
   }
 
   //// Change handlers
