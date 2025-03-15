@@ -2827,11 +2827,11 @@ export abstract class Expr {
   }
 
   /**
-   * Get the assumptions of this step if it has any, else null.
+   * Get the assumptions of this wff if it has any, else null.
    */
   // @ts-ignore
   asmPart() {
-    var wff = this.wff;
+    const wff = this;
     return wff.isCall2('=>') ? wff.getLeft() : null;
   }
 
