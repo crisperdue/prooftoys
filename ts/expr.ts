@@ -982,6 +982,10 @@ export abstract class Expr {
     return this.isCall2('=>') ? this.getLeft() : null;
   }
 
+  /**
+   * Returns truthy if this has the form of a type test; intended to
+   * extend to more types, currently R or NN or ZZ.
+   */
   isTypeTest(this) {
     if (this.isCall1()) {
       const self = this satisfies Call1;
@@ -1003,9 +1007,9 @@ export abstract class Expr {
   }
 
   /**
-   * Tests whether the given goal (wff) has a subgoal within its
-   * assumptions, currently defined as anything other than a real number
-   * assumption or an inequality condition.
+   * Tests whether the given goal (wff) has a plausible subgoal within
+   * its assumptions, currently defined as anything other than a real
+   * number assumption or an inequality condition.
    */
   hasSubgoal() {
     const asms = this.getAsms();

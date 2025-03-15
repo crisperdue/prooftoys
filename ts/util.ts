@@ -1685,7 +1685,9 @@ namespace Toy {
 
   /**
    * Returns a proofData record for the document with the given name,
-   * or a falsy value if none is found.
+   * or a falsy value if none is found.  These records are plain objects
+   * with a string "doc" field that is the doc name, and a "proof" field
+   * with an array of steps, each in the usual format as a string.
    */
   export function findProofData(docName) {
     return Toy.proofData.find(x => x.doc === docName);
