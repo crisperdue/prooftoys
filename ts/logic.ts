@@ -1082,7 +1082,7 @@ declare(
     menu: 'consider a term to transform (A = A)',
     toOffer: 'return step == null',
     tooltip: ('consider a term to transform'),
-    description: 'considering;; (A = A)',
+    description: 'considering;; {term}',
     labels: 'basic'
   },
 
@@ -1628,7 +1628,7 @@ declare(
     const inGoal = !assumedPrep(s, p, true);
     const g = inGoal ? 'in goal' : '';
     const term = s.get(p).toHtml(true);
-    return `assumed ${term} ${g}`;
+    return `${term} is assumed ${g}`;
    },
    priority: 5,
   },
@@ -1797,7 +1797,7 @@ declare(
    description:
    // TODO: include "in step <n>".
    (step =>
-    `by assumed;;<b>${step.ruleArgs[2].termDisplay()}</b>`),
+    `by assumed ;;<b>${step.ruleArgs[2].termDisplay()}</b>`),
   },  
 
   /**
