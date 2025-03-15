@@ -1914,6 +1914,14 @@ export abstract class Expr {
   }
 
   /**
+   * Is it a boolean equivalence, possibly with assumptions?
+   */
+  isEquiv() {
+    const main = this.getMain();
+    return main.isCall2('=') && main.getBinOp().isEquivOp();
+  }
+
+  /**
    * Gets the left side of an equation, possibly with assumptions,
    * or null if there is none.
    */

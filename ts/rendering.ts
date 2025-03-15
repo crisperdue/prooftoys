@@ -1216,6 +1216,9 @@ export function sameAsPrevAsms(step) {
  * "sameAs" each other.
  */
 export function sameAsPrevEqnLeft(step) {
+  if (!step.isEquiv()) {
+    return false;
+  }
   const left = step.eqnLeft();
   return left && prevRenderedStep(step)?.eqnLeft()?.sameAs(left);
 }
