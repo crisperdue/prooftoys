@@ -1039,7 +1039,8 @@ export interface Expr {
 }
 /**
  * Registers the types of all constants found in this term that have
- * not already been registered.
+ * not already been registered.  This goes hand-in-hand with
+ * addConstants, and the two should probably be combined.
  */
 Expr.prototype.registerConstants = function() {
   // Really just visiting all, not searching.

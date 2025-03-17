@@ -146,7 +146,8 @@ export function isConstantName(name) {
 
 /**
  * Adds the given iterable (e.g. Set or Array) of names to the set of
- * all named constants.
+ * all named constants.  Goes hand-in-hand with registerConstants.  The
+ * two probably should be combined.
  */
 export function addConstants(names) {
   names.forEach(function(name) {
@@ -2922,10 +2923,10 @@ var numeralRegex = /^-?[0-9]+$/;
 
 // Constant names having the same form as a usual variable name.
 // TODO: Consider handling of other constants such as C, Q, Z, N,
-//   pi, and the imaginary unit.  Perhaps in context, R and
+//   e (ee), pi, and the imaginary unit.  Perhaps in context, R and
 //   potentially "i" can be treated as parse-level abbreviations
 //   for constants such as RR and ii with normal constant names.
-const specialConsts = new Set(['T', 'F', 'R', 'e']);
+const specialConsts = new Set(['T', 'F', 'R']);
 
 /**
  * True iff the given string is an identifier (named variable or
