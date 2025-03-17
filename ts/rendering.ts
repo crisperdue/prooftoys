@@ -1724,11 +1724,7 @@ Expr.prototype.shortForm = function () {
   let shorts = null;
   if (asms) {
     asms.scanConj((asm) => {
-      if (
-        !asm.matchSchema('R x') &&
-        !asm.matchSchema('not (x = y)') &&
-        !asm.matchSchema('x != y')
-      ) {
+      if (!asm.matchSchema('R x')) {
         shorts = shorts ? infix(shorts, '&', asm) : asm;
       }
     });
