@@ -611,6 +611,9 @@ definition('recip x = 1 / x');
 
 
 declare(
+
+  //// Ordering axioms
+
   {statement: '@ x < y => R x & R y', axiom: true,
    description: 'domain of "<" is the real numbers'
   },
@@ -623,16 +626,31 @@ declare(
    {statement: 'x < y | y < x | x = y', axiom: true,
     description: 'axiom 3 of "<"'
    },
+
+   // Transitivity, in 3 forms
    {statement: 'x < y & y < z => x < z', axiom: true,
     description: 'transitivity of "<"'
    },
 
-   // Completeness:
+   // TODO: Decide whether to keep or omit these two.
    //
-   // infix (x is_ub S)
-   // define is_ub = [x ∈ ℝ, S ⊆ ℝ. ∀ y ∈ S. y ≤ x]
-   // ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
-   //          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
+   // {statement: '@ x < y => (R x & R y & R z & y < z => x < z)',
+   //  name: 'lessTrans2',
+   //  proof: function() {
+   //    const s1 = rules.fact('x < y & y < z => x < z');
+   //    const s2 = rules.isolateAsm(s1, 'x < y');
+   //    return s2;
+   //  },
+   // },
+
+   // {statement: '@ y < z => (R x & R y & R z & x < y => x < z)',
+   //  name: 'lessTrans3',
+   //  proof: function() {
+   //    const s1 = rules.fact('x < y & y < z => x < z');
+   //    const s2 = rules.isolateAsm(s1, 'y < z');
+   //    return s2;
+   //  },
+   // },
 
    {statement: 'x < y => x + z < y + z', axiom: true,
     description: 'ordering of reals and addition'
@@ -658,6 +676,13 @@ declare(
   {statement: 'not (none < x)', axiom: true},
   
 );
+
+//// Completeness:
+//
+// infix (x is_ub S)
+// define is_ub = [x ∈ ℝ, S ⊆ ℝ. ∀ y ∈ S. y ≤ x]
+// ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
+//          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
 
 definition('x > y == y < x');
 definition('x <= y == x < y | x = y');
@@ -1052,9 +1077,7 @@ declare(
 );
 
 
-////
 //// Inference rules
-////
 
 //
 // Real numbers
