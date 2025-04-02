@@ -241,6 +241,11 @@ namespace Toy {
   }
 
   /**
+   * A predicate that always returns true. Useful as a default argument.
+   */
+  export const truly = x => true;
+
+  /**
    * Converts an object/map into a Map from own property names to their
    * values.
    */
