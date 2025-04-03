@@ -347,9 +347,13 @@ export function checkRange(number) {
  * applying scanConjuncts to the given term, as for example
  * making the assumptions of a step into a TermSet.
  */
-export function makeConjunctionSet(term) {
+export function makeConjunctionSet(term, pred = truly) {
   var set = new TermSet();
-  term.scanConjuncts(function (t) { set.add(t); });
+  term.scanConjuncts(function (t) {
+    if (pred(t)) {
+      set.add(t);
+    }
+  });
   return set;
 }
 
@@ -728,7 +732,7 @@ export abstract class Expr {
    * given as a boolean function of one argument.  Returns the first
    * subexpression that passes the test, with this expression itself
    * tested first, followed by the rest in top-down, left-to-right
-   * order, or null if there is none.  The search includes
+   * order.  Returns null if there is none.  The search includes
    * variable bindings if bindings is truthy.
    */
   abstract search(test, bindings);
@@ -758,16 +762,24 @@ export abstract class Expr {
 
   /**
    * Tree walks though this Expr and its subexpressions, recursively,
-   * calling the function to each one, passing it the term and a reverse
-   * path from this term to that point until the function returns a
-   * truthy value.  Descends first into the arg part to make the search
-   * proceed right to left.  All subexpressions of Lambda terms receive
-   * non-null bindings, mapping the name of the bound variable to the
-   * lambda in which it is bound, innermost first.  Returns the first
-   * truthy value returned from "fn" at any level.  If not given, this
-   * treats the path and bindings as empty.
+   * calling the function at each one, passing it the term, a reverse
+   * path from this term to that point, and the current bindings, until
+   * the function returns a truthy value.  Descends first into the arg
+   * part to make the search proceed right to left.  All subexpressions
+   * of Lambda terms receive non-null bindings, mapping the name of the
+   * bound variable to the lambda in which it is bound, innermost first.
+   * Returns the first truthy value returned from "fn" at any level.
+   * Each binding maps from name to the Lambda term that binds it.
    */
-  abstract searchMost(fn, opt_path, opt_bindings);
+  abstract searchMost(fn, path, bindings);
+
+  /**
+   * Does the same as searchMost, but has a better name and only one
+   * argument.
+   */
+  searchAll(fn) {
+    return this.searchMost(fn, Path.empty, null);
+  }
 
   constructor() {
     this.__type = null;
@@ -985,18 +997,27 @@ export abstract class Expr {
 
   /**
    * Returns truthy if this has the form of a type test; intended to
-   * extend to more types, currently R or NN or ZZ.
+   * extend to more types, currently R or NN or QQ or ZZ.
    */
-  isTypeTest(this) {
+  isTypeTest() {
     if (this.isCall1()) {
       const self = this satisfies Call1;
       return (self.fn.name === 'R' ||
-            self.fn.name === 'NN' ||
-            self.fn.name === 'ZZ');
+        self.fn.name === 'NN' ||
+        self.fn.name === 'QQ' ||
+        self.fn.name === 'ZZ');
     } else {
       return false;
     }
   }
+
+  /**
+   * This truthy for type tests whose argument is a variable.
+   */
+  isTypeDecl() {
+    return this.isTypeTest() && (this as unknown as Call).arg.isVariable();
+  }
+
 
   /**
    * Returns truthy iff this looks like a subgoal.
@@ -2165,16 +2186,18 @@ export abstract class Expr {
    * from this to the occurrence, or null if none found.  Tests this
    * expression first, followed by the rest in top-down right-to-left
    * order.  Does not search for variable bindings, use pathToBinding
-   * instead.  Alternatively accepts a term to be matched with sameAs,
-   * which may be given as a string.
+   * instead.  Alternatively accepts a term to be matched with
+   * "matches", which may be given as a string.
    */
-  pathTo(arg) {
+  pathTo(arg, matches?: boolean) {
     // TODO: Make a more efficient version that works directly with
     // forward paths.
     let test = arg;
     if (typeof arg === 'string' || arg instanceof Expr) {
       const target = termify(arg);
-      test = function(term) { return target.sameAs(term); };
+      test = matches
+        ? (term) => target.matches(term)
+        : (term) => target === term;
     }
     const rpath = this._path(test, Toy.asPath(''));
     return rpath ? rpath.reverse() : null;
@@ -2653,11 +2676,14 @@ export abstract class Expr {
    * Build and return a TermSet containing the assumptions
    * of this wff.  If the wff is not conditional, returns
    * an empty set.
+   * 
+   * The optional predicate filters the asms to include in the set.  By
+   * default it includes all of them.
    */
-  asmSet() {
+  asmSet(pred = truly) {
     return (this.isCall2('=>')
-            ? Toy.makeConjunctionSet(this.getLeft())
-            : new Toy.TermSet());
+            ? makeConjunctionSet(this.getLeft(), pred)
+            : new TermSet());
   }
 
   /**
