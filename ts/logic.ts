@@ -1595,14 +1595,15 @@ declare(
      }
    },
   },
+);
 
-  /**
-   * Applies if the boolean target term is the same as some assumption.
-   * Acts by rewriting it to T and removing the T if it is in a
-   * conjunction.
-   */
-  {name: 'assumed',
-   action2: function(step, path) {
+/**
+ * Applies if the boolean target term is the same as some assumption.
+ * Acts by rewriting it to T and removing the T if it is in a
+ * conjunction.
+ */
+rule('assumed', {
+  action2: function (step, path) {
     const action = () => {
       const target = step.get(path);
       const step1 = rules.assume(target);
@@ -1613,26 +1614,31 @@ declare(
       const upPath = pretty.above();
       const simpler =
         (upPath &&
-          applyMatchingFact(step2, upPath, ['T & a == a', 'a & T == a']))
-        || step2;
+          applyMatchingFact(step2, upPath, [
+            'T & a == a',
+            'a & T == a',
+            'T => a == a',
+          ])) ||
+        step2;
       return simpler;
     };
     return assumedPrep(step, path, false) && action;
-   },
-   inputs: {site: 1},
-   labels: 'basic',
-   menu: 'true by assumption',
-   description: step => {
+  },
+  inputs: { site: 1 },
+  labels: 'basic',
+  menu: 'true by assumption',
+  description: (step) => {
     const [s, p] = step.ruleArgs;
     // Noted as "in goal" if not assumed in the step.
-    const inGoal = !assumedPrep(s, p, true);
+    const inGoal = !assumedPrep(s, p, false);
     const g = inGoal ? 'in goal' : '';
     const term = s.get(p).toHtml(true);
     return `${term} is assumed ${g}`;
-   },
-   priority: 5,
   },
+  priority: 5,
+});
 
+declare(
   /**
    * Applies if the boolean target term matches the negated part of a
    * negated assumption, rewriting the target term to F.
