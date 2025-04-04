@@ -203,3 +203,7 @@ It should be borne in mind that there is nothing more difficult to
 arrange, more doubtful of success, and more dangerous to carry through
 than initiating new orders of things. -- Niccolo Machiavelli, "The
 Prince", Ch 6.
+
+It is difficult to get a man to understand something when his salary
+depends upon his not understanding it. -- Upton Sinclair, "I, Candidate
+for Governor"
