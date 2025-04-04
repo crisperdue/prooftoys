@@ -413,8 +413,40 @@ export var rules: Record<string, any> = {};
 
 //// RULE PROPERTIES
 
-// The following rule properties are available directly when calling
-// addRule.
+const propNames = [
+  'action',
+  'action2',
+  'autoSimplify',
+  'axiom',
+  'converse',
+  'definition',
+  'description',
+  'desimplifier',
+  'form',
+  'inputs',
+  'isRewriter',
+  'labels',
+  // 'maxArgs',  How about this one?
+  'menu',
+  'menuGen',
+  'minArgs',
+  'name',
+  'noSuggest',
+  'noSwap',
+  // 'onFail',  Documented but questionable.
+  'precheck',
+  'priority',
+  'proof',
+  'simplifier',
+  'statement',
+  'toOffer',
+  'tooltip',
+];
+const ruleProps = new Set(propNames);
+  
+
+// The following rule properties may be used as inputs to addRule or set
+// up by it.
 //
 // Properties:
 //
@@ -634,6 +666,15 @@ export var rules: Record<string, any> = {};
  */
 export function addRule(info) {
   const fmt = Toy.format;
+
+  {
+    const id = info.name || info.statement || '?';
+    for (let k in info) {
+      if (!ruleProps.has(k)) {
+        console.warn(`addRule: unknown rule property ${k} of ${id}`)
+      }
+    }
+  }
 
   var name = info.name;
   if (name && rules[name]) {
@@ -2692,8 +2733,6 @@ export function addFact(info) {
   // the fact.  Also rules.assert can add constants in case it is used
   // without registering a fact. (And Toy.define also adds the defined
   // constant as it bypasses this code.)
-  // TODO: If there is no proof, assert the fact immediately and skip
-  //   this code.
   info.goal.registerConstants();
   const names = info.goal.newConstants();
   if (names.size > 0) {
