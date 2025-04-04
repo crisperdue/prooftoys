@@ -2869,12 +2869,19 @@ function asFactProver(prover, goal) {
         }
         if (!factAsms.superset(goalAsms)) {
           console.warn(
-            'Ignoring unneeded assumptions in the fact statement.',
+            'Adding extra assumptions from the fact statement.',
             '\nProved:', proved.toString(),
             '\nStated:', goal.toString()
           );
           // This is a pretty innocuous issue so we let it pass.
           // okAsms = false;
+          // Add the extra goal asms to the proved version.
+          goal.asmPart().scanConj(gasm => {
+            if (!factAsms.has(gasm)) {
+              proved = proved.andThen('andAssume', gasm);
+            }
+          });
+          console.warn('Improved:', proved.toString());
         }
         if (okAsms) {
           // The assumptions can match if rearranged.
