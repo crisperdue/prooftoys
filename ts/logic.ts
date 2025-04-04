@@ -3594,11 +3594,288 @@ declare(
     labels: 'basic',
     description: 'adding assumption {bool};; {in step step}'
   },
+);
 
-  // Given a boolean site and a condition, this conjoins "& condition"
-  // to the boolean at the site, and adds the condition to the step
-  // as needed.  Presumes that no free variables in the condition are
-  // bound in context.
+/**
+ * Adds the selected term to the assumptions.  Offered only when it is
+ * not already an assumption and all of its locally free vars are free
+ * in context.
+ */
+rule('andAssumeThis', {
+  action2: function (step, path) {
+    const term = step.get(path);
+    if (term.isBoolean()) {
+      return () => rules.andAssume(step, term);
+    }
+  },
+  toOffer: (step: Step, term: Expr) => {
+    // It must be boolean and not already in the asms.
+    if (!term.isBoolean() || step.asmSet().has(term)) {
+      return false;
+    }
+    const path = step.pathTo(term);
+    const bound = new Set(step.pathBindings(path).keys());
+    const freeHere = term.freeVarSet();
+    if (intersection(bound, freeHere).size > 0) {
+      // The locally free vbls must not be bound in context.
+      return false;
+    }
+    return true;
+  },
+  autoSimplify: noSimplify,
+  inputs: { site: 1 },
+  labels: 'basic',
+  menu: 'add {term} as assumption',
+  description: 'adding assumption {site};; {in step siteStep}',
+  priority: 2,
+});
+
+/**
+ * Seeks an opportunity to apply some assumption within the selected
+ * part of the step, which currently must be on the main side.  If it
+ * finds one or more opportunites, "arbitrarily" chooses one and applies
+ * it.  Eligible assumptions may optionally be filtered by a predicate,
+ * which defaults to including all assumptions.  The path may be given
+ * as a string.
+ */
+rule('applySomeAsm', {
+  action2: function (step: Step, path_arg: Pathable, test = truly) {
+    const path = step.asPath(path_arg);
+    if (!step.isMainSide(path)) {
+      return null;
+    }
+    const asmSet = step.asmSet(test);
+    if (asmSet.size() > 0) {
+      const test = (term: Expr, rpath: Path, bindings) => {
+        // The callback of asms.each must return undefined when not
+        // matching.
+        const asm = asmSet.each((a) => (a.matches(term) ? a : undefined));
+        if (!asm) {
+          return null;
+        }
+        // Here asm "matches" the current term.
+        const vars = term.freeVarSet();
+        for (const nm of vars) {
+          if (findBinding(nm, bindings)) {
+            return null;
+          }
+        }
+        // The locally free variables are free in context.
+        return rpath;
+      };
+      const target = step.get(path);
+      const rpath = target.searchMost(
+        test,
+        path.reverse(),
+        step.pathBindings(path.uglify(step.implies()))
+      );
+      if (rpath) {
+        return () => rules.assumed(step, rpath.reverse());
+      }
+    }
+  },
+  autoSimplify: noSimplify,
+  inputs: { site: 1 },
+  labels: 'tactic',
+  menu: 'apply an assumption',
+  description: 'applying an assumption',
+  priority: 3,
+});
+
+/**
+ * Given a step, applies all of the step's type decclarations (on
+ * variables, in the assumptions) wherever found in the main part of the
+ * step.  Returns null if no application is found.
+ */
+rule('applyTypeDecls', {
+  action2: function (step: Step) {
+    if (step.implies()) {
+      let better = step;
+      let more = rules.applySomeAsm.prep(step, '/right'), isTypeDecl;
+      if (more) {
+        // Now we know there is work to be done.
+        return () => {
+          while (more) {
+            // Apply a type declaration.
+            better = more();
+            // Now check if more can be done.
+            more = rules.applySomeAsm.prep(better, '/right', isTypeDecl);
+          }
+          return better;
+        };
+      }
+    }
+  },
+  autoSimplify: noSimplify,
+  inputs: { step: 1 },
+  labels: 'tactic',
+  menu: 'use all type declarations',
+  description: 'erasing excess type declarations',
+  priority: 2,
+});
+
+/**
+ * Collects all of the type declarations from a step that is a
+ * conjunction into a set of new assumptions for the new step that it
+ * builds.
+ * 
+ * The prep phase returns nullish if there are no type declarations to
+ * collect.
+ */
+rule('collectTypeDecls', {
+  action2: function (step) {
+    const map = step.matchSchema('a & b');
+    if (map) {
+      const test = a => a.isTypeDecl();
+      const aSet = map.a.asmSet(test);
+      aSet.addAll(map.b.asmSet(test));
+      let asms = null;
+      const add = a => { asms = asms ? call('&', asms, a) : a; };
+      aSet.each(add);
+      if (asms) {
+        return () => rules.andAssume(step, asms);
+      }
+    }
+  },
+  autoSimplify: noSimplify,
+  inputs: { step: 1 },
+  labels: 'tactic',
+  menu: 'collect type declarations',
+  description: 'collecting type declarations',
+});
+
+/**
+ * Collects type declarations as in collectTypeDecls, then applies them
+ * wherever possible in the main part of the step.
+ */
+rule('extractTypeDecls', {
+  action2: function (step: Step) {
+    const more = rules.collectTypeDecls.prep(step);
+    if (more) {
+      return () => {
+        const s1 = more();
+        const s2 = rules.applyTypeDecls.attempt(s1);
+        return s2 || s1;
+      };
+    }
+  },
+  autoSimplify: noSimplify,
+  inputs: { step: 1 },
+  labels: 'tactic',
+  priority: 5,
+  menu: 'extract type declarations',
+  description: 'extracting type declarations',
+});
+
+/**
+ * This untested rule applies the given assumption wherever possible
+ * within the given site, until no more eligible occurrences exist
+ * there.
+ */
+rule('applyAsmInZone', {
+  action2: function (step, path_arg, asm) {
+    const path = step.asPath(path_arg);
+    // Search down, but stop at any binding for a free var of the asm.
+    if (step.implies()) {
+      const frees = asm.freeVarSet();
+      const zone = step.get(path);
+
+      // Searches for asm within expr, where rpath must be a reverse
+      // path from "where" to expr.  Returns a reverse path to the first
+      // occurrence found, or null if none.
+      const search = (expr, rpath) => {
+        // This is like searchMost, but tailored to the purpose,
+        // avoiding the need to maintain a full list of bindings by
+        // checking the bound variable of each Lambda as it is reached,
+        // which is feasible because the replacement is known.
+        if (expr.matches(asm)) {
+          return rpath;
+        }
+        const ctr = expr.constructor;
+        if (ctr === Call) {
+          return (
+            search(expr.arg, new Path('arg', rpath)) ||
+            search(expr.fn, new Path('fn', rpath))
+          );
+        } else if (ctr === Lambda) {
+          if (frees.has(expr.bound.name)) {
+            return null;
+          } else {
+            return search(expr.body, new Path('body', rpath));
+          }
+        }
+      };
+
+      // Search once as a test to determine whether this rule applies.
+      let rpath = search(zone, Path.empty);
+      if (rpath) {
+        // If an occurrence is found, return a continuation to do the
+        // rest of the work.
+        return () => {
+          // If another suitable occurrence is found, continue searching
+          // and replacing until there are no more suitable occurrences.
+          let next = rules.assumed(step, path.concat(rpath.reverse()));
+          while (true) {
+            rpath = search(zone, Path.empty);
+            if (!rpath) {
+              return next;
+            }
+            next = rules.assumed(step, path.concat(rpath.reverse()));
+          }
+          return next;
+        };
+      }
+    }
+  },
+});
+
+/**
+ * Given a step that is a conjunction of conditionals, factors out
+ * common assumptions, though it does not remove them from the input
+ * conditionals.  Not clear how useful this can be.
+ */
+rule('collectJointAsms', {
+  action2: function (step) {
+    const map = step.matchSchema('(a1 => b) & (a2 => c)');
+    if (map) {
+      return () => {
+        const a1 = new TermSet();
+        const a2 = new TermSet();
+        map.a1.scanConj((c) => {
+          a1.add(c);
+        });
+        map.a2.scanConj((c) => {
+          a2.add(c);
+        });
+        const common = new TermSet();
+        a1.each((c) => {
+          if (a2.has(c)) {
+            common.add(c);
+          }
+        });
+        if (common.size() == 0) {
+          return null;
+        }
+        let asms = null;
+        common.each((c) => {
+          asms = asms ? call('&', asms, c) : c;
+        });
+        return rules.andAssume(step, asms);
+      };
+    }
+  },
+  autoSimplify: noSimplify,
+  inputs: { step: 1 },
+  labels: 'tactic',
+  menu: 'collect joint assumptions',
+  description: 'collecting joint assumptions',
+});
+
+declare(
+  // Given a boolean site and a boolean condition term, this conjoins "&
+  // condition" to the boolean at the site, and adds the condition to
+  // the assumptions of the step as needed.  Presumes that no free
+  // variables in the condition are bound in context.
   {name: 'andCondition',
    action2: function(step, path, cond_arg) {
      const cond = termify(cond_arg);
