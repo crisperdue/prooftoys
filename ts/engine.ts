@@ -2586,7 +2586,7 @@ export var basicSimpFacts: (string | Object)[] = [
 //// Support for adding facts
 
 // Object / set of property names supported in fact info data, used
-// for validation of fact properties.  See addFact.
+// for validation of fact properties and transfer from addRule.
 var factProperties = {
   goal: true,
   proved: true,
@@ -2603,6 +2603,7 @@ var factProperties = {
   description: true,
   definitional: true,
   asmExtras: true,
+  priority: true,
   // autoSimplify: true,
   // afterMatch: true,
   converse: true
