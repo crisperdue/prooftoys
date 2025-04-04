@@ -942,6 +942,23 @@ export function declare(...declarations) {
 }
 
 /**
+ * Like "declare", but specifically for a single fact.  Takes a
+ * statement argument and additional properties.
+ */
+export function fact(statement, properties) {
+  declare({statement, ...properties});
+}
+
+
+/**
+ * Like "declare", but specifically for a single rule.  Takes a
+ * rule name argument and additional properties.
+ */
+export function rule(name, properties) {
+  declare({name, ...properties});
+}
+
+/**
  * Returns truthy iff the given result (of a rule attempt)
  * is truthy and not an Error.  Useful utility for tactics
  * to test applicability of rules or to test if a rule
