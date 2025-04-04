@@ -2305,7 +2305,7 @@ var testCase = {
     var given = (rules.given('x + 2 = 5')
                  .andThen('rewrite', '/right/left', 'x + y = y + x'));
     var added = rules.andAssume(given, 'y = 8');
-    var p = added.wff.pathTo(termify('y = 8'));
+    var p = added.wff.pathTo(termify('y = 8'), true);
     var removed = rules.removeLet(added, p);
     assert(removed.wff.matchSchema('R v => (a == b)'));
   },
@@ -2319,7 +2319,7 @@ var testCase = {
     var given = (rules.given('x + 2 = 5')
                  .andThen('rewrite', '/right/left', 'x + y = y + x'));
     var added = rules.andAssume(given, 'R y');
-    var p = added.wff.pathTo(termify('R y'));
+    var p = added.wff.pathTo(termify('R y'), true);
     var removed = rules.removeTypeAsm(added, p);
     assert(removed.wff.matchSchema('R v => (a == b)'));
   },
