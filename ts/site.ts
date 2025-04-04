@@ -290,46 +290,65 @@ if (menuTrigger) {
 // Initializations on DOM ready.  When this file is loaded before
 // util.js, the "$" here refers to jQuery.  In other files it
 // will be our own "$".
-$(function() {
-  Promise.resolve().then
-  // Initializing after promise resolution takes this code
-  // out of the jQuery "ready" handler try-catch, so errors
-  // here become uncaught as we prefer them to be.
-  (function() {
-    // Potentially fetch a nonexistent page with date and TZ.
-    // The fetch writes into the server access log.
-    Toy.checkVisit();
+$(function () {
+  Promise.resolve().then(
+    // Initializing after promise resolution takes this code
+    // out of the jQuery "ready" handler try-catch, so errors
+    // here become uncaught as we prefer them to be.
+    function () {
+      // Potentially fetch a nonexistent page with date and TZ.
+      // The fetch writes into the server access log.
+      Toy.checkVisit();
 
-    // Create a proof editor for each div.proof-editor node,
-    // initializing its steps from a data-steps attribute if the
-    // constructor does not load steps from a document.  Re-visiting a
-    // page results in loading from a document, so that needs to have
-    // priority.
-    $('div.proof-editor').each(function() {
-      const options = this.dataset;
-      const editor = new ProofEditor(options);
-      $(this).append(editor.$node);
-      window.proofEditor = editor;
-    });
-    // Similarly create a proof display for each div.proof-display node.
-    // These are read-only.
-    $('div.proof-display').each(function() {
-        const data = this.dataset;
-        const stepsInfo = data.steps;
-        const reals = data.requireReals;
-        if (reals != null) {
-          Toy.requireScript(Toy.realNumbersScript);
-        }
-        if (!stepsInfo) {
-          console.error('No steps for proof display', this);
-        }
+      // Create a proof editor for each div.proof-editor node,
+      // initializing its steps from a data-steps attribute if the
+      // constructor does not load steps from a document.  Re-visiting a
+      // page results in loading from a document, so that needs to have
+      // priority.
+      $('div.proof-editor').each(function () {
+        const options = this.dataset;
+        const editor = new ProofEditor(options);
+        $(this).append(editor.$node);
+        window.proofEditor = editor;
+      });
+
+      // Similarly create a proof display for each div.proof-display node.
+      // These are read-only.  Expects either a data-doc-name attribute,
+      // which refers to proofdata.js data, or data-steps, a string of
+      // steps information, i.e. "(steps ... )".
+      $('div.proof-display').each(function () {
         const display = new ProofDisplay();
-        window.proofDisplay = display;
-        $(this).append(display.node);
-        // Add each step immediately when computed.
-        Toy.decodeSteps2(stepsInfo, step => display.addStep(step));
-    });
-  })
+        const data = this.dataset;
+        const docName = data.docName;
+
+        // Loads the proof data for the given document, from
+        // proofData, not the database/
+        const loadDoc = () => {
+          let stepsInfo;
+          if (docName) {
+            const proofData = findProofData(docName);
+            if (proofData) {
+              stepsInfo = proofDataSteps(proofData);
+            } else {
+              console.error(`No steps for document ${docName}`);
+            }
+          } else {
+            stepsInfo = data.steps;
+            if (!stepsInfo) {
+              console.error('No steps for proof display', this);
+            }
+          }
+          window.proofDisplay = display;
+          $(this).append(display.node);
+          // Add each step immediately when computed.
+          decodeSteps2(stepsInfo,
+            (step) => sleep(0).then(() => display.addStep(step)));
+        };
+
+        requireScript(realNumbersScript).then(loadDoc);
+      });
+    }
+  );
 });
 
 //// Managing the footer to account for (invisible) absolute DIVs
