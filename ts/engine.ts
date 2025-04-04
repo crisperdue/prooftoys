@@ -1588,6 +1588,8 @@ export function getResult0(info, mustProve?) {
     return info.proved;
   }
   const goal = info.goal;
+  // Note that info.prover is always wrapped by addFact by calling
+  // asFactProver.
   var prover = info.prover;
   if (Toy.assertFacts && !mustProve) {
     var result = rules.assert(goal);

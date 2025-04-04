@@ -1943,13 +1943,13 @@ export function adjacentSteps(step1, step2) {
 /**
  * Returns a jQuery node describing the renderable step, displayed after
  * the formula on each proof line.  This is an HTML description of a
- * proof step followed by references to other steps this one depends
- * on.  This finds the description in the rule's 'description'
- * property as a template.  Expands paired braces using expandMarkup.
- * Any text after a ";;" pair is formatted as arguments to the rule.
+ * proof step followed by references to other steps this one depends on.
+ * This finds the description in the rule's 'description' property as a
+ * template.  Expands paired braces using expandMarkup. Any text before
+ * ";;" pair has a tooltip based on the ruleInfo tooltip.
  *
  * Automatically formats site-type dependencies as "in step ... ".
- * If there is no markup that refers to steps, formats other step
+ * If there is no markup at all, formats other step
  * dependencies as "using step(s) ... ".
  */
 export function formattedStepInfo(step) {

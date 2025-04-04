@@ -31,9 +31,11 @@ namespace Toy {
   
   /**
    * Returns a truthy value iff the term has the form of an arithmetic
-   * expression suitable for rules.axiomArithmetic, in other words
-   * an arithmetic operator with numeric operands.  If the optional
-   * okNone argument is truthy, allows "none" as well as numerals.
+   * expression suitable for rules.arithSimpler, in other words an
+   * arithmetic operator with numeric operand(s), including relational
+   * operators such as inequalities and type predicates R, NN, and ZZ.
+   * If the optional okNone argument is truthy, allows "none" as well as
+   * numerals.  Normally used as a precheck.
    *
    * This does not do range checks on the values of numeric inputs.  On
    * the other hand it is faster and does not use exceptions.
