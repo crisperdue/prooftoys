@@ -4243,12 +4243,12 @@ declare
         (7 tautologous (t ((((((R x) & (R y)) => (((x < y) | (y < x)) | (x = y))) & (((R y) & (x = y)) => (not (y < x)))) & ((((x < y) & (R x)) & (R y)) => (not (y < x)))) => (((R x) & (R y)) => (((x < y) | (x = y)) == (not (y < x)))))))
         (8 forwardChain (s 6) (s 7))
         (9 rewrite (s 8) (path "/right/left") (t (((x < y) | (x = y)) == (x <= y))))
-        (10 rewrite (s 9) (path "/right/right/arg") (t ((y < x) == (x > y))))`
-     ]},
+        (10 rewrite (s 9) (path "/right/right/arg") (t ((y < x) == (x > y))))`,
+    ],
+  },
 
-    {statement: 'x >= y == y <= x',
-    },
-   );
+  { statement: 'x >= y == y <= x' }
+);
 
 // Pi
 
@@ -4424,24 +4424,34 @@ definition('absdiv x d = natdiv (abs x) (abs d)');
 
 // Mostly without proof.
 declare(
-  {fact: '@NN x == ZZ x & 0 < x'},
-  {statement: 'NN x => ZZ x'},
-  {statement: 'NN x => R x'},
-  {statement: 'NN x => 0 < x'},
-  {statement: 'NN x => x != 0'},
+  { fact: '@NN x == ZZ x & 0 < x' },
+  { statement: 'NN x => ZZ x',
+    priority: -5 },
+  { statement: 'NN x => R x',
+    priority: -5 },
+  { statement: 'NN x => 0 < x'},
+  { statement: 'NN x => x != 0'},
 
-  {statement: 'ZZ x => R x', axiom: true,
-   description: 'ZZ is a subset of R'},
-  {statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
-   description: 'ZZ is closed under addition'},
-  {statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
-   description: 'ZZ is closed under multiplication'},
-  {statement: 'R x & R y & x > 0 => exists {n. ZZ n & n * x > y}',
-   // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
-   description: 'Archimedean property of the reals'},
+  {
+    statement: 'ZZ x => R x', axiom: true,
+    description: 'ZZ is a subset of R',
+    priority: -5,
+  },
+  {
+    statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
+    description: 'ZZ is closed under addition',
+  },
+  {
+    statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
+    description: 'ZZ is closed under multiplication',
+  },
+  {
+    statement: 'R x & R y & x > 0 => exists {n. ZZ n & n * x > y}',
+    // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
+    description: 'Archimedean property of the reals',
+  },
 
-  {statement: 'ZZ x => floor x = x'},  // Sometimes simplifies
-
+  { statement: 'ZZ x => floor x = x' } // Sometimes simplifies
 );
 
 
