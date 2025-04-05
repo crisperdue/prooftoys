@@ -3036,37 +3036,46 @@ for (const obj of distribFacts) {
 
 const dFactsLeft = [
   'x * (y + z) = x * y + x * z',
-  'x * (y - z) = x * y - x * z'
+  'x * (y - z) = x * y - x * z',
+  'a & (b | c) == a & b | a & c',
+  'a | (b & c) == (a | b) & (a | c)',
 ];
 
 const dFactsRight = [
   '(x + y) * z = x * z + y * z',
   '(x - y) * z = x * z - y * z',
+  '(a | b) & c == (a & c) | (b & c)',
+  '(a & b) | c == (a | c) & (b | c)',
 ];
 
 const dFacts = dFactsLeft.concat(dFactsRight);
 
+/**
+ * Applies an applicable distributive law 
+ */
 function distribute(step, path_arg, where: 'left' | 'right' | 'both') {
-  const left = where == 'left' || where == 'right';
+  const left = where == 'left' || where == 'both';
   const right = where == 'right' || where == 'both';
   const path = step.asPath(path_arg);
   const facts =
     where == 'left' ? dFactsLeft
     : where == 'right' ? dFactsRight
     : dFacts;
-  let next = rules.consider(step.get(path));
+  const term = step.get(path);
+  const op: Expr = term.isBinOp() && term.getBinOp();
+  const opName = op && (op instanceof Atom) && op.name;
+  let next = rules.consider(term);
 
   // This applies some variant of the distributive law if possible
   // at the term referenced by "p".
   // On success it calls itself on both the left and right
   // summands.  It depends on "next" and modifies it on success.
   const distrib = p => {
-    const term = next.get(p);
     const nx = Toy.applyMatchingFact(next, p, facts);
     if (nx) {
       next = nx;
-      left && distrib(p.concat('/right'));
-      right && distrib(p.concat('/left'));
+      distrib(p.concat('/right'));
+      distrib(p.concat('/left'));
     }
   }
 
@@ -3075,10 +3084,13 @@ function distribute(step, path_arg, where: 'left' | 'right' | 'both') {
       // The path starts with /main to allow for the likelihood
       // that following steps will have assumptions.
       const rhs = Toy.asPath('/main/right');
+      const op = 
       // Next starts out as a pure equation, and at the end
       // its RHS has the rewritten term.
       distrib(rhs);
-      next = rules.flattenSum(next, rhs);
+      // TODO: Only do this when distributing over addition or
+      //   subtraction.
+      opName == '*' && (next = rules.flattenSum(next, rhs));
       // Now replace the original term.
       return rules.replace(step, path, next);
     };
