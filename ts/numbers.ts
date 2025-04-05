@@ -628,9 +628,31 @@ declare(
    {statement: 'x < y | y < x | x = y', axiom: true,
     description: 'axiom 3 of "<"'
    },
+  );
 
+fact('@ x < y => R x', {
+  proof: function () {
+    return rules
+      .fact('@ x < y => R x & R y')
+      .andThen('chain0', 'a => b & c => (a => b)');
+  },
+  priority: -10,
+});
+
+fact('@ x < y => R y', {
+  proof: function () {
+    return rules
+      .fact('@ x < y => R x & R y')
+      .rewrite('/right', 'a & b == b & a')
+      .andThen('chain0', 'a => b & c => (a => b)');
+  },
+  priority: -10,
+});
+
+declare(
    // Transitivity, in 3 forms
    {statement: 'x < y & y < z => x < z', axiom: true,
+    name: 'lessTrans',
     description: 'transitivity of "<"'
    },
 
@@ -672,6 +694,8 @@ declare(
   // },
 
   // The null value does not participate in orderings.
+  // TODO: This should be proved from (not (R none))
+  //   and "<" only applying to real numbers.
   // TODO: Consider introducing a "domain" concept and
   //   decree that "none" is not part of any domain.
   {statement: 'not (x < none)', axiom: true},
@@ -847,27 +871,36 @@ declare(
   },
 );
 
-declare(
-   {statement: 'x = y => not (x < y)',
-    proof: function() {
-       const asm = rules.assume('x = y');
-       return (rules.fact('not (x < x)')
-               // OK to use replace here.  It merges assumptions.
-               .andThen('replace', '/main/arg/right', asm));
-     }
-   },
+fact('x = y => not (x < y)', {
+  proof: function () {
+    const asm = rules.assume('x = y');
+    return (
+      rules
+        .fact('not (x < x)')
+        // OK to use replace here.  It merges assumptions.
+        .andThen('replace', '/main/arg/right', asm)
+    );
+  },
+});
 
-   {statement: '@R x & x < y => x != y',
-    proof: function() {
-       return (rules.fact('x = y => not (x < y)')
-               .andThen('extractHyp', 'x = y')
-               .andThen('rewrite', '/main', 'a => not b == b => not a')
-               .andThen('rewrite', 'not (x = y)', 'not (x = y) == x != y')
-               .andThen('rewrite', '', 'a => (b => c) == a & b => c'));
-     }
-   }
+fact('y = x => not (x < y)', {
+  proof: function () {
+    return rules
+      .fact('x = y => not (x < y)')
+      .rewrite('x = y', 'x = y == y = x');
+  },
+});
 
-);
+fact('x < y => x != y', {
+  proof: function () {
+    return rules
+      .fact('x = y => not (x < y)')
+      .andThen('extractHyp', 'x = y')
+      .andThen('rewrite', '/main', 'a => not b == b => not a')
+      .andThen('rewrite', 'not (x = y)', 'not (x = y) == x != y')
+      .andThen('rewrite', '', 'a => (b => c) == a & b => c');
+  },
+});
 
 // Ordering and multiplication.
 // Lay 11.1
@@ -4230,11 +4263,40 @@ declare(
 
 //// Inequality facts
 
-declare
-  (
-    {statement: 'x <= y == not (x > y)',
-     proof:
-     [ `(1 fact "x<y|y<x|x=y")
+declare(
+  {
+    statement: 'not (x < y) & not (y < x) => x = y',
+    proof: function () {
+      return rules
+        .fact('(((x < y) | (y < x)) | (x = y))')
+        .rewrite('', 'a => b | c | d == a & not b & not c => d');
+    },
+  },
+
+  {
+    statement: 'not (x < y) & not (x = y) => y < x',
+    proof: function () {
+      return rules
+        .fact('(((x < y) | (y < x)) | (x = y))')
+        .rewrite('', 'a => b | c | d == a & not b & not d => c');
+    },
+  },
+
+  {
+    statement: 'not (y < x) & not (x = y) => x < y',
+    proof: function () {
+      return rules
+        .fact('(((x < y) | (y < x)) | (x = y))')
+        .rewrite('', 'a => b | c | d == a & not c & not d => b');
+    },
+  },
+
+  {
+    statement: 'x <= y == not (x > y)',
+    // TODO: Make a more comprehensible proof of this.
+    /*
+    proof: [
+      `(1 fact "x<y|y<x|x=y")
         (2 fact "x<y=>not(y<x)")
         (3 fact "(((y = x) & (R y)) => (not (y < x)))")
         (4 and (s 1) (s 3))
@@ -4245,7 +4307,8 @@ declare
         (9 rewrite (s 8) (path "/right/left") (t (((x < y) | (x = y)) == (x <= y))))
         (10 rewrite (s 9) (path "/right/right/arg") (t ((y < x) == (x > y))))`,
     ],
-  },
+   */
+    },
 
   { statement: 'x >= y == y <= x' }
 );
