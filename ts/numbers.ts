@@ -1354,13 +1354,12 @@ declare(
   // facts about lack of equality between numbers and "none".  Applies
   // the definition of != given args that are numeric or "none".
   // (That case gives a direct result that is not simpler, but
-  // can be further simplified.)
-  //
-  // TODO: Handle inequalities other than "<" in terms of "<".
+  // can be further simplified.) Overall, operates on terms satisfying
+  // isArithmetic.
   {name: 'arithSimpler',
    action2: function(term_arg) {
      const term = termify(term_arg);
-     if (Toy.isArithmetic(term, true)) {
+     if (isArithmetic(term, true)) {
        return () => {
          if (term.isCall2('=')) {
            const left = term.getLeft();
@@ -1368,23 +1367,23 @@ declare(
            if (left.isConst('none') && right.isNumeral()) {
              const reversed = rules.arithSimpler(Toy.commuteEqn(term));
              return rules.rewriteOnly(reversed, '/left', 'a = b == b = a');
-           } else if (left.isNumeral() && right.isConst('none')) {
-             const s0 = (rules.axiomArithmetic(Toy.call('R', left))
-                         .andThen('rewriteOnly', '', 'a == T == a'));
-             const s1 = rules.chain0(s0, 'R a => a != none');
-             const s2 = rules.rewriteOnly(s1, '', 'a != b == (a = b == F)');
-             return s2;
-           }
-         } else if (term.isCall2('!=')) {
-           return (rules.consider(term)
-                   .andThen('arithmetic', '/right'));
-                   // .andThen('rewriteOnly', '/right', 'a != b == not (a = b)'));
-         }
-         return rules.axiomArithmetic(term);
+            } else if (left.isNumeral() && right.isConst('none')) {
+              const s0 = (rules.axiomArithmetic(Toy.call('R', left))
+                          .andThen('rewriteOnly', '', 'a == T == a'));
+              const s1 = rules.chain0(s0, 'R a => a != none');
+              const s2 = rules.rewriteOnly(s1, '', 'a != b == (a = b == F)');
+              return s2;
+            }
+          } else if (term.isCall2('!=')) {
+            return (rules.consider(term)
+                    .andThen('arithmetic', '/right'));
+          }
+          return rules.axiomArithmetic(term);
        };
      }
    },
    inputs: {term: 1},
+   labels: 'primitive',
    menu: 'simplify arithmetic',
    form: 'Arithmetic term: <input name=term>',
    tooltip: 'simplifier for arithmetic expression',
