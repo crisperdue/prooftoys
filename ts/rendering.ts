@@ -366,7 +366,7 @@ export class ProofDisplay {
    */
   suggest(node) {
     this.hideSuggestion();
-    $(this.stepsNode).append(node).scrollTop(1e9);
+    $('body > .proofEditor').append(node) /*.scrollingMenu .scrollTop(1e9)*/;
     this.suggesting = node;
   }
 
@@ -429,7 +429,7 @@ export class ProofDisplay {
       // All insertions of a rendered step immediately scroll the window
       // to the very bottom.
       // TODO: Consider using scrollIntoView.
-      $(self.stepsNode).scrollTop(1e9);
+      // $(self.stepsNode).scrollTop(1e9);
     }
     return $(node).data('proofStep');
   }

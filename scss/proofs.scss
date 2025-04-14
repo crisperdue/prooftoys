@@ -103,7 +103,7 @@ wffblock- > * {
 
 /* Proof displays -- rendering.js */
 
-.proofEditor {
+div.wrapper .proofEditor {
     color: black;
     position: relative;
     line-height: 1.5;
@@ -255,7 +255,7 @@ wffblock- > * {
 // .proofDisplay, i.e. top-level of proof steps.
 .proofDisplay.editable > .proofSteps {
   min-height: 100px;
-  height: 250px;
+  // height: 250px;
   position: relative; // This makes it an offsetParent.
   // Note that "resize: both" does not resize the
   // containing element horizontally.
@@ -303,10 +303,10 @@ wffblock- > * {
   white-space: pre;
 }
 
-.proofStep.stepSuggestion {
-    position: absolute;
-    left: 0;
-    right: 0;
+.stepSuggestion {
+    // position: absolute;
+    // left: 0;
+    // right: 0;
     color: #555;
     background-color: #fcfcfc;
     border: .5px solid #bbf;
@@ -979,6 +979,27 @@ input.copyText {
 
 /** Rule Menu **/
 
+body > .proofEditor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  // width: 80%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+
+  .ruleMenu {
+    position: static;
+  }
+
+  :nth-child(2) {
+    background: white;
+    opacity: .9;
+  }
+}
+
 .proofEditor {
 
     // The entire rules menu (hidden state)
@@ -989,10 +1010,10 @@ input.copyText {
         right: 1em;
         color: black;
         background-color: hsl(200deg, 100%, 95%);
-        visibility: hidden;
-        opacity: 0;
-        transition: all .4s linear;
-        transition-delay: .3s;
+        // visibility: hidden;
+        // opacity: 0;
+        // transition: all .4s linear;
+        // transition-delay: .3s;
     }
 
     &:hover .ruleMenu {
@@ -1017,7 +1038,7 @@ input.copyText {
     }
 
     .ruleMenu .scrollingMenu {
-        max-height: 20em;
+        max-height: 15em;
         overflow-y: scroll;
         overflow-x: hidden;
         /* The scrolling part contributes bottom, left, and right borders. */

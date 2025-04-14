@@ -235,6 +235,7 @@ export class ProofEditor {
   exercise;
   docName;
   proofData;
+  $ed2: JQuery<HTMLElement>;
 
   constructor(options_arg:Record<string, any>={}) {
 
@@ -351,6 +352,11 @@ export class ProofEditor {
       .append(menu.$node);
     this.setEditable(true);
 
+    const $ed2 = $('<div class=proofEditor></div>')
+      .append(menu.$node).append('<div>');
+    this.$ed2 = $ed2;
+    $(document.body).append($ed2);
+
     // Prepare to write out proof state during refresh, so basically
     // whenever it changes.
     this._refresher = new Toy.Refresher(changes => this.refresh());
@@ -362,7 +368,7 @@ export class ProofEditor {
     // Recover known content area height from the database
     Toy.db.editors.get(id).then(item => {
       const height = item && item.height;
-      height && self.$node.find('.proofSteps').height(height);
+      // height && self.$node.find('.proofSteps').height(height);
     });
     if (!options.exercise) {
       const state = Toy.getOtherPedState(self);
