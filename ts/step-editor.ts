@@ -2037,7 +2037,7 @@ export function tryRuleSoon(stepEditor, ruleName, args) {
         console.error('Argument step ' + arg.stepNumber + ' is renderable.');
       }
     });
-  stepEditor._proofEditor.$node.addClass('waitingForProver');
+  stepEditor._proofEditor.toggleClass('waitingForProver', true);
   // Try running the rule once the UI shows that the prover is working.
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, ruleName, args));
 }
