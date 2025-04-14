@@ -4889,7 +4889,8 @@ declare(
     },
     tooltip: ('Replaces an occurrence of a term with an equal term'),
     description: 'replacing {site};; {in step siteStep}',
-    labels: 'algebra'
+    priority: 5,
+    labels: 'algebra',
   },
 
   // Version of Andrews Rule R' that uses a conditional rather than
