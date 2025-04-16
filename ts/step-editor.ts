@@ -123,6 +123,13 @@ function popDown(node) {
   $(node).removeClass('poppedUp');
 }
 
+/**
+ * If truthy, place a single rule menu and suggestions at a fixed
+ * location in the window; default is true.
+ */
+export var useFixedRuleMenu = true;
+
+
 //// PROOF EDITOR
 
 /**
@@ -352,10 +359,11 @@ export class ProofEditor {
       .append(menu.$node);
     this.setEditable(true);
 
-    const $ed2 = $('<div class=proofEditor></div>')
-      .append(menu.$node).append('<div>');
-    this.$ed2 = $ed2;
+    const $ed2 = this.$ed2 = $('<div class=proofEditor></div>');
     $(document.body).append($ed2);
+    if (useFixedRuleMenu) {
+      $ed2.append(menu.$node, '<div></div>');
+    }
 
     // Prepare to write out proof state during refresh, so basically
     // whenever it changes.

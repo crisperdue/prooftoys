@@ -198,7 +198,7 @@ export class ProofDisplay {
   steps: any[];
   selections: any[];
   selection: any;
-  suggesting: any;
+  suggesting: HTMLElement;
   stepPrefix: any;
   parentStep: any;
   prevStep: any;
@@ -219,21 +219,24 @@ export class ProofDisplay {
     this.selections = [];
     // Single selected step when exactly one is selected, or null.
     this.selection = null;
-    // If a step is being suggested, the rendered version of the step.
-    this.suggesting = null;
     // Prefix string for each step.
     this.stepPrefix = properties.stepPrefix || '';
     this.parentStep = properties.parentStep || null;
     this.prevStep = properties.prevStep || null;
     this.proofEditor = properties.proofEditor || null;
 
-    // Only official "proof nodes" are permitted to have class proofDisplay.
-    var $node = $('<div class="proofDisplay logicZone">' +
-              '<div class=proofSteps></div>' +
-              '</div>');
+    // Only official "proof nodes" may have class proofDisplay.
+    //
+    // This will have two children, stepsNode and "suggesting".
+    var $node = $('<div class="proofDisplay logicZone">');
     $node.data('proofDisplay', this);
     this.node = dom($node);
-    this.stepsNode = dom($node.find('.proofSteps'));
+    // Some styling wants this to be a direct child of proofDisplay.
+    this.stepsNode = dom($('<div class=proofSteps></div>'));
+    // Container for an element with the current suggestion, if any.
+    this.suggesting = dom($('<div class=suggestion></div>'));
+    // For UXEdit: append to body
+    $node.append(this.stepsNode, this.suggesting);
     this._editable = false;
     // Initially selection is not locked out, so selections can be made
     // when this is editable.
@@ -312,13 +315,7 @@ export class ProofDisplay {
    * Hides any suggested step, doing necessary bookkeeping.
    */
   hideSuggestion() {
-    var node = this.suggesting;
-    if (node) {
-      // This does not remove event listeners and data.  To be safe,
-      // they will be removed when the RuleMenu is updated.
-      $(node).detach();
-      this.suggesting = null;
-    }
+    $(this.suggesting).empty();
   }
 
   /**
@@ -366,8 +363,9 @@ export class ProofDisplay {
    */
   suggest(node) {
     this.hideSuggestion();
-    $('body > .proofEditor').append(node) /*.scrollingMenu .scrollTop(1e9)*/;
-    this.suggesting = node;
+    // $('body > .proofEditor').append(node) /*.scrollingMenu .scrollTop(1e9)*/;
+    // $(this.stepsNode).scrollTop(1e9);
+    $(this.suggesting).append(node);
   }
 
 
