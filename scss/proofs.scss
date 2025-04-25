@@ -303,10 +303,11 @@ div.wrapper .proofEditor {
   white-space: pre;
 }
 
+// This class is for elements used as suggestions.
 .stepSuggestion {
-    // position: absolute;
-    // left: 0;
-    // right: 0;
+    position: absolute;
+    left: 0;
+    right: 0;
     color: #555;
     background-color: #fcfcfc;
     border: .5px solid #bbf;
@@ -314,6 +315,12 @@ div.wrapper .proofEditor {
     z-index: 1;
     /* This node is transparent to mouse events. */
     pointer-events: none;
+}
+
+// Container for a suggestion element, if any.
+.suggestionBox {
+  // This sets up a coordinate system for the suggestion.
+  position: relative;
 }
 
 .proofStep.stepMessage {
@@ -987,7 +994,7 @@ body > .proofEditor {
   // width: 80%;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 50% 50%;
   grid-template-rows: 1fr;
 
   .ruleMenu {

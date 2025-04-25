@@ -198,7 +198,7 @@ export class ProofDisplay {
   steps: any[];
   selections: any[];
   selection: any;
-  suggesting: HTMLElement;
+  suggestionBox: HTMLElement;
   stepPrefix: any;
   parentStep: any;
   prevStep: any;
@@ -234,9 +234,8 @@ export class ProofDisplay {
     // Some styling wants this to be a direct child of proofDisplay.
     this.stepsNode = dom($('<div class=proofSteps></div>'));
     // Container for an element with the current suggestion, if any.
-    this.suggesting = dom($('<div class=suggestion></div>'));
-    // For UXEdit: append to body
-    $node.append(this.stepsNode, this.suggesting);
+    this.suggestionBox = dom($('<div class=suggestionBox></div>'));
+    $node.append(this.stepsNode);
     this._editable = false;
     // Initially selection is not locked out, so selections can be made
     // when this is editable.
@@ -315,7 +314,17 @@ export class ProofDisplay {
    * Hides any suggested step, doing necessary bookkeeping.
    */
   hideSuggestion() {
-    $(this.suggesting).empty();
+    $(this.suggestionBox).empty();
+  }
+
+  /**
+   * Inserts the given DOM node into the spot set aside for suggestions,
+   * i.e. after all the display's steps.
+   */
+  suggest(node) {
+    this.hideSuggestion();
+    $(node).addClass('stepSuggestion');
+    $(this.suggestionBox).append(node);
   }
 
   /**
@@ -356,18 +365,6 @@ export class ProofDisplay {
     $div.append(message);
     return $div[0];
   }
-
-  /**
-   * Inserts the given DOM node into the spot set aside for suggestions,
-   * i.e. after all the display's steps.
-   */
-  suggest(node) {
-    this.hideSuggestion();
-    // $('body > .proofEditor').append(node) /*.scrollingMenu .scrollTop(1e9)*/;
-    // $(this.stepsNode).scrollTop(1e9);
-    $(this.suggesting).append(node);
-  }
-
 
   /**
    * Create and return a (rendered) renderable step to display the given

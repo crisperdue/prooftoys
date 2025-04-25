@@ -18,7 +18,9 @@ export var rpcQueue;
  */
 export var exerciseLoaded = null;
 
-
+/**
+ * Relative URL path to script that sets up real numbers.
+ */
 export const realNumbersScript = '/js/numbers.js';
 
 /**
@@ -125,9 +127,9 @@ function popDown(node) {
 
 /**
  * If truthy, place a single rule menu and suggestions at a fixed
- * location in the window; default is true.
+ * location in the window.
  */
-export var useFixedRuleMenu = true;
+export var useFixedRuleMenu = false;
 
 
 //// PROOF EDITOR
@@ -181,7 +183,7 @@ export var nextProofEditorId = 1;
  * steps: rendered steps from the proofDisplay.
  * $node: jQuery object for outermost DOM node for the display.
  * $proofButtons: jQuery object for the row of "proof buttons".
- * stepEditor: StepEditor for the proof being edited.
+ * stepEditor: StepEditor for the proof being edited -- an input form.
  * proofEditorId: identifies this editor for purposes of restoring its
  *   operating state from localstorage across visits / page loads.
  *   Consists of the pathname part of the browser "location", "#", and
@@ -242,7 +244,7 @@ export class ProofEditor {
   exercise;
   docName;
   proofData;
-  $ed2: JQuery<HTMLElement>;
+  $ruleMenuParent: JQuery<HTMLElement>;
 
   constructor(options_arg:Record<string, any>={}) {
 
@@ -355,14 +357,28 @@ export class ProofEditor {
       .append(proofButtons.$node)
       .append(this._wksControls.node)
       .append(stepEditor.$proofErrors)
-      .append(self.$uxDialog())
-      .append(menu.$node);
+      .append(self.$uxDialog());
     this.setEditable(true);
 
-    const $ed2 = this.$ed2 = $('<div class=proofEditor></div>');
-    $(document.body).append($ed2);
+
+    // Container for an element with the current suggestion, if any.
+    const $suggesting = $(mainDisplay.suggestionBox);
     if (useFixedRuleMenu) {
-      $ed2.append(menu.$node, '<div></div>');
+      // The parent element is styled with class proofEditor for
+      // appearance, and to help find the menu in the DOM tree.
+      const $ruleMenuParent = $('<div class=proofEditor></div>');
+      this.$ruleMenuParent = $ruleMenuParent;
+      // Place the rule menu and step suggestions under the parent
+      // element.
+      $ruleMenuParent.append(menu.$node, $suggesting);
+      // Place the parent directly under the document body.
+      $(document.body).append($ruleMenuParent);
+    } else {
+      // Append the rule menu under the proof editor.
+      this.$node.append(menu.$node);
+      // Place any rule suggestions after the steps list
+      // in the display.
+      $(mainDisplay.node).append($suggesting);
     }
 
     // Prepare to write out proof state during refresh, so basically
