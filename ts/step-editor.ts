@@ -232,6 +232,7 @@ export class ProofEditor {
   $node;
   $status;
   $statusDisplay;
+  suggestionBox: HTMLElement;
   $copyText;
   $proofButtons;
   _wksControls;
@@ -275,6 +276,8 @@ export class ProofEditor {
       // TODO: Handle this much like data.proof.
       ? Toy.unrenderedDeps(Toy.asProof(options.steps)())
       : [];
+      // Container for an element with the current suggestion, if any.
+      this.suggestionBox = dom($('<div class=suggestionBox></div>'));
 
     //// Build the DOM structures and connect the parts.
 
@@ -362,7 +365,7 @@ export class ProofEditor {
 
 
     // Container for an element with the current suggestion, if any.
-    const $suggesting = $(mainDisplay.suggestionBox);
+    const $box = $(self.suggestionBox);
     if (useFixedRuleMenu) {
       // The parent element is styled with class proofEditor for
       // appearance, and to help find the menu in the DOM tree.
@@ -370,7 +373,7 @@ export class ProofEditor {
       this.$ruleMenuParent = $ruleMenuParent;
       // Place the rule menu and step suggestions under the parent
       // element.
-      $ruleMenuParent.append(menu.$node, $suggesting);
+      $ruleMenuParent.append(menu.$node, $box);
       // Place the parent directly under the document body.
       $(document.body).append($ruleMenuParent);
     } else {
@@ -378,7 +381,7 @@ export class ProofEditor {
       this.$node.append(menu.$node);
       // Place any rule suggestions after the steps list
       // in the display.
-      $(mainDisplay.node).append($suggesting);
+      $(mainDisplay.node).append($box);
     }
 
     // Prepare to write out proof state during refresh, so basically
@@ -973,6 +976,25 @@ export class ProofEditor {
   toggleClass(className, truthy) {
     this.$node.toggleClass(className, truthy);
   }
+
+  //// Step suggestions
+  
+  /**
+   * Hides any suggested step, doing necessary bookkeeping.
+   */
+  hideSuggestion() {
+    $(this.suggestionBox).empty();
+  }
+  
+  /**
+   * Inserts the given DOM node into the spot set aside for suggestions,
+   * i.e. after all the display's steps.
+   */
+  suggest(node) {
+    this.hideSuggestion();
+    $(node).addClass('stepSuggestion');
+    $(this.suggestionBox).append(node);
+  }
 }
 
 /**
@@ -1532,6 +1554,7 @@ export class StepEditor {
   ruleName;
   lastRuleTime;
   lastRuleSteps;
+  suggestionBox: HTMLElement;
 
   constructor(proofEditor) {
     // Make this available to all inner functions.
@@ -2267,7 +2290,7 @@ class RuleMenu {
     $node.on('mouseleave', '.ruleItem', function(event) {
         self.hovering = null;
         var $this = $(this);
-        proofEditor.proofDisplay.hideSuggestion();
+        proofEditor.hideSuggestion();
         var promise = $this.data('promise');
         if (promise && promise.dequeue()) {
           $this.removeData('promise');
@@ -2617,7 +2640,7 @@ class RuleMenu {
     const stepEditor = proofEditor.stepEditor;
     // This code runs from a click, so a suggestion may well
     // be active.  Make sure it is not displayed.
-    proofEditor.proofDisplay.hideSuggestion();
+    proofEditor.hideSuggestion();
     proofEditor.stepEditor.ruleName = ruleName;
     var rule = Toy.rules[ruleName];
     if (rule) {
@@ -2707,7 +2730,7 @@ class RuleMenu {
     // been computed for this menu item.  It is a DOM node that may
     // have a proofStep in it.
     var working = display.suggestionMessage('Working . . . ');
-    display.suggest(working);
+    proofEditor.suggest(working);
     // noSuggest means "no suggestion action".  We still need a message,
     // so reuse the menu message.
     const noSuggest = rule && rule.info.noSuggest;
@@ -2718,14 +2741,14 @@ class RuleMenu {
     var suggestion = $node.data('suggestion');
     if (suggestion) {
       // A suggestion is already computed; show it.
-      display.suggest(suggestion);
+      proofEditor.suggest(suggestion);
     } else if (!$node.data('promise')) {
       // The "promise" data property indicates that a request for a
       // step for this menu item has already been issued.
       var args = ruleArgs || stepEditor.argsFromSelection(ruleName);
       if (!stepEditor.checkArgs(args, rule.info.minArgs, false)) {
         // The rule requires user input.
-        display.suggest(display.suggestionMessage('(needs user input)'));
+        proofEditor.suggest(display.suggestionMessage('(needs user input)'));
       } else {
         // Ask for rule execution in the background.
         const promise = sendRule(ruleName, args);
@@ -2756,7 +2779,7 @@ class RuleMenu {
                           ? display.stepSuggestion(value)
                           : display.suggestionMessage('failed'));
               $node.data('suggestion', node);
-              display.suggest(node);
+              proofEditor.suggest(node);
             }
           })
           .catch(function(info) {
@@ -2766,7 +2789,7 @@ class RuleMenu {
               $node.removeData('promise');
               var messageNode = display.suggestionMessage('oops, not applicable');
               $node.data('suggestion', messageNode);
-              display.suggest(messageNode);
+              proofEditor.suggest(messageNode);
               if (info.result) {
                 console.error('Rule menu error:', info.result.message);
               } else {

@@ -198,7 +198,6 @@ export class ProofDisplay {
   steps: any[];
   selections: any[];
   selection: any;
-  suggestionBox: HTMLElement;
   stepPrefix: any;
   parentStep: any;
   prevStep: any;
@@ -233,8 +232,6 @@ export class ProofDisplay {
     this.node = dom($node);
     // Some styling wants this to be a direct child of proofDisplay.
     this.stepsNode = dom($('<div class=proofSteps></div>'));
-    // Container for an element with the current suggestion, if any.
-    this.suggestionBox = dom($('<div class=suggestionBox></div>'));
     $node.append(this.stepsNode);
     this._editable = false;
     // Initially selection is not locked out, so selections can be made
@@ -311,23 +308,6 @@ export class ProofDisplay {
   }
 
   /**
-   * Hides any suggested step, doing necessary bookkeeping.
-   */
-  hideSuggestion() {
-    $(this.suggestionBox).empty();
-  }
-
-  /**
-   * Inserts the given DOM node into the spot set aside for suggestions,
-   * i.e. after all the display's steps.
-   */
-  suggest(node) {
-    this.hideSuggestion();
-    $(node).addClass('stepSuggestion');
-    $(this.suggestionBox).append(node);
-  }
-
-  /**
    * Renders the given "real" proof step as a suggestion.  Returns a DOM
    * node containing either the rendered step, or HTML with a suitable
    * message.
@@ -363,7 +343,7 @@ export class ProofDisplay {
   suggestionMessage(message) {
     var $div = $('<div class="proofStep stepSuggestion stepMessage">');
     $div.append(message);
-    return $div[0];
+    return dom($div);
   }
 
   /**
