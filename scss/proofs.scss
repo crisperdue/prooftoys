@@ -989,13 +989,21 @@ input.copyText {
 body > .proofEditor {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 2%;
+  right: 2%;
   // width: 80%;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 50% 50%;
   grid-template-rows: 1fr;
+
+  background-color: white;
+  opacity: 95%;
+  overflow: hidden;
+  border: 1px solid #bbb;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  box-shadow: #bbb 3px 3px 6px;
 
   .ruleMenu {
     position: static;
