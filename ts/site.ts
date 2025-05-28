@@ -200,6 +200,7 @@ export function mathMarkup0(text, title) {
   jQuery('code').replaceWith(function() {
     const content = $(this).text();
     const lang = this.dataset.lang;
+    const classes = this.className;
     if (!lang && content.startsWith('\\')) {
       const $element = $('<code>');
       $element.text(content.slice(1));
@@ -213,6 +214,7 @@ export function mathMarkup0(text, title) {
                          : {'class': 'language-logic',
                             'data-tippy-content':  title});
       $element.html(markup);
+      $element.addClass(classes);
       return $element;
     } else {
       return this;
