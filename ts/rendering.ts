@@ -1966,24 +1966,24 @@ export function formattedStepInfo(step) {
   //   can be distinguished from other facts, perhaps by simply
   //   omitting the 'proof' property.
   var fa = 'fa fa-plus-square';
-  var classes = (step.ruleName == 'fact' ||
+  const expand = (step.ruleName == 'fact' ||
                  (step.details &&
                   step.details.ruleName !== 'assert' &&
                   // If the details are already rendered, there is no
                   // point in displaying in the link style.
                   !step.details.rendering &&
-                  Toy.modes.subproofs)
-                 ? `subproofExpander ${fa}`
-                 : `${fa}`);
-  const $expander = ($('<span>')
-                      .prop({className: classes,
-                        title: 'View step details'
-                      }));
-  var $d1 = ($('<span>')
+                  Toy.modes.subproofs));
+  const $expander =
+   $('<span class="fa fa-plus-square" title="View step details">');
+  const $d1 = ($('<span>')
              .prop({title: info.tooltip})
              .append(d1));
-  var stepRefs = useDefault ? defaultStepRefs(step, description) : '';
-  return $('<span>').append($expander, ' ', $d1, d2, stepRefs);
+  const stepRefs = useDefault ? defaultStepRefs(step, description) : '';
+  const $result = $('<span>');
+  if (expand) {
+    $result.prop({className: 'subproofExpander'});
+  }
+  return $result.append($expander, ' ', $d1, d2, stepRefs);
 }
 
 /**
