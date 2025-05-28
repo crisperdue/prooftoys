@@ -342,7 +342,15 @@ export class ProofEditor {
     const $solve =
           $('<input type=button class="solveProblem hidden" value="Solve">')
           .css({fontWeight: 'bold'});
+
     const $headerRight = $('<span>').css({float: 'right'});
+
+    if (useFixedRuleMenu) {
+      const $newStep =
+        $('<input type=button class="newStep" value="New step ...">');
+      $headerRight.append($newStep);
+    }
+
     $headerRight.append($solve, $clearWork);
     $header.append($headerRight);
 
@@ -369,7 +377,7 @@ export class ProofEditor {
     if (useFixedRuleMenu) {
       // The parent element is styled with class proofEditor for
       // appearance, and to help find the menu in the DOM tree.
-      const $ruleMenuParent = $('<div class=proofEditor></div>');
+      const $ruleMenuParent = $('<div class="proofEditor fixed"></div>');
       this.$ruleMenuParent = $ruleMenuParent;
       // Place the rule menu and step suggestions under the parent
       // element.
