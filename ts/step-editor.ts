@@ -403,7 +403,7 @@ export class ProofEditor {
     // Recover known content area height from the database
     Toy.db.editors.get(id).then(item => {
       const height = item && item.height;
-      // height && self.$node.find('.proofSteps').height(height);
+      height && self.$node.find('.proofSteps').height(height);
     });
     if (!options.exercise) {
       const state = Toy.getOtherPedState(self);
