@@ -1938,7 +1938,7 @@ export function formattedStepInfo(step) {
     useDefault = false;
     // Expand the description with the named function.
     var fn = stepFormatters[description.slice(1)];
-    assert(fn, 'No step formatter "{1}"',  description.slice(1));
+    assert(fn, 'No step formatter "{1}"', description.slice(1));
     description = fn(step);
   }
   // Use default step refs only if there are no formatting directives;
@@ -1954,10 +1954,12 @@ export function formattedStepInfo(step) {
     d2 = parts[2];
   }
   // Expand any markup within the description.
-  d1 = d1.replace(/[{].*?[}]/g,
-                  function(markup) { return expandMarkup(step, markup)});
-  d2 = d2.replace(/[{].*?[}]/g,
-                  function(markup) { return expandMarkup(step, markup)});
+  d1 = d1.replace(/[{].*?[}]/g, function (markup) {
+    return expandMarkup(step, markup);
+  });
+  d2 = d2.replace(/[{].*?[}]/g, function (markup) {
+    return expandMarkup(step, markup);
+  });
   // If a rule has "assert" as its last step, that is its only
   // step, because "assert" has no dependencies.  So we treat the
   // rule as an axiom, regardless of whether it has parameters.
@@ -1966,22 +1968,22 @@ export function formattedStepInfo(step) {
   //   can be distinguished from other facts, perhaps by simply
   //   omitting the 'proof' property.
   var fa = 'fa fa-plus-square';
-  const expand = (step.ruleName == 'fact' ||
-                 (step.details &&
-                  step.details.ruleName !== 'assert' &&
-                  // If the details are already rendered, there is no
-                  // point in displaying in the link style.
-                  !step.details.rendering &&
-                  Toy.modes.subproofs));
-  const $expander =
-   $('<span class="fa fa-plus-square" title="View step details">');
-  const $d1 = ($('<span>')
-             .prop({title: info.tooltip})
-             .append(d1));
+  const expand =
+    step.ruleName == 'fact' ||
+    (step.details &&
+      step.details.ruleName !== 'assert' &&
+      // If the details are already rendered, there is no
+      // point in displaying in the link style.
+      !step.details.rendering &&
+      Toy.modes.subproofs);
+  const $expander = $(
+    '<span class="fa fa-plus-square" title="View step details">'
+  );
+  const $d1 = $('<span>').prop({ title: info.tooltip }).append(d1);
   const stepRefs = useDefault ? defaultStepRefs(step, description) : '';
   const $result = $('<span>');
   if (expand) {
-    $result.prop({className: 'subproofExpander'});
+    $result.prop({ className: 'subproofExpander' });
   }
   return $result.append($expander, ' ', $d1, d2, stepRefs);
 }
