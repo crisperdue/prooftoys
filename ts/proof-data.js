@@ -397,4 +397,21 @@ Toy.proofData =
    "(16 rewrite (s 15) (path \"/right/right/left/left/right/left\") (t ((((((b != 0) & (c != 0)) & (R b)) & (R c)) & (R a)) => ((a / (b / c)) = ((a / b) * c)))))",
    "(17 simplifyFocalPart (s 16))"
   ]
- }];
+ },
+ {
+   "doc": "xMinus2",
+   "proof": [
+    "(1 consider (t ((x - 2) = 2)))",
+    "(2 addThisToBoth (s 1) (path \"/main/right/left/right\"))",
+    "(3 simplifySums (s 2) (path \"/right/right\"))"
+   ]
+ },
+ {
+  "doc": "MinSimp",
+  "proof": [
+   "(1 consider (t (((5 - 2) - 1) = 2)))",
+   "(2 simplifySite (s 1) (path \"/main/right\"))",
+   "(3 rewrite (s 2) (path \"/main\") (t ((a == T) == a)))"
+  ]
+ },
+];
