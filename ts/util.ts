@@ -1677,10 +1677,10 @@ namespace Toy {
   /**
    * This dumps out JSON to the console for proofs in worksheets with
    * names matching any of the given regex arguments.  Include this
-   * output in a file to build a database of proofs that can be loaded
-   * to solve problems.  Unlike official "exercises", these do not have
-   * order or dependencies.  If given no arguments, dumps data for a
-   * convenient default set.
+   * output in a file to build a database of proofs such as
+   * proof-data.js that can be loaded to solve problems.  Unlike
+   * official "exercises", these do not have order or dependencies.  If
+   * given no arguments, dumps data for a convenient default set.
    */
   export function dumpProofData(...regexes) {
     const data = docsProofData(regexes);
