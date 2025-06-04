@@ -2189,15 +2189,13 @@ export abstract class Expr {
    * instead.  Alternatively accepts a term to be matched with
    * "matches", which may be given as a string.
    */
-  pathTo(arg, matches?: boolean) {
+  pathTo(arg) {
     // TODO: Make a more efficient version that works directly with
     // forward paths.
     let test = arg;
     if (typeof arg === 'string' || arg instanceof Expr) {
       const target = termify(arg);
-      test = matches
-        ? (term) => target.matches(term)
-        : (term) => target === term;
+      test = (term) => target.matches(term);
     }
     const rpath = this._path(test, Toy.asPath(''));
     return rpath ? rpath.reverse() : null;
