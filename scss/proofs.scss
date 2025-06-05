@@ -21,6 +21,7 @@
 
 .faded {
   color: #999;
+  font-weight: normal;
 }
 
 .ellipsis {
@@ -71,6 +72,7 @@ b[videotip], b[imagetip] {
 
 wffblock- {
   display: inline-block;
+  font-weight: bold;
 }
 
 wffblock- > * {
