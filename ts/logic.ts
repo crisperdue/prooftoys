@@ -5705,7 +5705,7 @@ declare(
   },
 
   // Matches the conclusion of a conditional proved step with part of
-  // the given conditional schema step or fact statement, normally an
+  // the given conditional schema step or fact statement, typically an
   // assumption.  This substitutes into the schema and drops the
   // assumption, which is now proved true.  Available interactively only
   // through menuGen.
