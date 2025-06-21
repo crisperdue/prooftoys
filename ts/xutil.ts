@@ -2119,6 +2119,9 @@ export function decodeSteps(input) {
  * is a function that will be called with the proved result of each
  * of the input step descriptions, typically to insert it into the
  * steps array of a ProofEditor.
+ * 
+ * Terminates on any error indication, returning the indicator, or the
+ * final step on success (undefined if no steps).
  */
 export function decodeSteps2(input, callback) {
   const parsed =
@@ -2129,6 +2132,7 @@ export function decodeSteps2(input, callback) {
          : input);
   const descriptions = parsed.asArray();
   const outSteps = [];
+  let finalStep;
   for (let i = 1; i < descriptions.length; i++) {
     let message = '';
     // Ignore the first "description" by starting at 1.
@@ -2143,18 +2147,18 @@ export function decodeSteps2(input, callback) {
     stepInfo.forEach(function(info) {
         args.push(decodeArg(info, outSteps));
       });
-    const rule = Toy.rules[ruleName];
+    const rule = Toy.rules[ruleName].attempt;
     const result = rule.apply(rule.info, args);
     if (Toy.isProved(result)) {
       outSteps.push(result);
+      finalStep = result;
       callback(result);
     } else {
-      // Since the rule is applied, not just attempted,
-      // it should hopefully not return an error.
       console.error(result);
-      abort('Internal error');
+      return result;
     }
   }
+  return finalStep;
 }
 
 /**
