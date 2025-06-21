@@ -76,16 +76,25 @@ export var quotes = [];
 //
 
 /**
- * Replaces ASCII math symbols in the given HTML text with HTML
- * entities for math, and with alphanumeric names in italics.
+ * Replaces ASCII math symbols in the given HTML text with HTML entities
+ * for math, and with alphanumeric names in italics.  Operates on each
+ * token independently, except exponentiation as a special case with
+ * one-character lookahead, written as "^", and subscripting as "_".
+ * 
+ * TODO: Extend lookahead to a complete token using state.  Support
+ *   "**" for exponentiation like "^".
  */
 export function mathMarkup0(text, title) {
-  // Substitutions for "forall" and "exists" consume a trailing blank,
+  // Substitutions for "forall" and "exists" consume any trailing blank,
   // helping to push them up next to following text.
+  // "_" for subscript and "^" for superscript are treated specially,
+  // while other operator characters can be combined.  These two
+  // affect a single following character, i.e. letter or digit.
   var rex =
-    /[-!<=>*/&|]+|[_^] ?.|\bforall( |\b)|\bexists1?( |\b)|[a-zA-Z]+[0-9]*/g;
+    /[-!<=>*/&|]+|[_^] ?.|\bforall( |\b)|\bexists1?( |\b)|[a-zA-Z0-9]+/g;
   return text.replace(rex, function(s) {
     if (s.match(/^\^[a-z]/)) {
+      // "^" followed by alphabetic char (to catch variables).
       return '<sup><i>' + s[1] + '</i></sup>';
     } else if (s[0] === '^') {
       return '<sup>' + s.slice(1) + '</sup>';
