@@ -418,7 +418,7 @@ export class ProofEditor {
                           // that is greater than one.
                           : this.proofEditorId));
       // If there is a canned solution, show the "Solve" button.
-      const data = self.proofData = Toy.findProofData(self.docName);
+      const data = self.proofData = Toy.findInProofData(self.docName);
       if (data) {
         $solve.removeClass('hidden');
       }
@@ -1028,14 +1028,6 @@ Object.defineProperty(ProofEditor.prototype, "givens", {
       this._updateGivenVars();
     }
   });
-
-/**
- * Converts a proofData record to a "steps" string with the proof.
- * Decode this into an executable proof with decodeSteps(2).
- */
-export function proofDataSteps(data) {
-  return ['(steps '].concat(data.proof, ')').join('\n');
-}
 
 /**
  * Based on the given "exercise/item" exercise name, adds the fact

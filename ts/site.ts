@@ -328,7 +328,7 @@ $(function () {
         const loadDoc = () => {
           let stepsInfo;
           if (docName) {
-            const proofData = findProofData(docName);
+            const proofData = findInProofData(docName);
             if (proofData) {
               stepsInfo = proofDataSteps(proofData);
             } else {

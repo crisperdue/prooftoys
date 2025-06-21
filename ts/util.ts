@@ -1636,28 +1636,63 @@ namespace Toy {
   }
 
   /**
-   * Returns an array of strings of the steps of the proof in the named
-   * document.
-   *
-   * TODO: Consider replacing double quotes within steps with single
-   * quotes and converting back when reading.
+   * Each proof data record has a doc name and an array of strings
+   * representing steps.
    */
-  export function docSteps(name) {
-    const doc = readDoc(name);
-    const steps = doc.proofState.split('\n').slice(1, -2);
-    return steps;
+  export type ProofData = {
+    doc: string;
+    proof: string[];
   }
 
   // Export the name to be used by machine-generated file
   // proof-data.js.
-  export let proofData = [];
+  export let proofData: ProofData[] = [];
+
+  /**
+   * Given a document name, returns an array of strings representing
+   * the steps of the proof in the named document, one string per line
+   * of the document's "steps" string.
+   *
+   * TODO: Consider replacing double quotes within steps with single
+   * quotes and converting back when reading.
+   */
+  export function docSteps(name): string[] {
+    const doc = readDoc(name);
+    if (!doc) {
+      return;
+    }
+    const steps = doc.proofState.split('\n').slice(1, -2);
+    return steps;
+  }
+
+  /**
+   * Converts a proofData record to a "steps" string with the proof.
+   * Decode this into an executable proof with decodeSteps(2).
+   * Inverts the data conversion of docSteps.
+   */
+  export function proofDataSteps(data: ProofData): string {
+    return ['(steps '].concat(data.proof, ')').join('\n');
+  }
+
+  /**
+   * Given a ProofData record, attempts to perform the proof, returning
+   * the value of applying decodeSteps2 to it.
+   * 
+   * E.g. Toy.proofData.map(Toy.proveFromData) to test proofData.
+   * 
+   * TODO: Consider returning richer information.
+   */
+  export function proveFromData(data: ProofData) {
+    const steps = proofDataSteps(data);
+    return decodeSteps2(steps, step => null);
+  }
 
   /**
    * Given an array of regexes, creates and returns proof data for all
-   * documents with names matching one or more of them.  If the array is
-   * empty, dumps data for a convenient default set.
+   * database docs with names matching one or more of them.  If the
+   * array is empty, dumps data for a convenient default set.
    */
-  export function docsProofData(a) {
+  export function docsProofData(a): ProofData[] {
     const regexes =
       a.length 
       ? a 
@@ -1682,24 +1717,25 @@ namespace Toy {
    * official "exercises", these do not have order or dependencies.  If
    * given no arguments, dumps data for a convenient default set.
    */
-  export function dumpProofData(...regexes) {
+  export function dumpProofData(...regexes): void {
     const data = docsProofData(regexes);
     console.log('Toy.proofData =\n' +
       JSON.stringify(data, null, 1) + ';\n');
   }
 
   /**
-   * Returns a proofData record for the document with the given name,
-   * or a falsy value if none is found.  These records are plain objects
-   * with a string "doc" field that is the doc name, and a "proof" field
-   * with an array of steps, each in the usual format as a string.
+   * Searches the global proofData object for a ProofData record for the
+   * document with the given name, or a falsy value if none is found.
+   * These records are plain objects with a string "doc" field that is
+   * the doc name, and a "proof" field with an array of steps, each in
+   * the usual format as a string.
    */
-  export function findProofData(docName) {
+  export function findInProofData(docName): ProofData {
     return Toy.proofData.find(x => x.doc === docName);
   }
 
 
-  //// Proof editor state, by proofEditorId
+  //// Proof editor state, accessible by proofEditorId
 
   // This is persistent state, document name per editor ID.
   // Each proof editor object has a numeric ID that is unique within its
