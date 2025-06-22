@@ -352,8 +352,7 @@ $(function () {
           window.proofDisplay = display;
           $(this).append(display.node);
           // Add each step immediately when computed.
-          decodeSteps2(stepsInfo,
-            (step) => sleep(0).then(() => display.addStep(step)));
+          decodeSteps2(stepsInfo, (step) => display.addStep(step));
         };
 
         requireScript(realNumbersScript).then(loadDoc);
