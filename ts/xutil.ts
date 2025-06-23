@@ -2121,7 +2121,8 @@ export function decodeSteps(input) {
  * steps array of a ProofEditor.
  * 
  * Terminates on any error indication, returning the indicator, or the
- * final step on success (undefined if no steps).
+ * final step on success (undefined if no steps).  If the callback
+ * returns exactly false, terminates immediately.
  */
 export function decodeSteps2(input, callback) {
   const parsed =
@@ -2152,7 +2153,10 @@ export function decodeSteps2(input, callback) {
     if (Toy.isProved(result)) {
       outSteps.push(result);
       finalStep = result;
-      callback(result);
+      const v = callback(result);
+      if (v === false) {
+        break;
+      }
     } else {
       console.error(result);
       return result;

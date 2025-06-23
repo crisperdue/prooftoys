@@ -326,14 +326,20 @@ $(function () {
       // Similarly create a proof display for each div.proof-display node.
       // These are read-only.  Expects either a data-doc-name attribute,
       // which refers to proofdata.js data, or data-steps, a string of
-      // steps information, i.e. "(steps ... )".
+      // steps information, i.e. "(steps ... )".  If data-step-filter is
+      // truthy, displays only steps for which the string evaluates to
+      // truthy given "n" as the step number.  If data-step-limit is
+      // parseable as a number, steps after that one are not generated
+      // at all.
       $('div.proof-display').each(function () {
         const display = new ProofDisplay();
         const data = this.dataset;
         const docName = data.docName;
+        // This is always a number, NaN if not parseable.
+        const stepLimit = +data.stepLimit;
 
         // Loads the proof data for the given document, from
-        // proofData, not the database/
+        // proofData, not local storage.
         const loadDoc = () => {
           let stepsInfo;
           if (docName) {
@@ -351,15 +357,45 @@ $(function () {
           }
           window.proofDisplay = display;
           $(this).append(display.node);
+          let stepNum = 1;
+          const addStep =
+            // This always adds the step if stepLimit is NaN.
+            (step) => stepNum++ > stepLimit ? false : display.addStep(step);
           // Add each step immediately when computed.
-          decodeSteps2(stepsInfo, (step) => display.addStep(step));
+          decodeSteps2(stepsInfo, addStep);
+          const filterText = data.stepFilter;
+          if (filterText) {
+            filterStepDisplays(display, filterText);
+          }
         };
-
         requireScript(realNumbersScript).then(loadDoc);
       });
     }
   );
 });
+
+/**
+ * Filters the set of steps to be displayed in the proof display
+ * based on a filterText string to be evaluated as a JS expression
+ * string.  If it is truthy, each step is filtered based on its position
+ * in the display, starting with 1.  If the value of the expression is
+ * truthy given "n" as the step number, the step is displayed, otherwise
+ * hidden with class "hidden".
+ */
+function filterStepDisplays(display: ProofDisplay, filterText: string) {
+  const test = Function('n', 'return ' + filterText);
+  const children = $(display.stepsNode).children();
+  for (let i = 0; i < children.length; i++) {
+    const node = children[i];
+    try {
+      if (!test(i + 1)) {
+        $(node).addClass('hidden');
+      }
+    } catch(e) {
+      console.error(e);
+    };
+  }
+}
 
 //// Managing the footer to account for (invisible) absolute DIVs
 
