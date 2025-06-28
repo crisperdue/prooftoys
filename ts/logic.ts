@@ -5490,6 +5490,24 @@ function chainDescription(step) {
   }
 }
 
+/**
+ * Given the ruleName ("detach"), a selected (renderable) step and term,
+ * and a proof editor, this returns an array of menu items to offer as
+ * potential applications of the rule.  The selection must be the
+ * conclusion of a conditional fact.
+ * 
+ * This searches for registered facts with assumptions that match as
+ * schemas with the selection, with the intention that the detach rule
+ * will instantiate the fact, dropping the assumption as true, and
+ * adding the assumptions of the selected step to its instantiated
+ * assumptions.
+ * 
+ * Similarly, searches in reverse order through existing steps for such
+ * matches.  In this case returns only information for the first match
+ * found, to make the rule less prolific.
+ * 
+ * Currently in effect disabled.
+ */
 function detachMenuGen(ruleName, selStep, selTerm, editor) {
   // Menu generation for the detach is currently disabled.  It tends to
   // produce results that are too large and hard to read.
