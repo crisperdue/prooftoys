@@ -6875,22 +6875,32 @@ declare(
  * swapped.  The first list of facts for each applies to operations
  * with two operands, e.g. commutativity.  The second list is for
  * "chains" with two operators.
+ * 
+ * When filled in by initMovers, this has two sets of facts for moving a
+ * term right, and two for moving a term left.  As declared here, the
+ * first set of facts swap a left term with a right term, and the second
+ * set facts have the form "a op b op c", moving "b" into the location
+ * of "c".  The facts as given move to the right.
+ * 
+ * For each group of facts, the "up" property indicates how much to
+ * shorten a (pretty) path before rewriting, assuming the path points to
+ * the term being moved.  "Before" is a relative path to the term being
+ * moved, and "after" is a relative path to its location after the move.
  *
  * Caution: initMovers reverses the "left" array after filling
  * everything in, because left movers use the 2 operator facts if
  * applicable, so they need to be first.
  */
-export const moverFacts = {right: [{facts: [], up: 1,
-                           before: '/left', after: '/right'},
-                          {facts: [], up: 2,
-                           before: '/left/right', after: '/right'},
-                         ],
-                  left: [{facts: [], up: 1,
-                          before: '/right', after: '/left'},
-                         {facts: [], up: 1,
-                          before: '/right', after: '/left/right'},
-                        ],
-                 };
+export const moverFacts = {
+  right: [
+    { facts: [], up: 1, before: '/left', after: '/right' },
+    { facts: [], up: 2, before: '/left/right', after: '/right' },
+  ],
+  left: [
+    { facts: [], up: 1, before: '/right', after: '/left' },
+    { facts: [], up: 1, before: '/right', after: '/left/right' },
+  ],
+};
 
 // private to initMovers:
 var moversReady = false;
@@ -6901,7 +6911,6 @@ var moversReady = false;
 function initMovers() {
   const info = moverFacts;
   if (!moversReady) {
-    const add = (which, term) => info[which].push(term);
 
     const process = (n, term) => {
       const fact = (Toy.isProved(term)
@@ -6913,7 +6922,7 @@ function initMovers() {
       } else {
         console.warn('No mover fact:', term);
       }
-    }
+    };
     [
       'neg a + b = b - a',
       'a + b = b + a',
