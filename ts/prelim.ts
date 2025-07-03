@@ -174,6 +174,9 @@ var _end = new Path(null, Path.none);
 // The empty path.
 Path.empty = _end;
 
+/** A path that refers to a main part. */
+Path.main = new Path('main');
+
 /**
  * Paths are iterable, with the segments as values.
  * This is not tested, consider the "segments" method instead.
