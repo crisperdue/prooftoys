@@ -6302,20 +6302,25 @@ function moverAction(which, step, path_arg) {
   return {};
 }
 
-const chainTypes = [['+', '-'], ['*', '/'], ['&'], ['|']];
-const chainOps = [].concat( ...chainTypes);
+/**
+ * Array of arrays of strings naming chainable operators.
+ * Each element is an array of names of compatible chainable operators.
+ */
+const chainTypes: string[][] = [['+', '-'], ['*', '/'], ['&'], ['|']];
 
 /**
- * All of the terms in the result array occupy chain slots
- * to the right of the given target term.  The array elements are
- * ancestor terms of the target with a binary operator compatible with
- * the binary operator of the parent of the target.  The path must be
- * pretty.
- *
- * If the target term is not part of a chain, the result is an empty
- * array.
+ * Array of names of all chainable operators.
  */
-export function rightChain(step, path) {
+const chainOps: string[] = [].concat( ...chainTypes);
+
+/**
+ * Returns an array of all chain element terms to the right of the
+ * target term, in order from the left, based on the binary operator of
+ * the parent of the target (if there is one). If the target term is not
+ * part of a chain, the result is an empty array.  The path must be
+ * pretty.
+ */
+export function rightChain(step, path): Expr[] {
   const bop = term => term.isCall2() && term.getBinOp().name;
 
   const chain = [];
