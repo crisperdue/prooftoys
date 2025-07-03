@@ -6255,21 +6255,33 @@ declare(
 );
 
 /**
- * This function implements the commonality of moving right and left,
- * for use as an "action2".  The "where" value is either "left" for
- * leftward movers or "right" for rightward movers.  The step and path
- * refer to a term to be moved.
+ * This function implements the core actions for moving right and left,
+ * for use in computing an "action2".  The "where" value is either
+ * "left" for leftward movers or "right" for rightward movers.  The step
+ * and path refer to a term to be moved.
+ * 
+ * Searches through each fact of each "info" in order for a schema that
+ * matches the appropriate parent of the target term, returning an
+ * object with "completer" and "path" properties if found, or an empty
+ * object if not.
+ * 
+ * The completer is suitable as an action2 completer function and the
+ * path points to the location of the term after being moved, assuming
+ * the rewrite does not invalidate the input path argument.
  */
-function moverAction(where, step, path_arg) {
+function moverAction(which, step, path_arg) {
   initMovers();
-  const data = Toy.moverFacts[where];
+  const data = moverFacts[which];
   const path = step.prettifyPath(path_arg);
 
-  const checkMatch = (parent, schema, info) => {
+  // Given an array of parents, a fact schema, and a moverfacts "info"
+  // object, returns a continuation to do a suitable rewrite for the
+  // situation or a falsy value if the schema does not match.
+  const checkMatch = (parents, schema, info) => {
+    const parent = parents[info.up];
     if (parent && parent.matchSchema(schema.eqnLeft())) {
       const rwPath = path.upTo(info.before);
-      return rwPath && (() =>
-                        rules.rewrite(step.original, rwPath, schema));
+      return rwPath && (() => rules.rewrite(step.original, rwPath, schema));
     }
   };
 
@@ -6278,12 +6290,12 @@ function moverAction(where, step, path_arg) {
   const parents = step.ancestors(path).reverse();
   for (const info of data) {
     for (const fact of info.facts) {
-      const completer = checkMatch(parents[info.up], fact, info);
+      const completer = checkMatch(parents, fact, info);
       const p = path;
       if (completer) {
         const path = p.upTo(info.before).concat(info.after);
         assert(path);
-        return {completer, path};
+        return { completer, path };
       }
     }
   }
@@ -6392,13 +6404,12 @@ export function leftChain(step, path) {
 
 declare(
   // Searches for a moverFact whose LHS matches the appropriate parent
-  // of the target term and uses it to rewrite.
+  // of the target term and uses it to rewrite.  Third argument truthy
+  // causes this to return the path from moverAction as well as the
+  // completer.
   {name: 'moveRight',
-   action2: function(step, path_arg, location=false) {
-     const {completer, path} = moverAction('right', step, path_arg);
-     return (location
-             ? {completer, path}
-             : completer);
+   action2: function(step, path_arg) {
+     return moverAction('right', step, path_arg).completer;
    },
    inputs: {site: 1},
    menu: '   move term {term} right',
@@ -6407,11 +6418,8 @@ declare(
   },
 
   {name: 'moveLeft',
-   action2: function(step, path_arg, location=false) {
-     const {completer, path} = moverAction('left', step, path_arg);
-     return (location
-             ? {completer, path}
-             : completer);
+   action2: function(step, path_arg) {
+     return moverAction('left', step, path_arg).completer;
    },
    inputs: {site: 1},
    menu: '   move term {term} left',
@@ -6424,18 +6432,19 @@ declare(
      const mover = () => {
        // Consider the entire step, so adding assumptions will not
        // change the target paths.
-       let righter = rules.consider(step).andThen('andAssume', 'T');
+       let righter = rules.consider(step);
        // Adjust the target path accordingly.
        let path = Toy.asPath('/main/right').concat(step.asPath(path_arg));
        let completer;
        while (true) {
-         ({completer, path} = rules.moveRight.prep(righter, path, true));
+        console.log('Righter:', righter.$$);
+        console.log('Path:', path.$$);
+        ({completer, path} = moverAction('right', righter, path));
          if (completer) {
-           // If we can move right, do so.
+           // If we can move further right, do so.
            righter = completer();
          } else {
-           // Otherwise replace the entire step with the updated right
-           // side.
+           // We are done.  Replace the entire step with the result.
            return rules.replace(step, '', righter);
          }
        }
@@ -6463,7 +6472,7 @@ declare(
        let path = Toy.asPath('/main/right').concat(step.asPath(path_arg));
        let completer;
        while (true) {
-         ({completer, path} = rules.moveLeft.prep(lefter, path, true));
+         ({completer, path} = moverAction('left', lefter, path));
          if (completer) {
            lefter = completer();
          } else {
