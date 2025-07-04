@@ -4515,8 +4515,7 @@ declare(
   // issues of this kind.
   //
   // Unlike Andrews' rule, there is no special handling here for
-  // hypotheses.  Include them as antecedent of a conditional
-  // in the schema.
+  // hypotheses.  Include them in the schema as needed.
   // 
   // For tautologies with a conjunction on the LHS as shown in the
   // book, you can use rule P2.  If there are more than two conjuncts,
@@ -6365,7 +6364,7 @@ export function rightChain(step, path): Expr[] {
  *
  * The result path segments all turn out to be "left".
  */
-function leftmost(term_arg) {
+function leftmost(term_arg: Expr): Path {
   const bop = term => term.isCall2() && term.getBinOp().name;
 
   let rpath = Toy.Path.empty;
@@ -6391,7 +6390,8 @@ function leftmost(term_arg) {
  * operator of the parent of the target term, and all to the left of
  * the target.
  */
-export function leftChain(step, path) {
+export function leftChain(step: Step, path_arg: Pathable) {
+  const path = step.prettifyPath(path_arg);
   if (path.isEnd()) {
     return [];
   }
