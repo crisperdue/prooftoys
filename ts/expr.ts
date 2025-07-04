@@ -2935,12 +2935,14 @@ var identifierRegex = new RegExp('^' + identifierPattern + '([:]|$)');
 
 // Variables in particular, not including identifiers for constants.
 // The "." and ":" provide for extension with bound variable unique
-// identifiers and type signatures.
+// identifiers and type signatures.  Currently a variable name must
+// be an identifier.
 //
 // TODO: Make variable naming and subscripting consistent and
 // rational!  Currently variable names of a single alphabetic
-// character.
-var variableRegex = /^[a-zA-Z$][0-9_]*([.:]|$)|^_/;
+// character optionally followed by digits and underscores;
+// or "$" followed by alphadigits.
+var variableRegex = /^[a-zA-Z][0-9_]*([.:]|$)|^_|[$][a-zA-Z0-9]+/;
 
 // Numeric literals.
 var numeralRegex = /^-?[0-9]+$/;
