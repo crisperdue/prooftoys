@@ -1898,9 +1898,8 @@ export abstract class Expr {
   }
 
   /**
-   * Returns an equivalent path that uses "left", "right", "binop", and
-   * "main" to indicate subexpressions of binary operators where
-   * possible.
+   * Returns an equivalent path that replaces combinations of "fn" and
+   * "arg" with "left", "right", and "binop" where feasible.
    */
   prettifyPath(path_arg: Pathable) {
     const p = asPath(path_arg);

@@ -942,19 +942,23 @@ export function definex(name_arg, fact) {
 // oriented displays, both text and HTML, show them as Unicode.
 
 // Tokens pattern, private to tokenize.
-var _tokens = new RegExp(['[(){}\\[\\]]',
-                           // Identifiers: variables and named constants
-                           Toy.identifierPattern,
-                           // Numeric constants.  The parser glues together
-                           // negative numerals later.
-                           '[0-9]+',
-                           // Strings
-                           '"(?:\\\\.|[^"])*"',
-                           // Other operators (constants)
-                           // TODO: Narrow this to graphic nonalphabetic
-                           //   characters.
-                           '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
-                         'g');
+var _tokens = new RegExp(
+  [
+    '[(){}\\[\\]]',
+    // Identifiers: variables and named constants
+    Toy.identifierPattern,
+    // Numeric constants.  The parser glues together
+    // negative numerals later.
+    '[0-9]+',
+    // Strings
+    '"(?:\\\\.|[^"])*"',
+    // Other operators (constants)
+    // TODO: Narrow this to graphic nonalphabetic
+    //   characters.
+    '[^_:a-zA-Z0-9(){}\\s]+',
+  ].join('|'),
+  'g'
+);
 
 /**
  * In most cases the Unicode displays can serve as alternative names
