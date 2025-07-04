@@ -2220,7 +2220,6 @@ export abstract class Expr {
   /**
    * Like Expr.pathTo, but for infix calls produces a path with /left,
    * /right, or /binop rather than combinations of /fn and /arg.
-   * If given a Step that is not conditional, prepends /main.
    *
    * Given a term to match against, this searches for an identical
    * term, not just a sameAs term, unlike pathTo.
@@ -2234,9 +2233,7 @@ export abstract class Expr {
       pred = function(term) { return target == term; };
     }
     var p = this._prettyPath(pred, Toy.asPath(''));
-    return (this.isProved() && !this.isCall2('=>')
-            ? new Path('main', p)
-            : p);
+    return p;
   }
 
   /**
