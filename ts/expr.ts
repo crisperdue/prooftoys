@@ -1902,7 +1902,7 @@ export abstract class Expr {
    * "arg" with "left", "right", and "binop" where feasible.
    */
   prettifyPath(path_arg: Pathable) {
-    const p = asPath(path_arg);
+    const p = this.asPath(path_arg);
     if (p.isEnd()) {
       return p;
     }
