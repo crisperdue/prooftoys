@@ -4638,4 +4638,44 @@ basicSimpFacts.push
 //Toy._ungroupingFacts = ungroupingFacts;
 
 
+  //// Basic definitions related to groups and their kin.
+
+declare(
+  // For assoc and commut, applying to a restricted domain preserves
+  // and may even establish the property -- everywhere.
+  {definition:
+    'assoc o == forall {x. forall {y. forall {z. o (o x y) z = o x (o y z)}}}'
+  },
+  {definition:
+    'commut o == forall {x. forall {y. o x y = o y x}}'
+  },
+  {definition:
+    'leftIdn i d o == forall {x. d x => o i x = x}'
+  },
+  {definition:
+    'idn i d o == forall {x. d x => o i x = x & o x i = x}'
+  },
+  {definition:
+    'leftInvt d o i == forall {x. d x => exists {y. d y & o y x = i}}'
+  },
+  {definition:
+    'rightInvt d o i == forall {x. d x => exists {y. d y & o x y = i}}'
+  },
+  {definition:
+    'invt d o i == leftInvt d o i & rightInvt d o i'
+  },
+  {definition:
+    'Magma m o == forall {x. forall {y. m x & m y => m (o x y)}}'
+  },
+  {definition:
+    'SGroup s o == Magma s o & assoc o'
+  },
+  {definition:
+    'Monoid m o i == SGroup m o & idn i m o'
+  },
+  {definition:
+    'Group g o i == SGroup g o & invt g o i'
+  },
+);
+
 }
