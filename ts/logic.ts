@@ -6434,17 +6434,17 @@ declare(
 
   {name: 'moveRightmost',
    action2: function(step, path_arg) {
+     // This removes /main if needed, and prettifies.
+     const path = step.prettifyPath(step.asPath(path_arg));
      const mover = () => {
        // Consider the entire step, so adding assumptions will not
        // change the target paths.
        let righter = rules.consider(step);
        // Adjust the target path accordingly.
-       let path = Toy.asPath('/main/right').concat(step.asPath(path_arg));
+       let p = asPath('/main/right').concat(path);
        let completer;
        while (true) {
-        console.log('Righter:', righter.$$);
-        console.log('Path:', path.$$);
-        ({completer, path} = moverAction('right', righter, path));
+        ({completer, path: p} = moverAction('right', righter, p));
          if (completer) {
            // If we can move further right, do so.
            righter = completer();
@@ -6473,7 +6473,7 @@ declare(
    action2: function(step, path_arg) {
      // Implementation is very much like moveRightmost.
      const mover = () => {
-       let lefter = rules.consider(step).andThen('andAssume', 'T');
+       let lefter = rules.consider(step);
        let path = Toy.asPath('/main/right').concat(step.asPath(path_arg));
        let completer;
        while (true) {
