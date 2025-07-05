@@ -7289,7 +7289,7 @@ declare(
    simplifier: true,
   },
 
-  //// Useful for forward chaining:
+  //// Tautologies useful for forward chaining:
 
   {statement: '(not a => a) => a',
    proof: function() {
@@ -7379,13 +7379,11 @@ declare(
    }
   },
 
-  // Equivalence by proving a conditional in both directions; general form.
-  {statement: 'a1 => (b => c) => (a2 => (c => b) => (a1 & a2 => (b == c)))',
-   proof: function() {
-     return rules.tautology
-       ('a1 => (b => c) => (a2 => (c => b) => (a1 & a2 => (b == c)))');
-   }
-  },
+  // Conditional in both directions, with additional conditions
+  // on both conjuncts.  Also works as an equivalence.
+  //
+  // TODO: Handle cases with extra condition(s) on just one side.
+  defTautology('(a1 & b => c) & (a2 & c => b) => (a1 & a2 => (b == c))'),
 
   // Alternate strategy for proving equivalence from conditionals.
   {statement: 'a => b => ((not a => not b) => (a == b))',
@@ -7400,10 +7398,16 @@ declare(
    },
   },
 
+  // As above with extra condition(s) on both conjuncts.
+  defTautology('(a1 & b => c) & (a2 & not b => c) => (a1 & a2 => c)'),
+
   // General form of classic proof by cases; also useful transformer.
   {statement: '(((a => c) & (b => c)) == ((a | b) => c))',
    proof: () => rules.tautology('(((a => c) & (b => c)) == ((a | b) => c))'),
   },
+
+  // Basically as above with extra condition(s) on both conjuncts.
+  defTautology('(a1 & a => c) & (a2 & b => c) => (a1 & a2 & (a | b) => c)'),
 
   // Working with conditional equivalences:
   {statement: 'a => (b == c) == (a & b == a & c)',
