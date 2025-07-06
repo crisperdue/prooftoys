@@ -2982,6 +2982,17 @@ declare(
    labels: 'forward',
   },
 
+  // This should be helpful when an assumption is universally
+  // quantified.
+  {
+    statement: 'forall p == forall p & p x',
+    proof: function () {
+      return rules
+        .fact('forall p => p x')
+        .rewrite('', 'a => b == (a == a & b)');
+    },
+  },
+
   // r5226 is r5225 with "p" and "x" instantiated, then beta conversion.
 
   // [not T] = F
