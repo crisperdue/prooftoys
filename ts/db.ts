@@ -1,7 +1,9 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
-import { Dexie } from "js/dexie.js";
-import type { Table } from "js/dexie.js";
+// prooftoys-scripts.html arranges for dexie.js to be published
+// properly.  tsconfig.json ensures that its type info is found.
+import { Dexie } from "/js/dexie.js";
+import type { Table } from "/js/dexie.js";
 
 export type MyDexie = Dexie & {
   editors: Table<Editor, string>;

@@ -52,6 +52,7 @@
     "lib": ["es2022", "dom", "dom.iterable"],
     // For compilation speed over accuracy:
     "skipLibCheck": true,
+    // jQuery types are available here.
     "typeRoots": ["./node_modules/@types"],
     // The paths here define lookups of modules at compiletime. The
     // importmap in layouts/partials/prooftoys-scripts.html defines
@@ -59,7 +60,7 @@
     // here.
     "paths": {
         // This provides access to dexie.d.ts.
-        "js/*": ["./node_modules/dexie/dist/*"],
+        "/js/*": ["./node_modules/dexie/dist/*"],
      },
     // Transform module paths using package.json.
     // "resolvePackageJsonImports": true,

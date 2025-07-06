@@ -10,6 +10,7 @@
   {{ $lo := resources.Get "/js/logic.js" }}
   {{ (resources.Get "/js/numbers.js").Publish }}
   {{ (resources.Get "/js/derivatives.js").Publish }}
+  {{ (resources.Get "/js/trig.js").Publish }}
   {{ $nn := resources.Get "/js/natnums.js" }}
   {{ $st := resources.Get "/js/step-editor.js" }}
   {{ $re := resources.Get "/js/rendering.js" }}
@@ -27,25 +28,18 @@
     <script src="{{ $allJS.RelPermalink }}"></script>
   {{ end }}
 
-  {{/* This specifies that a runtime import from
-       "js/<etc>" translates to a request for /pt/js/<etc>.
-        TODO: Translate path to just /js/<etc>, here and in
-          the uses below.
+  {{/* 
+    Hugo sees files in prooftoys/js/ as being in assets/js due to
+    mounts in hugo.toml.  In this case (leading "/"?) it outputs
+    the file in "public" to be accessible with exactly the url
+    given to resources.Get.
     */}}
-<script type="importmap">
-  {
-    "imports": {
-      "js/": "/pt/js/"
-    }
-  }
-</script>
-
-{{ $db := resources.Get "/pt/js/db.js" }}
+{{ $db := resources.Get "/js/db.js" }}
 <script type=module src="{{ $db.RelPermalink }}"></script>
 
-{{/* This stimulates Hugo to include dexie.js in the site.
+{{/* This stimulates Hugo to publish dexie.js much like db.js.
      TODO: Use Hugo to avoid having to check it in (in js/).
      It could be accessed as dexie/dist/dexie.mjs, and Concat'ed
      to /js/dexie.js.
   */}}
-{{ (resources.Get "/pt/js/dexie.js").Publish }}
+{{ (resources.Get "/js/dexie.js").Publish }}
