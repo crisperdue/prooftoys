@@ -1135,7 +1135,8 @@ export function definitionOnly(defn_arg) {
  */
 function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
   const definitions = Toy.definitions;
-  let candidate: EType = justParse(defn_arg);
+  let candidate: Expr =
+    defn_arg instanceof Expr ? defn_arg : justParse(defn_arg);
   // Free occurrences of names of constants that do not have
   // definitions.  We check this before adding any facts that
   // may reference the defined name.
@@ -1150,6 +1151,7 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
   assert(newList.length === 1,
          'Definition {1} has multiple new constants {2}',
          defn_arg, newList.join(', '));
+  // This is the name being defined.
   const name: string = newList[0];
   if (candidate.isCall2('=')) {
     // The name must not appear in the RHS.
@@ -1160,8 +1162,9 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
 
   // This checks for a definition in "infix form", with the new constant
   // function or predicate in the middle of three Atoms on the left.  If
-  // so, register it as infix, and rearrange the LHS so it is prefix.
-  function handleInfix() {
+  // so, register it as infix, and rearrange the candidate so its LHS is
+  // prefix.
+  function convertInfix() {
     let left = candidate.getLeft();
     const parts = left.asArray();
     // If the lhs side has the form v1 C v2, treat C as the constant
@@ -1170,7 +1173,7 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
       const mid = parts[1];
       if (mid.isNamedConst()) {
         left = call(mid, parts[0], parts[2]);
-        addConstants([mid]);
+        // addConstants([mid]);
         const name = mid.name;
         // Give it a default infix binding power unless it
         // already has a precedence.
@@ -1179,9 +1182,13 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
       }
     }
   }
-  handleInfix();
+  convertInfix();
   // Now it is safe to calculate type information.
   candidate = candidate.typedCopy();
+
+  // TODO: Add and register new constants only once we are
+  //   sure the definition is acceptable.
+
   // Register the single new name as a constant.
   Toy.addConstants(newList);
   // Register the type of the new constant.
@@ -1196,9 +1203,13 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
     // logic is loaded.
     const defn = normalizeDefn(candidate);
     // The defn is the definition in standard form: <constant> = <term>.
+    // TODO: Also check for excess RHS type variables. I'm not sure that
+    //   can happen with type vars all being implicit.
+    assert(defn.freeVarSet().size === 0, 
+      'Requested definition {1} has (right side) free variables', candidate);
 
     // Now assert the fundamental fact.
-    // TODO: Is the best place to assert it?
+    // TODO: Is this the best place to assert it?
     const assertion: EType = rules.assert(defn);
     if (defn.isCall2('=') && defn.getLeft().isNamedConst()) {
       // Allow benign redefinition same as an existing one.
