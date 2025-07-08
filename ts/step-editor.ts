@@ -1195,7 +1195,8 @@ function buildWksControls(editor) {
     const html =
       '<div class="{2} hidden form">{1} ' +
       '<input type=text class=input size=30>' +
-      '&nbsp;<input type=button class=go value="Go">' +
+      '&nbsp;<input type=button class=go value="Go"><br><br>' +
+      'Use alphanumerics, "/", "-" and "_" in document names.' +
       '</div>';
     return $(Toy.format(html, prefix, classes));
   }
