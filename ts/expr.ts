@@ -231,7 +231,7 @@ export function checkFnMatch(schema, fn, expr, map, bindings) {
     //   Consider how to handle that here.
     rules.consider(schema).andThen('instVar', lambdas, name);
   });
-  if (reduced instanceof Error) {
+  if (!(reduced instanceof Expr)) {
     return null;
   }
   while (path !== Path.empty) {
