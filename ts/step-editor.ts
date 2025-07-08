@@ -1789,7 +1789,7 @@ export class StepEditor {
     // from the main part of the rule.  If the precheck or first
     // phase fails, they return falsy (but not undefined), or
     // an Error.
-    const result = Toy.value(() => rule( ...args));
+    const result = try_(() => rule( ...args));
     // const thrown = Toy.thrown; // This could give the thrown value.
 
     if (Toy.profileName) {
@@ -1817,11 +1817,20 @@ export class StepEditor {
     } else if (!isProved(result)) {
       // It is possible to display more information about thrown
       // errors (aborts), but it may not be helpful to the user.
-      const message = 'Rule failed:' + ruleName;
+      let message = 'Rule failed:' + ruleName;
 
       console.warn(`Rule ${ruleName} failed`);
       if (result instanceof Error) {
-        console.warn(`Error: ${result.message}`);
+        const emsg = result.message;
+        console.warn(`Error: ${emsg}`);
+        const prefix = ruleName + ': ';
+        if (emsg.startsWith(prefix)) {
+          // Show the user the error message if the rule requested by
+          // the user matches the beginning of the message.  This way
+          // should work well unless a rule is recursive, and perhaps
+          // sometimes even then.
+          message = 'Error: ' + emsg.slice(prefix.length);
+        }
       } else {
         console.warn('Result:', result);
       }

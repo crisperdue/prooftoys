@@ -1147,9 +1147,9 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
   // Check that there is exactly one new constant here, and that it
   // appears only in the LHS of the equality.
   assert(newList.length > 0,
-         'Definition {1} needs a fresh constant name.', defn_arg);
+         'define: Definition {1} needs a fresh constant name.', defn_arg);
   assert(newList.length === 1,
-         'Definition {1} has multiple new constants {2}',
+         'define: Definition {1} has multiple new constants {2}',
          defn_arg, newList.join(', '));
   // This is the name being defined.
   const name: string = newList[0];
@@ -1157,7 +1157,7 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
     // The name must not appear in the RHS.
     const rhsNames = candidate.getRight().newConstants();
     assert(!rhsNames.has(name),
-           'Definition of {1} refers to {1}', name);
+           'define: Definition of {1} refers to {1}', name);
   }
 
   // This checks for a definition in "infix form", with the new constant
@@ -1206,7 +1206,8 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
     // TODO: Also check for excess RHS type variables. I'm not sure that
     //   can happen with type vars all being implicit.
     assert(defn.freeVarSet().size === 0, 
-      'Requested definition {1} has (right side) free variables', candidate);
+      'define: Requested definition {1} has (right side) free variables',
+      candidate);
 
     // Now assert the fundamental fact.
     // TODO: Is this the best place to assert it?
@@ -1247,7 +1248,7 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
       } else {
         var exists = Toy.call('exists', Toy.lambda(x, body));
         assert(isRecordedFact(exists),
-               'Definition {1} needs an existence fact.', defn);
+               'define: Definition {1} needs an existence fact.', defn);
       }
 
       // Assert the non-equational statement and add it to the
