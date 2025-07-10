@@ -10,7 +10,7 @@
   {{ $lo := resources.Get "/js/logic.js" }}
   {{ (resources.Get "/js/numbers.js").Publish }}
   {{ (resources.Get "/js/derivatives.js").Publish }}
-  {{ (resources.Get "/js/trig.js").Publish }}
+  {{/* (resources.Get "/js/trig.js").Publish */}}
   {{ $nn := resources.Get "/js/natnums.js" }}
   {{ $st := resources.Get "/js/step-editor.js" }}
   {{ $re := resources.Get "/js/rendering.js" }}
