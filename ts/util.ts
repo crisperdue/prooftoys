@@ -1542,13 +1542,14 @@ namespace Toy {
    * valid document name.  Currently one or more of alphanumeric or
    * "-./_ #".
    *
-   * Now experimentally allows anything if the entire name begins
-   * with an open parenthesis and ends with a closing one.
+   * Now experimentally allows anything if the entire name begins with
+   * an open parenthesis, ends with a closing one, and can be parsed as
+   * a term.
    */
   export function checkDocName(name) {
     const result = name.match(/^[(].*[)]$|^([a-zA-Z0-9_ /.#-]+)$/);
-    const term = (Toy.parse && name.startsWith('(')
-      ? catching(() => Toy.parse(name))
+    const term = (parse && name.startsWith('(')
+      ? catching(() => parse(name))
       : null);
     // Note that if parsing is not available, parenthesized but
     // ill-formed terms are accepted here.

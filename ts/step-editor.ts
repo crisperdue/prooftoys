@@ -452,7 +452,7 @@ export class ProofEditor {
           // editors or displays on the page will have this same proof
           // context whether it is appropriate or not.
           const theories = (Toy.lsDocs()
-                            .filter(nm => nm.startsWith('Theory '))
+                            .filter(nm => nm.startsWith('Theory'))
                             .sort());
           const index = theories.indexOf(self.docName);
           if (index >= 0) {
