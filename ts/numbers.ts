@@ -4641,40 +4641,44 @@ basicSimpFacts.push
   //// Basic definitions related to groups and their kin.
 
 declare(
-  // For assoc and commut, applying to a restricted domain preserves
-  // and may even establish the property -- everywhere.
+  // The domain of associativity is an argument here. It could be
+  // treated implicitly as the entire domain of the operation.
   {definition:
-    'assoc o == forall {x. forall {y. forall {z. o (o x y) z = o x (o y z)}}}'
+    'assoc o d == forall {x. forall {y. forall {z.' +
+      'd x & d y & d z => o (o x y) z = o x (o y z)}}}'
+  },
+  // Here again the domain of commutativity is an argument, though it
+  // could be treated implicitly as the entire domain of the operation.
+  {definition:
+    'commut o d == forall {x. forall {y. d x & d y => o x y = o y x}}'
   },
   {definition:
-    'commut o == forall {x. forall {y. o x y = o y x}}'
+    'leftIdn i d o == d i & forall {x. d x => o i x = x}'
   },
   {definition:
-    'leftIdn i d o == forall {x. d x => o i x = x}'
+    'rightIdn i d o == d i & forall {x. d x => o x i = x}'
   },
   {definition:
-    'idn i d o == forall {x. d x => o i x = x & o x i = x}'
+    'idn i d o == d i & forall {x. d x => o i x = x & o x i = x}'
   },
+  // Here v is an inverse of operation "o" over domain d.
+  // This definition does not specify that "idn i d o".
   {definition:
-    'leftInvt d o i == forall {x. d x => exists {y. d y & o y x = i}}'
+    'inverse v o d i == forall {x. d x => o (v x) x = i & o x (v x) = i}'
   },
-  {definition:
-    'rightInvt d o i == forall {x. d x => exists {y. d y & o x y = i}}'
-  },
-  {definition:
-    'invt d o i == leftInvt d o i & rightInvt d o i'
-  },
+  // A magma is simply a carrier set with a binary operation that is
+  // closed over the carrier set.
   {definition:
     'Magma m o == forall {x. forall {y. m x & m y => m (o x y)}}'
   },
   {definition:
-    'SGroup s o == Magma s o & assoc o'
+    'SGroup s o == Magma s o & assoc o s'
   },
   {definition:
     'Monoid m o i == SGroup m o & idn i m o'
   },
   {definition:
-    'Group g o i == SGroup g o & invt g o i'
+    'Group g o i v == Monoid g o i & inverse v o g i'
   },
 );
 
