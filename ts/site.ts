@@ -431,7 +431,7 @@ function footerOnResize() {
  * Makes image tooltips base
  */
 function makeImageTips() {
-  tippy('b[imagetip]', {
+  tippy && tippy('b[imagetip]', {
     content: (reference) => {
       const img = document.createElement('img');
       img.src = reference.getAttribute('imagetip');
@@ -455,7 +455,7 @@ function makeImageTips() {
  * have a border box around it.
  */
 function makeVideoTips() {
-  tippy('span[videotip], a[videotip], b[videotip]', {
+  tippy && tippy('span[videotip], a[videotip], b[videotip]', {
     content: element => {
       const source = element.getAttribute('videotip');
       return `<video muted playsinline style="max-width: 80vw">
