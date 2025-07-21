@@ -2848,21 +2848,6 @@ export abstract class Expr {
   }
 
   /**
-   * Computes the "base instance" of a proof step.  Each level of
-   * justification has its own Expr, all equal, but each with its
-   * own justification and details.  This accesses the bottom level
-   * step.
-   */
-  // @ts-ignore
-  getBase() {
-    var result = this;
-    while (result.details) {
-      result = result.details;
-    }
-    return result;
-  }
-
-  /**
    * Get the assumptions of this wff if it has any, else null.
    */
   // @ts-ignore

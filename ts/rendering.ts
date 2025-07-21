@@ -847,8 +847,7 @@ export class ProofDisplay {
           clearSubproof(step);
         } else {
           fillDetails(step);
-          // Track these events in Matomo.
-          Toy.trackAppEvent('ShowSubproof');
+          trackAppEvent('ShowSubproof');
           renderSubproof(step);
         }
       });
@@ -859,36 +858,36 @@ export class ProofDisplay {
 }
 
 export interface Expr {
+  /**
+   * Builds and returns a potentially nested array if given a Call,
+   * otherwise returns this.
+   *
+   * Terminology: a term may be "broken before" if a line break and suitable
+   * indentation may be inserted before its DOM node.  A term is
+   * splittable if breaks are allowed between its parts in case it has
+   * parts.  Representation:
+   *
+   * Atom: the term.
+   *
+   * Lambda: the term.
+   *
+   * Call: array of two or more elements for the function and
+   * potentially "extended" arguments, in textual order.  Thus an infix
+   * function is second in the array rather than first.  Extended
+   * arguments come from "uncurrying", and calls to infix functions can
+   * also be uncurried, e.g. function composition as infix, applied to
+   * some input value.  All of the elements are splittable, and all but
+   * the first may be broken before.
+   *
+   * "Chains" of infix calls to the same operator, or + and - or * and /
+   * are flattened to put all arguments and operator terms at the
+   * same level in the tree, reducing nesting of terms to the left.
+   *
+   * Right operands of infix operators and the argument to an ordinary
+   * function may or may not be converted to arrays.
+   */
   formatTerm();
 }
-/**
- * Builds and returns a potentially nested array if given a Call,
- * otherwise returns this.
- *
- * Terminology: a term may be "broken before" if a line break and suitable
- * indentation may be inserted before its DOM node.  A term is
- * splittable if breaks are allowed between its parts in case it has
- * parts.  Representation:
- *
- * Atom: the term.
- *
- * Lambda: the term.
- *
- * Call: array of two or more elements for the function and
- * potentially "extended" arguments, in textual order.  Thus an infix
- * function is second in the array rather than first.  Extended
- * arguments come from "uncurrying", and calls to infix functions can
- * also be uncurried, e.g. function composition as infix, applied to
- * some input value.  All of the elements are splittable, and all but
- * the first may be broken before.
- *
- * "Chains" of infix calls to the same operator, or + and - or * and /
- * are flattened to put all arguments and operator terms at the
- * same level in the tree, reducing nesting of terms to the left.
- *
- * Right operands of infix operators and the argument to an ordinary
- * function may or may not be converted to arrays.
- */
 Expr.prototype.formatTerm = function() {
   const power = Toy.getPrecedence;
   const term = this;
@@ -1111,7 +1110,7 @@ export function fillDetails(step) {
                   // Impossible for a step!
                   : null);
       // Get a real proof.
-      var result0 = Toy.proveResult(copy);
+      var result0 = proveResult(copy);
       // Convert the variable names in the actual proof to the
       // ones mentioned in the usage of the fact.
       // This map should be OK as it is just a renaming.
@@ -2353,21 +2352,6 @@ export function computeHeaderArgInfo(step) {
       + argInfo + '</span>';
   }
   return argInfo;
-}
-
-/**
- * Computes the lowest real ordinal of a set of steps.
- * TODO: Eliminate this when there are no more artificial ordinals
- * due to creating assertions after the fact.
- */
-export function computeFirstOrdinal(steps) {
-  var lowest = 0;
-  for (var i = 0; i < steps.length; i++) {
-    lowest = steps[i].getBase().ordinal;
-    if (lowest >= 1) {
-      return lowest;
-    }
-  }
 }
 
 
