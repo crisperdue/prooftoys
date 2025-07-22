@@ -95,23 +95,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   //   and storing "rendering" in a WeakMap.
   result.rendering = null;
   // Record the step as details.
-  // Note that above, primitive rules have no deps.
-  if (Toy.isProved(step)) {
-    // Except for primitive rules listed just below.
-    result.details = ruleName === 'r' ? null : step;
-  } else {
-    switch(ruleName) {
-    case 'axiom4':
-    case 'assert':
-    // TODO: "define" should not have to be a special case here.
-    case 'define':
-    case 'definition':
-    case 'r':
-      break;
-    default:
-      assert(false, 'Input to "justify" should be a step ({1})', step);
-    }
-  }
+  assert(isProved(step), 'Input to "justify" should be a step ({1})', step);
+  result.details = ruleName === 'r' ? null : step;
   // Give the new step the specified ruleName.
   result.ruleName = ruleName;
   // Make the step be its own original, for uniform access to an original.
@@ -124,6 +109,26 @@ Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   result.ruleDeps = ruleDeps;
   return result;
 };
+
+export interface Expr {
+  /**
+   * Given a Step, returns a new Step with exactly the same
+   * justification, allowing it for example to have its own rendering.
+   */
+  rejustify(): Step;
+  /**
+   * Performs this step based on the rule name and args, returning its
+   * result.  Does not create a step with a justification.
+   */
+  run(): Step;
+}
+Expr.prototype.rejustify = function() {
+  return this.justify(this.ruleName, this.ruleArgs, this.ruleDeps, true);
+}
+
+Expr.prototype.run = function() {
+  return rules[this.ruleName]( ...this.ruleArgs);
+}
 
 export interface Expr {
   /**
