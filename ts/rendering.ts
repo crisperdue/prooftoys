@@ -841,12 +841,12 @@ export class ProofDisplay {
 
     // Clicking on a subproofExpander (if any) shows the subproof when
     // subproofs are enabled.
-    if (Toy.modes.subproofs) {
+    if (modes.subproofs) {
       $proofStep.on('click', 'span.subproofExpander', function(event) {
         if (step.subproofDisplay) {
           clearSubproof(step);
         } else {
-          fillDetails(step);
+          // fillDetails(step);  // XXX
           trackAppEvent('ShowSubproof');
           renderSubproof(step);
         }
@@ -1082,7 +1082,8 @@ Expr.prototype.reIndent = function(depth, portWidth) {
  * in which case this may set the details of the step and its
  * original.
  */
-export function fillDetails(step) {
+export function fillDetails(step) {  // XXX
+  abort('Fooey');
   const original = step.original;
   // This code knows the structure of results produced by
   // asserted facts, either in getResult (when the proof is not
@@ -1966,21 +1967,13 @@ export function formattedStepInfo(step) {
   // TODO: Allow facts to be flagged as axioms so their displays
   //   can be distinguished from other facts, perhaps by simply
   //   omitting the 'proof' property.
-  var fa = 'fa fa-plus-square';
-  const expand =
-    step.ruleName == 'fact' ||
-    (step.details &&
-      step.details.ruleName !== 'assert' &&
-      // If the details are already rendered, there is no
-      // point in displaying in the link style.
-      !step.details.rendering &&
-      Toy.modes.subproofs);
   const $expander = $(
     '<span class="fa fa-plus-square" title="View step details">'
   );
   const $d1 = $('<span>').prop({ title: info.tooltip }).append(d1);
   const stepRefs = useDefault ? defaultStepRefs(step, description) : '';
   const $result = $('<span>');
+  const expand = modes.subproofs && !primRules.includes(step.ruleName);
   if (expand) {
     $result.prop({ className: 'subproofExpander' });
   }
@@ -2224,7 +2217,7 @@ var stepFormatters = {
  *   rendering.  Rule wrapper code might do this automatically.
  */
 export function renderInference(step) {
-  var steps = unrenderedDeps(step.details);
+  var steps = unrenderedDeps(step.details || step.original.run());
   var prefix = '';
   var stepNum = step.stepNumber;
   if (stepNum) {

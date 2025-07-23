@@ -734,8 +734,8 @@ declare(
       assert(rendered, 'For interactive use only');
       const display = Toy.getProofDisplay(rendered);
 
-      Toy.fillDetails(rendered);
-      const insertions = Toy.unrenderedDeps(step.details);
+      // fillDetails(rendered);
+      const insertions = unrenderedDeps(step.getDetails());
       // Steps with an array argument (list of facts) where some entry
       // is neither a term nor a string cannot currently be inlined.
       const noEncode = insertions.some(function(step) {
@@ -3154,10 +3154,10 @@ declare(
     action: function(wff_arg) {
       const wff = termify(wff_arg).typedCopy();
       const key = '' + wff.dump();
-      const details = _tautologies.get(key);
+      const stored = _tautologies.get(key);
       let result;
-      if (details) {
-        result = details.justify('tautology', [wff]);
+      if (stored) {
+        result = stored.rejustify();
       } else {
         if (!Toy.looksBoolean(wff)) {
           return Toy.newError('Not handled as tautology: {1}', wff_arg);
@@ -3175,7 +3175,7 @@ declare(
         return Toy.newError('Not a tautology: {1} -- {2}',
                             wff_arg, result.message);
       } else {
-        _tautologies.set(key, result.details);
+        _tautologies.set(key, result);
         const str = wff.toString();
         const count = tautologyCounts.get(str);
         tautologyCounts.set(str, (count || 0) + 1);
@@ -7347,6 +7347,9 @@ declare(
      return rules.tautology('a => (b => c) == a & b => c');
    }
   },
+
+  // Conditionalization
+  defTautology('b => c => (a => b => (a => c))'),
 
   // Contraposition
   {statement: 'a => b == not b => not a',

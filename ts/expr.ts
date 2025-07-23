@@ -2163,6 +2163,15 @@ export abstract class Expr {
   }
 
   /**
+   * Gets the details for the given plain step by computing them, never
+   * accessing the details property.
+   */
+  getDetails() {
+    assert(!this.details, 'Details?');
+    return this.run();
+  }
+
+  /**
    * Coerces this Expr to one that is the same, but not proved by making
    * a very shallow copy.  Carries over any type information.
    * Also sets the "fromStep" property to this Step, providing easy

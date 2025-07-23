@@ -31,6 +31,9 @@ var F = constify('F');
 // TODO: Part of a proof context.
 export var _tautologies = new Map();
 
+// List of names of rules that apply "justify" to a non-Step.
+export const primRules = ['r', 'axiom4', 'assert', 'define', 'definition'];
+
 //
 // Expr methods for inference
 //
@@ -95,7 +98,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   //   and storing "rendering" in a WeakMap.
   result.rendering = null;
   // Record the step as details.
-  assert(isProved(step), 'Input to "justify" should be a step ({1})', step);
+  assert(isProved(step) || primRules.includes(ruleName),
+    'Input to "justify" should be a step ({1})', step);
   result.details = ruleName === 'r' ? null : step;
   // Give the new step the specified ruleName.
   result.ruleName = ruleName;
@@ -127,7 +131,8 @@ Expr.prototype.rejustify = function() {
 }
 
 Expr.prototype.run = function() {
-  return rules[this.ruleName]( ...this.ruleArgs);
+  // This effectively
+  return rules[this.ruleName]( ...this.ruleArgs).details;
 }
 
 export interface Expr {
