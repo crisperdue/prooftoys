@@ -6,17 +6,14 @@
 
 'use strict';
 
-// import type { Dexie } from "./dexie.d.ts";
-
-// import type { Dexie } from "dexie";
-
-/** Exported constructor */
-// var Dexie;
-
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
 namespace Toy {
 
+/**
+ * This is a global variable that stores info from a rule's "action"
+ * property.
+ */
 export var _actionInfo;
 
 //// THEOREMS AND RULES

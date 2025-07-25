@@ -1003,6 +1003,8 @@ var _altTokens = _buildAltTokens();
  * parsed as if the usual textual form were seen.
  */
 export function tokenize(str) {
+  // TODO: Create distinctions here between single-char tokens,
+  //   especially ".", and operators (consisting of non-alphanumerics).
   var match;
   var result = [];
   while (match = _tokens.exec(str)) {
@@ -2243,7 +2245,7 @@ export function dumpProof(proofEditor) {
  * ... )", or an array of step description strings, returns a function
  * that returns an ordinary proof step ready to render into a proof.
  * In case of an Error return from decodeSteps, the function will
- * return that error.  If given a function, the function should return
+ * return that error.  If given a function, that function should return
  * an ordinary proved step (or an Error).
  *
  * Adding the result to a proof editor should be done with

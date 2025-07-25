@@ -846,7 +846,7 @@ export class ProofDisplay {
         if (step.subproofDisplay) {
           clearSubproof(step);
         } else {
-          // fillDetails(step);  // XXX
+          fillDetails(step);
           trackAppEvent('ShowSubproof');
           renderSubproof(step);
         }
@@ -1077,13 +1077,12 @@ Expr.prototype.reIndent = function(depth, portWidth) {
 }
 
 /**
- * Fills in the details of a renderable step.  A no-op unless the step
- * is a use of rules.fact in which the proof of the fact was deferred,
- * in which case this may set the details of the step and its
+ * This has no effect unless the step
+ * is a use of rules.fact in which the proof of the fact was deferred.
+ * In that case this may set the details of the step and its
  * original.
  */
-export function fillDetails(step) {  // XXX
-  abort('Fooey');
+export function fillDetails(step) {
   const original = step.original;
   // This code knows the structure of results produced by
   // asserted facts, either in getResult (when the proof is not
@@ -1104,6 +1103,7 @@ export function fillDetails(step) {  // XXX
       // The fact was asserted based on its statement, deferring
       // the proof.  Substitute an actual proof, creating it if
       // necessary.  First create a new Step object.
+      // TODO: Use rejustify here instead??
       var copy = (original instanceof Call
                   ? new Call(original.fn, original.arg)
                   : original instanceof Atom

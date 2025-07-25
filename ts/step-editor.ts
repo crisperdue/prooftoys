@@ -779,7 +779,7 @@ export class ProofEditor {
         // page loads.
         this.syncToDocName(name);
         // Reload the page and start over.
-        Toy.sleep(0).then(() => location.reload());
+        sleep(0).then(() => location.reload());
         // Indicate an inconclusive result.
         return null;
       }
@@ -806,7 +806,7 @@ export class ProofEditor {
       if (proofData) {
         self.setEditable(true);
         self.setSteps([]);
-        Toy.decodeSteps2(proofData.proofState, step => self.addStep(step));
+        decodeSteps2(proofData.proofState, step => self.addStep(step));
         self.syncToDocName(name);
         return true;
       }
