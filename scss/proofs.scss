@@ -699,11 +699,16 @@ span.stepRef {
 }
 
 .expr.equiv {
-    margin: 0 .1em;
+    padding: 0 .1em;
 }
 
 .expr.implies {
-  margin: 0 .1em;
+  padding: 0 .1em;
+}
+
+.expr.multiply {
+    padding: 0 .1em;
+    font-size: 70%;
 }
 
 // Text transforms, e.g. for \u27f9 arrows.
@@ -716,10 +721,6 @@ span.stepRef {
 //   transform: scaleX(75%);
 //   margin: 0 -.15em;
 // }
-
-.expr.multiply {
-    margin: 0 .1em;
-}
 
 /* Proof step editor */
 

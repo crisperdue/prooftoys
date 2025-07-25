@@ -41,7 +41,7 @@ export const unicodeNames = {
   'in': '\u2208',     // &in;
   'notin': '\u2209',  // &notin;
   '**': '**',         // Dont change to sdots.
-  '*': '\u22c5',      // &sdot;
+  '*': '\u00d7',      // &times; previously &sdot; (too small)
   '-': '\u2212',      // &minus;
   '</': '</',         // Treat this as HTML.
   '/': '\u2215',      // division slash
