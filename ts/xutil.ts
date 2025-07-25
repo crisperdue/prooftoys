@@ -944,18 +944,24 @@ export function definex(name_arg, fact) {
 // Tokens pattern, private to tokenize.
 var _tokens = new RegExp(
   [
-    '[(){}\\[\\]]',
-    // Identifiers: variables and named constants
+    // The "type" identifiers in the comments here are currently just
+    // comments with no impact on any code.
+    // TODO: Consider arranging for them to contribute to properly
+    //   classifying each token.
+    // These are the single-character tokens -- type 1.
+    '[(){}\\[\\].]',
+    // Identifiers: variables and named constants -- type 2
     Toy.identifierPattern,
     // Numeric constants.  The parser glues together
-    // negative numerals later.
+    // negative numerals later. -- type 3
     '[0-9]+',
-    // Strings
+    // Strings -- type 4
     '"(?:\\\\.|[^"])*"',
-    // Other operators (constants)
+    // These are the other operators, treated as constants.
+    // These never include any of the single-character tokens.
     // TODO: Narrow this to graphic nonalphabetic
-    //   characters.
-    '[^_:a-zA-Z0-9(){}\\s]+',
+    //   characters. -- type 5
+    '[^_:a-zA-Z0-9(){}\\[\\].\\s]+',
   ].join('|'),
   'g'
 );
