@@ -698,17 +698,9 @@ span.stepRef {
     color: #555;
 }
 
-.expr.equiv {
-    padding: 0 .1em;
-}
-
-.expr.implies {
-  padding: 0 .1em;
-}
-
-.expr.multiply {
-    padding: 0 .1em;
-    font-size: 70%;
+/* This puts padding on each infix operator. */
+.expr.infix {
+  padding: 0 .2em;
 }
 
 // Text transforms, e.g. for \u27f9 arrows.

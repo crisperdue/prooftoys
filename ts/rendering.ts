@@ -1548,9 +1548,10 @@ Call.prototype.render = function(minPower) {
                      $('<sup>').append(right.getNumValue()));
       } else {
         // A typical binary operator invocation, e.g. x + y.
-        var $fn = exprJq().append(left.render(thisPower(left)), ' ', $op);
+        $op.addClass('infix');
+        var $fn = exprJq().append(left.render(thisPower(left)), $op);
         this.fn.node = dom($fn);
-        $expr.append($fn, ' ', right.render(thisPower(right) + 1));
+        $expr.append($fn, right.render(thisPower(right) + 1));
       }
     } else {
       // Anything else render like "f x y".
