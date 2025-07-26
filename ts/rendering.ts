@@ -1559,10 +1559,10 @@ Call.prototype.render = function(minPower) {
       // reducing the required power by 1 here, but then we might want
       // to reorganize the code for rendering ordinary function calls.
       var $fn = exprJq()
-        .append(this.fn.fn.render(Toy.namePower + 1, true), ' ',
+        .append(this.fn.fn.render(Toy.namePower + 1, true), '&ensp;',
                 this.fn.arg.render(Toy.namePower + 1));
       this.fn.node = dom($fn);
-      $expr.append($fn, ' ', this.arg.render(Toy.namePower + 1));
+      $expr.append($fn, '&ensp;', this.arg.render(Toy.namePower + 1));
     }
   } else if (Toy.isInfixOp(this.fn)) {
     // Infix operator, but only one argument: render like "(+) x"
@@ -1587,7 +1587,7 @@ Call.prototype.render = function(minPower) {
     }
   } else {
     // Other function call, e.g. just one or more than 2 args.
-    $expr.append(this.fn.render(Toy.namePower, true), ' ',
+    $expr.append(this.fn.render(Toy.namePower, true), '&ensp;',
                  this.arg.render(Toy.unaryPower));
   }
   if (parens) {
