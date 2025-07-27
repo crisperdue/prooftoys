@@ -16,6 +16,12 @@ namespace Toy {
  */
 export var _actionInfo;
 
+/**
+ * This global variable stores the input to the most recent call to
+ * Expr.justify.
+ */
+export var _latestDetails;
+
 //// THEOREMS AND RULES
 
 // Predefine some common constants.
@@ -59,6 +65,10 @@ export interface Expr {
   justify(ruleName, ruleArgs, deps?: Step[], retain?: boolean);
 }
 Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
+
+  // Record what is going to be justified here.
+  _latestDetails = this;
+
   // Note: when splitting Step and Expr, make a version of this just
   // for rules.assert, and use that in any primitive inference rules.
   var ruleDeps = Array.from(deps || []);
@@ -97,7 +107,6 @@ Expr.prototype.justify = function(ruleName, ruleArgs, deps, retain) {
   // Record the step as details.
   assert(isProved(step) || primRules.includes(ruleName),
     'Input to "justify" should be a step ({1})', step);
-  result.details = ruleName === 'r' ? null : step;
   // Give the new step the specified ruleName.
   result.ruleName = ruleName;
   // Make the step be its own original, for uniform access to an original.
@@ -127,9 +136,13 @@ Expr.prototype.rejustify = function() {
   return this.justify(this.ruleName, this.ruleArgs, this.ruleDeps, true);
 }
 
+/**
+ * This applies the step's rule to its arguments, returning just the
+ * details without the justification based on the step's ruleName.
+ */
 Expr.prototype.run = function() {
-  // This effectively
-  return rules[this.ruleName]( ...this.ruleArgs).details;
+  rules[this.ruleName]( ...this.ruleArgs);
+  return _latestDetails;
 }
 
 export interface Expr {

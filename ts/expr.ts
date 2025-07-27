@@ -2163,11 +2163,11 @@ export abstract class Expr {
   }
 
   /**
-   * Gets the details for the given plain step by computing them, never
-   * accessing the details property.
+   * Gets the details for the given plain step by computing them, without
+   * accessing  or setting the details property.
    */
   getDetails() {
-    assert(!this.details, 'Details?');
+    this.details && console.warn('Details?');
     return this.run();
   }
 

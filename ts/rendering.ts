@@ -1077,10 +1077,11 @@ Expr.prototype.reIndent = function(depth, portWidth) {
 }
 
 /**
- * This has no effect unless the step
- * is a use of rules.fact in which the proof of the fact was deferred.
- * In that case this may set the details of the step and its
- * original.
+ * Ensures that the given renderable step has details (if appropriate
+ * for it).  If the step is a use of rules.fact in which the proof of
+ * the fact was deferred, it fills in the details with a proof of the
+ * fact.  Otherwise runs the step (again) and fills in the details from
+ * that.
  */
 export function fillDetails(step) {
   const original = step.original;
@@ -1122,6 +1123,8 @@ export function fillDetails(step) {
       // Caution!! This modifies the details of the input step.
       step.details = original.details = result0;
     }
+  } else if (!step.details) {
+      step.details = original.details = original.getDetails();
   }
 }
 
