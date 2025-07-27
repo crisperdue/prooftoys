@@ -2631,18 +2631,18 @@ export abstract class Expr {
   /**
    * Taking this expression as a chain of assumptions, applies the given
    * action function to each conjunct in the chain, going from left to
-   * right.
+   * right, passing a reverse path from this to the conjunct.
    *
    * If the action returns a truthy value for some asm, that value
    * immediately becomes the value of the call.  Otherwise returns
    * the value of the last call to the action.
    */
-  scanConj(action) {
+  scanConj(action, revPath=Path.empty) {
     if (this.isCall2('&')) {
-      return (this.getLeft().scanConj(action) ||
-              action(this.getRight()));
+      return (this.getLeft().scanConj(action, new Path('left', revPath)) ||
+              action(this.getRight(), new Path('right', revPath)));
     } else {
-      return action(this);
+      return action(this, revPath);
     }
   }
 
