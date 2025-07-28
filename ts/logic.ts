@@ -6162,7 +6162,9 @@ declare(
       var keepTerms = keepTermsInfo.map(function(pair) { return pair.key; });
       var rewriter = Toy.infixCall(schema, '==',
                                    Toy.chainCall('&', keepTerms, T));
-      var result = rules.instMultiVars(rules.tautology(rewriter), map.subst);
+      // TODO: Caution!!!! This asserts the key tautology that makes
+      //   this rule work.
+      var result = rules.instMultiVars(rules.assert(rewriter), map.subst);
       return result.justify('conjunctionArranger', arguments);
     }
   },
