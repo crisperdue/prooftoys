@@ -1787,11 +1787,11 @@ export function getResInfo(stmt) {
 //// Finding matching facts
 
 /**
- * Finds a single LHS match within the given term with one of the
- * given facts.  Returns the value of the successful call to
- * findMatchingFact, with a "path" property added indicating the path
- * from the term argument to the matched term, or a falsy value if no
- * call succeeded.
+ * Finds a single LHS match within the given term with one of the given
+ * facts.  Returns the value of the successful call to findMatchingFact,
+ * with the "path" property extended to start with the path from the
+ * term argument to the matched term.  Returns a falsy value if no call
+ * succeeded.
  *
  * All arguments other than the term are passed via "info".  If it is
  * a plain object, it interprets the following properties:
@@ -1813,11 +1813,11 @@ export function getResInfo(stmt) {
  *   application fails.
  */
 export function searchForMatchingFact(term, info, cxt={}) {
-  var allFacts, searchMethod;
+  var allFacts, searcher;
   if (info.constructor === Object) {
     allFacts = info.facts;
     info.context && Object.assign(cxt, info.context);
-    searchMethod = info.searchMethod;
+    searcher = info.searchMethod;
   } else {
     allFacts = info;
   }
@@ -1827,17 +1827,17 @@ export function searchForMatchingFact(term, info, cxt={}) {
   //
   // TODO: Handle more complicated facts (as needed).
   var pureFacts = null;
-  searchMethod = searchMethod || 'searchMost';
-  function factFinder(term, revPath, isQuantified) {
-    if (isQuantified) {
+  searcher = searcher || 'searchMost';
+  function factFinder(term, revPath, bindings) {
+    if (bindings) {
       pureFacts = pureFacts || allFacts.filter(isPureFact);
     }
     // If some free variables of a conditional fact do not appear in
     // the assumptions, this may exclude it unnecessarily.
     //
     // TODO: Consider a more precise check here.
-    var facts = isQuantified ? pureFacts : allFacts;
-    var result = findMatchingFact(facts, cxt, term, isQuantified);
+    var facts = bindings ? pureFacts : allFacts;
+    var result = findMatchingFact(facts, cxt, term, bindings);
     if (result) {
       result.path = revPath.reverse().concat(result.path);
     }
@@ -1846,7 +1846,7 @@ export function searchForMatchingFact(term, info, cxt={}) {
   // TODO: Accurately determine quantification of the term,
   //   and use the proper information rather than a boolean
   //   to control "purity" of facts in each context.
-  return term[searchMethod](factFinder, Toy.Path.empty, false);
+  return term[searcher](factFinder, Toy.Path.empty, null);
 }
 
 /**
@@ -1926,12 +1926,6 @@ Expr.prototype.withoutEqT = function() {
  *   OR if it is a function, call it with the substition, cxt, and
  *   term as arguments.  The statement will only be considered
  *   to match if the result is truthy.
- *
- * For fact statements passed as list elements or the "stmt" property
- * of a list element, if proof of the fact is in progress at the time,
- * the fact is ignored in the search.  This provides a crude mechanism
- * for avoiding infinite regress, for example when simplifying steps
- * of the proof of a simplifier fact.
  *   
  * Or it can be a plain object with a single property, either:
  *
@@ -1954,6 +1948,12 @@ Expr.prototype.withoutEqT = function() {
  *   fails to produce such an equation.  The call is done by
  *   Toy.normalReturn, and this uses the value returned from that.
  *
+ * For fact statements passed as list elements or the "stmt" property
+ * of a list element, if proof of the fact is in progress at the time,
+ * the fact is ignored in the search.  This provides a crude mechanism
+ * for avoiding infinite regress, for example when simplifying steps
+ * of the proof of a simplifier fact.
+ *
  * The value returned is falsy if no match is found, else a plain
  * object with properties:
  * 
@@ -1961,9 +1961,10 @@ Expr.prototype.withoutEqT = function() {
  *   the equation returned by an "apply" pattern, always coerced to a
  *   wff with asWff.
  * term: the term argument to findMatchingFact.
- * subst: substitution that makes the given term match the fact (empty for
+ * subst: substitution that makes the fact match the given term (empty for
  *   "apply" patterns).
  * path: path to the portion of the given term that matched some pattern.
+ *   If no descend patterns are involved, this will be an empty path.
  *
  * If pureOnly is true, this only accepts a fact that is a pure
  * equation, with no conditions on it.
