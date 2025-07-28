@@ -1774,6 +1774,7 @@ Toy.asmSimplifiers.push
    );
 
 declare(
+  // This is intended to be applied to a site that is an equation.
   {name: 'simplifyProducts',
    action2: function(step, path) {
      if (step.get(path).isCall2()) {
@@ -1794,6 +1795,7 @@ declare(
    description: 'simplifying products',
   },
 
+  // This is intended to be applied to a site that is an equation.
   {name: 'simplifySums',
    action2: function(step, path) {
      if (step.get(path).isCall2()) {
@@ -2029,12 +2031,12 @@ declare
          // distinct.
          'x * (y * z) = x * y * z',
        ];
-       let result = Toy.repeatedly
+       let result = repeatedly
        (step_arg, step => 
-        Toy.withExit(
+        withExit(
           exit => {
             function walkMulDiv(term, path) {
-              const next = Toy.applyMatchingFact(step, path, facts);
+              const next = applyMatchingFact(step, path, facts);
               if (next) {
                 exit(next);
               }
