@@ -1647,6 +1647,9 @@ Step.prototype.stepFullCopy = function() {
   var step = wff;
   // Flag it as a Step (actually StepDisplay)
   step.wff = wff;
+  // Give the new step a details property even if it is undefined.
+  // It is probably reasonable for all renderable steps to have
+  // this property present.
   step.details = this.details;
   step.ruleName = this.ruleName;
   // Some elements of ruleArgs may refer to originals of other steps.

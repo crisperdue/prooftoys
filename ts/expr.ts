@@ -2751,9 +2751,9 @@ export abstract class Expr {
    * specified action function, applies the function at each of the
    * variable's occurrences in the matching schema, passing it the
    * subexpression of this that matches and a reverse path from this to
-   * the occurrence.  Does not return a value, but Toy.returnFrom can be
+   * the occurrence.  Does not return a value, but withExit can be
    * useful for returning a value.  The search through patterns proceeds
-   * left to right.
+   * in order.
    *
    * The patternInfo is a plain object with property "match" being the
    * schema to match, and (usually) properties named after variables in
