@@ -2255,37 +2255,51 @@ declare(
               : step);
     }
   },
+);
 
+declare({
   // Uses the given facts to simplify the assumptions of the given
   // step, first by simplifying with all asmSimplifiers; removing T
   // from conjunctions.  Ensures the result has its assumptions
   // arranged with arrangeAsms, and if the assumptions reduce to T,
   // removes the assumptions entirely.
-  //
-  // TODO: Clean up the implementation, this appears to have a lot
-  //   of unneeded code.  Perhaps this should be considered obsolete.
-  {name: 'simplifyAsms',
-    action: function(step) {
-      const facts = Toy.asmSimplifiers;
-      if (!step.wff.isCall2('=>')) {
-        return step;
-      }
-      let simpler = step;
-      // Uses rewriteOnly, avoiding recursive calls to simplifyAsms
-      // which could be problematic or simply result in unintuitive
-      // displays of the process.
-      const rw = (step, path, eqn) => rules.rewriteOnly(step, path, eqn);
-      //
-      // Repeatedly apply simplifying facts, each time removing T from
-      // the assumptions.  Note that rewriteOnly adds any new
-      // assumptions, making them available on the next iteration.
-      const test = (term, facts) => findMatchingFact(facts, null, term);
-      const search0 = (term, facts) => term.scanConj(test);
-      const search =
-       (term, facts) => searchForMatchingFact(term, {
-        facts: facts,
-        searchMethod: search0});
-      const left = Toy.asPath('/left');
+  name: 'simplifyAsms',
+  action: function (step_arg) {
+    if (!step_arg.implies()) {
+      return step_arg.justify('simplifyAsms', arguments, [step_arg]);
+    }
+    const path_arg = '/left';
+    let result = repeatedly(step_arg, (step) => {
+      const v = withExit((exit) => {
+        function tryFacts(path, facts) {
+          const next = applyMatchingFact(step, path, facts);
+          if (next) {
+            exit(next);
+          }
+        }
+        function tryConjunct(term, path) {
+          tryFacts(path, asmSimplifiers);
+        }
+        function walkConjuncts(term, path) {
+          tryFacts(path, ['a & T == a', 'T & a == a']);
+          const patterns = [
+            { match: 'a & b', a: walkConjuncts, b: walkConjuncts },
+            { match: 'a', a: tryConjunct },
+          ];
+          term.walkPatterns(patterns, path);
+        }
+        walkConjuncts(step.get(path_arg), path_arg);
+      });
+      return v;
+    });
+    return result.justify('simplifyAsms', arguments, [step_arg]);
+  },
+  inputs: { step: 1 },
+  menu: 'simplify assumptions',
+  description: 'simplifying assumptions;; {in step step}',
+  labels: 'general',
+});
+
       // TODO: Currently unused function, consider completing this
       //   and uncommenting the call to it.  See below also.
       /*
@@ -2331,46 +2345,6 @@ declare(
         return subsumptions;
       };
        */
-
-      while (true) {
-        const info = search(simpler.get('/left'), facts);
-        if (info) {
-          simpler = (rw(simpler, left.concat(info.path),
-                        info.stmt));
-          // Immediately remove T if possible, partly for clean displays.
-          const info2 = search(simpler.get('/left'),
-                              ['a & T == a', 'T & a == a']);
-          if (info2) {
-            simpler = rw(simpler, left.concat(info2.path), info2.stmt);
-          }
-        } else {
-          // No applicable fact found.
-          //
-          // Dedupe and normalize order of asms.
-          simpler = rules.arrangeAsms(simpler);
-          //
-          // TODO: Consider completing findSubsumptions,
-          //   implementing removeSubsumed, and uncommenting
-          //   these lines below.
-          // Remove subsumed assumptions
-          // const subsumptions = findSubsumptions();
-          // removeSubsumed();
-          //
-          // If only T remains, remove it.
-          simpler = (Toy.applyMatchingFact(simpler, '', ['T => a == a']) ||
-                     simpler);
-          // And we are done.
-          return simpler.justify('simplifyAsms', arguments, [step]);
-        }
-      }
-    },
-    inputs: {step: 1},
-    minArgs: 1,
-    menu: 'simplify assumptions',
-    description: 'simplifying assumptions;; {in step step}',
-    labels: 'general'
-  }
-);
 
 /**
  * Function callable to simplify an entire step.  Useful when there is
