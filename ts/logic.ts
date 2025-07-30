@@ -6118,21 +6118,24 @@ declare(
     //   separately, then build the equal list with rules.and.  Also
     //   prove in the opposite direction if desired.
     //
-    //   Or perhaps even better, prove the desired tautology by by
-    //   considering k+1 cases where k is the number of variables in
-    //   the desired consequent.  The cases are those with one
-    //   variable in the consequent being false, and one with them all
-    //   true.  These cases each trivially simplify to true, and case
-    //   analysis proves the whole thing true.
+    //   The cases are those with one variable in the consequent being
+    //   false, and one with them all true.  These cases each trivially
+    //   simplify to true, and case analysis proves the whole thing
+    //   true.
+    //   
+    //   There is a family of statements like axiom1 and provable from
+    //   axiom1, expressing the idea that these are the required cases.
     action: function(conj, comparator) {
-      var map = new Toy.TermMap();
-      var infix = Toy.infixCall;
+      const map = new TermMap();
       // This traverses a tree of conjunctions, inserting entries into
       // the TermMap in left-to-right textual order.
       function transform(term) {
         if (term.isCall2('&')) {
-          return infix(transform(term.getLeft()), '&',
-                       transform(term.getRight()));
+          return infixCall(
+            transform(term.getLeft()),
+            '&',
+            transform(term.getRight())
+          );
         } else if (term.sameAs(T)) {
           // Return it without mapping it to a variable.
           return T;
@@ -6144,7 +6147,7 @@ declare(
       // variable for the term at the same location in conj, or T if
       // the term in conj is T.  The result of applying map.subst to
       // the schema will be exactly conj.
-      var schema = transform(conj);
+      const schema = transform(conj);
 
       // Create a list of the variables for terms that will go into the
       // RHS of the result equation, sorted by the desired ordering of
@@ -6154,17 +6157,23 @@ declare(
         // TODO: Remove the sorting here altogether.
         return 0;
       }
-      var keepTermsInfo = Toy.sortMap(map.subst, compare);
+      const keepTermsInfo = sortMap(map.subst, compare);
       // This is the desired list of variables.  If the comparator
       // is a no-op, it is in order of insertion into map.subst,
       // so that substituting the terms back in keeps the original
       // order of the first occurrence of each term.
-      var keepTerms = keepTermsInfo.map(function(pair) { return pair.key; });
-      var rewriter = Toy.infixCall(schema, '==',
-                                   Toy.chainCall('&', keepTerms, T));
-      // TODO: Caution!!!! This asserts the key tautology that makes
+      const keepTerms = keepTermsInfo.map(function (pair) {
+        return pair.key;
+      });
+      const rewriter = Toy.infixCall(
+        schema,
+        '==',
+        Toy.chainCall('&', keepTerms, T)
+      );
+      // TODO: Caution!!!! This may assert the key tautology that makes
       //   this rule work.
-      var result = rules.instMultiVars(rules.assert(rewriter), map.subst);
+      const rule = map.size() > 7 ? rules.assert : rules.tautology;
+      const result = rules.instMultiVars(rule(rewriter), map.subst);
       return result.justify('conjunctionArranger', arguments);
     }
   },
