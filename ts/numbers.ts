@@ -4624,6 +4624,9 @@ basicSimpFacts.push
     }
    },
    {apply: arithRight},
+   {stmt: 'x * (y * z) = x * y * z',
+    where: $ => $.x.isNumeral() && $.y.isNumeral()
+   },
    {stmt: 'x ** (y - 1) * x = x ** y',
     where: $ => !($.x.isNumeral() && $.y.isNumeral())
    },
