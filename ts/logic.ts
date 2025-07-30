@@ -3144,16 +3144,13 @@ declare(
     // than a rule on its own.  Also it builds a recursive tree
     // of justified proofs, so the proof display is a bit artificial.
     action: function(wff) {
-      // TODO: Right here check for patterns such as -
+      // TODO: There is potential here to check for patterns such as -
       //   p | T == T, p & F == F, p => T == T, and negations such as
       //   p | not F = T and so on.
       //   Where these occur, this is an instance of a simpler tautology
       //   and need not be analyzed further.  In addition, forms such as
       //   p | F == T is equivalent to p == T along with similar examples,
       //   so this can be broken down into a smaller wff.
-      // NOTE that saving proved tautologies as we already do has
-      //   potential for accomplishing similar improvements, though it
-      //   would work better if saved variable names were standardized.
       var names = wff.freeVars();
       // Not really a loop, just works with the first free (variable!)
       // name returned.
@@ -3166,14 +3163,14 @@ declare(
           var step3 = rules.equationCases(step1, step2, name);
           // Record before the final justification, so all occurrences
           // look the same when displayed.
-          var result = step3.justify('tautology', arguments);
+          var result = step3.justify('tautology0', arguments);
           return result;
         } else {
           var step1 = rules.tautology0(call('==', T, wff.subFree1(T, name)));
           var step2 = rules.tautology0(call('==', T, wff.subFree1(F, name)));
           var step3 = rules.equationCases(step1, step2, name);
           var step4 = rules.fromTIsA(step3);
-          var result = step4.justify('tautology', arguments);
+          var result = step4.justify('tautology0', arguments);
           return result;
         }
       }
@@ -3190,7 +3187,7 @@ declare(
         }
       }
       var step12 = rules.rRight(rules.theorem('t'), '', step11);
-      var result = step12.justify('tautology', arguments);
+      var result = step12.justify('tautology0', arguments);
       return result;
     },
     tooltip: ('Tautology decider.'),
