@@ -401,9 +401,8 @@ export class ProofDisplay {
     // Reindent when inserted into the DOM:
     node.oninsert = function() {
       copy.wff.reIndent();
-      // All insertions of a rendered step scroll the added node into
-      // view.
-      node.scrollIntoView({behavior: 'smooth'});
+      // Scroll the step list to the bottom.
+      self.stepsNode.scroll({top: 1e9, behavior: 'smooth'});
     }
     return $(node).data('proofStep');
   }
