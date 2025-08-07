@@ -5430,6 +5430,7 @@ function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
         results.push({ruleName,
                       ruleArgs: [step, schemaStep],
                       html: 'chain with step ' + (index + 1),
+                      priority: 2,
                      });
       }
     }
