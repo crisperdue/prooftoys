@@ -31,13 +31,9 @@
  */
 
 :root {
-  color: #344054;
-    --bg-color: white;
-    --link-color: #344054;
-    background-color: var(--bg-color);
-    font-family: "Roboto Flex", sans-serif;
-    font-family: "Manrope", sans-serif;
     scroll-behavior: smooth;
+    /* Allow space for the fixed header when scrolling */
+    scroll-padding-top: 60px;
     --px14: 0.875rem;
     --px15: 0.9375rem;
     --px16: 1rem;
@@ -54,11 +50,109 @@
 }
 
 .logicZone {
+
+  color: #344054;
+    --bg-color: white;
+    --link-color: #344074;
+    background-color: var(--bg-color);
  
   body {
-    margin-top: 0;
-    position: relative;
+    // Flex layout enables the footer to be at the bottom
+    // of the viewport even on short pages.
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    justify-content: space-between;
+
+    font-family: "Manrope", sans-serif;
+    font-family: "Roboto Flex", sans-serif;
+    font-weight: 300;
+    margin: 0;
+    line-height: 1.4;
     background-color: transparent;  // Overrides _reboot.css.
+  }
+
+  // This contains the sidebar and main content area.
+  .main-row {
+    max-width: 1000px;
+  }
+
+  // This the main content section.
+  #main {
+    // This padding separates it from the sidebar and right edge of the
+    // viewport.
+    padding: 0 4%;
+  }
+
+  //// Styling of the various elements.
+
+  #main pre {
+    // I think these settings avoid a useless vertical scrollbar on code
+    // samples.
+    overflow-y: clip;
+    overflow-x: auto;
+  }
+
+  pre {
+    padding: 10px;
+    border: 2px solid lightgray;
+    border-radius: 10px;
+    & > code {
+      font-size: .9rem;
+      // Overriden in HTML: background: #f5f5f5 !important;
+    }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+
+  h1 {
+    text-align: center;
+  }
+
+  // TODO: Move the rest of styling for h1 ... h6 to here.
+
+  // A couple of pleasant defaults
+  p, li {
+    max-width: 75ch;
+    text-wrap: pretty;
+  }
+  
+  ul {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    padding: 0;
+    list-style-type: disc;
+    li {
+      margin-bottom: 5px;
+      margin-left: 20px;
+    }
+  }
+  
+  img, picture, video, svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    font-style: italic;  // For alt text
+  }
+
+  img {
+    border: 2px solid #aaf;
+    box-shadow: #ccc 15px 10px 15px;
+  }
+
+  sub {
+    // This assumes use of reboot.css, which positions them relative,
+    // aligned to the baseline.  The negative bottom moves it below
+    // that baseline, relative to its own size.  Reboot.css uses -.25,
+    // which does not seem quite enough for math.
+    bottom: -.3em;
+  }
+  
+  sub, sup {
+    // Again overriding reboot.css, here 70% vs 75%.
+    font-size: 70%;
   }
 
   //// Utilities
@@ -67,19 +161,6 @@
  .invisible {
    visibility: hidden;
  }
-
-sub {
-  // This assumes use of reboot.css, which positions them relative,
-  // aligned to the baseline.  The negative bottom moves it below
-  // that baseline, relative to its own size.  Reboot.css uses -.25,
-  // which does not seem quite enough for math.
-  bottom: -.3em;
-}
-
-sub, sup {
-  // Again overriding reboot.css, here 70% vs 75%.
-  font-size: 70%;
-}
 
 .hidden {
   display: none;
@@ -104,11 +185,6 @@ sub, sup {
 figure {
   display: flex;
   justify-content: center;
-}
-
-img {
-  border: 2px solid #aaf;
-  box-shadow: #ccc 15px 10px 15px;
 }
 
 // "tippytoys" tooltips theme
@@ -167,7 +243,7 @@ dd {
   margin-left: 1.5em;
 }
 
-//// Banner
+//// Header bar for all new-style pages
 
 header {
   position: fixed;
@@ -191,6 +267,16 @@ header {
   gap: 16px;
 }
 
+.nav-links .fill {
+  flex: 100 1 auto;
+}
+
+img.icon {
+  height: 32px;
+  border: none;
+  box-shadow: none;
+}
+
 /**
  * Basic hamburger stylings really should include this bit
  * to override the usual button background.
@@ -203,7 +289,6 @@ button.hamburger {
 #TOC ul ul {
     margin: 0;
 }
-
 
 /**
  * Set the proof editor below the sidebar, but moved to the left to
@@ -225,6 +310,16 @@ button.hamburger {
   }
 }
 
+/**
+ * This can center an absolutely positioned element relative to a parent
+ * that is "position: relative;" or otherd suitable landmark.
+ */
+.abs-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 
 /* For Talkyard */
 div.talkyard-comments {
@@ -293,9 +388,7 @@ p.utterances {
 
 /* Overrides to the Whisper theme */
 
-.content {
-
-  margin-top: 50px;
+  margin-top: 10px;
 
   /* Header styling */
 
@@ -325,11 +418,13 @@ p.utterances {
     font-weight: 400;
   }
 
+.docs-menu ul {
+  list-style-type: circle;
 }
 
 .docs-menu ul li {
   font-size: 1rem;
-  font-family: "Manrope", sans-serif;
+  // font-family: "Manrope", sans-serif;
 
   // Style anchors here as block, which goes well with giving them a
   // solid background.  See the default baseof.html layout.
@@ -340,14 +435,36 @@ p.utterances {
 
 /* Customize the styling of blockquotes. */
 
-.content blockquote {
-  margin-left: 1em;
+blockquote {
+  background: #f9f9f9;
+  border-left: 10px solid #ccc;
+  margin: 1.5em 10px;
+  padding: 0.5em 10px;
+  quotes: '\201C''\201D''\2018''\2019';
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+blockquote:before {
+  color: #ccc;
+  content: open-quote;
+  font-size: 4em;
+  line-height: 0.1em;
+  margin-right: 0.25em;
+  vertical-align: -0.4em;
+}
+
+code {
+  background: #f5f5f5;
+  padding: 3px 6px;
+  border-radius: 3px;
 }
 
 /* Inline code blocks are for logic, so style accordingly. */
 /* This also keeps less padding. */
 /* TODO: This is somewhat delicate, find something better. */
-.content code.language-logic {
+code.language-logic {
     padding: 1px 3px;
     border-radius: 2px;
     font-family: STIXGeneral;
@@ -355,10 +472,10 @@ p.utterances {
 }
 
 /* From style.scss in the Whisper theme, so it can override
-   the preceding style. */
-.content pre code {
+   the style for code. */
+pre code {
     font-family: "Roboto Mono", monospace;
-    font-size: 0.9rem;
+    overflow: visible;
 }
 
 /* For sidebar, see style.css */
@@ -371,7 +488,7 @@ p.utterances {
     margin-left: 1em;
 }
 
-/* Page footer */
+/* Unused page footer with position:absolute */
 
 .pageFooter {
     /* The following let it work with an onresize action. */
@@ -401,18 +518,19 @@ p.utterances {
 /* Darken the color of links a bit. */
 a {
     color: var(--link-color);
-    font-weight: 500;
+    font-weight: bold;
     text-decoration: none;
-}
-
-a.logo {
-  flex: auto 1 100;
 }
 
 a:hover {
   cursor: pointer;
   text-decoration: underline;
 }
+
+/*
+  Footer element styling.
+  TODO: Move this near other area stylings.
+ */
   
 footer {
   display: flex;
@@ -420,7 +538,7 @@ footer {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin: 100px 24px 16px 5%;
+  margin: 60px 24px 16px 5%;
 }
 
 .footer-logo {
@@ -432,7 +550,7 @@ footer {
    TODO: Coordinate the units here with the proofStateArea.
 */
 .footer-spacer {
-  min-height: 400px;
+  min-height: 500px;
 }
 
 img[src="/Logo1.svg"] {
@@ -563,6 +681,8 @@ div.canFade.faded .fadeHere {
 .redBack {
   background-color: #ffe8e8;
 }
+
+//// We import proofs.scss into the ".logicZone".
 
 @import "proofs.scss";
 
