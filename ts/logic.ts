@@ -5231,12 +5231,12 @@ declare(
   // returns the result of that.
   {name: 'replacementFor',
    action2: function(step, path, eqn_arg, reduce=true) {
-     // This is the target term, or null if the path does not apply.
 
-     // TODO: Use the optional argument to "get" much more often,
+     // TODO: Use the optional argument to "get" in many more places,
      //   to check if a path is valid -- and handle the case where it is
      //   not.
 
+     // This is the target term, or null if the path does not apply.
      const target = step.get(path, true);
      if (!target) {
        return Error(fmt`No term ${path} in ${step}\n (for ${eqn_arg})`);
@@ -5287,7 +5287,8 @@ declare(
   },
 
   // Minimal rewriter with no simplification; like rewriteOnlyFrom
-  // except takes a fact statement rather than a step.
+  // except takes a fact statement rather than a step. The "reduce"
+  // argument is only used in the "induct" rule in natnums.js.
   {name: 'rewriteOnly',
    action2: function(step, path_arg, stmt_arg, reduce=true) {
      const path = step.wff.asPath(path_arg);
@@ -5339,6 +5340,8 @@ declare(
   //
   // TODO: Modify all of these rewrite* rules to return Error objects
   //   in case preconditions are not met.
+  // TODO: Consider an optional arg that asks replacementFor to reduce
+  //   after replacing, as in rewriteOnly.
   {name: 'rewrite',
     action2: function(step, path_arg, statement) {
       // Be careful to convert a possible search pattern into
