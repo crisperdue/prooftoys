@@ -1723,7 +1723,7 @@ declare(
    // This and "assumed" are very similar.
    precheck: function(step, path, eqn) {
      const target = step.get(path);
-     if (eqn.isCall2('=') && eqn.getLeft().sameAs(target)) {
+     if (eqn.isCall2('=') && eqn.getLeft().matches(target)) {
        const freeHere = target.freeVarSet();
        const boundHere = Toy.asSet(step.wff.boundNames(path));
        if (Toy.equalSets(freeHere, Toy.setDiff(freeHere, boundHere))) {
@@ -1752,7 +1752,7 @@ declare(
    // LHS same as the given term.
    menuGen: function(ruleName, step, term, editor) {
      if (term) {
-       const match = a => a.isCall2('=') && a.getLeft().sameAs(term) && a;
+       const match = a => a.isCall2('=') && a.getLeft().matches(term) && a;
        const asms = step.original.wff.getAsms();
        const goal = editor.goalStatement;
        const gasms = goal && goal.getAsms();
