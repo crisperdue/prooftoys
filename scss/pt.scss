@@ -111,6 +111,31 @@
     text-align: center;
   }
 
+  /* Experimental support for run-in H6 headings.
+     This seems to work, at least for basic cases.
+     It plays well with Hugo/Goldmark automatic ID
+     generation.
+  h6 {
+    display: inline;
+    font-size: 1em;
+    font-weight: bold;
+
+    &::after {
+      content: ".";
+    }
+
+    & + p {
+      display: inline;
+    }
+
+    // The H6 and its following paragraph are both inline,
+    // so we put top margin on the element after that.
+    & + p + * {
+      margin-top: 1rem;  // Like a normal paragraph
+    }
+  }
+   */
+
   // TODO: Move the rest of styling for h1 ... h6 to here.
 
   // A couple of pleasant defaults
