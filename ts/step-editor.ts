@@ -594,6 +594,7 @@ export class ProofEditor {
 
       // Is the goal proved?
       const stmt = self.goalStatement;
+      const solved = step.checkSubgoals(stmt) === 0;
       if (stmt && !self.animating) {
         async function showProved() {
           // TODO: Use CSS transitions for the animation.  The current
@@ -601,13 +602,12 @@ export class ProofEditor {
           //   changes a solution into a non-solution.
           self.animating = true;
           await Toy.sleep(200);
-          for (const ch of '\u2713 Proof complete. '.split('')) {
+          for (const ch of '✓ Proof complete. '.split('')) {
             $node.append(ch);
             await Toy.sleep(20);
           }
           self.animating = false;
         }
-        const solved = step.checkSubgoals(stmt) === 0;
         const $node = $('.proofEditorHeader .status');
         $node.empty();
         if (solved) {
@@ -618,6 +618,7 @@ export class ProofEditor {
       }
 
       var message = self.progressMessage(step.original);
+      message ||= solved && '✓ Proof complete.';
       $statusDisplay.empty();
       $statusDisplay.append(message || '&nbsp;');
       $status.toggleClass('empty', !message);
