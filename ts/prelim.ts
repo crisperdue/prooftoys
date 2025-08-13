@@ -139,6 +139,11 @@ export declare class Path {
   expand(): any;
   reverse(): any;
   remainder(path: any): this;
+  /**
+   * Returns truthy iff this path is equal to or extends the pathable
+   * argument.  Untested.
+   */
+  startsWith(path: Pathable): boolean;
 }
 
 export declare namespace Path {
@@ -548,5 +553,10 @@ Path.prototype.remainder = function(path) {
   }
   return self;
 };
+
+Path.prototype.startsWith = function(path_arg) {
+  const path = asPath(path_arg);
+  return this.remainder(path) !== null;
+}
 
 }  // namespace;
