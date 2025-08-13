@@ -1909,7 +1909,8 @@ export function clearSubproof(step, internal?) {
 
 /**
  * True iff step1 and step2 are rendered adjacent to each other,
- * with step1 first.
+ * with step1 first.  If rendering of step2 is not (yet) completed,
+ * assume it is currently being rendered at the end of the list.
  */
 export function adjacentSteps(step1, step2) {
   step1 = step1.rendering;
@@ -1921,6 +1922,10 @@ export function adjacentSteps(step1, step2) {
   }
   var index1 = controller.steps.indexOf(step1);
   var index2 = controller.steps.indexOf(step2);
+  if (index2 < 0) {
+    // Step2 is not yet rendered.  Assume it will be next.
+    index2 = controller.steps.length;
+  }
   return index2 == index1 + 1;
 }
 
