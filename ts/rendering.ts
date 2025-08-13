@@ -1381,21 +1381,21 @@ export function textNode(text) {
 // NOTE that some methods on Expr and its subclasses appear here.
 
 export interface Expr {
+  /**
+   * Copies this non-rendered term and renders the result, returning a
+   * DOM node containing the rendering.  This is called by the step
+   * editor to render terms and their replacements into the menu
+   * display.  Often no type information is present, e.g. fact goals.
+   * Goals are not deduced, so it is not entirely clear whether pure
+   * type inference can be relied on to supply the correct type
+   * assignments.
+   *
+   * TODO: Consider trying to make the rendering of variable names here
+   *   consistent with the the names presented in the actual step
+   *   renderings.
+   */
   renderTerm();
 }
-/**
- * Copies this non-rendered term and renders the result, returning a
- * DOM node containing the rendering.  This is called by the step
- * editor to render terms and their replacements into the menu
- * display.  Often no type information is present, e.g. fact goals.
- * Goals are not deduced, so it is not entirely clear whether pure
- * type inference can be relied on to supply the correct type
- * assignments.
- *
- * TODO: Consider trying to make the rendering of variable names here
- *   consistent with the the names presented in the actual step
- *   renderings.
- */
 Expr.prototype.renderTerm = function() {
   const copy = this.copyWithTypes();
   const jq = copy.render(0);
@@ -1403,20 +1403,19 @@ Expr.prototype.renderTerm = function() {
 }
 
 export interface Expr {
+  /**
+   * Returns an HTML string based on rendering with renderTerm
+   * and enclosing the result in a span of class=term, for
+   * displaying terms in step descriptions and other areas not
+   * strictly within a step display.
+   */
   termDisplay();
 }
-/**
- * Returns an HTML string based on rendering with renderTerm
- * and enclosing the result in a span of class=term, for
- * displaying terms in step descriptions and other areas not
- * strictly within a step display.
- */
 Expr.prototype.termDisplay = function() {
   const html = this.renderTerm().outerHTML;
   return `<span class=term>${html}</span>`;
 
 }
-
 
 export interface Expr {
   render(minPower, isFn);
