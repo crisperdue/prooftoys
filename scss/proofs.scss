@@ -310,11 +310,13 @@ wffblock- > * {
     position: absolute;
     left: 0;
     right: 0;
-    color: #555;
     background-color: #fcfcfc;
-    border: .5px solid #bbf;
-    /* Try to help situations where this overlaps the menu. */
-    z-index: 1;
+    padding: 5px;
+    border: 1px solid #bbf;
+    border-radius: 5px;
+    /* Display it over the menu. */
+    z-index: 3;
+    opacity: .9;
     /* This node is transparent to mouse events. */
     pointer-events: none;
 }
@@ -488,8 +490,6 @@ span.ruleStats {
     display: inline-block;
     white-space: pre;
     margin: .2em;
-    border: 2px solid #0cf;
-    border-radius: 6px;
     padding: 3px .5em;
 }
 
@@ -1113,11 +1113,6 @@ body > .proofEditor {
     }
 
     .solutionStatus.empty {
-        visibility: hidden;
-    }
-
-    &.ruleMenuHovered .solutionStatus {
-        opacity: 0;
         visibility: hidden;
     }
 
