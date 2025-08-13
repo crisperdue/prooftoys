@@ -3233,7 +3233,7 @@ declare(
 
   {name: 'byTautology',
    precheck: function(step, path) {
-     return step.get(path).isBoolean();
+     return looksBoolean(step.get(path));
    },
    action: function(step, path) {
      const target = step.get(path);
