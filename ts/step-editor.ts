@@ -599,7 +599,7 @@ export class ProofEditor {
 
       // Is the goal proved?
       const stmt = self.goalStatement;
-      const solved = step.checkSubgoals(stmt) === 0;
+      const solved = stmt && step.checkSubgoals(stmt) === 0;
       if (stmt && !self.animating) {
         async function showProved() {
           // TODO: Use CSS transitions for the animation.  The current
