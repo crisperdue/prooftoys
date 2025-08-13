@@ -3322,30 +3322,32 @@ declare(
 );
 
 export interface Expr {
+  /**
+   * Where this is a step resulting from a substitution, and given the
+   * input wff and substitution map for the substitution, this determines
+   * all sites where a lambda is substituted as the function in a Call,
+   * and reduces those calls, repeating in each spot until no lambda
+   * "surfaces" as a result of the reduction, in case the lambda is
+   * actually multiple nested lambdas, i.e. {x. {y. ... }}.
+   * 
+   * TODO: Consider taking an optional (r)Path arg that excludes one
+   * part of the wff tree, a part to be replaced.
+  */
   reduceSites(wff, map);
 }
-/**
- * With this a step resulting from a substitution, and given the input
- * wff and substitution map for the substitution, this determines all
- * sites where a lambda is substituted as the function in a Call, and
- * reduces those calls, repeating in each spot until no lambda
- * "surfaces" as a result of the reduction, in case the lambda is
- * actually multiple nested lambdas, i.e. {x. {y. ... }}.
- */
-Step.prototype.reduceSites = function(wff, map) {
-  // Eliminate introduced lambdas where feasible.
+Step.prototype.reduceSites = function(wff: Expr, map) {
   let step = this;
   const funSites = new Map();
-  for (const key in map) {
-    if (map[key] instanceof Lambda) {
-      funSites.set(key, wff.locateFree(key));
+  for (const name in map) {
+    if (map[name] instanceof Lambda) {
+      funSites.set(name, wff.locateFree(name));
     }
   }
   funSites.forEach(function(rPaths) {
     rPaths.forEach(function (rPath) {
       for (let r = rPath; r.segment === 'fn'; r = r.rest) {
-        // First time r refers to the lambda, then successive
-        // parents as this does more reductions.  Could be
+        // In the first iteration, path refers to the lambda call, then
+        // successive parents as this does more reductions.  Could be
         // done more efficiently.
         const path = r.rest.reverse();
         const s = rules.backReduce(step, path);
@@ -5327,9 +5329,8 @@ declare(
 
   // Version of the rewrite rule good for general use in code and for
   // indirect use in the UI with well-known facts.  (In the display
-  // this does not give access to the proof of the fact.)  This does
-  // trivial simplification of assumptions including numeric type
-  // assumptions after rewriting.
+  // this does not give access to the proof of the fact.)  This applies
+  // simplifyAsms after rewriting.
   //
   // TODO: Modify all of these rewrite* rules to return Error objects
   //   in case preconditions are not met.
