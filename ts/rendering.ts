@@ -401,8 +401,12 @@ export class ProofDisplay {
     // Reindent when inserted into the DOM:
     node.oninsert = function() {
       copy.wff.reIndent();
-      // Scroll the step list to the bottom.
-      self.stepsNode.scroll({top: 1e9, behavior: 'smooth'});
+      if (!this.parentElement.classList.contains('suggestionBox')) {
+        // If it is not tentative, scroll the step list to the bottom.
+        // This runs after insertion, so alternative we could check
+        // if self.steps.includes(copy).
+        self.stepsNode.scroll({top: 1e9, behavior: 'smooth'});
+      }
     }
     return $(node).data('proofStep');
   }
