@@ -1606,7 +1606,7 @@ declare
     form: ('Divide both sides of the equation by <input name=term>'),
     menu: 'divide both sides',
     tooltip: ('divide both sides'),
-    description: 'dividing both sides by {term};; {in step equation}',
+    description: 'dividing both sides by {term};; {in step siteStep}',
     labels: 'algebra'
   },
 
