@@ -2859,7 +2859,6 @@ export abstract class Expr {
   /**
    * Get the assumptions of this wff if it has any, else null.
    */
-  // @ts-ignore
   asmPart() {
     const wff = this;
     return wff.isCall2('=>') ? wff.getLeft() : null;
@@ -2867,10 +2866,9 @@ export abstract class Expr {
 
   /**
    * Returns a map from path string to term, containing all terms of the
-   * step that are assumptions; empty if there are no assumptions.
-   * The paths use /left and /right.
+   * step that are in the step's chain of assumptions; empty if there
+   * are no assumptions. The paths use /left and /right.
    */
-  // @ts-ignore
   asmMap() {
     const scan = function(expr, pathStr) {
       if (expr.isCall2('&')) {
