@@ -24,6 +24,11 @@ export var exerciseLoaded = null;
 export const realNumbersScript = '/js/numbers.js';
 
 /**
+ * Maximum Expr.size() of term to display as "short".
+ */
+export const maxShortResult = 10;
+
+/**
  * Async utility function to print and return the
  * proofState of the named exercise.  Currently unused.
  */
@@ -2519,16 +2524,19 @@ class RuleMenu {
           return;
         }
         const resultTerm = eqn2.replacementTerm();
+        const isShort = resultTerm.size(maxShortResult + 1) <= maxShortResult;
 
         // The special character is a form of white right arrow.
-        let html =
-            '➭ <b class=resultTerm></b><input class=subgoals>';
+        let html = isShort
+          ? '➭ <b class=resultTerm></b><input class=subgoals>'
+          : '';
+        const using = isShort ? 'using ' : 'use ';
         const shorty = statement.shortForm();
         const mainText = Toy.trimParens(shorty.toHtml());
         const prefix = info.definitional ? '' : ' ';
         const blurb = (info.definitional
                       ? 'definition of ' + info.definitional
-                      : 'using ' + mainText)
+                      : using + mainText)
         html = prefix + html + ' <span class=description>' + blurb + '</span>';
         const $node = $('<span>').append(html);
         const $resultTerm = $node.find('.resultTerm');

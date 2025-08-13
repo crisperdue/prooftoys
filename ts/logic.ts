@@ -1195,12 +1195,7 @@ declare(
    form: 'Desired result: <input name=bool>',
    toOffer: 'return term.isBoolean()',
    menu: ' use {term} as subgoal',
-   description: step => {
-     const [s, p] = step.ruleArgs;
-     const site = s.get(p);
-     const html = site.termDisplay();
-     return `subgoal;; <span class=term><b>${html}</b></span>`;
-   },
+   description: `starting on a subgoal`,
    labels: 'basic',
   },
    
