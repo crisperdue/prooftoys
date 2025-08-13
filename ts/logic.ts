@@ -2208,9 +2208,7 @@ declare(
 
   // Inline version of simplifySite.  Uses full rewriting and replace,
   // so resulting assumptions are simplified with simplifyAsms.  If
-  // the simplification has no effect, return the input step.  This
-  // also enables "justify" to pretend this (or its caller!) was never
-  // invoked.
+  // the simplification has no effect, return the input step.
   {name: '_simplifySite',
    action: function(step, path, opt_facts, asms=true) {
       var eqn = rules.consider(step.get(path));
@@ -2767,15 +2765,15 @@ declare(
   //
   // TODO: Check that uses of this check appropriately for errors.
   {name: 'instMultiVars',
-    action: function(b, map, reduceFns?) {
+    action: function(step_arg: Step, map, reduceFns?) {
       assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
       if (Toy.isEmpty(map)) {
-        return b.justify('instMultiVars', arguments, [b]);
+        return step_arg.justify('instMultiVars', arguments, [step_arg]);
       }
-      var isEqn = b.isCall2('=');
+      var isEqn = step_arg.isCall2('=');
       // Ensure that the step is a (pure) equation.
-      var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
+      var step = isEqn ? step_arg : rules.rewriteOnly(step_arg, '', 'a == (T == a)');
       var namesReversed = [];
       for (var name in map) {
         var value = termify(map[name]);
@@ -2787,7 +2785,7 @@ declare(
         namesReversed.unshift(name);
       }
       if (namesReversed.length === 0) {
-        return b.justify('instMultiVars', arguments, [b]);
+        return step_arg.justify('instMultiVars', arguments, [step_arg]);
       }
       // Then substitute for the variables, outermost binding first.
       namesReversed.forEach(function(name) {
@@ -2802,9 +2800,9 @@ declare(
         step = rules.fromTIsA(step);
       }
       if (reduceFns) {
-        step = step.reduceSites(b, map);
+        step = step.reduceSites(step_arg, map);
       };
-      return step.justify('instMultiVars', arguments, [b]);
+      return step.justify('instMultiVars', arguments, [step_arg]);
     },
     inputs: {step: 1},
     // There is no suitable form for entering the arguments for
