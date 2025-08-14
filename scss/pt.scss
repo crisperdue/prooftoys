@@ -586,12 +586,12 @@ img[src="/Logo1.svg"] {
 
 /* Math-oriented text */
 
-.math, .mathColor, s {
+// There may be some old HTML using <s> for math.
+.math, s {
   font-family: STIXGeneral, Times, serif;
-  /* Variable and constant names should be explicitly italicized
-     within math text. */
+  /* Note that variable names should be explicitly italicized within
+     math text. */
   font-style: normal;
-  white-space: nowrap;
 }
 
 /* You can use <s class=em> to make an em space. */
