@@ -1344,10 +1344,15 @@ export abstract class Expr {
    * Returns a new variable Atom with a name that does not occur free in
    * this expression.  If a name is given, uses that name as the
    * starting point for the name of the new variable, otherwise "x".
+   * Given an additional term, avoids its free variables also.
    */
-  freshVar(name) {
-    name = name || 'x';
-    return genVar(name, this.freeVars());
+  freshVar(name='x', term2?: Expr) {
+    if (term2) {
+      const names = Object.assign(this.freeVars(), term2.freeVars());
+      return genVar(name, names);
+    } else {
+      return genVar(name, this.freeVars());
+    }
   }
 
   /**
