@@ -2320,8 +2320,15 @@ var testCase = {
                  .andThen('rewrite', '/right/left', 'x + y = y + x'));
     var added = rules.andAssume(given, 'R y');
     var p = added.wff.pathTo(termify('R y'), true);
-    var removed = rules.removeTypeAsm(added, p);
+    var removed = rules.removeTypeAsm(added, p);;
     assert(removed.wff.matchSchema('R v => (a == b)'));
+  },
+
+  testRewrite: function() {
+    const step = rules.consider('x');
+    const result = rules.rewrite(step, 
+      '', 'a = b == a + c = b + c', {c: parse('2')});
+    assertEqual('((x + 2) = (x + 2))', result.getRight())
   },
 
   // This tests beta-expansion of "p x" during matching, and automatic

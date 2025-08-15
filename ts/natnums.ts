@@ -151,8 +151,12 @@ const decls = [
      // This replaces the assumption with the lambda call.
      const step2 = rules.r1(step, path, rules.eqnSwap(reducer));
      // Apply the induction2 fact to the modified assumption.
-     const step3 = rules.rewriteOnly(step2, path, 'induction2', false);
-     // Reduce the lambda calls.
+     // The "false" arg disables beta reduction after substitution
+     // TODO: Consider instead handling it properly in rewrites.
+     //   Look there for more info.
+     const step3 = rules.rewriteOnly(step2, path, 'induction2',
+       null, false);
+     // Reduce the lambda calls not reduced duirng rewriting.
      const reduced = rules.reduceAll(step3, '');
      // Items b and c here are at the locations of the inductive
      // case and the base case.

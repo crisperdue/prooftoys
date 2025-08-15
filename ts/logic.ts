@@ -5211,6 +5211,10 @@ declare(
   // as the equation.  To rewrite using an entire conditional "A => B"
   // (not just its main part), rewrite with the fact "(A => B) == T".
   //
+  // If there is a map argument, it adds any new mappings in it to
+  // the computed substitution map, never overriding mappings that
+  // establish the match.
+  //
   // TODO: Consider renaming _free_ variables introduced into the step
   //   by the equation so they are distinct from all free variables
   //   that were already in the equation.  Doing so would enable
@@ -5225,7 +5229,7 @@ declare(
   // Performs the needed substitution, with higher-order matching, and
   // returns the result of that.
   {name: 'replacementFor',
-   action2: function(step, path, eqn_arg, reduce=true) {
+   action2: function(step, path, eqn_arg, map_arg, reduce=true) {
 
      // TODO: Use the optional argument to "get" in many more places,
      //   to check if a path is valid -- and handle the case where it is
@@ -5237,7 +5241,8 @@ declare(
        return Error(fmt`No term ${path} in ${step}\n (for ${eqn_arg})`);
      }
      const schema = Toy.schemaPart(eqn_arg);
-     const map = target.matchSchema(schema);
+     const map1 = target.matchSchema(schema);
+     const map = map_arg ? Object.assign(map_arg, map1) : map1;
      if (!map) {
        return Error(
          fmt`Fact ${eqn_arg} not applicable\n to ${target}\n in ${step}\n at ${path}`
@@ -5267,9 +5272,9 @@ declare(
   // assumptions to any existing ones; does not deduplicate or arrange
   // them.
   {name: 'rewriteOnlyFrom',
-    action2: function(step, path_arg, eqn) {
+    action2: function(step, path_arg, eqn, map_arg?) {
       const path = step.wff.asPath(path_arg);
-      const replacement = rules.replacementFor.attempt0(step, path, eqn);
+      const replacement = rules.replacementFor.attempt0(step, path, eqn, map_arg);
       return ok(replacement, () =>
                 rules.replace(step, path, replacement));
     },
@@ -5285,12 +5290,12 @@ declare(
   // except takes a fact statement rather than a step. The "reduce"
   // argument is only used in the "induct" rule in natnums.js.
   {name: 'rewriteOnly',
-   action2: function(step, path_arg, stmt_arg, reduce=true) {
+   action2: function(step, path_arg, stmt_arg, map_arg?, reduce=true) {
      const path = step.wff.asPath(path_arg);
      const fact = rules.fact(stmt_arg);
      const replacement =
        isProved(fact) &&
-       rules.replacementFor.attempt0(step, path, fact, reduce);
+       rules.replacementFor.attempt0(step, path, fact, map_arg, reduce);
      return ok(fact) && 
       ok(replacement, () => rules.replace(step, path, replacement));
     },
@@ -5309,8 +5314,9 @@ declare(
   // TODO: Render (programmatic) calls to this and "rewrite" according to
   //   whether the equation is a statement or a step.
   {name: 'rewriteFrom',
-    action2: function(step, path, equation) {
-      const step2 = rules.replacementFor.attempt0(step, path, equation);
+    action2: function(step, path, equation, map_arg?) {
+      const step2 = rules.replacementFor.attempt0(step, path,
+        equation, map_arg);
       return ok(step2, () => {
         const step3 = rules.replace(step, path, step2);
         return rules.simplifyAsms(step3);
@@ -5334,17 +5340,19 @@ declare(
   //
   // TODO: Modify all of these rewrite* rules to return Error objects
   //   in case preconditions are not met.
-  // TODO: Consider an optional arg that asks replacementFor to reduce
-  //   after replacing, as in rewriteOnly.
+  // TODO: In all of these, avoiding reducing in the term to use as a
+  //   replacement. Reduce lambdas introduced by the H-O match, probably
+  //   flagging them as part of substitution, then finding flagged
+  //   points.
   {name: 'rewrite',
-    action2: function(step, path_arg, statement) {
+    action2: function(step, path_arg, statement, map_arg?) {
       // Be careful to convert a possible search pattern into
       // an ordinary path _before_ replacing the target term.
       const path = step.asPath(path_arg);
       var fact = rules.fact(statement);
       const replacement0 =
         isProved(fact) &&
-        rules.replacementFor.attempt0(step, path, fact);
+        rules.replacementFor.attempt0(step, path, fact, map_arg);
       return ok(fact) && ok(replacement0, () => {
         const replacement = rules.simplifyAsms(replacement0);
         const step2 = rules.replace(step, path, replacement);
