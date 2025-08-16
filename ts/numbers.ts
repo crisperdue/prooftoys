@@ -1802,6 +1802,8 @@ declare(
        }
      }
    },
+   inputs: {site: 1},
+   menu: 'simplify products',
    description: 'simplifying products',
   },
 
@@ -1821,6 +1823,8 @@ declare(
        }
      }
    },
+   inputs: {site: 1},
+   menu: 'simplify sums',
    description: 'simplifying sums',
   }
 );
