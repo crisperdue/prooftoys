@@ -26,7 +26,7 @@ export const realNumbersScript = '/js/numbers.js';
 /**
  * Maximum Expr.size() of term to display as "short".
  */
-export const maxShortResult = 10;
+export const maxShortResult = 20;
 
 /**
  * Async utility function to print and return the
