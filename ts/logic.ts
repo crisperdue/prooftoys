@@ -6189,22 +6189,15 @@ declare(
     }
   },
 
-  // Derives a step with assumptions flattened, deduplicated and
-  // ordered as by conjunctionArranger given Toy.asmComparator,
-  // including removal of occurrences of T.  In some cases this can
-  // remove all assumptions and a top-level conditional, and in that
-  // case the meanings of /main paths into the step may not be as
-  // expected if the resulting step remains conditional, though this
-  // is an exceptional case.
+  // Derives a step with the input step's assumptions flattened,
+  // deduplicated and ordered as by conjunctionArranger given
+  // Toy.asmComparator, including removal of occurrences of T.
   //
-  // TODO: Attempt to eliminate T by some other means where
-  //   appropriate.
-  //
-  // TODO: Make this much faster by using sets of tautologies that
-  //   show conjuncts imply a single one of its conjuncts, and using
-  //   those to build the rearranged conjunction.
+  // If the optional removeAll argument is truthy (the default), this
+  // also removes any lone remaining assumption of T, transforming a
+  // conditional step into an unconditional step.  
   {name: 'arrangeAsms',
-    action: function(step) {
+    action: function(step, removeAll=true) {
       if (!step.isCall2('=>')) {
         return step;
       }
@@ -6213,7 +6206,7 @@ declare(
       // which is not exactly desired, but convenient to do there.
       // See TODOs there for some ideas.
       var deduper =
-          rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
+          rules.conjunctionArranger(step.getLeft(), asmComparator);
       /*
       Around 60% of calls to this are no-ops ("Toy.same").
       if (deduper.getLeft().sameAs(deduper.getRight())) {
@@ -6223,7 +6216,7 @@ declare(
       }
       */
       const deduped = rules.r1(step, '/left', deduper);
-      const result = (deduped.getLeft().isConst('T')
+      const result = (removeAll && deduped.getLeft().isConst('T')
                       ? rules.rewriteOnly(deduped, '', '(T => a) == a')
                       : deduped);
       return result.justify('arrangeAsms', arguments, [step]);
