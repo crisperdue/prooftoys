@@ -1139,13 +1139,21 @@ declare(
   {name: 'goal',
    action: function(wff) {
      if (wff.implies()) {
+       // Equivalent to the more elegant option below,
+       // except for ordering of assumptions.
        return (rules.tautology('b => (a => b)')
                .andThen('instMultiVars', {b: wff.getMain(), a: wff.getAsms()})
+               // This (mergeAsms) is intended as a helper for replace,
+               // but works OK here.
                .andThen('mergeAsms')
                .justify('goal', arguments));
+       /* This would be more elegant, but puts asms in a different
+          order, so not compatible.
        return (rules.assumeExplicitly(wff.getMain())
                .andThen('andAssume', wff.getAsms())
+               .andThen('arrangeAsms')
                .justify('goal', arguments));
+         */
      } else {
        return rules.assumeExplicitly(wff).justify('goal', arguments);
      }
@@ -2212,7 +2220,7 @@ declare(
   {name: '_simplifySite',
    action: function(step, path, opt_facts, asms=true) {
       var eqn = rules.consider(step.get(path));
-      var simpler = Toy.repeatedly(eqn, function(eqn) {
+      var simpler = repeatedly(eqn, function(eqn) {
         if (eqn.size(1000) > 500) {
           debug(`Is eqn too big?\n${eqn.$$}`);
         }
@@ -2251,11 +2259,11 @@ declare(
 );
 
 declare({
-  // Uses the given facts to simplify the assumptions of the given
-  // step, first by simplifying with all asmSimplifiers; removing T
-  // from conjunctions.  Ensures the result has its assumptions
-  // arranged with arrangeAsms, and if the assumptions reduce to T,
-  // removes the assumptions entirely.
+  // Uses the given facts to simplify the assumptions of the given step,
+  // first by simplifying with all asmSimplifiers, using rules.rewrite.
+  // Any assumption that simplifies to T is removed unless it is the
+  // last one remaining.  Rewrites may re-order the asms and/or add new
+  // ones.
   name: 'simplifyAsms',
   action: function (step_arg) {
     if (!step_arg.implies()) {
@@ -4926,9 +4934,7 @@ declare(
   /**
    * Replaces the target term using the given equation.  If both
    * inputs are conditionals and this does not replace the entire
-   * step, merges the resulting assumptions, with the target step
-   * assumptions first.  The equation assumptions unfortunately
-   * are reversed in the result.  See TODO for mergeAsms.
+   * step, merges the resulting assumptions with mergeAsms.
    */
   {name: 'replace',
     action: function(target, path, equation) {
@@ -5023,10 +5029,10 @@ declare(
     labels: 'uncommon'
   },
 
-  // If the step has the form a => (b => c), moves all conjuncts of
-  // "a" to the inner level and finally erasing the outer "=>".  The
-  // conjuncts of "a" end up following all the conjuncts of "b".  Also
-  // deduplicates the assumptions.  This is a helper for
+  // If the step has the form a => (b => c), moves all the members of
+  // that chain to the inner level and finally erases the outer "=>".
+  // Then uses arrangeAsms to flatten, re-order, and deduplicate the
+  // entire set, removing occurrences of T.  This is a helper for
   // rules.replace, in which "a" is the assumptions of the input
   // equation.
   //
@@ -5035,10 +5041,12 @@ declare(
   //   already does internally after merging.
   {name: 'mergeAsms',
    action: function(step) {
-      const once = Toy.applyMatchingFact;
+      const once = applyMatchingFact;
       let flatter = step;
+      // FWIW, repeated uses of this put the conjuncts of "a" in
+      // reversed order following all the conjuncts of "b". 
       const mover = ['a1 & a2 => (b => c) == (a1 => (b & a2 => c))'];
-      // This loop flattens out the assumptions.
+      // This loop moves the conjuncts of "a" after "b".
       while (true) {
         let next = once(flatter, '', mover, 'rewriteOnly');
         if (!next) {

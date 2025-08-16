@@ -1743,6 +1743,10 @@ declare
 
 //// Fact lists
 
+// Rules.simplifyAsms uses this list, so it is typically applied
+// internally by rewriting.  Facts here that do not implicitly assume
+// variables are real numbers might even serve better in basicSimpFacts.
+//
 // This list may be added onto later.
 Toy.asmSimplifiers.push
   (

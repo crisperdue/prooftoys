@@ -297,6 +297,8 @@ const decls = [
     (7 trueBy0 (s 3) (path "/left/right/arg/body") (s 6))
     (8 simplifySite (s 7) "")`,
    simplifier: true,
+   // TODO: This could be in asmSimplifiers, but we don't have a
+   //   convenient way to say that here.
   },
   {exertion: 'add1.5'},
 

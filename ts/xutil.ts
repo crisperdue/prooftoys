@@ -1854,8 +1854,8 @@ export function asmLess(e1, e2) {
 
 /**
  * Comparator for Array.sort corresponding to asmLess.  Terms that are
- * calls to "R" come before all others.  Value < 0 means e1 is less
- * than e2.  Value is 0 iff the terms are identical.
+ * calls to "R" come before all others.  Value < 0 means e1 is less than
+ * e2.  Value is 0 iff the terms are identical according to Expr.dump.
  */
 export function asmComparator(e1, e2) {
   function asmScore(e) {
