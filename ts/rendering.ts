@@ -148,9 +148,9 @@ export interface Expr {
    * TODO: Allow asms to merely match (e.g. "matches") goal asms, to
    *   nicely handle asms with bound vars.
    */
-  checkSubgoals(goalWff);
+  checkUnsolved(goalWff);
 }
-Expr.prototype.checkSubgoals = function(goalWff) {
+Expr.prototype.checkUnsolved = function(goalWff) {
   const self = this;
   const main = self.getMain();
   const goalMain = goalWff.getMain();
@@ -326,7 +326,7 @@ export class ProofDisplay {
       renderStepNumber(rendered);
       const ed = this.proofEditor;
       if (ed && ed.goalStatement) {
-        rendered.checkSubgoals(ed.goalStatement);
+        rendered.checkUnsolved(ed.goalStatement);
       }
       var node = rendered.stepNode;
       $(node).addClass('stepSuggestion');
