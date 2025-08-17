@@ -47,11 +47,10 @@ b[videotip], b[imagetip] {
 
 // Unwanted assumption in goal-based proof.
 // See also .redBack in pt.scss.
-.expr.unsolved {
+:is(.stepAndNum.hover, .proofStep.selected, wffblock-:hover) .expr.unsolved {
   color: #e44;
-  // background-color: hsl(30, 100%, 94%);  if background
-  border-radius: 5px;
-  outline: 2px solid #e88;
+  border-radius: 3px;
+  outline: 2px solid #f88;
   // Use these for even more emphasis:
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
