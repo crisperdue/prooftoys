@@ -421,6 +421,7 @@ export var rules: Record<string, any> = {};
 const propNames = [
   'action',
   'action2',
+  'asmSimplifier',
   'autoSimplify',
   'axiom',
   'converse',
@@ -2655,6 +2656,7 @@ var factProperties = {
   definition: true,
   simplifier: true,
   desimplifier: true,
+  asmSimplifier: true,
   noSwap: true,
   labels: true,
   with: true,
@@ -2698,6 +2700,7 @@ var factProperties = {
  *   If not present, one will be generated to assert the goal.
  * description: string or function as for a rule description.
  * simplifier: true iff this fact is a simplifier.
+ * asmSimplifier: true iff this fact is an asmSimplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
  * definition: true if this fact is introduced as a definition.
  *   Currently just affects the message.
@@ -2796,6 +2799,11 @@ export function addFact(info) {
       // not inverses.
       basicSimpFacts.push('@' + info.goal.toString());
     }
+    if (info.asmSimplifier) {
+      asmSimplifiers.push('@' + info.goal.toString());
+    }
+
+    // Install the info.
     setFactInfo(info);
   }
   return info;
