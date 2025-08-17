@@ -2355,6 +2355,19 @@ export function simplifyStep(step) {
   return rules.simplifySite(step, '');
 }
 
+/**
+ * Function that simplifies just asms if the path is on that side,
+ * otherwise the main part of the step.  Simplifies some part containing
+ * the term it points to, but never an entire conditional step.
+ * 
+ * TODO: Consider adapting this into an improvement over
+ *   simplifyFocalPart.
+ */
+export function simplifySide(step) {
+  const [_, path] = step.ruleArgs;
+  return rules.simplifySite(step, step.isAsmSide(path) ? '/left' : '/main');
+}
+
 // Data for flattenAnd.
 const contextAnd = {
   factLists:
@@ -2534,7 +2547,9 @@ declare(
       return ok(result, () => result);
    },
    inputs: {site: 1, step: 3},
-   autoSimplify: simplifyStep,    // TODO: Maybe use the default instead.
+   // This is a guess at reasonable simplification, and avoids
+   // simplifying an entire conditional step.
+   autoSimplify: simplifySide,
    toOffer: 'return term.isBoolean()',
    form: ('{term} instance of step <input name=step>'),
 
@@ -2574,7 +2589,9 @@ declare(
      return ok(result, () => result);
    },
    inputs: {site: 1, step: 3},
-   autoSimplify: simplifyStep,    // TODO: Maybe use the default instead.
+   // This is a guess at reasonable simplification, and avoids
+   // simplifying an entire conditional step.
+   autoSimplify: simplifySide,
    toOffer: 'return term.isBoolean()',
    form: ('Match {term} with (consequent of) step <input name=step>'),
    menu: 'replace known true part with T',
@@ -7694,7 +7711,14 @@ enableDefnFacts();
 
 export const tautologyCounts = new Map();
 
-/** numbers.js adds many more to this list. */
+/** 
+ * List of asm simplifiers used by simplifyAsms to simplify internally
+ * in rules such as rewriters. These typically use closure properties,
+ * and only display as part of the step, not within a separate
+ * simplification step.
+ *
+ * numbers.js adds many more to this list.
+ */
 export const asmSimplifiers: (string | Object)[] = ['a & T == a', 'T & a == a'];
 
 }  // namespace;
