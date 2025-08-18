@@ -84,7 +84,7 @@ export var quotes = [];
  * TODO: Extend lookahead to a complete token using state.  Support
  *   "**" for exponentiation like "^".
  */
-export function mathMarkup0(text, title) {
+export function mathMarkup0(text, useWords) {
   // Substitutions for "forall" and "exists" consume any trailing blank,
   // helping to push them up next to following text.
   // "_" for subscript and "^" for superscript are treated specially,
@@ -108,7 +108,7 @@ export function mathMarkup0(text, title) {
     } else {
       // It is a constant name.
       switch(s) {
-      case '=>': return title ? 'implies' : '&rArr;';
+      case '=>': return '&rArr;';
       case '==': return '&equiv;';
       case '!=': return '&ne;';
       case '<': return '&lt;';
@@ -129,11 +129,11 @@ export function mathMarkup0(text, title) {
         // and also plain '&'.
         return '&';             // &*amp; -> &amp;
       case '&':
-        return title ? 'and' : '&and;';
+        return useWords ? 'and' : '&and;';
       case '|':
-        return title ? 'or' : '&or;';
+        return useWords ? 'or' : '&or;';
       case 'not':
-        return title ? 'not' : '&not;';
+        return useWords ? 'not' : '&not;';
       case 'in':
         return '&in;';
       case 'notin':
@@ -180,8 +180,8 @@ export function mathMarkup0(text, title) {
  * Postprocess basic results of mathMarkup0 to keep operands of
  * multiplication visually near the "center dot".
  */
- export function mathMarkup(text, title=false) {
-  const text0 = mathMarkup0(text, title);
+ export function mathMarkup(text: string, useWords: boolean) {
+  const text0 = mathMarkup0(text, useWords);
   return text0.replace(/ &sdot; /g, '&sdot;');
 };
 
@@ -191,7 +191,7 @@ export function mathMarkup0(text, title) {
  * not the fastest thing in the world.
  */
  export function mathText(text) {
-  return jQuery('<span>' + mathMarkup(text) + '</span>').text();
+  return jQuery('<span>' + mathMarkup(text, true) + '</span>').text();
 };
 
 /**
@@ -215,8 +215,8 @@ export function mathMarkup0(text, title) {
       $element.text(content.slice(1));
       return $element;
     } else if (!lang || lang === 'fallback' || lang === 'logic') {
-      const markup = mathMarkup(content);
-      const title = mathMarkup(content, true);
+      const markup = mathMarkup(content, true);
+      const title = mathMarkup(content, false);
       const $element = $('<code>',
                          title === markup || title.includes('\n')
                          ? {'class': 'language-logic'}

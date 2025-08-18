@@ -3133,7 +3133,7 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
       } else {
         const tip = ruleInfo.basicTooltip;
         // TODO: Reconcile use of math markup here vs. non-use in menus.
-        return tip && Toy.mathMarkup(ruleInfo.basicTooltip);
+        return tip && Toy.mathMarkup(ruleInfo.basicTooltip, true);
       }
     }
   }

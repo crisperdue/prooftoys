@@ -2340,7 +2340,7 @@ export function computeHeaderArgInfo(step) {
       argText = mathSpan(translated.toHtml());
     } else if (typeof arg == 'string' && arg.match(/^(\(|T$|F$)/)) {
       // Is 'T' or 'F' or '(.*'
-      argText = mathSpan(Toy.mathMarkup(arg));
+      argText = mathSpan(Toy.mathMarkup(arg, true));
     } else if (typeof arg == 'string' && arg[0] != '/') {
       argText = '"' + arg + '"';
     } else if (typeof arg == 'string' || arg instanceof Toy.Path) {
