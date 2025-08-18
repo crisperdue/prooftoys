@@ -181,7 +181,7 @@ export function mathMarkup0(text, title) {
  * multiplication visually near the "center dot".
  */
  export function mathMarkup(text, title=false) {
-  const text0 = Toy.mathMarkup0(text, title);
+  const text0 = mathMarkup0(text, title);
   return text0.replace(/ &sdot; /g, '&sdot;');
 };
 
@@ -191,7 +191,7 @@ export function mathMarkup0(text, title) {
  * not the fastest thing in the world.
  */
  export function mathText(text) {
-  return jQuery('<span>' + Toy.mathMarkup(text) + '</span>').text();
+  return jQuery('<span>' + mathMarkup(text) + '</span>').text();
 };
 
 /**
@@ -215,8 +215,8 @@ export function mathMarkup0(text, title) {
       $element.text(content.slice(1));
       return $element;
     } else if (!lang || lang === 'fallback' || lang === 'logic') {
-      const markup = Toy.mathMarkup(content);
-      const title = Toy.mathMarkup(content, true);
+      const markup = mathMarkup(content);
+      const title = mathMarkup(content, true);
       const $element = $('<code>',
                          title === markup || title.includes('\n')
                          ? {'class': 'language-logic'}

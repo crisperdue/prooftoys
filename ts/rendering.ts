@@ -2342,10 +2342,10 @@ export function computeHeaderArgInfo(step) {
       // Is 'T' or 'F' or '(.*'
       argText = mathSpan(Toy.mathMarkup(arg));
     } else if (typeof arg == 'string' && arg[0] != '/') {
-      argText = arg;
+      argText = '"' + arg + '"';
     } else if (typeof arg == 'string' || arg instanceof Toy.Path) {
       // Ignore paths and strings that look like paths.
-      continue;
+      argText = '<code class=smaller>' + arg.toString() + '</code>';
     } else {
       // E.g. mappings/objects
       argText = '<code>' + Toy.debugString(arg) + '</code>';
