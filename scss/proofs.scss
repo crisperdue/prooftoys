@@ -45,16 +45,22 @@ b[videotip], b[imagetip] {
   padding: 0 2px;
 }
 
-// Unwanted assumption in goal-based proof.
+// These are styles for unwanted assumption in goal-based proof.
 // See also .redBack in pt.scss.
 :is(.stepAndNum.hover, .proofStep.selected, wffblock-:hover) .expr.unsolved {
-  color: #e44;
+  // color: #e44; maybe?
   border-radius: 3px;
   outline: 2px solid #f88;
   // Use these for even more emphasis:
   // background-color: hsl(340 100% 95%);
   // text-decoration: solid underline red;
   // text-decoration-thickness: 2px;
+}
+
+// This is an indicator that this proof step solves some subgoal.
+.proofStep.solving .stepAndNum::after {
+  vertical-align: bottom;
+  content: ' ✓subgoal';
 }
 
 // Hovered exprs.  This overrides "unsolved".

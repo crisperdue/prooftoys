@@ -872,9 +872,28 @@ export class ProofEditor {
    */
   addStep(step) {
     const rendered = this.proofDisplay.addStep(step);
+    // Now highlight assumptions not present in the goal
+    // and thus needing to be removed to achieve the goal.
     const stmt = this.goalStatement;
     if (stmt) {
       rendered.checkUnsolved(stmt);
+    }
+    // Now also highlight assumptions not present in some subgoal.
+    const steps = this.proofDisplay.steps;
+    const main = step.getMain();
+    // Iterate over all steps prior to this one.
+    for (let i = 0; i < steps.length - 1; i++) {
+      const st = steps[i];
+      // If this step has a matching conclusion and is a subgoal,
+      // check against it and stop iterating.  It seems hard to know
+      // what is best if multiple subgoals have the same conclusion.
+      if (st.ruleName === 'subgoal' && main.sameAs(st.getMain())) {
+        const n = rendered.checkUnsolved(st);
+        if (n === 0) {
+          rendered.stepNode.classList.add('solving');
+        }
+        break;
+      }
     }
   }
 

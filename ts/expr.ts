@@ -386,10 +386,12 @@ export function neverWhenBound(rule) {
 
 /**
  * TermSet and TermMap identify terms by their "dump"
- * as a string.
+ * as a string.  Useful primarily for working with assumptions,
+ * deduplication and such.
  *
  * TODO: Dump does not distinguish terms by type.
  *   Consider making it do so.
+ * TODO: Or at least distinguish between "=" and "==" like toString does.
  * TODO: Consider making "dump" insensitive to names of
  *   bound variables.
  */
