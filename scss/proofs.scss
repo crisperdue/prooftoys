@@ -19,7 +19,7 @@
   z-index: 1001; /* 1 more than the overlay layer */
 }
 
-.faded {
+.faded:not(.unsolved) {
   color: #999;
   font-weight: normal;
 }
