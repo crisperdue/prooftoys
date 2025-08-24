@@ -161,9 +161,8 @@ Expr.prototype.checkUnsolved = function(goalWff) {
   const goalAsms = goalWff.asmSet();
   let found = 0;
   asms.each(asm => {
-    // Never count the conclusion of the goal as OK.
-    // This makes it easier to check against steps that
-    // are the result of the subgoal rule.
+    // Never count the conclusion of the goal as OK.  Flagging it as
+    // undesired is appropriate for both the "goal" and "subgoal" rules.
     if (!goalAsms.has(asm) || asm.matches(goalMain)) {
       found++;
       if (asm.node) {
