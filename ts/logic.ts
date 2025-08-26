@@ -1071,6 +1071,8 @@ declare(
   // Like "consider", but for formulas (boolean-valued terms)
   // Special case: this is only offerable if there are no steps
   // already in a proof.
+  // TODO: This is obsolete, but tests use it exercise the
+  //   solutionStatus machinery.  Adjust tests and remove this.
   {name: 'given',
     action: function(term) {
       return rules.eqSelf(term).justify('given', arguments);

@@ -203,7 +203,7 @@ export var nextProofEditorId = 1;
  *   option if given, or from an exercise problem statement; defaults
  *   to an empty array.
  * givens: read-only TermSet of boolean terms defining the problem, often
- *   equations (not steps).  Non-empty iff the first step is a "given"
+ *   equations (not steps).  Non-empty iff the first step is a "solveReal"
  *   step; then contains the conjuncts of the main part, as determined
  *   by scanConjuncts.
  * givenVars: object/set keyed by names of variables free in the givens;
@@ -840,6 +840,8 @@ export class ProofEditor {
    * name is "given".  Sets them to be all conjuncts of the RHS of the
    * main part of the first step, set up as an equivalence by
    * rules.given.
+   * 
+   * TODO: Move this functionality into the solveReal rule.
    */
   _updateGivens() {
     var self = this;
@@ -848,7 +850,7 @@ export class ProofEditor {
     function add(given) { self._givens.add(given); }
     if (steps.length > 0) {
       var step = steps[0];
-      if (step.ruleName === 'given') {
+      if (step.ruleName === 'solveReal') {
         step.wff.getMain().getRight().scanConjuncts(add);
       }
     }
@@ -860,10 +862,11 @@ export class ProofEditor {
    * of this problem.
    */
   _updateGivenVars() {
+    const assign = Object.assign;
     // An object/set with names of all variables in any of the
     // givens:
-    var vars = {};
-    this._givens.each(function(g) { $.extend(vars, g.freeVars()); });
+    let vars = {};
+    this._givens.each(function(g) { assign(vars, g.freeVars()); });
     this.givenVars = vars;
   }
 
