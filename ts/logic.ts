@@ -865,7 +865,7 @@ declare(
     action: function(step) {
       if (window.confirm('Remove selected step and all following?')) {
         const rendered = step.rendering;
-        const display = Toy.getProofDisplay(rendered);
+        const display = getProofDisplay(rendered);
         display.removeStepAndFollowing(rendered);
       }
       return true;
@@ -878,24 +878,6 @@ declare(
     noSuggest: true,
     labels: 'edit'
   },
-
-  /* Partial implementation of concept --
-  {name: 'setGoal',
-   action: function(wff, proofEditor) {
-     proofEditor.goalStatement = wff;
-     Toy.sleep(100).then(() => location.reload());
-     return true;
-   },
-   menu: 'set proof editor goal',
-   inputs: {bool: 1, ed: 2},
-   form: 'Goal to prove <input name=bool>',
-   // Rare property, indicates that this has side effects, so do
-   // not run the rule to find a suggested step.
-   noSuggest: true,
-   autoSimplify: noSimplify,
-   labels: 'edit'
-  },
-  */
 
   /**
    * Refer to a theorem by name, for the UI.  Inline.
