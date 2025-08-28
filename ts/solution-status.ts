@@ -9,7 +9,8 @@ var ProofEditor = Toy.ProofEditor;
 var TermSet = Toy.TermSet;
 
 /**
- * Returns an object with properties having useful information from a
+ * Returns an object with properties having useful information about a
+ * term ("expr") in the context of a
  * TermSet of givens and/or type conditions.  The value of each
  * property of the result is a list of terms that are conjuncts of the
  * given expr.  The properties are TermSets:
@@ -23,7 +24,7 @@ export function analyzeConditions(expr, givens) {
   var givs = new TermSet();
   var others = new TermSet();
   function collate(x) {
-    if (x.isTypeCond()) {
+    if (x.isTypeDecl()) {
       tcs.add(x);
     } else if (givens.has(x)) {
       givs.add(x);
@@ -114,7 +115,7 @@ function analyze1Solution(conj, givenVars) {
         };
         byVar[name] = info;
       }
-    } else if (term.isTypeCond()) {
+    } else if (term.isTypeDecl()) {
       tcs.add(term);
     } else {
       others.add(term);
@@ -180,6 +181,8 @@ export interface ProofEditor {
   messageForSolution(step, sol);
 }
 
+// This defines solutionStatus-related methods of a
+// proof editor.
 var methods = {
 
   /**
@@ -425,7 +428,6 @@ var methods = {
       //   arbitrary extra assumptions and necessary ones such as
       //   division by nonzero.
       var allOthers = new TermSet();
-      // eslint-disable-next-line no-inner-declarations
       function add(value) { allOthers.add(value); }
       givsInfo.others.each(add);
       tcOthers.each(add);
@@ -435,7 +437,6 @@ var methods = {
       var givensPresent = new TermSet().addAll(givsInfo.givens).addAll(tcGivens);
       var absentGivens = new TermSet();
       // Returns fml iff it is not present in this step.
-      // eslint-disable-next-line no-inner-declarations
       function checkAbsent(fml) {
         if (!givensPresent.has(fml)) {
           absentGivens.add(fml);

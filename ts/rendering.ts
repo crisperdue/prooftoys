@@ -1324,7 +1324,7 @@ Expr.prototype.renderTopConj = function(minPower) {
  * (This makes the whole term implicit.)
  */
 export function allImplicit(expr, step) {
-  return (expr.isTypeCond() ||
+  return (expr.isTypeDecl() ||
           (expr.isCall2('&') &&
            allImplicit(expr.getLeft(), step) && 
            allImplicit(expr.getRight(), step)));

@@ -63,7 +63,6 @@ export const unicodeNames = {
   'intersect': '\u2229',
   'union': '\u222a',
 };
-
 /**
  * For each substitution map that has expansions of terms into
  * lambdas, a count of the number of expansions applied to
@@ -998,8 +997,9 @@ export abstract class Expr {
   }
 
   /**
-   * Returns truthy if this has the form of a type test; intended to
-   * extend to more types, currently R or NN or QQ or ZZ.
+   * Returns truthy if this has the form of a type test, i.e.
+   * application of a "type predicate" to a value; intended to extend to
+   * more types, currently R or NN or QQ or ZZ.
    */
   isTypeTest() {
     if (this.isCall1()) {
@@ -1311,15 +1311,6 @@ export abstract class Expr {
   isBoolConst() {
     return (this instanceof Atom &&
             (this.name == 'T' || this.name == 'F'));
-  }
-
-  /**
-   * Truthy iff the given term is a type condition on a variable.
-   * Currently this means just a call on R, but extension to other
-   * types is intended.
-   */
-  isTypeCond() {
-    return this.isCall1('R') && (this satisfies Call1).arg.isVariable();
   }
 
   /**
