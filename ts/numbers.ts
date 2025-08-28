@@ -1283,8 +1283,8 @@ declare(
   // End of interim axioms.
 
   // Core for evaluating arithmetic expressions with operators: +, -,
-  // *, /, div, mod, neg, =, !=, >, >=, <, <=, and the type operators
-  // "R", NN, and ZZ.  Given an arithmetic term with numerals as
+  // *, /, div, mod, neg, =, !=, >, >=, <, <=, and the type conditions
+  // "R", NN, QQ, and ZZ.  Given an arithmetic term with numerals as
   // operands, produces an equation whose right side is the exact
   // result of the operation.  Checks that inputs are all numeric
   // (exact integers by construction) and that the result can be
@@ -1357,7 +1357,7 @@ declare(
         if (nm == 'neg') {
           value = -arg;
           var rhs = Toy.numify(value);
-        } else if (nm == 'R' || nm == 'ZZ' ||
+        } else if (nm == 'R' || nm == 'ZZ' || nm == 'QQ' ||
                    (nm == 'NN' && arg >= 0)) {
           var rhs = T;
         } else {
