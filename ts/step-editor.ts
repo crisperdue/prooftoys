@@ -211,11 +211,11 @@ export var nextProofEditorId = 1;
  * goalStatement: for proof exercises, a proof statement wff.
  * proofData: If the document has proof data in proof-data.js, this
  *   is the plain object defined for the document there.
- * solutions: If any of these expressions (or strings) is an alphaMatch
+ * solutions: Array of expressions (or strings); if any is an alphaMatch
  *   with a step, announce the step as a solution.
- * standardSolution: Boolean.  If no explicit solutions given, but the
- *   result of a step solves for a variable (equal to a numeral or
- *   fraction), announce that the problem is solved.
+ * standardSolution: Boolean, initially true.  If no explicit solutions
+ *   are given, but the result of a step solves for a variable (equal to a
+ *   numeral or fraction), announce that the problem is solved.
  * showRuleType: Selects type of rules to show, as determined by labelApproved.
  *   Takes effect when this editor is reset.
  * showRules: List of individual rules to show.  Takes effect when this
@@ -267,7 +267,7 @@ export class ProofEditor {
           `Exercises permit only one ProofEditor (${options.exercise}).`);
     proofEditors.add(self);
 
-    // If the first step of the proof is a "givens" step, this will
+    // If the first step of the proof is a "solveReal" step, this will
     // become a TermSet with all conjuncts of its main part.
     self._givens = new TermSet();
     self.givenVars = {};
