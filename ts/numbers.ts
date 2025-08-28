@@ -4430,6 +4430,9 @@ declare(
 
   // The definitions here related to NN follow
   // Murray H. Protter, "Basic Elements of Real Analysis", 1998.
+  // Except that here NN includes 0, as in the Lean
+  // Natural Number Game, and recursive function theory
+  // back to at least Kleene's Introduction to Metamathematics.
 
   {definition: 'succ n = n + 1'},
 
@@ -4437,24 +4440,23 @@ declare(
   // Defining NN:
   // Starting at 1, unlike the tutorial, which starts at 0
 
-  {definition: 'nn1 N == forall {x. N x => N (succ x)}'},
-  {definition: 'nn2 N == forall {P. nn1 P => N subset? P}'},
-  {definition: 'isRealNN N == N 1 & nn1 N & nn2 N'},
+  {definition: 'allSucc P == forall {x. P x => P (succ x)}'},
+  {definition: 'smallSucc N == forall {P. allSucc P => N subset? P}'},
+  {definition: 'isRealNN N == N 0 & allSucc N & smallSucc N'},
   {definition: 'NN = the1 {N. isRealNN N}'},
 
   {statement: 'exists1 {N. isRealNN N}'},  // Asserted
 
   // True via "equalThe".
   {statement: 'isRealNN S == S = NN'},  // Asserted
-  // True via zz and nn2 properties of NN, then expanding definitions.
+  // True via zz and smallSucc properties of NN, then expanding definitions.
   {statement:
    'P 0 & forall {x. P x => P (x + 1)} => NN subset? P'},  // Asserted
 
-  
 
   // Defining ZZ:
 
-  // This is like nn1, but with a biconditional.
+  // This is like allSucc, but with a biconditional.
   {definition: 'zz1 Z == forall {x. Z x == Z (succ x)}'},
   {definition: 'zz2 Z == forall {P. zz1 P => Z subset? P}'},
   {definition: 'isRealZZ Z == Z 0 & zz1 Z & zz2 Z'},
