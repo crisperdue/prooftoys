@@ -851,7 +851,7 @@ export class ProofEditor {
     if (steps.length > 0) {
       var step = steps[0];
       if (step.ruleName === 'solveReal') {
-        step.wff.getMain().getRight().scanConjuncts(add);
+        step.wff.getMain().getLeft().scanConjuncts(add);
       }
     }
     self._updateGivenVars();

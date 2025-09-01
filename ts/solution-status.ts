@@ -14,7 +14,7 @@ var TermSet = Toy.TermSet;
  * TermSet of givens and/or type conditions.  The value of each
  * property of the result is a list of terms that are conjuncts of the
  * given expr.  The properties are TermSets:
- *   tcs: type conditions
+ *   tcs: type declarations  TODO: Rename to tds.
  *   givens: members of the givens of the problem, excluding type conditions
  *   others: other terms
  * Each conjunct is categorized as exactly one of these.
@@ -42,19 +42,17 @@ export function analyzeConditions(expr, givens) {
 }
 
 /**
- * Returns a solution status for a single equation given also a set of
- * names of variables free in the givens of an algebra problem.
+ * Accepts a single equation, checking that it is of the form v = t,
+ * where v among the given vars, and t a term with free variables only
+ * among givenVars, and not including v.
  *
- * If the equation LHS is anything other than a variable (in the
- * givenVars), or if the RHS has the LHS variable free, or if the RHS
- * contains any variable not among the given object / set of variable
- * names, returns null.
+ * If the criteria are met, returns an object/set of the variable names
+ * that occur free in the RHS, i.e. this term has the form of a solution
+ * for the LHS variable in terms of the returned set of RHS variables.
  *
- * Otherwise returns an object/set of the variable names that occur
- * free in the RHS, i.e. this term has the form of a solution for the
- * LHS variable in terms of the returned set of RHS variables.
+ * If eqn is not of this form, returns null.
  */ 
-export function eqnStatus(eqn, givenVars) {
+export function eqnDeps(eqn, givenVars) {
   var parts = eqn.matchSchema('v = t');
   if (!parts) {
     return null;
@@ -87,6 +85,11 @@ export function eqnStatus(eqn, givenVars) {
  * conjunction.  Builds and returns the information structure that
  * will be the relevant element of the array returned by
  * analyzeSolutions.
+ * 
+ * For conjuncts found by scanConjuncts, if the conjunct is acceptable
+ * to eqnDeps either as given, or commuted, works with its result as a
+ * status.  Any variable that eqnDeps takes as the variable solved for
+ * in an equation in more than one conjunct is taken as an "overage".
  */
 function analyze1Solution(conj, givenVars) {
   var eqns = [];
@@ -96,10 +99,10 @@ function analyze1Solution(conj, givenVars) {
   var others = new TermSet();
   function analyzeConjunct(term) {
     var swapped = false;
-    var status = eqnStatus(term, givenVars);
+    var status = eqnDeps(term, givenVars);
     if (!status && term.isCall2('=')) {
       swapped = true;
-      status = eqnStatus(Toy.commuteEqn(term), givenVars);
+      status = eqnDeps(Toy.commuteEqn(term), givenVars);
     }
     if (status) {
       eqns.push(term);
@@ -133,16 +136,21 @@ function analyze1Solution(conj, givenVars) {
 }
 
 /**
- * Returns an array of object/maps, one for each disjunct
- * ("solution") of the given expression.  We will call each of these
+ * Apply analyze1Solution to each disjuct of the given "solution part"
+ * of a formula, potentially a disjunction of conjunctions,
+ * returning an array of plain objects with the following properties,
+ * one for each disjunct.  We will call each of these
  * object/maps a "solution info" object, having the following
  * properties:
  *   eqns: Array of all equations among the term's conjuncts.
- *   overages: a map/set of names of variables that appear in more than
- *     one equation of this "solution" as its LHS.
+ *     Each of these is potentially a solution for one variable of
+ *     the given problem.
+ *   overages: a map/set of names of variables that are overdetermined in
+ *     the sense that appear as the LHS of more than
+ *     one equation of this "solution".
  *   byVar: an object/map with an entry for each variable that appears
- *     in exactly one equation of the solution as its LHS.  Each entry
- *     value is an object with properties:
+ *     as they LHS of exactly one equation of the "solution" conjunction.
+ *     Each entry value is an object with properties:
  *       eqn: the equation itself,
  *       using: set of RHS vars of the equation as from eqnStatus.
  *   tcs: TermSet of any type conditions appearing in the "solution".
@@ -173,6 +181,15 @@ function isLowestTerms(expr) {
           (Toy.isFraction(expr) && gcd(expr) === 1));
 }
 
+/**
+ * TODO: Refactor this into a "problem source" or something like it,
+ *   with these methods and some properties such as:
+ * 
+ * solutions: specified solutions
+ * givens: (read-only) TermSet of conjuncts of the
+ *   problem statement as supplied to solveReal; typically equations.
+ * standardSolution: boolean, true to enable standard processing 
+ */
 export interface ProofEditor {
   matchesSolution(step);
   statusInfo(step);
@@ -182,7 +199,7 @@ export interface ProofEditor {
 }
 
 // This defines solutionStatus-related methods of a
-// proof editor.
+// proof editor, or potentially some other "problem source".
 var methods = {
 
   /**
@@ -203,15 +220,22 @@ var methods = {
 
   /**
    * Extracts key information from the given step, related to solution
-   * status.  If the step does not match any of the understood formats,
-   * returns null.
+   * status, for use by solutionStatus.  If the step does not match any
+   * of the understood formats, returns null.
+   * 
+   * This classifies the step structure as "full" if a conditional
+   * equivalence; "equiv" if a pure equivalence, and either "tentative"
+   * or "confirmation" if some other variety of conditional.  If the RHS
+   * has more problem statement "given" terms than the LHS, then
+   * "confirmation", else "tentative".  (Usually the choice is
+   * clearcut.)
    *
-   * Otherwise returns an object with properties:
+   * In these cases, returns an object with properties:
    *   structure: string, one of "full", "equiv", "confirmation", or "tentative".
-   *   tcInfo: information from analyzeConditions if the format is "full",
-   *     otherwise null.
-   *   givensInfo: information on givens (and type conditions) from
-   *     analyzeConditions.
+   *   tcInfo: information from applying analyzeConditions to the step's
+   *     assumptions if the format is "full", otherwise null.
+   *   givensInfo: information from applying analyzeConditions to the
+   *     step's "givens" part, if any.
    *   solutionsInfo: information on solutions from analyzeSolutions.
    */
   statusInfo: function(step) {
@@ -314,7 +338,10 @@ var methods = {
 
   /**
    * Returns solution status in a form prepared for straightforward
-   * display.  Return values, in order of checking:
+   * display.  In typical cases this is based on the result of calling
+   * this.statusInfo.
+   * 
+   * Return values, in order of checking, are:
    *
    * true: iff the step matches a stated solution.
    * 'noStandard': if this ProofEditor has standardSolution turned off.
@@ -323,7 +350,8 @@ var methods = {
    * null: if this is in the form of a confirmation, but does not solve
    *   for all variables, has overages or extra conditions in the LHS.
    * 
-   * If in the form <solution> => <givens>, an object with properties:
+   * If the step has the form <solution> => <givens>, an object with
+   * properties:
    * type: 'confirmation'
    * givens: a TermSet of the givens in the RHS.
    * solution: an object/map of information about solutions "by variable"
@@ -458,9 +486,10 @@ var methods = {
   },
 
   /**
-   * Solution progress message for the entire step as a single string.
-   * It could be a combination of multiple messages separated in case
-   * of multiple solutions, or null if there is no notable progress.
+   * Solution progress message for the entire step as a single string,
+   * based on the solutionStatus of the step. It could be a combination
+   * of multiple messages separated in case of multiple solutions, or
+   * null if there is no notable progress.
    *
    * TODO: Consider how to handle underdetermined problems.
    */
@@ -550,7 +579,6 @@ var methods = {
    * Message for one of the status.solutions objects for a step.
    */
   messageForSolution: function(step, sol) {
-    var self = this;
     var isEmpty = Toy.isEmpty;
     var format = Toy.format;
     if (sol.eqns.length === 0) {
