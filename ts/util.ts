@@ -362,7 +362,8 @@ namespace Toy {
 
   /**
    * Returns the items in the first argument that are not also
-   * in the second argument, taking each as a set.
+   * in the second argument, taking each as a set.  Since 2024,
+   * see also Set.difference.
    */
   export function setDiff(big_arg, small_arg) {
     const result = union(big_arg);
@@ -390,7 +391,7 @@ namespace Toy {
   }
 
   /**
-   * True if both arguments are sets and each "has"
+   * True if both arguments are Sets and each "has"
    * the same elements.
    */
   export function equalSets(arg1, arg2) {

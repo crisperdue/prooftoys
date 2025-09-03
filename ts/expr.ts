@@ -1782,6 +1782,7 @@ export abstract class Expr {
    * Finds and returns an object/map of all the names bound in this
    * expression at the location given by the path, represented by an
    * object/map from names to the variable Atom actually bound.
+   * For more detailed info, see pathBindings.
    */
   boundNames(path) {
     path = this.asPath(path);
@@ -1800,7 +1801,7 @@ export abstract class Expr {
   freeBound(path): Set<string> {
     const target = this.get(path);
     const freeHere = target.freeVarSet();
-    const boundHere = Toy.asSet(this.boundNames(path));
+    const boundHere = asSet(this.boundNames(path));
     return Toy.intersection(freeHere, boundHere) as Set<string>;
   }
 
