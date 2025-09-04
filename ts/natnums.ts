@@ -410,17 +410,14 @@ const decls = [
   },
 ];
 
-// Any facts with "proof" changed to "pruf" can be removed.
-// In effect they are just comments or remnants.  
-decls.forEach(decl => {
-  delete decl['pruf'];
-});
-
 // Now set up all the exercises in the "nat" group.
-Toy.exercise(
+exercise(
   'nat',
   ... decls
 );
+
+// This can come up as a side condition.
+asmSimplifiers.push('NN 0');
 
   /*
 (steps

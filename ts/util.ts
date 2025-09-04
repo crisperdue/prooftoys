@@ -405,7 +405,7 @@ namespace Toy {
         return false;
       }
     }
-    return true
+    return true;
   }
 
   //// SORTING
