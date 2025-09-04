@@ -1167,14 +1167,17 @@ declare(
    autoSimplify: noSimplify,
   },
 
+  // Use the selection as a subgoal.  If universally quantified, use the
+  // body of its lambda arg as the subgoal.  That is more practical.
   {name: 'subgoal',
    precheck: function(step, path) {
      return step.get(path).isBoolean();
    },
-   // TODO: If term is not quantified, consider using all
-   //   assumptions to imply the selection.
    action: function(step, path) {
-     const wff = step.get(path);
+     const wff0 = step.get(path);
+     const wff = wff0.isCall1('forall') && wff0.arg instanceof Lambda
+      ? wff0.arg.body
+      : wff0;
      if (wff.implies()) {
        return (rules.assumeExplicitly(wff.getMain())
                .andThen('andAssume', wff.getAsms())
@@ -1185,8 +1188,13 @@ declare(
    },
    inputs: {site: 1},
    form: 'Desired result: <input name=bool>',
-   toOffer: 'return term.isBoolean()',
    menu: ' use {term} as subgoal',
+   // TODO: Probably better would be to check if this is an assumption
+   //   to be eliminated, and give less priority otherwise.
+   priority: (step, term) => {
+    const isAsm = step.isAsmPath(step.prettyPathTo(term));
+    return isAsm ? 5 : 1;
+   },
    description: `starting on a subgoal`,
    labels: 'basic',
   },
@@ -1712,8 +1720,8 @@ declare(
      const target = step.get(path);
      if (eqn.isCall2('=') && eqn.getLeft().matches(target)) {
        const freeHere = target.freeVarSet();
-       const boundHere = Toy.asSet(step.wff.boundNames(path));
-       if (Toy.equalSets(freeHere, Toy.setDiff(freeHere, boundHere))) {
+       const boundHere = asSet(step.wff.boundNames(path));
+       if (equalSets(freeHere, setDiff(freeHere, boundHere))) {
          // No locally-free variables are bound in context.
          return true;
        }

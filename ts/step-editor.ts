@@ -2563,7 +2563,7 @@ class RuleMenu {
         const blurb = (info.definitional
                       ? 'definition of ' + info.definitional
                       : using + mainText)
-        html = prefix + html + ' <span class=description>' + blurb + '</span>';
+        html = prefix + html + '<span class=description>' + blurb + '</span>';
         const $node = $('<span>').append(html);
         const $resultTerm = $node.find('.resultTerm');
         $resultTerm.append(resultTerm.renderTerm());
@@ -2576,7 +2576,9 @@ class RuleMenu {
           $node.find('.subgoals')
             .append(` with ~${count} new subgoal${plural}`);
         }
-        let priority = info.priority ?? html.match(/^ */).length;
+        // Use an explicit priority, or otherwise use the number
+        // of leading spaces in its html.
+        let priority = info.priority ?? html.match(/^ */)[0].length;
         if (count < 2) {
           // If there are no significant new assumptions, give this
           // rewrite extra priority.
@@ -3102,7 +3104,9 @@ function acceptsSelection(step, ruleName) {
  * html: HTML string to be displayed.
  * $node: optional jQuery object containing a DOM node to insert.
  *   If given, the "html" only affects sorting.
- * priority: optional number
+ * priority: optional number; or a function accepting a step, term,
+ *   and proofEditor, potentially returning a number.  This functionality
+ *   is currently specific to rules and not facts.
  * 
  * The returned array has at most one element unless the rule has a
  * menuGen property.  In that case the result can be of any size.
@@ -3156,7 +3160,10 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
   const html0 = menuString(ruleInfo) ?? '';
   // Strip off leading blanks.
   const [all, spaces, html] = html0.match(/^( *)(.*)$/s)
-  const priority = ruleInfo.priority ?? spaces.length;
+  let priority = ruleInfo.priority;
+  priority = (typeof priority == 'function')
+    ? priority(step, term, proofEditor)
+    : priority ?? spaces.length;
 
   const gen = ruleInfo.menuGen;
   if (gen) {
