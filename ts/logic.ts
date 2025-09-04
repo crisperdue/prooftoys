@@ -2181,7 +2181,7 @@ declare(
     action: function(step, path, opt_facts) {
       var result = (rules._simplifySite(step, path, opt_facts)
                     .andThen('simplifyAsms'));
-      return result.justify('simplifySite', arguments, [step]);
+      return result.justify('simplifySitePlus', arguments, [step]);
     },
     inputs: {site: 1},
     minArgs: 2,
@@ -2357,7 +2357,7 @@ export function simplifyStep(step) {
  */
 export function simplifySide(step) {
   const [_, path] = step.ruleArgs;
-  return rules.simplifySite(step, step.isAsmSide(path) ? '/left' : '/main');
+  return rules.simplifySitePlus(step, step.isAsmSide(path) ? '/left' : '/main');
 }
 
 // Data for flattenAnd.
