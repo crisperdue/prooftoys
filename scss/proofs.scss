@@ -262,7 +262,7 @@ wffblock- > * {
 // .proofDisplay, i.e. top-level of proof steps.
 .proofDisplay.editable > .proofSteps {
   min-height: 100px;
-  // height: 250px;
+  height: 250px;
   position: relative; // This makes it an offsetParent.
   // Note that "resize: both" does not resize the
   // containing element horizontally.
