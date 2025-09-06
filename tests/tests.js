@@ -2646,13 +2646,13 @@ var testCase = {
 
   // ProofEditor - solution status
 
-  testEqnStatus: function() {
+  testEqnDeps: function() {
     var givenVars = {
       x: true,
       y: true
     }
     function status(eqn) {
-      return Toy.eqnStatus(termify(eqn), givenVars);
+      return Toy.eqnDeps(termify(eqn), givenVars);
     }
     assertEqual(null, status('R x'));
     assertEqual({}, status('x = 5'));
