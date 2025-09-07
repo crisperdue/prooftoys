@@ -22,7 +22,7 @@ namespace Toy {
    * of the distributed law in distribFacts.
    */
   export function isDistribFact(stmt) {
-    return _distribFacts.has(Toy.resolveToFact(stmt));
+    return _distribFacts.has(resolveToFact(stmt));
   }
 
   window.Numtest = function(x) {
@@ -76,7 +76,7 @@ namespace Toy {
       default:
         return false;
       }
-    } else if (term instanceof Toy.Call) {
+    } else if (term instanceof Call) {
       if (term.fn.isConst()) {
         const nm = term.fn.name;
         return (term.arg.isNumeral() &&
@@ -92,7 +92,7 @@ namespace Toy {
    */
   export function tryArithmetic(term) {
     if (isArithmetic(term)) {
-      return Toy.normalReturn(rules.axiomArithmetic, term);
+      return normalReturn(rules.axiomArithmetic, term);
     }
     // Implicit falsy return.
   }
@@ -127,7 +127,7 @@ namespace Toy {
    */
   export function varFactorCounts(term) {
     var info = {};
-    const status = Toy.withExit(exit => {
+    const status = withExit(exit => {
       function mustBeVariable(expr, revPath) {
         if (expr.isVariable()) {
           var value = info[expr.name] || 0;
@@ -144,7 +144,7 @@ namespace Toy {
         ]);
         return true;
       }
-      return addCounts(term, Toy.Path.empty);
+      return addCounts(term, Path.empty);
     });
     return status ? info : null;
   }
@@ -218,7 +218,7 @@ namespace Toy {
         var info = _arithInfo;
         for (var i = 0; i < info.length; i++) {
           var item = info[i];
-          var map = term.matchSchema(Toy.parse(item.schema).getLeft());
+          var map = term.matchSchema(parse(item.schema).getLeft());
           if (map) {
             var nz = item.nz;
             var bValue = map.b.isNumeral() && map.b.getNumValue();
@@ -229,7 +229,7 @@ namespace Toy {
             }
             var step1 = rules.consider(term);
             var step2 = rules.rewrite(step1, '/right', item.schema);
-            var eqn = Toy.tryArithmetic(step2.get('/main/right/right'));
+            var eqn = tryArithmetic(step2.get('/main/right/right'));
             if (eqn) {
               var step3 = rules.rewriteFrom(step2, '/main/right/right', eqn);
               return step3;
@@ -257,7 +257,7 @@ namespace Toy {
   function ungroupingFacts() {
     _ugFacts = _ugFacts ||
       regroupingFacts.map(function (fact) {
-            return Toy.commuteEqn(Toy.resolveToFact(fact));
+            return commuteEqn(resolveToFact(fact));
           });
     return _ugFacts;
   }
@@ -1305,7 +1305,7 @@ declare(
     // This precheck does not guarantee success if it passes.
     precheck: function(term_arg) {
       var term = termify(term_arg);
-      return Toy.isArithmetic(term);
+      return isArithmetic(term);
     },
     action: function(term_arg) {
       var term = termify(term_arg);
@@ -1331,8 +1331,8 @@ declare(
             return null;
           }
           break;
-        case 'div': value = Toy.div(left, right); break;
-        case 'mod': value = Toy.mod(left, right); break;
+        case 'div': value = div(left, right); break;
+        case 'mod': value = mod(left, right); break;
         case '=': value = left === right; break;
         case '!=': value = left !== right; break;
         case '>': value = left > right; break;
@@ -1345,18 +1345,18 @@ declare(
         if (typeof value == 'boolean') {
           var rhs = value ? T : F;
         } else {
-          var rhs = Toy.numify(value);
+          var rhs = numify(value);
         }
-        return rules.assert(Toy.infixCall(term, '=', rhs))
+        return rules.assert(infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
-      } else if (term instanceof Toy.Call) {
+      } else if (term instanceof Call) {
         var op = term.fn;
         assert(op.isConst(), 'Unsupported operator: {1}', op);
         var arg = term.arg.getNumValue();
         const nm = op.name;
         if (nm == 'neg') {
           value = -arg;
-          var rhs = Toy.numify(value);
+          var rhs = numify(value);
         } else if (nm == 'R' || nm == 'ZZ' || nm == 'QQ' ||
                    (nm == 'NN' && arg >= 0)) {
           var rhs = T;
@@ -1364,7 +1364,7 @@ declare(
         // A programming error has occurred.
           abort('Not an arithmetic expression: ' + term);
         }
-        return rules.assert(Toy.infixCall(term, '=', rhs))
+        return rules.assert(infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else {
         // A programming error has occurred.
@@ -1398,10 +1398,10 @@ declare(
            const left = term.getLeft();
            const right = term.getRight();
            if (left.isConst('none') && right.isNumeral()) {
-             const reversed = rules.arithSimpler(Toy.commuteEqn(term));
+             const reversed = rules.arithSimpler(commuteEqn(term));
              return rules.rewriteOnly(reversed, '/left', 'a = b == b = a');
             } else if (left.isNumeral() && right.isConst('none')) {
-              const s0 = (rules.axiomArithmetic(Toy.call('R', left))
+              const s0 = (rules.axiomArithmetic(call('R', left))
                           .andThen('rewriteOnly', '', 'a == T == a'));
               const s1 = rules.chain0(s0, 'R a => a != none');
               const s2 = rules.rewriteOnly(s1, '', 'a != b == (a = b == F)');
@@ -1447,7 +1447,7 @@ declare(
     },
     isRewriter: true,
     inputs: {site: 1},
-    toOffer: 'return Toy.isArithmetic(term);',
+    toOffer: 'return isArithmetic(term);',
     tooltip: 'arithmetic',
     labels: 'algebra'
   },
@@ -1460,13 +1460,13 @@ declare(
   {name: 'arithFact',
    action: function(wff) {
      if (wff.isEquation()) {
-       var result = Toy.tryArithmetic(wff.eqnLeft());
+       var result = tryArithmetic(wff.eqnLeft());
        if (result && result.alphaMatch(wff)) {
          return result.justify('fact', arguments);
        }
      } else {
        // Relational operators can go here.
-       var result = Toy.tryArithmetic(wff);
+       var result = tryArithmetic(wff);
        // x = T is the expected result.
        if (result && result.matchSchema('x == T')) {
          return (rules.rewriteOnly(result, '', '(x == T) == x')
@@ -1501,9 +1501,9 @@ declare
       var fml = '@ the1 {z. R x & R y & R z & x = y * z} = x / y';
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
-      var loc7 = Toy.asPath('/right').concat(step7.getRight().find('(R x)'));
+      var loc7 = asPath('/right').concat(step7.getRight().find('(R x)'));
       var step8 = rules.assumed(step7, loc7);
-      var loc8 = Toy.asPath('/right').concat(step8.getRight().find('(R y)'));
+      var loc8 = asPath('/right').concat(step8.getRight().find('(R y)'));
       var step9 = rules.assumed(step8, loc8);
       var step10 = rules.simplifySite(step9, '/main/left');
       return step10;
@@ -1748,7 +1748,7 @@ declare
 // variables are real numbers might even serve better in basicSimpFacts.
 //
 // This list may be added onto later.
-Toy.asmSimplifiers.push
+asmSimplifiers.push
   (
    'R 0',  // Include R 0 and R 1 for direct use where applicable.
    'R 1',
@@ -1898,7 +1898,6 @@ declare
     action: function(data, step, path) {
       var context = {factLists: {flatteners: data.flatteners}};
       return convert(step, path, function(expr) {
-          var arrangeRhs = Toy.arrangeRhs;
           var eqn = rules.consider(step.get(path));
           var flat = arrangeRhs(eqn, context, 'flatteners');
           return flat;
@@ -1951,7 +1950,6 @@ declare
         }];
       var context = {factLists: {numRightMovers: numRightMovers}};
       return convert(step, path, function(expr) {
-          var arrangeRhs = Toy.arrangeRhs;
           var eqn = rules.consider(step.get(path));
           var flat = arrangeRhs(eqn, context, 'numRightMovers');
           return flat;
@@ -1973,7 +1971,7 @@ declare
    {name: 'denegateTerm',
       action: function denegateTerm(data, step, path) {
         let eqn = rules.consider(step.get(path));
-        return Toy.arrangeRhs(eqn, data.context, 'denegaters');
+        return arrangeRhs(eqn, data.context, 'denegaters');
       }.bind(null,
              {context:
               {factLists:
@@ -1999,7 +1997,6 @@ declare
     action: function flattenTerm(data, step, path) {
       var context = {factLists: {flatteners: data.flatteners}};
       return convert(step, path, function(expr) {
-          var arrangeRhs = Toy.arrangeRhs;
           var eqn = rules.consider(step.get(path));
           var noneg = rules.denegateTerm(eqn, '/main/right');
           var flat = arrangeRhs(noneg, context, 'flatteners');
@@ -2105,7 +2102,7 @@ declare
            }
          }
        }
-       const result = Toy.repeatedly(step_arg, xform);
+       const result = repeatedly(step_arg, xform);
        return (result &&
                result.justify('factorToRightmost', arguments, [step_arg]));
      },
@@ -2188,7 +2185,7 @@ declare
            //
            // Found a similar term to cancel with it.
            //
-           const apply = Toy.applyMatchingFact;
+           const apply = applyMatchingFact;
            // Path in other side chain, to a corresponding term.
            const thatChainPath = thosePaths[thatIndex].reverse();
            const moved2 = rules.factorToRightmost(
@@ -2225,7 +2222,7 @@ declare
              'a * x / x = a',
              'x / x = 1',
            ];
-           simpler = Toy.repeatedly(simpler, step =>
+           simpler = repeatedly(simpler, step =>
                                     apply(step, cdPath, cancelers));
 
            // Now convert x * x etc. back into exponents.
@@ -2291,10 +2288,9 @@ declare
     },
     action: function arrangeRational(data, step, path, numsLeft) {
       var context = data.context;
-      var arrangeRhs = Toy.arrangeRhs;
       var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
       return convert(step, path, function(expr) {
-          var infix = Toy.infixCall;
+          var infix = infixCall;
           var eqn = rules.consider(expr);
           var flat = rules.flattenTerm(eqn, '/main/right');
           // TODO: For large terms consider separating numerator
@@ -2477,7 +2473,7 @@ declare
           {stmt: 'a / (b * c) = 1 / c * (a / b)',
            where: '$.c.isNumeral()'}
       ];
-      return ((Toy.applyMatchingFact(step2, path, facts) || step2)
+      return ((applyMatchingFact(step2, path, facts) || step2)
               .justify('arrangeTerm', arguments, [step]));
     },
     inputs: {site: 1},
@@ -2492,7 +2488,7 @@ declare
    {name: 'regroupAdditions',
     action: function(step, path) {
       function applyTo(eqn, facts) {
-        return Toy.applyFactsWithinRhs(eqn, {facts: facts,
+        return applyFactsWithinRhs(eqn, {facts: facts,
                                              searchMethod: 'searchTerms'});
       }
       function converter(expr) {
@@ -2591,25 +2587,25 @@ declare(
       // Truthy value if the given name in the LHS of the fact can
       // match the part of this at the selected path.
       function testFact(name, fact_arg) {
-        var schema = Toy.factExpansion(fact_arg).getMain().getLeft();
+        var schema = factExpansion(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path, schema, name);
         return info || undefined;
       }
-      return (Toy.each(factsB, testFact.bind(null, 'b')) ||
-              Toy.each(factsA, testFact.bind(null, 'a')));
+      return (each(factsB, testFact.bind(null, 'b')) ||
+              each(factsA, testFact.bind(null, 'a')));
     },
     action: function(step, path_arg) {
       var factsB = termRightData.factsB;
       var factsA = termRightData.factsA;
       function tryFact(name, fact_arg) {
-        var schema = Toy.factExpansion(fact_arg).getMain().getLeft();
+        var schema = factExpansion(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
           return rules.rewrite(step, info.path, fact_arg);
         }
       }
-      var result = (Toy.each(factsB, tryFact.bind(null, 'b')) ||
-                    Toy.each(factsA, tryFact.bind(null, 'a')) ||
+      var result = (each(factsB, tryFact.bind(null, 'b')) ||
+                    each(factsA, tryFact.bind(null, 'a')) ||
                     step);
       return result.justify('moveTermRight', arguments, [step]);
     },
@@ -2648,14 +2644,14 @@ declare(
       // TODO: Factor this out, see also moveTermRight.
       //   Consider extending to be somewhat like findMatchingFact.
       function tryFact(name, fact_arg) {
-        var schema = Toy.factExpansion(fact_arg).getMain().getLeft();
+        var schema = factExpansion(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
           return rules.rewrite(step, info.path, fact_arg);
         }
       }
-      var result = (Toy.each(factsC, tryFact.bind(null, 'c')) ||
-                    Toy.each(factsB, tryFact.bind(null, 'b')));
+      var result = (each(factsC, tryFact.bind(null, 'c')) ||
+                    each(factsB, tryFact.bind(null, 'b')));
       return (result || step).justify('moveTermLeft', arguments, [step]);
     },
     inputs: {site: 1},
@@ -2670,10 +2666,10 @@ declare(
    */
    {name: 'groupToRight',
     toOffer: function(step, expr) {
-      return Toy.matchFactPart(step, step.pathTo(expr), regroupingFacts, 'b');
+      return matchFactPart(step, step.pathTo(expr), regroupingFacts, 'b');
     },
     action: function(step, path) {
-      var func = Toy.matchFactPart(step, path, regroupingFacts, 'b');
+      var func = matchFactPart(step, path, regroupingFacts, 'b');
       return func
         ? func().justify('groupToRight', arguments, [step])
         : step;
@@ -2696,11 +2692,11 @@ declare(
         return false;
       }
       var term = step.get(path);
-      return !!Toy.findMatchingFact(ungroupingFacts(), null, term);
+      return !!findMatchingFact(ungroupingFacts(), null, term);
     },
     action: function(step, path_arg) {
       var path = step.prettifyPath(path_arg).upTo('/right');
-      return ((Toy.applyMatchingFact(step, path, ungroupingFacts()) || step)
+      return ((applyMatchingFact(step, path, ungroupingFacts()) || step)
               .justify('ungroup', arguments, [step]));
     },
     inputs: {site: 1},
@@ -2768,7 +2764,7 @@ declare
   (
   /**
    * Reduces the selected fraction to lower terms using their least
-   * common divisor (via Toy.npd).  No, not the greatest common
+   * common divisor (via npd).  No, not the greatest common
    * divisor, for pedagogical reasons.
    */
    {name: 'reduceFraction',
@@ -2776,11 +2772,11 @@ declare
       var expr = step.get(path);
       var lv = expr.getLeft().getNumValue();
       var rv = expr.getRight().getNumValue();
-      var divisor = Toy.npd(lv, rv, 0);
+      var divisor = npd(lv, rv, 0);
       var fact = rules.fact('b != 0 & c != 0 => a / b = (a / c) / (b / c)');
       const map = {a: expr.getLeft(),
                    b: expr.getRight(),
-                   c: Toy.numify(divisor)};
+                   c: numify(divisor)};
       const fact2 = rules.instMultiVars(fact, map);
       const fact3 = rules.arithmetic(fact2, '/main/right/right');
       const fact4 = rules.arithmetic(fact3, '/main/right/left');
@@ -2795,7 +2791,7 @@ declare
         if (l.isNumeral() && r.isNumeral()) {
           var lv = l.getNumValue();
           var rv = r.getNumValue();
-          return Toy.npd(lv, rv, 0);
+          return npd(lv, rv, 0);
         }
       }
     },
@@ -2819,7 +2815,7 @@ declare
       var fact = rules.fact('b != 0 & c != 0 => a / b = (a / c) / (b / c)');
       const map = {a: expr.getLeft(),
                    b: expr.getRight(),
-                   c: Toy.numify(divisor)};
+                   c: numify(divisor)};
       const fact2 = rules.instMultiVars(fact, map);
       const fact3 = rules.arithmetic(fact2, '/main/right/right');
       const fact4 = rules.arithmetic(fact3, '/main/right/left');
@@ -2865,14 +2861,14 @@ declare
       assert(map, 'Not sum/diff of fractions: {1}', expr);
       var d1 = map.d1.getNumValue();
       var d2 = map.d2.getNumValue();
-      var n = Toy.lcm(d1, d2);
+      var n = lcm(d1, d2);
       assert(n % d1 == 0 && n % d2 == 0, 'Not a multiple: {1}', n);
       var k1 = n / d1;
       var k2 = n / d2;
       var fact = rules.fact('a / b = a * c / (b * c)');
-      var fact1 = rules.instVar(fact, Toy.numify(k1), 'c');
+      var fact1 = rules.instVar(fact, numify(k1), 'c');
       var step1 = step.rewrite(path.concat('/left'), fact1);
-      var fact2 = rules.instVar(fact, Toy.numify(k2), 'c');
+      var fact2 = rules.instVar(fact, numify(k2), 'c');
       return (step1.rewrite(path.concat('/right'), fact2)
               .andThen('arithmetic', path.concat('/right/right'))
               .andThen('arithmetic', path.concat('/left/right'))
@@ -2897,14 +2893,14 @@ declare
       var term = termify(term_arg);
       var factors = [];
       if (term.isNumeral()) {
-        factors = Toy.primeFactors(term.getNumValue());
+        factors = primeFactors(term.getNumValue());
       }
       assert(factors.length > 0, 'Does not have prime factors: {1}', term);
-      var product = Toy.numify(factors[0]);
+      var product = numify(factors[0]);
       for (var i = 1; i < factors.length; i++) {
-        product = Toy.infixCall(product, '*', Toy.numify(factors[i]));
+        product = infixCall(product, '*', numify(factors[i]));
       }
-      var step = rules.consider(Toy.infixCall(term, '=', product));
+      var step = rules.consider(infixCall(term, '=', product));
       return (rules.simplifySite(step, '/left')
               .andThen('fromTIsA')
               .justify('primeFactors', [term]));
@@ -3080,7 +3076,7 @@ declare.apply(null, distribFacts);
 
 // TODO: Need distributivity of division over addition and subtraction.
 for (const obj of distribFacts) {
-  _distribFacts.add(Toy.resolveToFact(obj.statement));
+  _distribFacts.add(resolveToFact(obj.statement));
 }
 
 const dFactsLeft = [
@@ -3120,7 +3116,7 @@ function distribute(step, path_arg, where: 'left' | 'right' | 'both') {
   // On success it calls itself on both the left and right
   // summands.  It depends on "next" and modifies it on success.
   const distrib = p => {
-    const nx = Toy.applyMatchingFact(next, p, facts);
+    const nx = applyMatchingFact(next, p, facts);
     if (nx) {
       next = nx;
       distrib(p.concat('/right'));
@@ -3128,11 +3124,11 @@ function distribute(step, path_arg, where: 'left' | 'right' | 'both') {
     }
   }
 
-  if (Toy.applyMatchingFact(step, path, facts)) {
+  if (applyMatchingFact(step, path, facts)) {
     return () => {
       // The path starts with /main to allow for the likelihood
       // that following steps will have assumptions.
-      const rhs = Toy.asPath('/main/right');
+      const rhs = asPath('/main/right');
       const op = 
       // Next starts out as a pure equation, and at the end
       // its RHS has the rewritten term.
@@ -3495,7 +3491,7 @@ declare(
     proof: function() {
       var rewrite = rules.rewrite;
       var step1 = rules.fact('a + neg a = 0');
-      var step2 = rules.instVar(step1, Toy.parse('a + b'), 'a');
+      var step2 = rules.instVar(step1, parse('a + b'), 'a');
       var step3 = rewrite(step2, '/right/left',
                                         'a + b + c = a + c + b');
       var step4 = rules.applyToBothWith(step3, '+', 'neg b')
@@ -3686,7 +3682,7 @@ declare(
     proof: function() {
       var rewrite = rules.rewrite;
       var step1 = rules.fact('a * recip a = 1');
-      var step2 = rules.applyToBothWith(step1, '*', Toy.parse('recip (recip a)'));
+      var step2 = rules.applyToBothWith(step1, '*', parse('recip (recip a)'));
       var step3 = rewrite(step2, '/main/right', '1 * a = a');
       var step4 = rewrite(step3, '/main/left', 'a * b * c = a * (b * c)');
       var step6 = rules.rewrite(step4, '/main/left/right', 'a * recip a = 1');
@@ -3713,14 +3709,14 @@ declare(
     proof: function() {
       var rewrite = rules.rewrite;
       var step1 = rules.fact('a * recip a = 1');
-      var step2 = rules.instVar(step1, Toy.parse('a * b'), 'a');
+      var step2 = rules.instVar(step1, parse('a * b'), 'a');
       var step3 = rewrite(step2, '/right/left', 'a * b * c = a * c * b');
-      var step4 = rules.applyToBothWith(step3, '*', Toy.parse('recip b'));
+      var step4 = rules.applyToBothWith(step3, '*', parse('recip b'));
       var step5 = rewrite(step4, '/right/left', 'a * b * c = a * (b * c)');
       var step6 = rewrite(step5, '/right/left/right', 'a * recip a = 1');
       var step7 = rewrite(step6, '/right/right', '1 * a = a');
       var step8 = rewrite(step7, '/right/left', 'a * 1 = a');
-      var step9 = rules.applyToBothWith(step8, '*', Toy.parse('recip a'));
+      var step9 = rules.applyToBothWith(step8, '*', parse('recip a'));
       var step10 = rewrite(step9, '/right/left/left', 'a * b = b * a');
       var step11 = rewrite(step10, '/right/left', 'a * b * c = a * (b * c)');
       var step12 = rewrite(step11, '/right/left/right', 'a * recip a = 1');
@@ -3783,7 +3779,7 @@ declare(
   },
   {statement: 'b != 0 & c != 0 => a / b / c = a / c / b',
     proof: function() {
-      var arrange = Toy.applyFactsWithinRhs;
+      var arrange = applyFactsWithinRhs;
       var step1 = arrange(rules.consider('a / b / c'),
                           ['a / b = a * recip b']);
       var step2 = rules.rewrite(step1, '/main/right',
@@ -3794,7 +3790,7 @@ declare(
   },
   {statement: 'b != 0 & c != 0 => a / (b / c) = a / b * c',
     proof: function() {
-      var arrange = Toy.applyFactsWithinRhs;
+      var arrange = applyFactsWithinRhs;
       var step1 = arrange(rules.consider('a / (b / c)'),
                           ['a / b = a * recip b',
                            'recip (a * b) = recip a * recip b',
@@ -3947,9 +3943,9 @@ declare(
   // Distributivity:
   {statement: 'c != 0 => (a + b) / c = a / c + b / c',
     proof: function() {
-      var tx = Toy.transformApplyInvert;
-      var mp = Toy.mathParse;
-      return tx(Toy.parse('(a + b) / c'),
+      var tx = transformApplyInvert;
+      var mp = mathParse;
+      return tx(parse('(a + b) / c'),
                 mp('a / b = a * recip b'),
                 mp('(a + b) * c = a * c + b * c'))
     },
@@ -3959,9 +3955,9 @@ declare(
   // Distributivity:
   {statement: 'c != 0 => (a - b) / c = a / c - b / c',
     proof: function() {
-      var tx = Toy.transformApplyInvert;
-      var mp = Toy.mathParse;
-      return tx(Toy.parse('(a - b) / c'),
+      var tx = transformApplyInvert;
+      var mp = mathParse;
+      return tx(parse('(a - b) / c'),
                 mp('a / b = a * recip b'),
                 mp('(a - b) * c = a * c - b * c'))
     },
@@ -4635,7 +4631,7 @@ basicSimpFacts.push
     where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
    {apply:
     function(term, cxt) {
-      return (Toy.isArithmetic(term, true) &&
+      return (isArithmetic(term, true) &&
               rules.arithSimpler.attempt(term));
     }
    },
@@ -4656,7 +4652,7 @@ basicSimpFacts.push
   );
 
 // For testing (computed value).
-//Toy._ungroupingFacts = ungroupingFacts;
+//_ungroupingFacts = ungroupingFacts;
 
 
   //// Basic definitions related to groups and their kin.
