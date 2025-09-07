@@ -2952,6 +2952,7 @@ declare(
         .fact('forall p => p x')
         .rewrite('', 'a => b == (a == a & b)');
     },
+    desimplifier: true,
   },
 
   // r5226 is r5225 with "p" and "x" instantiated, then beta conversion.
