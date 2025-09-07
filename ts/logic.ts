@@ -2165,7 +2165,7 @@ declare(
   // Ultimately uses rules.rewrite and rules.replace, so resulting
   // assumptions will be simplified and arranged.
   {name: 'simplifySite',
-    action: function(step, path, opt_facts) {
+    action: function(step, path, opt_facts?) {
       var result = rules._simplifySite(step, path, opt_facts);
       return result.justify('simplifySite', arguments, [step]);
     },
@@ -2177,10 +2177,10 @@ declare(
   },
 
   // Simplifies site and asms.
+  // TODO: This should be superfluous, use simplifySite instead.
   {name: 'simplifySitePlus',
-    action: function(step, path, opt_facts) {
-      var result = (rules._simplifySite(step, path, opt_facts)
-                    .andThen('simplifyAsms'));
+    action: function(step, path, opt_facts?) {
+      var result = (rules._simplifySite(step, path, opt_facts));
       return result.justify('simplifySitePlus', arguments, [step]);
     },
     inputs: {site: 1},
@@ -2207,10 +2207,11 @@ declare(
   },
 
   // Inline version of simplifySite.  Uses full rewriting and replace,
-  // so resulting assumptions are simplified with simplifyAsms.  If
-  // the simplification has no effect, return the input step.
+  // so resulting assumptions are simplified with simplifyAsms unless
+  // suppressed with a falsy optional fourth argument.  If the
+  // simplification has no effect, return the input step.
   {name: '_simplifySite',
-   action: function(step, path, opt_facts, asms=true) {
+   action: function(step, path, opt_facts?, asms=true) {
       var eqn = rules.consider(step.get(path));
       var simpler = repeatedly(eqn, function(eqn) {
         if (eqn.size(1000) > 500) {
@@ -2357,7 +2358,7 @@ export function simplifyStep(step) {
  */
 export function simplifySide(step) {
   const [_, path] = step.ruleArgs;
-  return rules.simplifySitePlus(step, step.isAsmSide(path) ? '/left' : '/main');
+  return rules.simplifySite(step, step.isAsmSide(path) ? '/left' : '/main');
 }
 
 // Data for flattenAnd.
