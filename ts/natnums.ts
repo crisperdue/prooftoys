@@ -37,6 +37,7 @@ const decls = [
   // NN axioms; 1
   {statement: '@NN 0', axiom: true,
    simplifier: true,
+   asmSimplifier: true,
    description: 'axiom: zero is a natural number'
   },
 
@@ -415,9 +416,6 @@ exercise(
   'nat',
   ... decls
 );
-
-// This can come up as a side condition.
-asmSimplifiers.push('NN 0');
 
   /*
 (steps
