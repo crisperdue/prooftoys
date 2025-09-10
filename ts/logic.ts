@@ -2208,8 +2208,9 @@ declare(
 
   // Inline version of simplifySite.  Uses full rewriting and replace,
   // so resulting assumptions are simplified with simplifyAsms unless
-  // suppressed with a falsy optional fourth argument.  If the
-  // simplification has no effect, return the input step.
+  // suppressed with a falsy optional fourth argument.  If the resulting
+  // step matches T => a, converts it to just "a".  Returns the input
+  // step if nothing is done.
   {name: '_simplifySite',
    action: function(step, path, opt_facts?, asms=true) {
       var eqn = rules.consider(step.get(path));
@@ -2221,13 +2222,9 @@ declare(
         // adapts in case some versions of eqn have assumptions.
         return rules._simplifyOnce(eqn, eqn.asPath('/main/right'), opt_facts);
       });
-      if (eqn.sameAs(simpler)) {
-        return step;
-      } else {
-        const replaced = rules.replace(step, path, simpler);
-        const simpler2 = asms ? rules.simplifyAsms(replaced) : replaced;
-        return applyMatchingFact(simpler2, '', ['T => a == a']) || simpler2;
-      }
+      const replaced = rules.replace(step, path, simpler);
+      const simpler2 = asms ? rules.simplifyAsms(replaced) : replaced;
+      return applyMatchingFact(simpler2, '', ['T => a == a']) || simpler2;
     }
   },
 
@@ -2355,7 +2352,7 @@ export function simplifyStep(step) {
  * the term it points to, but never an entire conditional step.
  * 
  * TODO: Consider adapting this into an improvement over
- *   simplifyFocalPart.
+ *   simplifyFocalPart and/or simplifyUsual.
  */
 export function simplifySide(step) {
   const [_, path] = step.ruleArgs;
@@ -5384,6 +5381,9 @@ declare(
       const path = step.asPath(step.ruleArgs[1]);
       const stmt = step.ruleArgs[2];
       const info = resolveFactRef(stmt);
+      // This is sensitive to autoSimplify declarations on facts,
+      // applying the fact decl if present.  There may not yet be any of
+      // these.
       if (info && info.autoSimplify) {
         const simp = info.autoSimplify;
         return simp(step);
@@ -5392,11 +5392,12 @@ declare(
             step.isMainSide(path)) {
           return rules.simplifyProducts(step, path);
         } else {
-          // Otherwise simplify as usual except for desimplifiers.
+          // Otherwise according to side unless current step was a
+          // desimplifier.
           const info = resolveFactRef(stmt);
           return (info && info.desimplifier
                   ? step
-                  : step.simplifyUsual());
+                  : simplifySide(step));
         }
       }
     },

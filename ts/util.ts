@@ -1693,7 +1693,7 @@ namespace Toy {
    * Given a ProofData record, attempts to perform the proof, returning
    * the value of applying decodeSteps2 to it.
    * 
-   * E.g. Toy.proofData.map(Toy.proveFromData) to test proofData.
+   * TODO: Use Toy.proofData.map(Toy.proveFromData) to test proofData.
    * 
    * TODO: Consider returning richer information.
    */

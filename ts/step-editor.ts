@@ -2208,14 +2208,16 @@ export interface Expr {
  * typically the largest part safe to simplify.  Simplifying the entire
  * step can manage assumptions poorly.
  *
- * TODO: Should this be a rule?
+ * TODO: Should this be a rule?  Compared with simplifySide, this
+ *   simplifies only the focal part if the path is not on the asm side.
+ *   Does the difference matter?
  */
 Step.prototype.simplifyUsual = function() {
   const step = this;
   const path = Toy.getStepSite(step);
   return (path && step.isAsmSide(path)
-          ? Toy.rules.simplifySite(step, '/left')
-          : Toy.rules.simplifyFocalPart(step) || assert(false));
+          ? rules.simplifySite(step, '/left')
+          : rules.simplifyFocalPart(step) || assert(false));
 };
 
 //// RULEMENU
