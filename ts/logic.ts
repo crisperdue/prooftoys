@@ -2225,7 +2225,8 @@ declare(
         return step;
       } else {
         const replaced = rules.replace(step, path, simpler);
-        return asms ? rules.simplifyAsms(replaced) : replaced;
+        const simpler2 = asms ? rules.simplifyAsms(replaced) : replaced;
+        return applyMatchingFact(simpler2, '', ['T => a == a']) || simpler2;
       }
     }
   },

@@ -201,6 +201,19 @@ namespace Toy {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
+  /**
+   * Joins any number of lines of text into a single line, so that the
+   * only remaining whitespace comes from internal spaces within those
+   * lines.
+   */
+  export function multiTrim(str: string): string {
+    return str
+      .split(/\r?\n/) // Split into lines
+      .map((line) => line.trim()) // Trim whitespace from each line
+      .filter((line) => line) // Remove empty lines
+      .join('');
+  }
+
 
   //// PROPERTY ACCESS
 

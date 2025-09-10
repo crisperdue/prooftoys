@@ -319,45 +319,37 @@ export class ProofEditor {
 
     var menu = self.ruleMenu = new RuleMenu(self);
 
-    // This element is for messages about status of solving the problem.
-    // It always occcupies space, but can be hidden by CSS rules.  It
-    // can have an "empty" class if the text is cleared, i.e. when there
-    // is no progress to report.  It is hidden when empty or when the
-    // mouse pointer is within the rule menu, to stay out of the way of
-    // step suggestions.
+    // These elements are for messages about status of solving the
+    // problem. They currently always occcupy space, but can be hidden
+    // by CSS rules. The $statusDisplay can have an "empty" class if the
+    // text is cleared, i.e. when there is no progress to report.  It is
+    // hidden when empty or when the mouse pointer is within the rule
+    // menu, to stay out of the way of step suggestions.
+    //
+    // TODO: Consider renaming $status to $eqnStatus and eliminating
+    // $statusDisplay, simplifying the implementation all around.
     var $status = $('<div class="solutionStatus">');
     var $statusDisplay = $('<div class=solutionStatusDisplay>');
     $status.append($statusDisplay);
     self.$status = $status;
     self.$statusDisplay = $statusDisplay;
 
-    let $header =
-      ($('<div class=proofEditorHeader>')
-      .append('&nbsp;<b class=wksTitle>Worksheet \
-              "<span class=wksName></span>"</b>'));
-    const $clearWork = $('<input type=button class=clearWork value="Clear work">');
-    const css = {border: '1px solid red',
-                color: '#d9534f',
-                fontWeight: 'bold',
-                backgroundColor: 'white'
-    };
-    $clearWork.css(css);
-    // Add "Solve" button next to "Clear work", but with class "hidden".
-    // Use its "solveProblem" class to find it.
-    const $solve =
-          $('<input type=button class="solveProblem hidden" value="Solve">')
-          .css({fontWeight: 'bold'});
-
-    const $headerRight = $('<span>').css({float: 'right'});
-
-    if (useFixedRuleMenu) {
-      const $newStep =
-        $('<input type=button class="newStep" value="New step ...">');
-      $headerRight.append($newStep);
-    }
-
-    $headerRight.append($solve, $clearWork);
-    $header.append($headerRight);
+    const $head = $(multiTrim(`
+      <div class=proofEditorHeader>
+        <div class=_1>
+          <b class=wksTitle>Worksheet "<span class=wksName></span>"</b>
+          <div class="goalInfo hidden">
+            <b class="goalStatus">Proving:</b>&#32;
+            <span class=goalWff></span>
+          </div>
+        </div>
+        <div class=headerRight>
+          <input type=button class="newStep hidden" value="New step ...">
+          <input type=button class="solveButton hidden" value="Solve">
+          <input type=button class=clearWork value="Clear Work">
+        </div>
+      </div>
+      `));
 
     let $readOnly =
       $(`<p class=ifProofLoadError><i><b style="color:red">
@@ -365,7 +357,7 @@ export class ProofEditor {
         View the workspace as text to see steps not executed.<br>
         For safety this worksheet is read-only.</i></p>`);
     this.$node
-      .append($header)
+      .append($head)
       .append($readOnly)
       .append(mainDisplay.node)
       .append($status)
@@ -399,8 +391,8 @@ export class ProofEditor {
 
     // Prepare to write out proof state during refresh, so basically
     // whenever it changes.
-    this._refresher = new Toy.Refresher(changes => this.refresh());
-    this._otherChanges = new Toy.Refresher(changes => this.otherChanges());
+    this._refresher = new Refresher(changes => this.refresh());
+    this._otherChanges = new Refresher(changes => this.otherChanges());
     
     // Create an editor record if none exists.
     const id = self.proofEditorId;
@@ -425,7 +417,7 @@ export class ProofEditor {
       // If there is a canned solution, show the "Solve" button.
       const data = self.proofData = Toy.findInProofData(self.docName);
       if (data) {
-        $solve.removeClass('hidden');
+        $node.find('.solveButton').removeClass('hidden');
       }
       // Initialize editor content.
       if (self.openDoc(self.docName, true)) {
@@ -514,6 +506,7 @@ export class ProofEditor {
       }
     });
 
+    const $solve = $node.find('.solveButton');
     $solve.on('click', function() {
       if (window.confirm('Replace contents with a pre-made solution?')) {
         self.setSteps([]);
@@ -574,12 +567,14 @@ export class ProofEditor {
   }
 
   /**
-   * Really this responds when the proof has been updated since
-   * the last time the event loop returned to idle.
-   * Response to other changes is in method otherChanges.
+   * This responds when the proof has been updated since the last time
+   * the event loop returned to idle, for example when loading a
+   * recorded proof into the proof editor. Method otherChanges handles
+   * other sorts of changes.
    */
   refresh() {
     const self = this;
+    const $node = self.$node;
     const mainDisplay = self.proofDisplay;
     const $status = self.$status;
     const $statusDisplay = self.$statusDisplay;
@@ -591,16 +586,31 @@ export class ProofEditor {
       self.saveProofState();
     }
 
-    // Set (or clear) the possible "Proof complete"  message in the $status box.
+    // Set (or clear) the possible "Proof complete"  message in the
+    // editor's header area.
     var steps = mainDisplay.steps;
     var len = steps.length;
     if (len > 0) {
+
+      // If the first step is a goal statement, let that be the editor's
+      // goal, overriding any preset property.
+      const first = steps[0];
+      if (first.ruleName === 'goal') {
+        self.goalStatement = first.asWff();
+      }
+
       var step = steps[len - 1];
 
       // Is the goal proved?
       const stmt = self.goalStatement;
-      const solved = stmt && step.checkUnsolved(stmt) === 0;
+      $node.find('.goalInfo').toggleClass('hidden', !stmt);
+      const proved = stmt && step.checkUnsolved(stmt) === 0;
       if (stmt && !self.animating) {
+
+        // Display the proof's status vs the goal.
+        const $gStatus = $node.find('.goalStatus');
+        $gStatus.empty();
+        $node.find('.goalWff').empty().append(stmt.renderTerm());
         async function showProved() {
           // TODO: Use CSS transitions for the animation.  The current
           //   design probably doesn't work if auto-simplification
@@ -608,22 +618,22 @@ export class ProofEditor {
           self.animating = true;
           await Toy.sleep(200);
           for (const ch of '✓ Proof complete. '.split('')) {
-            $node.append(ch);
+            $gStatus.append(ch);
             await Toy.sleep(20);
           }
           self.animating = false;
         }
-        const $node = $('.proofEditorHeader .status');
-        $node.empty();
-        if (solved) {
+        if (proved) {
           showProved();
         } else {
-          $node.append('Proving:');
+          $gStatus.append('Proving:');
         }
       }
 
       var message = self.progressMessage(step.original);
-      message ||= solved && '✓ Proof complete.';
+      // If no eqn progress message, but the goal is proved,
+      // indicate it here (as well as in .goalStatus).
+      message ||= proved && '✓ Proof complete.';
       $statusDisplay.empty();
       $statusDisplay.append(message || '&nbsp;');
       $status.toggleClass('empty', !message);
@@ -686,11 +696,6 @@ export class ProofEditor {
       }));
     if (statement) {
       self.goalStatement = statement;
-      // Display the exercise goal in the editor's header.
-      const $header = self.$node.find('.proofEditorHeader');
-      $header.find('.wksTitle')
-        .replaceWith('<b class=status>Proving:</b> <span class=wff></span>');
-      $header.find('.wff').append(statement.renderTerm());
     }
   }
 
@@ -879,9 +884,12 @@ export class ProofEditor {
     // but when there is a goal step, the ProofEditor goal appears to be
     // unnecessary.
     // 
+    const steps = this.proofDisplay.steps;
+    if (steps.length === 1 && step.ruleName === 'goal') {
+      this.goalStatement = step.ruleArgs[0];
+    }
     // Now we just search for a goal or subgoal whose conclusion matches
     // the conclusion of this new step.
-    const steps = this.proofDisplay.steps;
     const main = step.getMain();
     // Iterate over all steps so far.
     for (let i = 0; i < steps.length; i++) {

@@ -60,7 +60,11 @@ b[videotip], b[imagetip] {
 // This is an indicator that this proof step solves some subgoal.
 .proofStep.solving .stepAndNum::after {
   vertical-align: bottom;
-  content: ' ✓subgoal';
+  content: ' ✓(sub)goal';
+}
+
+.solveButton  {
+  font-weight: bold;
 }
 
 // Hovered exprs.  This overrides "unsolved".
@@ -141,7 +145,14 @@ wffblock- > * {
 .proofEditor {
 
   .proofEditorHeader {
+    display: flex;
+    justify-content: space-between;
     color: black;
+  }
+
+  .proofEditorHeader>._1 {
+    display: flex;
+    flex-direction: column;
   }
 
   // Exercises may have a wff, styled as a formula.
@@ -150,8 +161,10 @@ wffblock- > * {
   }
 
   .proofEditorHeader .clearWork {
-    float: right;
-    margin-left: 1em;
+    border: 1px solid red;
+    color: #d9534f;
+    font-weight: bold;
+    background-color: white;
     font-weight: bold;
   }
 
@@ -951,7 +964,6 @@ input.varName, input.step, input.equation, input.implication {
 
 .wksTitle {
     font-weight: bold;
-    margin: .8em 0;
 }
 
 // .wksTitle is hidden if oneDoc.
