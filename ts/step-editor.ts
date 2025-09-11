@@ -2688,7 +2688,7 @@ class RuleMenu {
     */
 
     // Track these events in Matomo.
-    Toy.trackAppEvent('MainMenu');
+    Toy.trackAppEvent('MainMenu ' + node.innerText);
 
     // TODO: Consider generating an event here and moving
     //   much of this code elsewhere.
