@@ -16,11 +16,11 @@ namespace Toy {
  * Track uncaught errors with Matomo.
  */
 window.onerror = function(message, source, lineno, colno, error) {
-  const track = Toy.trackAppEvent;
+  const track = trackAppEvent;
   if (track) {
     if (error) {
       // Error and error.stack might not exist.
-      track('Error', ''+(error.stack || error));
+      track('Error', message + ': ' + (error.stack || error));
     } else {
       track('Error', message);
     }
