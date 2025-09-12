@@ -1096,12 +1096,14 @@ export function fillDetails(step) {
   // TODO: This will be the place to handle omission of details
   //   in a proof sent back by a worker thread, when the full
   //   proof is overly long.
-  if (original.ruleName == 'fact') {
-    var details = original.details;
+  let details = original.details;
+  if (!details) {
+    step.details = original.details = original.getDetails();
+  } else if (original.ruleName == 'fact') {
     // Even a fact asserted with its proof deferred may have
     // a step to change the names of free variables.
     // Dig down beyond that step.
-    if (details && details.ruleName == 'instMultiVars') {
+    if (details.ruleName == 'instMultiVars') {
       details = details.ruleArgs[0];
     }
     if (details.ruleName == 'assert') {
@@ -1127,8 +1129,6 @@ export function fillDetails(step) {
       // Caution!! This modifies the details of the input step.
       step.details = original.details = result0;
     }
-  } else if (!step.details) {
-      step.details = original.details = original.getDetails();
   }
 }
 
