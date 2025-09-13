@@ -601,18 +601,18 @@ const ruleProps = new Set(propNames);
 //   Expr.
 //
 // menuGen: function to return zero or more menu entries for
-//   application(s) of the rule.  It will be passed the ruleName,
-//   step, selected term or null if none, and the ProofEditor for
-//   which it is generating the menu.  A falsy value indicates no menu
-//   entries; a non-empty string is for one entry.  An array of one or
-//   more plain objects give full menu information, with properties
-//   ruleName (string), ruleArgs (Array), optional priority (number
-//   where highest will display first), html (string), and optional
-//   $node, which overrides the html for controlling the menu item
-//   display.  (In this case the html still controls sorting.)  The
-//   html property has the effect and format of the plain "menu"
-//   property described above.  A returned empty string ruleName
-//   indicates a rule menu comment, and never attempts to run a rule.
+//   application(s) of the rule.  It will be passed the ruleName, step,
+//   selected term or null if none, and the ProofEditor for which it is
+//   generating the menu.  A falsy value indicates no menu entries; a
+//   non-empty string is for one entry.  An array of one or more plain
+//   objects give full menu information, with properties ruleName
+//   (string), ruleArgs (Array), optional priority (number where highest
+//   will display first), html (string), and optional $node, which
+//   overrides the html for controlling the menu item display.  ($node
+//   never controls sorting.)  The html property has the effect and
+//   format of the plain "menu" property described above.  A returned
+//   empty string ruleName indicates a rule menu comment, and never
+//   attempts to run a rule.
 //
 // tooltip: plain text to become the title attribute of mentions of the
 //   rule name in proof displays and the description in subproof displays.
@@ -1622,7 +1622,7 @@ export function isRecordedFact(stmt) {
 
 /**
  * Like getResult, below, but always proves the statement if it has
- * an associate prover function.
+ * an associated prover function.
  */
 export function proveResult(stmt) {
   return getResult(stmt, true);

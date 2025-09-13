@@ -374,8 +374,8 @@ namespace Toy {
   }
 
   /**
-   * Returns the items in the first argument that are not also
-   * in the second argument, taking each as a set.  Since 2024,
+   * Returns the items in the first argument that are not also in the
+   * second argument, coercing each to a set with asSet.  Since 2024,
    * see also Set.difference.
    */
   export function setDiff(big_arg, small_arg) {
@@ -387,7 +387,7 @@ namespace Toy {
 
   /**
    * Returns true iff the second argument contains every element of the
-   * first argument, otherwise false, taking each as a Set.
+   * first argument, otherwise false, coercing each to a Set.
    */
   export function isSubset(arg1, arg2) {
     const small = asSet(arg1);
