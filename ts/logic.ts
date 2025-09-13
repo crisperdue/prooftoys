@@ -2242,7 +2242,7 @@ declare(
   {name: '_simplifyOnce',
     action: function(step, _path, opt_facts) {
       var facts = opt_facts || basicSimpFacts;
-      var info = Toy.searchForMatchingFact(step.get(_path), facts);
+      var info = searchForMatchingFact(step.get(_path), facts);
       return (info
               ? rules.rewrite(step, _path.concat(info.path), info.stmt)
               : step);
@@ -2251,11 +2251,11 @@ declare(
 );
 
 declare({
-  // Uses the given facts to simplify the assumptions of the given step,
-  // first by simplifying with all asmSimplifiers, using rules.rewrite.
-  // Any assumption that simplifies to T is removed unless it is the
-  // last one remaining.  Rewrites may re-order the asms and/or add new
-  // ones.
+  // Uses the given facts to simplify the tree of assumptions of the
+  // given step, first by repeatedly trying all asmSimplifiers to the
+  // tree nodes in top-down order, using rewriteOnly on success. Any
+  // assumption that simplifies to T is removed unless it is the last
+  // one remaining.  Rewrites may re-order the asms and/or add new ones.
   name: 'simplifyAsms',
   action: function (step_arg) {
     if (!step_arg.implies()) {
@@ -2265,7 +2265,9 @@ declare({
     let result = repeatedly(step_arg, (step) => {
       const v = withExit((exit) => {
         function tryFacts(path, facts) {
-          const next = applyMatchingFact(step, path, facts);
+          // Using rewriteOnly here should have the effect of applying
+          // only asmSimplifiers during this entire process.
+          const next = applyMatchingFact(step, path, facts, 'rewriteOnly');
           if (next) {
             exit(next);
           }
