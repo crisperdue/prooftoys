@@ -1602,6 +1602,70 @@ rule('assumed', {
   priority: 5,
 });
 
+rule('plugIn', {
+  action2: function(step, path, name) {
+    const target = step.get(path);
+    const asms = step.getAsms();
+    if (!asms) {
+      return null;
+    }
+    const checkAsm = asm => {
+      const map = asm.matchSchema('v = t');
+      if (map && map.v.name === name) {
+        return asm;
+      }
+    }
+    const eqn = asms.scanConj(checkAsm);
+    if (!eqn) {
+      return null;
+    }
+    const frees = setDiff(target.freeVarSet(), step.boundNames(path));
+    if (frees.has(name)) {
+      return () => {
+        const paths0 = target.locateFree(name);
+        const makeFull = p => path.concat(p.reverse());
+        const fullPaths = paths0.map(makeFull);
+        let next = step;
+        for (const p of fullPaths) {
+          next = rules.assumedEq(next, p, eqn);
+        }
+        return next;
+      };
+    }
+  },
+  menuGen: function(ruleName, step, target, proofEditor) {
+    if (!target) {
+      return null;
+    }
+    const asms = step.getAsms();
+    if (!asms) {
+      return null;
+    }
+    const path = step.prettyPathTo(target);
+    const frees = setDiff(target.freeVarSet(), step.boundNames(path));
+    const results = [];
+    const checkAsm = asm => {
+      const map = asm.matchSchema('l = r');
+      if (map && map.l.isVariable()) {
+        const left = map.l.name;
+        if (frees.has(left)) {
+          const r = {
+            html: `plug in value of ${left}`,
+            ruleName,
+            ruleArgs: [step.original, path, left],
+            priority: map.l.isNumeral() ? 5 : 3,
+          };
+          results.push(r);
+        }
+      }
+    };
+    asms.scanConj(checkAsm);
+    return results;
+  },
+  inputs: {site: 1, name: 3},
+  description: step => `plug in assumed value of ${step.ruleArgs[2]}`,
+});
+
 declare(
   /**
    * Applies if the boolean target term matches the negated part of a
