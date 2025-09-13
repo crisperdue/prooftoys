@@ -848,7 +848,7 @@ namespace Toy {
     if (o.constructor !== Object &&
       o.toString && typeof o.toString === "function") {
       if (o instanceof Toy.Expr && o.isProved()) {
-        return `|- ${o.toString()} "${o.ruleName}" ${o.ruleArgs}`;
+        return `|- ${o.toString()} "${o.ruleName}"`;
       } else {
         return o.toString();
       }
