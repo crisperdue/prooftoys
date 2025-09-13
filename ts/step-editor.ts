@@ -1858,7 +1858,7 @@ export class StepEditor {
     } else if (!isProved(result)) {
       // It is possible to display more information about thrown
       // errors (aborts), but it may not be helpful to the user.
-      let message = 'Rule failed:' + ruleName;
+      let message = `Didn't work: ${ruleName}`;
 
       console.warn(`Rule ${ruleName} failed`);
       if (result instanceof Error) {
@@ -2832,9 +2832,10 @@ class RuleMenu {
             if (ruleMenu.hovering === $node[0]) {
               // At this point in time after the rule has run, if this
               // item is hovered, show the result.
-              var node = (value instanceof Step
-                          ? display.stepSuggestion(value)
-                          : display.suggestionMessage('failed'));
+              var node = 
+                value instanceof Step
+                ? display.stepSuggestion(value)
+                : display.suggestionMessage(`Doesn't work out`);
               $node.data('suggestion', node);
               proofEditor.suggest(node);
             }
