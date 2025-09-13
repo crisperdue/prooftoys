@@ -2173,7 +2173,8 @@ declare(
     minArgs: 2,
     menu: '  simplify {term}',
     description: 'simplifying;; {in step siteStep}',
-    labels: 'algebra general'
+    autoSimplify: noSimplify,
+    labels: 'algebra general',
   },
 
   // Simplifies site and asms.
