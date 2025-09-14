@@ -1447,7 +1447,7 @@ declare(
     },
     isRewriter: true,
     inputs: {site: 1},
-    toOffer: 'return isArithmetic(term);',
+    toOffer: 'return Toy.isArithmetic(term);',
     tooltip: 'arithmetic',
     labels: 'algebra'
   },
