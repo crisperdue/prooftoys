@@ -3882,7 +3882,7 @@ rule('applyAsmHere', {
     const path = dstep.prettyPathTo(zone);
     const items = [];
     asms.scanConj(asm => {
-      const fn = rules.applyAsmIn.prep(step, path, asm);
+      const fn = rules.applyAsmHere.prep(step, path, asm);
       if (typeof fn === 'function') {
         const item = {
             html: `apply ${asm.shortString()} here`,
