@@ -1605,6 +1605,7 @@ rule('assumed', {
 /**
  * "Plugs in" an equational assumption throughout a target term.
  */
+/*
 rule('plugIn', {
   action2: function(step, path, name) {
     const target = step.get(path);
@@ -1668,6 +1669,7 @@ rule('plugIn', {
   inputs: {site: 1, name: 3},
   description: step => `plug in assumed value of ${step.ruleArgs[2]}`,
 });
+*/
 
 declare(
   /**
