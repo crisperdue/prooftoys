@@ -2566,7 +2566,7 @@ class RuleMenu {
         let html = isShort
           ? '➭ <b class=resultTerm></b><input class=subgoals>'
           : '';
-        const using = isShort ? 'using ' : 'use ';
+        const using = isShort ? ' using ' : ' use ';
         const shorty = statement.shortForm();
         const mainText = Toy.trimParens(shorty.toHtml());
         const prefix = info.definitional ? '' : ' ';

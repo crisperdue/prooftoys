@@ -1064,7 +1064,7 @@ declare(
     menu: 'consider a term to transform (A = A)',
     toOffer: 'return step == null',
     tooltip: ('consider a term to transform'),
-    description: 'considering;; {term}',
+    description: 'expression equal to itself',
     labels: 'basic'
   },
 
