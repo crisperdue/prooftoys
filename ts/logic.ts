@@ -1602,6 +1602,9 @@ rule('assumed', {
   priority: 5,
 });
 
+/**
+ * "Plugs in" an equational assumption throughout a target term.
+ */
 rule('plugIn', {
   action2: function(step, path, name) {
     const target = step.get(path);
@@ -3809,61 +3812,91 @@ rule('extractTypeDecls', {
  * within the given site, until no more eligible occurrences exist
  * there.
  */
-rule('applyAsmInZone', {
+rule('applyAsmHere', {
   action2: function (step, path_arg, asm) {
-    const path = step.asPath(path_arg);
+    if (!asm.isCall2('=')) {
+      return null;
+    }
     // Search down, but stop at any binding for a free var of the asm.
     if (step.implies()) {
+      const aLeft = asm.getLeft();
+      const zPath = step.asPath(path_arg);
       const frees = asm.freeVarSet();
-      const zone = step.get(path);
+      const bound = asSet(step.boundNames(zPath));
+      if (intersection(bound, frees).size > 0) {
+        return null;
+      }
+      const zone = step.get(zPath);
+      // This will be filled with forward paths to occurrences that can
+      // be replaced.
+      const paths = [];
 
       // Searches for asm within expr, where rpath must be a reverse
-      // path from "where" to expr.  Returns a reverse path to the first
-      // occurrence found, or null if none.
+      // path from "zone" to expr.  Fills in "paths" with paths to
+      // occurrences found.
       const search = (expr, rpath) => {
         // This is like searchMost, but tailored to the purpose,
         // avoiding the need to maintain a full list of bindings by
         // checking the bound variable of each Lambda as it is reached,
         // which is feasible because the replacement is known.
-        if (expr.matches(asm)) {
-          return rpath;
-        }
-        const ctr = expr.constructor;
-        if (ctr === Call) {
-          return (
-            search(expr.arg, new Path('arg', rpath)) ||
-            search(expr.fn, new Path('fn', rpath))
-          );
-        } else if (ctr === Lambda) {
-          if (frees.has(expr.bound.name)) {
-            return null;
-          } else {
-            return search(expr.body, new Path('body', rpath));
+        if (expr.matches(aLeft)) {
+          paths.push(rpath.reverse());
+        } else {
+          const ctr = expr.constructor;
+          if (ctr === Call) {
+            return (
+              search(expr.arg, new Path('arg', rpath)) ||
+              search(expr.fn, new Path('fn', rpath))
+            );
+          } else if (ctr === Lambda) {
+            if (!frees.has(expr.bound.name)) {
+              search(expr.body, new Path('body', rpath));
+            }
           }
         }
       };
 
-      // Search once as a test to determine whether this rule applies.
-      let rpath = search(zone, Path.empty);
-      if (rpath) {
+      search(zone, Path.empty);
+      if (paths.length > 0) {
         // If an occurrence is found, return a continuation to do the
         // rest of the work.
         return () => {
-          // If another suitable occurrence is found, continue searching
-          // and replacing until there are no more suitable occurrences.
-          let next = rules.assumed(step, path.concat(rpath.reverse()));
-          while (true) {
-            rpath = search(zone, Path.empty);
-            if (!rpath) {
-              return next;
-            }
-            next = rules.assumed(step, path.concat(rpath.reverse()));
+          let next = step;
+          for (const p of paths) {
+            next = rules.assumedEq(next, zPath.concat(p), asm);
           }
           return next;
         };
       }
     }
   },
+  menuGen: function(ruleName, dstep, zone, proofEditor) {
+    if (!zone) {
+      return null;
+    }
+    const step = dstep.original;
+    const asms = step.getAsms();
+    if (!asms) {
+      return null;
+    }
+    const path = dstep.prettyPathTo(zone);
+    const items = [];
+    asms.scanConj(asm => {
+      const fn = rules.applyAsmIn.prep(step, path, asm);
+      if (typeof fn === 'function') {
+        const item = {
+            html: `apply ${asm.shortString()} here`,
+            ruleName,
+            ruleArgs: [step, path, asm],
+            priority: 4,
+        };
+        items.push(item);
+      }
+    });
+    return items;
+  },
+  inputs: {site: 1, bool: 3},
+  description: step => `apply ${step.ruleArgs[2]} here`,
 });
 
 /**
