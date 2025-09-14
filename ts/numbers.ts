@@ -1181,6 +1181,9 @@ declare(
    }
   },
 
+  // Multiplication of exponents, asserted.
+  {statement: '(x ** y) ** z = x ** (y * z)'},
+
   // TODO: Prove this from x * y = 0 etc by deMorgan's Law.
   {name: 'factNonzeroProduct',
     statement: '@R x & R y => (x * y != 0 == x != 0 & y != 0)',
