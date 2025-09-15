@@ -282,6 +282,7 @@ export class ProofDisplay {
     if (this.proofEditor) {
       this.proofEditor._refresher.activate();
       // This next only needed on account of rules.given as of 02/2017.
+      // XXX also rules.goal?
       this.proofEditor.ruleMenu.refresh();
     }
   }
@@ -1364,7 +1365,7 @@ export function specialClasses(name) {
     return ['implies'];
   case '*':
     return ['multiply'];
-  case '**':
+  case '^':
     return ['exponent'];
   default:
     return [];
@@ -1542,7 +1543,7 @@ Call.prototype.render = function(minPower) {
         var $fn = exprJq().append(left.render(thisPower(left)), $op);
         this.fn.node = dom($fn);
         $expr.append($fn, right.render(thisPower(right) + 1));
-      } else if (op.name == '**') {
+      } else if (op.name == '^') {
         $op.addClass('infix');
         // Strongly encourage parens around the left arg.
         const lpower = left instanceof Atom ? 1 : 200;

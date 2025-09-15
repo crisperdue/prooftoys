@@ -3000,6 +3000,12 @@ export interface RStep extends Step {
   // and more
 }
 
+/**
+ * Aliases for Atoms for purposes of input only; maps strings to
+ * strings.
+ */
+export const inputAliases = asMap({'**': '^'});
+
 //// Atom
 /**
  * Make an Atom with the given name.  If a non-null integer position
@@ -3026,8 +3032,9 @@ export class Atom extends Expr {
   __name;
   _value;
 
-  constructor(name, position=null) {
+  constructor(name_arg, position=null) {
     super();
+    const name = inputAliases.get(name_arg) || name_arg;
     this.__pname = this.__name = name;
     if (isConstantName(name))
       this.pos = position;
@@ -3471,7 +3478,7 @@ export class Call extends Expr {
     if (this.isCall2()) {
       const op = this.getBinOp();
       if (isInfixOp(op)) {
-        if (useUnicode && op.name == '**') {
+        if (useUnicode && op.name == '^') {
           // Use HTML for exponentiation.  So "Unicode" here is
           // currently a misnomer.
           return this.getLeft() + '<sup>' + this.getRight() + '</sup>';
@@ -3634,7 +3641,7 @@ export class Call extends Expr {
       case '-':
       case '*':
       case '/':
-      case '**':
+      case '^':
         addVars();
         result = true;
         break;

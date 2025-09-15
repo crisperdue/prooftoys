@@ -804,7 +804,7 @@ export var constantTypes = new Map(Object.entries({
   '/': fun2Type(),
   div: fun2Type(),
   mod: fun2Type(),
-  '**': fun2Type(),
+  '^': fun2Type(),
   neg: funType(),
   sqrt: funType(),
   // Absolute value
@@ -1508,7 +1508,7 @@ export const precedence = {
   '/': 40,
   div: 40,
   mod: 40,
-  '**': 50,
+  '^': 50,
   // Default infix: 70
   // Specials
   '(': 1000,
