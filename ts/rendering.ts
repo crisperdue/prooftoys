@@ -1364,6 +1364,8 @@ export function specialClasses(name) {
     return ['implies'];
   case '*':
     return ['multiply'];
+  case '**':
+    return ['exponent'];
   default:
     return [];
   }
@@ -1449,8 +1451,8 @@ Atom.prototype.render = function(minPower, isFn) {
   this.node = dom($expr);
 
   // This line says "render without parens if it occurs in function
-  // position or is not syntactically an operator".
-  const html = this.toHtml(isFn || !this.isOperator());
+  // position or is not syntactically an operator".  XXX
+  const html = this.toHtml(isFn || !this.isOperator());  // XXX
   const name = this.isEquivOp() ? '==' : this.name;
   specialClasses(name).forEach(function(cl) { $expr.addClass(cl); });
   if (isFn) {
@@ -1540,18 +1542,17 @@ Call.prototype.render = function(minPower) {
         var $fn = exprJq().append(left.render(thisPower(left)), $op);
         this.fn.node = dom($fn);
         $expr.append($fn, right.render(thisPower(right) + 1));
-      } else if (op.name == '**' && right.isNumeral()) {
-        // Integer exponent: display as superscript without making
-        // the exponent selectable by itself.  This makes it practical
-        // to select the entire expression.
-        // TODO: Support selection of just the exponent using the shift
-        //   key, and then also render expressions in the exponent as
-        //   superscript, at least provided that they don't contain
-        //   exponents themselves.
+      } else if (op.name == '**') {
+        $op.addClass('infix');
+        // Strongly encourage parens around the left arg.
         const lpower = left instanceof Atom ? 1 : 200;
-        var $left = exprJq().append(left.render(lpower));
-        $expr.append($left,
-                     $('<sup>').append(right.getNumValue()));
+        var $fn = exprJq().append(left.render(lpower), $op);
+        const $right = right.render(thisPower(right) + 1);
+        if (right instanceof Atom) {
+          $expr.append($fn, $('<sup>').append($right));
+        } else {
+          $expr.append($fn, $right);
+        }
       } else {
         // A typical binary operator invocation, e.g. x + y.
         $op.addClass('infix');

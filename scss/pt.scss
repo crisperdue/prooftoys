@@ -174,10 +174,15 @@
     // which does not seem quite enough for math.
     bottom: -.3em;
   }
+
+  sup {
+    // Also overriding reboot.css.
+    top: -.3em;
+  }
   
   sub, sup {
-    // Again overriding reboot.css, here 70% vs 75%.
-    font-size: 70%;
+    // As in reboot.css.
+    font-size: 75%;
   }
 
   //// Utilities
