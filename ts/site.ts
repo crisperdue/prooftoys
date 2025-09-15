@@ -80,23 +80,25 @@ export var quotes = [];
  * for math, and with alphanumeric names in italics.  Operates on each
  * token independently, except exponentiation as a special case with
  * one-character lookahead, written as "^", and subscripting as "_".
+ * A token is a sequence of operator characters, or a single "^" or "_",
+ * or a sequence of alphanumerics.
  * 
- * TODO: Extend lookahead to a complete token using state.  Support
- *   "**" for exponentiation like "^".
+ * TODO: Extend lookahead to a complete token using state.
  */
 export function mathMarkup0(text, useWords) {
   // Substitutions for "forall" and "exists" consume any trailing blank,
-  // helping to push them up next to following text.
-  // "_" for subscript and "^" for superscript are treated specially,
-  // while other operator characters can be combined.  These two
-  // affect a single following character, i.e. letter or digit.
+  // helping to push them up next to following text. "_" for subscript
+  // and "^" for superscript are treated specially. These two affect a
+  // single following character, i.e. letter or digit, while other
+  // operator characters can be combined.  
   var rex =
-    /[-!<=>*/&|]+|[_^] ?.|\bforall( |\b)|\bexists1?( |\b)|[a-zA-Z0-9]+/g;
+    /[-!<=>*/&|]+|[_^].|\bforall( |\b)|\bexists1?( |\b)|[a-zA-Z0-9]+/g;
   return text.replace(rex, function(s) {
     if (s.match(/^\^[a-z]/)) {
-      // "^" followed by alphabetic char (to catch variables).
+      // "^" followed by alphabetic char (to italicize 1-char variables).
       return '<sup><i>' + s[1] + '</i></sup>';
     } else if (s[0] === '^') {
+      // "^" followed by other single character, e.g. digit
       return '<sup>' + s.slice(1) + '</sup>';
     } else if (s.match(/^_[a-z]/)) {
       return '<sub><i>' + s[1] + '</i></sub>';
