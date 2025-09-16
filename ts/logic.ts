@@ -1150,10 +1150,14 @@ declare(
      if (proofEditor.proofDisplay.steps.length == 0) {
        const goal = proofEditor.goalStatement;
        if (goal) {
-         return [{html: 'state the goal',
+         return [{html: 'present the worksheet goal',
                   ruleName: 'goal',
                   ruleArgs: [goal]
-                 }];
+                 },
+                 {html: 'state a new goal',
+                  ruleName: 'goal',
+                 },
+                ];
        } else {
          return 'state the goal';
        }
@@ -1162,7 +1166,7 @@ declare(
      }
    },
    tooltip: ('proof starter'),
-   description: 'starting proof of;; {bool}',
+   description: 'starting goal-directed proof',
    labels: 'basic',
    autoSimplify: noSimplify,
   },
