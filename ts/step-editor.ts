@@ -610,7 +610,7 @@ export class ProofEditor {
         // Display the proof's status vs the goal.
         const $gStatus = $node.find('.goalStatus');
         $gStatus.empty();
-        $node.find('.goalWff').empty().append(stmt.renderTerm());
+        $node.find('.goalWff').empty();
         async function showProved() {
           // TODO: Use CSS transitions for the animation.  The current
           //   design probably doesn't work if auto-simplification
@@ -627,6 +627,7 @@ export class ProofEditor {
           showProved();
         } else {
           $gStatus.append('Proving:');
+          $node.find('.goalWff').append(stmt.renderTerm());
         }
       }
 
