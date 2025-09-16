@@ -1456,20 +1456,27 @@ declare(
   },
 
   // A rule that proves arithmetic facts given their statements,
-  // currently inline.  Given an equation, checks that it is the
-  // result of applying the axiom of arithmetic to its LHS; otherwise
-  // checks that applying the axiom of arithmetic yields T as the
-  // value.  Returns null if the input is not an arithmetic fact.
+  // currently inline, justifying as "fact".  Given an equation, checks
+  // that it is the result of applying the axiom of arithmetic to its
+  // LHS; otherwise checks that applying the axiom of arithmetic yields
+  // T as the value.  Returns null if the input is not an arithmetic
+  // fact.
   {name: 'arithFact',
    action: function(wff) {
      if (wff.isEquation()) {
-       var result = tryArithmetic(wff.eqnLeft());
+       const result = tryArithmetic(wff.eqnLeft());
        if (result && result.alphaMatch(wff)) {
          return result.justify('fact', arguments);
        }
+       const step1 = tryArithmetic(wff.eqnRight());
+       if (step1) {
+         const step2 = rules.rewrite(step1, '/main', 'x = y == y = x');
+         if (step2.alphaMatch(wff)) {
+           return step2.justify('fact', arguments);
+       }
      } else {
-       // Relational operators can go here.
-       var result = tryArithmetic(wff);
+       // Relational operators use this code.
+       const result = tryArithmetic(wff);
        // x = T is the expected result.
        if (result && result.matchSchema('x == T')) {
          return (rules.rewriteOnly(result, '', '(x == T) == x')
@@ -1477,8 +1484,9 @@ declare(
        }
      }
      return null;
-   }
-  },
+    }
+   },
+  }
 );
 
 
