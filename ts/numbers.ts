@@ -3935,6 +3935,14 @@ declare(
               .rewrite('/main/right', 'a * b / c = a * (b / c)'));
     }
   },
+  {statement: 'a != 0 => a * b / a = b',
+    proof: function() {
+      return (rules.consider('a * b / a')
+        .rewrite('/right', 'a * b / c = b * (a / c)')
+        .andThen('simplifySite', '/right'));
+    },
+    simplifier: true
+  },
   // Used in arrangeTerm.
   {statement: 'b != 0 & c != 0 => a / (b * c) = 1 / c * (a / b)',
     proof: function() {
