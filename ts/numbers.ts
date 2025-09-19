@@ -1453,7 +1453,8 @@ declare(
     toOffer: 'return Toy.isArithmetic(term);',
     tooltip: 'arithmetic',
     labels: 'algebra'
-  },
+  }
+);
 
   // A rule that proves arithmetic facts given their statements,
   // currently inline, justifying as "fact".  Given an equation, checks
@@ -1461,33 +1462,33 @@ declare(
   // LHS; otherwise checks that applying the axiom of arithmetic yields
   // T as the value.  Returns null if the input is not an arithmetic
   // fact.
-  {name: 'arithFact',
-   action: function(wff) {
-     if (wff.isEquation()) {
-       const result = tryArithmetic(wff.eqnLeft());
-       if (result && result.alphaMatch(wff)) {
-         return result.justify('fact', arguments);
-       }
-       const step1 = tryArithmetic(wff.eqnRight());
-       if (step1) {
-         const step2 = rules.rewrite(step1, '/main', 'x = y == y = x');
-         if (step2.alphaMatch(wff)) {
-           return step2.justify('fact', arguments);
-       }
-     } else {
-       // Relational operators use this code.
-       const result = tryArithmetic(wff);
-       // x = T is the expected result.
-       if (result && result.matchSchema('x == T')) {
-         return (rules.rewriteOnly(result, '', '(x == T) == x')
-                 .justify('fact', arguments));
-       }
-     }
-     return null;
+rule('arithFact', {
+  action: function (wff) {
+    if (wff.isEquation()) {
+      const result = tryArithmetic(wff.eqnLeft());
+      if (result && result.alphaMatch(wff)) {
+        return result.justify('fact', arguments);
+      }
+      const step1 = tryArithmetic(wff.eqnRight());
+      if (step1) {
+        const step2 = rules.rewrite(step1, '/main', 'x = y == y = x');
+        if (step2.alphaMatch(wff)) {
+          return step2.justify('fact', arguments);
+        }
+      }
+    } else {
+      // Relational operators use this code.
+      const result = tryArithmetic(wff);
+      // x = T is the expected result.
+      if (result && result.matchSchema('x == T')) {
+        return rules
+          .rewriteOnly(result, '', '(x == T) == x')
+          .justify('fact', arguments);
+      }
     }
-   },
-  }
-);
+    return null;
+  },
+});
 
 
 // definition('isQuotient = {x. {y. {z. R x & R y & R z & x = y * z}}}');
