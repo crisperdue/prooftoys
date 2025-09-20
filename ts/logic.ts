@@ -5146,7 +5146,7 @@ declare(
   // If the step has the form a => (b => c), moves all the members of
   // that chain to the inner level and finally erases the outer "=>".
   // Then uses arrangeAsms to flatten, re-order, and deduplicate the
-  // entire set, removing occurrences of T.  This is a helper for
+  // entire set, removing occurrences of T.  This is used by
   // rules.replace, in which "a" is the assumptions of the input
   // equation.
   //
@@ -5175,7 +5175,13 @@ declare(
         flatter = next;
       }
     },
-   description: 'merging new assumptions',
+   description: 'collecting assumptions',
+   inputs: {step: 1},
+   menu: 'collect assumptions',
+   priority: 5,
+   toOffer: (step, term) => {
+     return step.matchSchema('a => (b => c)');
+   },
   }
 );
 
