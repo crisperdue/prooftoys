@@ -218,6 +218,9 @@ export function boundVarsOK(target, path, equation) {
 // Utility functions
 //
 
+// All labels encountered, for debugging and developer info.
+export var allLabels = new Set();
+
 /**
  * Processes an object/set or string as a set of labels.  If it is a
  * string, converts it to an object/set by treating it as a
@@ -230,7 +233,10 @@ export function processLabels(labels) {
     var result = {};
     const array = labels.split(/\s+/);
     if (array.length) {
-      array.forEach(function(label) { result[label] = true; });
+      array.forEach(function(label) {
+        allLabels.add(label);
+        result[label] = true;
+      });
       return result;
     } else {
       return {none: true};
