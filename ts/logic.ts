@@ -7444,24 +7444,12 @@ declare(
    }
   },
 
-  {statement: 'a => (b == a & b)',
-   proof: function() {
-     return rules.tautology('a => (b == a & b)');
-   }
-  },
-
   {statement: '(a == b & c) => (a => b)',
    proof: () => rules.tautology('(a == b & c) => (a => b)')
   },
 
   {statement: '(a => b & c) => (a => b)',
    proof: () => rules.tautology('(a => b & c) => (a => b)')
-  },
-
-  {statement: 'a => (b => c) == b => (a => c)',
-   proof: function() {
-     return rules.tautology('a => (b => c) == b => (a => c)');
-   }
   },
 
   //// More tautologies
@@ -7473,7 +7461,7 @@ declare(
   },
 
   // Conditionalization
-  defTautology('b => c => (a => b => (a => c))'),
+  // defTautology('b => c => (a => b => (a => c))'),
 
   // Contraposition
   {statement: 'a => b == not b => not a',
@@ -7492,17 +7480,12 @@ declare(
    proof: () => rules.tautology('a => b == not a | b'),
   },
 
-  {statement: 'a => b => (c => (a => b & c))',
-   proof: function() {
-     return rules.tautology('a => b => (c => (a => b & c))');
-   }
-  },
-
   // Eliminating conjuncts that are subsumed by another conjunct.
   {statement: 'a => b == (a & b == a)',
    proof: () => rules.tautology('a => b == (a & b == a)'),
   },
 
+  // Proving the "bidirectional".
   {statement: '(a => b) & (b => a) == (a == b)',
    proof: function() {
      return rules.tautology('(a => b) & (b => a) == (a == b)');
@@ -7510,39 +7493,23 @@ declare(
    simplifier: true,
   },
 
-  // Equivalence by proving a conditional in both directions.
-  {statement: 'a => b => ((b => a) => (a == b))',
-   proof: function() {
-     return rules.tautology('(a => b) => ((b => a) => (a == b))');
-   }
-  },
-
   // Conditional in both directions, with additional conditions
   // on both conjuncts.  Also works as an equivalence.
   //
   // TODO: Handle cases with extra condition(s) on just one side.
-  defTautology('(a1 & b => c) & (a2 & c => b) => (a1 & a2 => (b == c))'),
+  // defTautology('(a1 & b => c) & (a2 & c => b) => (a1 & a2 => (b == c))'),
 
   // Alternate strategy for proving equivalence from conditionals.
-  {statement: 'a => b => ((not a => not b) => (a == b))',
-   proof: () => rules.tautology('a => b => ((not a => not b) => (a == b))'),
-  },
+  defTautology('(a => b) & (not a => not b) == (a == b)'),
 
   // Simple version of proof by cases.
-  {statement: '((a => b) => (((not a) => b) => b))',
-   proof: function() {
-     return rules.tautology(
-       '((a => b) => (((not a) => b) => b))');
-   },
-  },
+  defTautology('(a => b) & (not a => b) => b'),
 
   // As above with extra condition(s) on both conjuncts.
   defTautology('(a1 & b => c) & (a2 & not b => c) => (a1 & a2 => c)'),
 
   // General form of classic proof by cases; also useful transformer.
-  {statement: '(((a => c) & (b => c)) == ((a | b) => c))',
-   proof: () => rules.tautology('(((a => c) & (b => c)) == ((a | b) => c))'),
-  },
+  defTautology('(a => c) & (b => c) == (a | b => c)'),
 
   // Basically as above with extra condition(s) on both conjuncts.
   defTautology('(a1 & a => c) & (a2 & b => c) => (a1 & a2 & (a | b) => c)'),
@@ -7561,43 +7528,39 @@ declare(
    },
   },
 
-  // Is this tautology useful?
-  // Toy.defTautology('a => (b == c) => (a & b => c)'),
-
   // Solving equations with variables in denominator.
-  {statement: '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))',
-   proof: function() {
-     return rules.tautology(
-       '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))');
-   },
-  },
+  // {statement: '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))',
+  //  proof: function() {
+  //    return rules.tautology(
+  //      '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))');
+  //  },
+  // },
 
   // Eliminate side condition "not a", e.g. x != 0
   /* This is something of a prototype for specialized rules of this sort.
      it needs more work and thought; possibly automatic introduction
-     of assumptions such as a1 here.
-  {statement: 'a1 => (not a => (p == b)) => ((a => p) => (a1 => (p == a | b)))',
-   proof: function() {
-     return rules.tautology(
-       'a1 => (not a => (p == b)) => ((a => p) => (a1 => (p == a | b)))'
-     );
-   }
-  },
+     of assumptions such as a1 here. */
+  // {statement: 'a1 => (not a => (p == b)) => ((a => p) => (a1 => (p == a | b)))',
+  //  proof: function() {
+  //    return rules.tautology(
+  //      'a1 => (not a => (p == b)) => ((a => p) => (a1 => (p == a | b)))'
+  //    );
+  //  }
+  // },
 
-  TODO: Consider automatically using the tautology
-    a => c => (a => b => (a => c)) to relativize
-    conditionals to a consistent set of assumptions.
-  */
+  // TODO: Consider automatically using the tautology
+  //   a => c => (a => b => (a => c)) to relativize
+  //   conditionals to a consistent set of assumptions.
 
   // Eliminate simpler side condition "not a", e.g. x != 0
-  {statement: 'not a => (p == b) => (a => p => (p == a | b))',
-   name: 'sideCond',
-   proof: function() {
-     return rules.tautology(
-       'not a => (p == b) => (a => p => (p == a | b))'
-     );
-   }
-  },
+  // {statement: 'not a => (p == b) => (a => p => (p == a | b))',
+  //  name: 'sideCond',
+  //  proof: function() {
+  //    return rules.tautology(
+  //      'not a => (p == b) => (a => p => (p == a | b))'
+  //    );
+  //  }
+  // },
 
   {statement: 'x != y == y != x',
    labels: 'general',
