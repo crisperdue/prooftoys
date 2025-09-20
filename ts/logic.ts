@@ -1786,6 +1786,9 @@ declare(
    * to replace the target term, and this must be feasible.
    * The menu only offers this for equational assumptions either
    * already in the target step, or in the proof editor's goal.
+   * 
+   * In the menu we now only offer applyAsmHere which currently subsumes
+   * this capability.
    */
   {name: 'assumedEq',
    // This and "assumed" are very similar.
@@ -1814,7 +1817,7 @@ declare(
    // the term used for the replacement, because it is not
    // helpful there; but the test is not totally simple.
    inputs: {site: 1, bool: 3},
-   labels: 'basic',
+   labels: 'ignore',
    form: 'Assuming: <input name=bool>',
    // Offers equational assumptions in the target step, with
    // LHS same as the given term.
