@@ -2907,7 +2907,7 @@ declare(
   // If either theorem is unconditional, omits a1 or a2 or both
   // accordingly.
   //
-  // TODO: Replace with chaining and A => (B => A & B)?
+  // TODO: obsolete?
   {name: 'makeConjunction',
     action: function(a, b) {
       var stepa = rules.rewriteOnly(a, '/main', 'a == (T == a)');
@@ -2920,6 +2920,7 @@ declare(
               .justify('makeConjunction', arguments, [a, b]));
     },
     inputs: {step: [1, 2]},
+    labels: 'ignore',
     // An approximation, good enough until we can remove this whole rule.
     toOffer: 'return step.isCall2("=>");',
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
@@ -3574,9 +3575,6 @@ declare(
 
 declare(
   // Deduces the conjunction of two proved steps.
-  //
-  // TODO: Consider replacing all uses of this with application
-  //   of chain0 with "a => (b => a & b)".
   {name: 'and',
     action: function(step1, step2) {
       return (rules.replaceT0(rules.tautology('T & T'), '/right', step2)
@@ -3590,7 +3588,8 @@ declare(
     tooltip: ('Given [p] and [q], derive p & q'),
     description: 'p & q;; from steps {step1}, {step2}',
     autoSimplify: noSimplify,
-    labels: 'basic'
+    labels: 'ignore'
+  },
   },
 
   // Andrews' Rule P with two conjuncts.
