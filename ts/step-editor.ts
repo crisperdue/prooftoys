@@ -2171,6 +2171,8 @@ const addedSubgoals = (step, replacer, goal) => {
   return subgoals;
 }
 
+export var _autoMerge = false;
+
 /**
  * Supply this with an actual proof step.  If the rule has property
  * 'autoSimplify', this applies the value of the property to the step
@@ -2190,13 +2192,18 @@ export function autoSimplify(step) {
     // Simplification does not make sense, so don't do it.
     return step;
   }
-  var simplifier = Toy.getRuleInfo(step).autoSimplify;
+  var simplifier = getRuleInfo(step).autoSimplify;
+  let simpler;
   if (simplifier) {
     // Call the rule's simplifier.  To suppress simplification,
     // supply a simplifier that does nothing.
-    return simplifier(step) || step;
+    simpler = simplifier(step) || step;
+  } else {
+    simpler = step.simplifyUsual();
   }
-  return step.simplifyUsual();
+  return !_autoMerge || simplifier === noSimplify
+    ? simpler
+    : simpler.andThen('mergeAsms');
 }
 
 export interface Expr {
