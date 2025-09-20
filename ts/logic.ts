@@ -3601,7 +3601,7 @@ declare(
       return result.justify('p2', arguments, [step1, step2]);
     },
     inputs: {step: [1, 2], bool: 3},
-    labels: 'basic',
+    labels: 'ignore',  // Use forwardChain instead
     menu: '[p] and [q] and [p & q => r] to [r]',
     form: ('Match step <input name=step1> and ' +
            'step <input name=step2> with left side of ' +
