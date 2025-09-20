@@ -3593,6 +3593,38 @@ declare(
     autoSimplify: noSimplify,
     labels: 'ignore'
   },
+
+  // Deduces the conjunction of two proved steps, extracting type
+  // declarations.  From the menu it expects a selected step, and joins
+  // it with the current last step.
+  {name: 'join',
+    action: function(step1, step2) {
+      return (rules.and(step1, step2)
+              .andThen('extractTypeDecls')
+              .justify('join', arguments, arguments));
+    },
+    inputs: {step: [1, 2]},
+    tooltip: ('From [ ... p] and [ ... q], derive [ ... p & q]'),
+    description: 'extended [p & q];; from steps {step1}, {step2}',
+    autoSimplify: noSimplify,
+    labels: 'basic',
+    menuGen: (ruleName, step, term, editor) => {
+      if (term) {
+        return null;
+      };
+      const len = editor.steps.length;
+      if (len < 1) {
+        return null;
+      }
+      const stepNum = editor.steps.indexOf(step) + 1;
+      const item = {
+        html: `join step ${stepNum} and step ${len}`,
+        ruleName: 'join',
+        ruleArgs: [step.original, editor.steps[len - 1].original],
+        priority: 3,
+      };
+      return [item];
+    },
   },
 
   // Andrews' Rule P with two conjuncts.
