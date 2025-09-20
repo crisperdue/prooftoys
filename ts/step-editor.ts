@@ -2580,8 +2580,10 @@ class RuleMenu {
         const prefix = info.definitional ? '' : ' ';
         const blurb = (info.definitional
                       ? 'definition of ' + info.definitional
-                      : using + mainText)
-        html = prefix + html + '<span class=description>' + blurb + '</span>';
+                      : using + mainText);
+        const classes = 'description' + (isShort ? '' : ' black');
+        html = prefix + html + '<span class="' + classes + '">' + 
+          blurb + '</span>';
         const $node = $('<span>').append(html);
         const $resultTerm = $node.find('.resultTerm');
         $resultTerm.append(resultTerm.renderTerm());
