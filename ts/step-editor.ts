@@ -779,6 +779,16 @@ export class ProofEditor {
           console.warn('NN and R!?');
         }
       }
+      // The design is that numbers.js and other more advanced scripts
+      // are not loaded with the page, but only later with
+      // requireScript.  If the needs of some proof are not compatible
+      // with the scripts already loaded, the page must be loaded, and
+      // then suitable theory scripts.
+      //
+      // The unit tests *do* load numbers.js with the page, and this
+      // code must work in that setting also.  A consequence is that in
+      // tests, the document must work with real numbers.
+      //
       // TODO: The checking for what to load is ill-conceived.
       //   Instead, support editor options specifying the theories
       //   needed.  All editors on the same page then must require
@@ -800,14 +810,22 @@ export class ProofEditor {
         prepExercise('nat/');
         return doProof();
       } else {
-        // Ensure that numbers.js will be loaded, then asynchronously
-        // run the proof.
-        requireScript(realNumbersScript)
-          .then(doProof);
-          // Caution: We don't exactly know that the proof will
-          // complete successfully, but we don't want to unload
-          // the current theory first either.
-          return !!Toy.readDoc(name);
+        // Here not needNN.
+        //
+        // This check is enough to keep the unit tests working.
+        // It avoids loading numbers.js when it is already loaded.
+        if (realNumbersLoaded) {
+          doProof();
+        } else {
+          // Ensure that numbers.js will be loaded, then asynchronously
+          // run the proof.
+          requireScript(realNumbersScript)
+            .then(doProof);
+        }
+        // Caution: We don't exactly know that the proof will
+        // complete successfully, but we don't want to unload
+        // the current theory first either.
+        return !!Toy.readDoc(name);
       }
     }
     // Decode and run the proof recorded in the document, inserting
