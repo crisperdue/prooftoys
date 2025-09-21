@@ -3605,7 +3605,7 @@ declare(
     },
     inputs: {step: [1, 2]},
     tooltip: ('From [ ... p] and [ ... q], derive [ ... p & q]'),
-    description: 'extended [p & q];; from steps {step1}, {step2}',
+    description: 'combining steps {step1} and {step2}',
     autoSimplify: noSimplify,
     labels: 'basic',
     menuGen: (ruleName, step, term, editor) => {
@@ -3618,7 +3618,7 @@ declare(
       }
       const stepNum = editor.steps.indexOf(step) + 1;
       const item = {
-        html: `join step ${stepNum} and step ${len}`,
+        html: `combine step ${stepNum} and step ${len}`,
         ruleName: 'join',
         ruleArgs: [step.original, editor.steps[len - 1].original],
         priority: 3,
