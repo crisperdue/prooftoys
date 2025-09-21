@@ -2160,9 +2160,9 @@ export function decodeSteps2(input, callback) {
     stepInfo.forEach(function(info) {
         args.push(decodeArg(info, outSteps));
       });
-    const rule = Toy.rules[ruleName].attempt;
+    const rule = rules[ruleName].attempt;
     const result = rule.apply(rule.info, args);
-    if (Toy.isProved(result)) {
+    if (isProved(result)) {
       outSteps.push(result);
       finalStep = result;
       const v = callback(result);
