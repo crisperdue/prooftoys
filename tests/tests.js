@@ -2884,6 +2884,10 @@ var testCase = {
     deepEqual(qUnitCopy(stats), expected);
   },
 
+  // This creates a proof editor.  Note that tests run with numbers.js
+  // loaded by the tests page, so the page reloading hackery in proof
+  // editor construction cannot work.  The consequence is that the tests
+  // must not involve natural numbers.
   TODOsimultaneousEqnStatus: function() {
     // Simultaneous linear equations:
     ed = newProofEditor();
@@ -3055,6 +3059,23 @@ $(function() {
     Toy.eachFact(testFact);
   }
   console.log('Queued', nFacts, 'facts to test.');
+
+  // Check that proofs in proofData succeed, asserting that
+  // the result of each one isProved.
+  var nProofData = 0;
+  if (!toTest) {
+    const testData = data => {
+      runTest(data.doc, () => {
+        const result = Toy.proveFromData(data);
+        const msg = `Did not prove ${data.doc}; result ${result.$$}`;
+        assert(Toy.isProved(result), msg);
+      });
+      nProofData++;
+    };
+    QUnit.module('Proofdata');
+    Toy.proofData.forEach(testData);
+  }
+  console.log('Queued', nProofData, 'proof data items to test.');
 
 // TODO: Get this running again with QUnit 2.x.
 /*
