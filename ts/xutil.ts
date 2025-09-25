@@ -2080,6 +2080,102 @@ export function encodeSteps(steps_arg) {
 }
 
 /**
+ * Convert an argument of an inference rule to data that can be passed
+ * to JSON.stringify.  The result is a plain object with key "type"
+ * whose value is a string, with that string being the name of a
+ * property holding the type-specific value of the argument in
+ * stringify-able data.
+ * 
+ * The "type" values are: "string", "path", "term", "stepRef", "subn",
+ * and "facts".  The value of "subn" is a plain object mapping variable
+ * names to terms.  The value of "facts" is an array of strings
+ * representing the facts, as accepted by findMatchingFact.  Otherwise
+ * the result is the string value of v.toString(), where v is the value
+ * being represented.
+ */
+export function jsonArg(arg, indexes) {
+  if (typeof arg === 'string') {
+    return {type: 'string', rep: arg};
+  } else if (arg instanceof Path) {
+    return {type: 'path', rep: arg.toString()};
+  } else if (arg instanceof Expr) {
+        const i = indexes.get(arg);
+        // Note: This finesses the question of whether the step might
+        // improperly refer to a step not part of the current proof.
+        if (i) {
+          return {type: 'stepRef', rep: indexes.get(arg)};
+        } else {  
+          return {type: 'term', rep: arg.toString()};
+        }
+  } else if (arg.constructor === Object) {
+    const submap = obj => {
+      const kv = {};
+      const map = asMap(obj);
+      map.forEach((v, nm) => kv[nm] = v.toString());
+      return kv;
+    };
+    return {type: 'subn', subn: submap(arg)};
+  } else if (Array.isArray(arg)) {
+    return {type: 'facts', facts: jsonFacts(arg)};
+  } else {
+    console.warn('Bad rule argument:', arg);
+    assert(false, 'Bad rule argument in encodeSteps');
+  }
+}
+
+/**
+ * Returns an array of stringify-able representations of proof steps,
+ * each a plain object having properties n: 1-based step number; rule:
+ * string rule name; args: array of stringify-able representations of
+ * rule arguments.
+ */
+export function jsonSteps(steps_arg) {
+  // Use the original steps throughout, so the ruleArgs refer
+  // to the actual steps.
+  const steps = steps_arg.map((step) => step.original || step);
+  const indexes = new Map();
+  steps.forEach((step, i) => {
+    // Step numbers are 1-based.
+    indexes.set(step, i + 1);
+  });
+  const results = [];
+  const json = step => {
+    const mkJson = arg => jsonArg(arg, indexes);
+    return {
+      n: indexes.get(step),
+      rule: step.ruleName,
+      args: step.ruleArgs.map(mkJson),
+    };    
+  }
+  return steps.map(json);
+}
+
+/**
+ * Returns an array of strings representing an array of facts, with "@"
+ * prepended if the fact is given as an Expr.
+ */
+export function jsonFacts(arg) {
+  // An array currently is always a list of facts.
+  let ok = true;
+  // A fact may be an Expr, a string, or a plain object.  The
+  // plain objects usually contain functions, so we do not try
+  // to encode them.
+  const a = arg.map(function(v) {
+      return (v instanceof Expr
+              // A fact will be parsed with mathParse, so make
+              // sure that adds no assumptions.
+              ? '@ ' + v.toString()
+              : typeof v === 'string'
+              ? v
+              : (console.warn('Bad fact list item:', v),
+                 ok = false,
+                 undefined));
+    });
+  assert(ok, 'Failed to encode Array');
+  return a;
+}
+
+/**
  * From the given input expression or string to be parsed, computes
  * and returns an array of steps if successful.
  * The string may be a sequence of steps or "(steps <seq>)".
