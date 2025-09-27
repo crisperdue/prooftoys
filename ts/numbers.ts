@@ -1013,6 +1013,82 @@ declare(
        ]
      },
 
+/**
+ * Facts related to "zero products".
+ */
+ {
+  statement: '@ R x & R y & x = 0 | y = 0 => x * y = 0',
+  name: 'xyzero',
+  proof: [
+   '(1 consider (t ((x * y))))',
+   '(2 andAssume (s 1) (t ((x = 0))))',
+   '(3 applyAsmHere (s 2) (path "/right/right/left") (t ((x = 0))))',
+   '(4 simplifyFocalPart (s 3))',
+   '(5 andAssume (s 1) (t ((y = 0))))',
+   '(6 applyAsmHere (s 5) (path "/right/right/right") (t ((y = 0))))',
+   '(7 simplifyFocalPart (s 6))',
+   '(8 join (s 4) (s 7))',
+   '(9 cases (s 8))',
+  ]
+ },
+ {
+  statement: '@ R x & R y & x * y = 0 => x = 0 | y = 0',
+  name: 'xoryzero',
+  proof: [
+   '(1 fact "0=x*0")',
+   '(2 instVar (s 1) (t (((~*) x))) (t (x)))',
+   '(3 fact "x!=0=>R(minv x)")',
+   '(4 trueBy1 (s 2) (path "/left") (s 3))',
+   '(5 assume (t ((0 = (x * y)))))',
+   '(6 rewriteFrom (s 4) (path "/right/right/right") (s 5))',
+   '(7 rewrite (s 6) (path "/right/right") (t (((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z))))))',
+   '(8 rewrite (s 7) (path "/right/right/left") (t ((((R x) & (R y)) => ((x * y) = (y * x))))))',
+   '(9 rewrite (s 8) (path "/right/right/left") (t ((((x != 0) & (R x)) => ((x * ((~*) x)) = 1)))))',
+   '(10 rewrite (s 9) (path "/right/right") (t (((R a) => ((1 * a) = a)))))',
+   '(11 display (s 10))',
+   '(12 trueBy1 (s 11) (path "/left/right") (s 3))',
+   '(13 rewrite (s 12) (path "/left/left/left/right") (t (((x != y) == (not (x = y))))))',
+   '(14 rewrite (s 13) (path "") (t ((((((p & (not q)) & a) & b) => r) == (((p & a) & b) => (q | r))))))',
+   '(15 rewrite (s 14) (path "/left/left/right") (t (((x = y) == (y = x)))))',
+   '(16 rewrite (s 15) (path "/right/right") (t (((x = y) == (y = x)))))',
+  ]
+ },
+
+ /* OLD work
+     (steps
+(1 consider (t (x * y)))
+(2 andAssume (s 1) (t (x = 0)))
+(3 applyAsmHere (s 2) (path "/right/right/left") (t (x = 0)))
+(4 simplifyFocalPart (s 3))
+(5 andAssume (s 1) (t (y = 0)))
+(6 applyAsmHere (s 5) (path "/right/right/right") (t (y = 0)))
+(7 simplifyFocalPart (s 6))
+(8 join (s 4) (s 7))
+(9 cases (s 8))
+)
+
+  => x = 0 | y = 0
+(steps
+(1 fact "0=x*0")
+(2 instVar (s 1) (t (((~*) x))) (t (x)))
+(3 fact "x!=0=>R(minv x)")
+(4 trueBy1 (s 2) (path "/left") (s 3))
+(5 assume (t ((0 = (x * y)))))
+(6 rewriteFrom (s 4) (path "/right/right/right") (s 5))
+(7 rewrite (s 6) (path "/right/right") (t (((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z))))))
+(8 rewrite (s 7) (path "/right/right/left") (t ((((R x) & (R y)) => ((x * y) = (y * x))))))
+(9 rewrite (s 8) (path "/right/right/left") (t ((((x != 0) & (R x)) => ((x * ((~*) x)) = 1)))))
+(10 rewrite (s 9) (path "/right/right") (t (((R a) => ((1 * a) = a)))))
+(11 display (s 10))
+(12 trueBy1 (s 11) (path "/left/right") (s 3))
+(13 rewrite (s 12) (path "/left/left/left/right") (t (((x != y) == (not (x = y))))))
+(14 rewrite (s 13) (path "") (t ((((((p & (not q)) & a) & b) => r) == (((p & a) & b) => (q | r))))))
+(15 rewrite (s 14) (path "/left/left/right") (t (((x = y) == (y = x)))))
+(16 rewrite (s 15) (path "/right/right") (t (((x = y) == (y = x)))))
+)
+*/
+
+
      // Lay 11.1e
      {statement: '@ R x & R y => (x < y == neg y < neg x)',
       proof:
@@ -4673,6 +4749,9 @@ basicSimpFacts.push
 
 // For testing (computed value).
 //_ungroupingFacts = ungroupingFacts;
+
+requireScript('/js/derivatives.js')
+  .then(() => console.log('Derivatives loaded'));
 
 
   //// Basic definitions related to groups and their kin.
