@@ -3951,7 +3951,7 @@ rule('applyAsmHere', {
       const fn = rules.applyAsmHere.prep(step, path, asm);
       if (typeof fn === 'function') {
         const item = {
-            html: `apply ${asm.shortString()} here`,
+            html: `apply ${asm.termDisplay()} here`,
             ruleName,
             ruleArgs: [step, path, asm],
             priority: 4,
@@ -3962,7 +3962,8 @@ rule('applyAsmHere', {
     return items;
   },
   inputs: {site: 1, bool: 3},
-  description: step => `apply ${step.ruleArgs[2]} here`,
+  // This shows the applied asm.
+  description: step => `applying assumed ${step.ruleArgs[2].termDisplay()} here`,
 });
 
 /**
