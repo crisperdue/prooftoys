@@ -1177,7 +1177,14 @@ export function justParse1(input) {
    * Attempts to parse one complete expression, ignoring any left
    * context. Returns the parsed expression or null if none is
    * available, i.e. if the next token is not an opening bracket, a
-   * prefix operator, or a token with precedence of namePower.
+   * prefix operator, or a token with precedence of namePower.  Returns
+   * the term, or null if it is unable to parse in thtis context.
+   * 
+   * The "-" is parsed as one of the operator characters, so it can
+   * appear in a sequence of them as part of a token.  If appearing
+   * individually, here it is unary minus except if directly followed by
+   * a numeral with no intervening space.  Except for unary operators,
+   * in this context an operator token must be enclosed in parentheses.
    * 
    * This function is responsible for parsing a subexpression that was
    * preceded by an infix operator or opening "bracket", or start of
@@ -1527,6 +1534,8 @@ export const precedence = {
   mod: 40,
   '^': 50,
   // Default infix: 70
+  '~*': unaryPower,  // Unary multiplicative inverse
+  '!': unaryPower,   // Boolean negation
   // Specials
   '(': 1000,
   '[': 1000,
@@ -2047,8 +2056,10 @@ export function encodeSteps(steps_arg) {
         // improperly refer to a step not part of the current proof.
         if (i) {
           result.push('(s ' + indexes.get(arg) + ')');
-        } else {  
-          result.push('(t ' + arg  + ')');
+        } else {
+          // Parenthesize the arg to ensure that it is syntactically
+          // correct for reading.
+          result.push('(t (' + arg  + '))');
         }
       } else if (arg.constructor === Object) {
         // Treat this as a substitution
