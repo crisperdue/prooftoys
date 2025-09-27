@@ -1862,6 +1862,17 @@ export function isInfixOp(term) {
 }
 
 /**
+ * Truthy for atoms with infix or unary precedence.
+ */
+export function isOperator(term) {
+  if (!(term instanceof Atom)) {
+    return false;
+  }
+  var p = getPrecedence(term);
+  return (0 < p && p < namePower) || p == unaryPower;
+}
+
+/**
  * True iff the result of calling asmComparator is less than 0.
  * Useful for ordering deduplicated hypotheses.
  */

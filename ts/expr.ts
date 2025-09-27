@@ -850,8 +850,8 @@ export abstract class Expr {
     // Parsing is generally strict about use of infix operators in other
     // contexts, so be sure to display them in parentheses by default.
     // Calls to functions that are infix operators can display as infix.
-    const isInfix = Toy.isInfixOp(this);
-    return isInfix ? '(' + str + ')' : str;
+    const isOp = isOperator(this);
+    return isOp ? '(' + str + ')' : str;
   }
 
   /**
