@@ -1127,8 +1127,6 @@ declare(
        // except for ordering of assumptions.
        return (rules.tautology('b => (a => b)')
                .andThen('instMultiVars', {b: wff.getMain(), a: wff.getAsms()})
-               // This (mergeAsms) is intended as a helper for replace,
-               // but works OK here.
                .andThen('mergeAsms')
                .justify('goal', arguments));
        /* This would be more elegant, but puts asms in a different
@@ -3625,6 +3623,34 @@ declare(
       };
       return [item];
     },
+  },
+
+  /**
+   * Proof by cases starting from a selected step with main part that
+   * has two conditionals with the same conclusion.
+   */
+  {name: 'cases',
+    action2: function(step) {
+      const main = step.getMain();
+      if (main.matchSchema('(a => c) & (b => c)')) {
+        return () => {
+          const facts = [
+            '(a => c) & (not a => c) == c',
+            '(not a => c) & (a => c) == c',
+            '(a => c) & (b => c) == a | b => c',
+          ];
+          const result1 = applyMatchingFact(step, '/main', facts);
+          if (!result1) {
+            abort();
+          }
+          return step.implies() ? rules.mergeAsms(result1) : result1;
+        };
+      }
+    },
+    inputs: {step: 1},
+    labels: 'basic',
+    menu: 'prove by cases',
+    description: 'proof by cases;; from step {step}',
   },
 
   // Andrews' Rule P with two conjuncts.
