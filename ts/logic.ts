@@ -7542,18 +7542,10 @@ declare(
   defTautology('(a1 & a => c) & (a2 & b => c) => (a1 & a2 & (a | b) => c)'),
 
   // Working with conditional equivalences:
-  {statement: 'a => (b == c) == (a & b == a & c)',
-   proof: function() {
-     return rules.tautology('a => (b == c) == (a & b == a & c)');
-   },
-  },
+  defTautology('a => (b == c) == (a & b == a & c)'),
 
   // Working with conditional equivalences:
-  {statement: 'a => (b == c) == (a => b == a => c)',
-   proof: function() {
-     return rules.tautology('a => (b == c) == (a => b == a => c)');
-   },
-  },
+  defTautology('a => (b == c) == (a => b == a => c)'),
 
   // Solving equations with variables in denominator.
   // {statement: '(((a => (b == c)) => ((z => (b == d)) => (((a | z) & b) == ((a & c) | (z & d))))))',
