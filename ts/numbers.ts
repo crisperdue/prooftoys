@@ -438,7 +438,7 @@ declare(
 );
 
 definition('neg = {x. the1 (addInverses x)}');
-definition('minv = {x. the1 (mulInverses x)}');
+definition('(~*) = {x. the1 (mulInverses x)}');
 
 // Note that our axiom of arithmetic computes that neg 1 = -1, which
 //   gives ability to prove things we prefer to prove from (other)
@@ -471,8 +471,8 @@ declare(
     [
      '(1 fact "exists1 (addInverses x)")',
      '(2 inverseFunLaw_old)',
-     '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t addInverses))',
-     '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t neg))',
+     '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t (addInverses)))',
+     '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t (neg)))',
      '(5 fact "@ neg x = the1 (addInverses x)")',
      '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
      '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
@@ -505,8 +505,8 @@ declare(
     [
      '(1 fact "exists1 (mulInverses x)")',
      '(2 inverseFunLaw_old)',
-     '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t mulInverses))',
-     '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t minv))',
+     '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t (mulInverses)))',
+     '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t (minv)))',
      '(5 fact "@ minv x = the1 (mulInverses x)")',
      '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
      '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
@@ -558,7 +558,7 @@ declare(
      '(10 rewriteFrom (s 9) (path "/main/right/body/right") (s 8))',
      '(11 simplifySite (s 10) (path "/main/right/body"))',
      '(12 rewrite (s 11) (path "/main/right") (t ({x. F} = empty)))',
-     '(13 applyToBoth (t the1) (s 12))',
+     '(13 applyToBoth (t (the1)) (s 12))',
      '(14 rewrite (s 13) (path "/main/left") (t ((the1 (mulInverses x)) = (minv x))))',
      '(15 rewrite (s 14) (path "/main/right") (t ((the1 empty) = none)))'
      ]

@@ -33,6 +33,7 @@ export const unicodeNames = {
   '&': '\u2227',      // &and;
   '|': '\u2228',      // &or;
   'not': '\u00ac',    // &not;
+  '!': '\u00ac',    // &not;
   '=>': '\u21d2',     // &rArr; ("implies") (\u27f9 is longer)
   '=>>': '\u21db',    // rightwards triple arrow
   '!=': '\u2260',     // &ne;
@@ -3004,7 +3005,8 @@ export interface RStep extends Step {
  * Aliases for Atoms for purposes of input only; maps strings to
  * strings.
  */
-export const inputAliases = asMap({'**': '^'});
+export const inputAliases: Map<string, string> = 
+  asMap({'**': '^', 'minv': '~*', '!': 'not'});
 
 //// Atom
 /**
