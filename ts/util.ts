@@ -1708,16 +1708,14 @@ namespace Toy {
    * array is empty, dumps data for a convenient default set.
    */
   export function docsProofData(a): ProofData[] {
-    const regexes =
-      a.length 
-      ? a 
-      : [/^\/equations[0-9/#]*$/,
-         /^\/lunar\/$/,
-         /^\/fake-proof\/$/,];
+    a.forEach((exp) => assert(exp instanceof RegExp, 'Non-RegExp: {1}', exp));
+    const regexes = a.length
+      ? a
+      : [/^\/equations[0-9/#]*$/, /^\/lunar\/$/, /^\/fake-proof\/$/];
     const docs = lsDocs().sort();
     const data = [];
     for (const docName of docs) {
-      if (regexes.some(exp => docName.match(exp))) {
+      if (regexes.some((exp) => docName.match(exp))) {
         data.push({ doc: docName, proof: docSteps(docName) });
       }
     }
