@@ -1064,6 +1064,21 @@ Expr.prototype.registerConstants = function() {
     });   
 };
 
+/** Set this to true to enter the debugger on parsing errors. */
+export var dbgParse = false;
+
+/**
+ * This indicates an error during parsing.  Aborts with the same
+ * arguments, first pausing in the debugger if dbgParse is truthy.
+ */
+function parseError( ...args) {
+  if (dbgParse) {
+    console.log('Parsing error');
+    debugger;
+  }
+  abort( ...args);
+}
+
 /**
  * Same as "parse", but does not annotate the result with types and
  * does not memoize in _parsed.  We call these untyped terms
@@ -1117,8 +1132,10 @@ export function justParse1(input) {
   function expect(expected) {
     var token = next();
     if (token.name != expected) {
-      abort({position: token.pos},
-            'Expected ' + expected + ', got ' + token.name);
+      parseError(
+        { position: token.pos },
+        'Expected ' + expected + ', got ' + token.name
+      );
     }
   }
 
@@ -1232,7 +1249,7 @@ export function justParse1(input) {
   function mustParseAbove(lastOp) {
     var left = tryParse1();
     if (!left) {
-      abort('Empty expression at ' + peek().pos);
+      parseError('Empty expression at ' + peek().pos);
     }
     while (true) {
       var token = peek();
@@ -1265,14 +1282,14 @@ export function justParse1(input) {
   var end = tokens.pop();
   if (tokens.length < 1) {
     // There should be at least one real token.
-    abort('No parser input');
+    parseError('No parser input');
   }
   // Parse an expression.  A special "(begin)" delimiter does not seem
   // to be required, though note this does not require or even allow a
   // closing paren.
   var result = mustParseAbove(endToken);
   if (tokens.length) {
-    abort('Extra input: "' + tokens[0] + '"');
+    parseError('Extra input: "' + tokens[0] + '"');
   }
   return result;
 }
