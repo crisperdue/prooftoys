@@ -730,6 +730,14 @@ span.stepRef {
   padding: 0;
 }
 
+// Multiplicative inverse styling is superscript-like.
+.expr.minv {
+  position: relative;
+  top: -.3em;
+  font-size: 75%;
+  padding: 0;
+}
+
 // Text transforms, e.g. for \u27f9 arrows.
 // Width of the element is not affected by the scaling,
 // so we compensate with negative margins.
