@@ -1345,7 +1345,7 @@ export function exprJq(full?) {
 
 /**
  * Returns an array CSS class names to add to an Expr node for a
- * variable having the specified name.
+ * variable or constant having the specified name.
  */
 export function specialClasses(name) {
   if (Toy.isVariableName(name)) {
@@ -1367,6 +1367,8 @@ export function specialClasses(name) {
     return ['multiply'];
   case '^':
     return ['exponent'];
+  case '~*':
+    return ['minv'];
   default:
     return [];
   }
