@@ -1017,7 +1017,7 @@ declare(
  * Facts related to "zero products".
  */
  {
-  statement: '@ R x & R y & x = 0 | y = 0 => x * y = 0',
+  statement: '@ R x & R y & (x = 0 | y = 0) => x * y = 0',
   name: 'xyzero',
   proof: [
    '(1 consider (t ((x * y))))',
