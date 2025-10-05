@@ -111,6 +111,22 @@
     text-align: center;
   }
 
+  // The styling here works with a custom Hugo shortcode that adds a
+  // "block" class to the summary.  These styles give the contained
+  // element, e.g. header, an open/closed triangle.  We get cursor:
+  // pointer from _reboot.scss.
+  // 
+  details > summary.block:first-of-type {
+    list-style: none;
+  }
+  details > summary.block:first-of-type > :first-child {
+    display: list-item;
+    list-style: inside disclosure-closed;
+  }
+  details[open] > summary.block:first-of-type > :first-child {
+    list-style: inside disclosure-open;
+  }
+
   /* Experimental support for run-in H6 headings.
      This seems to work, at least for basic cases.
      It plays well with Hugo/Goldmark automatic ID
@@ -227,20 +243,6 @@ figure {
   background-color: white;
   border: 2px solid black;
   border-radius: 5px;
-}
-
-// The styling here works with a custom Hugo shortcode to support
-// "summary" items containing a block element such as a header. The
-// shortcode adds a "block" class, and this gives the contained element,
-// e.g. header an open/closed triangle.  We get cursor: pointer from
-// _reboot.scss.
-// 
-details > summary.block > :nth-child(1)::before {
-  content: "▸ ";
-}
-
-details[open] > summary.block > :nth-child(1)::before {
-  content: "▾ ";
 }
 
 /* Text wrapping */
