@@ -46,9 +46,6 @@
       // Add a list item with that text and a link to the named anchor.
       // TODO: properly escape the header text.
       toc_html += '<li><a href="#' + toc_name + '">' + header_html + '</a>';
-
-      // Add an anchor before the header element.
-      $(this).before('<a name="' + toc_name + '"></a>');
       // Increment the counter in every case.
       anchor_counter++;
     });
