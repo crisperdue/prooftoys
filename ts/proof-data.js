@@ -393,6 +393,20 @@ Toy.proofData = [
     ],
   },
   {
+    doc: '/proof-by-cases/',
+    proof: [
+      '(1 consider (t ((x * y))))',
+      '(2 andAssume (s 1) (t ((x = 0))))',
+      '(3 applyAsmHere (s 2) (path "/right/right/left") (t ((x = 0))))',
+      '(4 simplifyFocalPart (s 3))',
+      '(5 andAssume (s 1) (t ((y = 0))))',
+      '(6 applyAsmHere (s 5) (path "/right/right/right") (t ((y = 0))))',
+      '(7 simplifyFocalPart (s 6))',
+      '(8 join (s 4) (s 7))',
+      '(9 cases (s 8))',
+    ],
+  },
+  {
     doc: 'xMinus2',
     proof: [
       '(1 consider (t ((x - 2) = 2)))',
