@@ -1358,6 +1358,7 @@ declare(
     // 
     // So finally R x & y = 0 => x / y = none
   },
+);
 
   // End of interim axioms.
 
@@ -1380,23 +1381,29 @@ declare(
   //   or perhaps arithSimpler (except "<"), so others can be defined
   //   in terms of it; and division by zero there also, to return
   //   "none".
-  {name: 'axiomArithmetic',
-    // This precheck does not guarantee success if it passes.
-    precheck: function(term_arg) {
-      var term = termify(term_arg);
-      return isArithmetic(term);
-    },
-    action: function(term_arg) {
-      var term = termify(term_arg);
-      if (term.isInfixCall()) {
-	var left = term.getLeft().getNumValue();
-	var right = term.getRight().getNumValue();
-	var op = term.getBinOp().name;
-	var value;
-	switch(op) {
-        case '+': value = left + right; break;
-        case '*': value = left * right; break;
-        case '-': value = left - right; break;
+rule('axiomArithmetic', {
+  // This precheck does not guarantee success if it passes.
+  precheck: function (term_arg) {
+    var term = termify(term_arg);
+    return isArithmetic(term);
+  },
+  action: function (term_arg) {
+    var term = termify(term_arg);
+    if (term.isInfixCall()) {
+      var left = term.getLeft().getNumValue();
+      var right = term.getRight().getNumValue();
+      var op = term.getBinOp().name;
+      var value;
+      switch (op) {
+        case '+':
+          value = left + right;
+          break;
+        case '*':
+          value = left * right;
+          break;
+        case '-':
+          value = left - right;
+          break;
         case '/':
           if (right === 0) {
             return null;
@@ -1410,58 +1417,81 @@ declare(
             return null;
           }
           break;
-        case 'div': value = div(left, right); break;
-        case 'mod': value = mod(left, right); break;
-        case '=': value = left === right; break;
-        case '!=': value = left !== right; break;
-        case '>': value = left > right; break;
-        case '>=': value = left >= right; break;
-        case '<': value = left < right; break;
-        case '<=': value = left <= right; break;
+        case 'div':
+          value = div(left, right);
+          break;
+        case 'mod':
+          value = mod(left, right);
+          break;
+        case '=':
+          value = left === right;
+          break;
+        case '!=':
+          value = left !== right;
+          break;
+        case '>':
+          value = left > right;
+          break;
+        case '>=':
+          value = left >= right;
+          break;
+        case '<':
+          value = left < right;
+          break;
+        case '<=':
+          value = left <= right;
+          break;
         default:
           abort('Unsupported operator: ' + op);
-	}
-        if (typeof value == 'boolean') {
-          var rhs = value ? T : F;
-        } else {
-          var rhs = numify(value);
-        }
-        return rules.assert(infixCall(term, '=', rhs))
-          .justify('axiomArithmetic', arguments);
-      } else if (term instanceof Call) {
-        var op = term.fn;
-        assert(op.isConst(), 'Unsupported operator: {1}', op);
-        var arg = term.arg.getNumValue();
-        const nm = op.name;
-        if (nm == 'neg') {
-          value = -arg;
-          var rhs = numify(value);
-        } else if (nm == 'R' || nm == 'ZZ' || nm == 'QQ' ||
-                   (nm == 'NN' && arg >= 0)) {
-          var rhs = T;
-        } else {
-        // A programming error has occurred.
-          abort('Not an arithmetic expression: ' + term);
-        }
-        return rules.assert(infixCall(term, '=', rhs))
-          .justify('axiomArithmetic', arguments);
+      }
+      if (typeof value == 'boolean') {
+        var rhs = value ? T : F;
+      } else {
+        var rhs = numify(value);
+      }
+      return rules
+        .assert(infixCall(term, '=', rhs))
+        .justify('axiomArithmetic', arguments);
+    } else if (term instanceof Call) {
+      var op = term.fn;
+      assert(op.isConst(), 'Unsupported operator: {1}', op);
+      var arg = term.arg.getNumValue();
+      const nm = op.name;
+      if (nm == 'neg') {
+        value = -arg;
+        var rhs = numify(value);
+      } else if (
+        nm == 'R' ||
+        nm == 'ZZ' ||
+        nm == 'QQ' ||
+        (nm == 'NN' && arg >= 0)
+      ) {
+        var rhs = T;
       } else {
         // A programming error has occurred.
-	abort('Not an arithmetic expression: ' + term);
+        abort('Not an arithmetic expression: ' + term);
       }
-    },
-    inputs: {term: 1},
-    form: 'Term to evaluate: <input name=term>',
-    tooltip: 'evaluate arithmetic expression',
-    description: 'axiom of arithmetic',
-    autoSimplify: noSimplify,
-    labels: 'primitive'
+      return rules
+        .assert(infixCall(term, '=', rhs))
+        .justify('axiomArithmetic', arguments);
+    } else {
+      // A programming error has occurred.
+      abort('Not an arithmetic expression: ' + term);
+    }
   },
+  inputs: { term: 1 },
+  form: 'Term to evaluate: <input name=term>',
+  tooltip: 'evaluate arithmetic expression',
+  description: 'axiom of arithmetic',
+  autoSimplify: noSimplify,
+  labels: 'primitive',
+});
 
   //
   // Inference rules for real numbers
   //
 
+declare(
   // This functions like axiomArithmetic, with extensions.  Generates
   // facts about lack of equality between numbers and "none".  Applies
   // the definition of != given args that are numeric or "none".
