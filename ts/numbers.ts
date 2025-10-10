@@ -437,6 +437,221 @@ declare(
    }
 );
 
+declare(
+
+  //// Ordering axioms
+
+  {statement: '@ x < y => R x & R y', axiom: true,
+   description: 'domain of "<" is the real numbers'
+  },
+   {statement: 'not (x < x)', axiom: true,
+    description: 'axiom 1 of "<"'
+   },
+   {statement: 'x < y => not (y < x)', axiom: true,
+    description: 'axiom 2 of "<"'
+   },
+   {statement: 'x < y | y < x | x = y', axiom: true,
+    description: 'axiom 3 of "<"'
+   },
+  );
+
+fact('@ x < y => R x', {
+  proof: function () {
+    return rules
+      .fact('@ x < y => R x & R y')
+      .andThen('chain0', 'a => b & c => (a => b)');
+  },
+  priority: -10,
+});
+
+fact('@ x < y => R y', {
+  proof: function () {
+    return rules
+      .fact('@ x < y => R x & R y')
+      .rewrite('/right', 'a & b == b & a')
+      .andThen('chain0', 'a => b & c => (a => b)');
+  },
+  priority: -10,
+});
+
+declare(
+   // Transitivity, in 3 forms
+   {statement: 'x < y & y < z => x < z', axiom: true,
+    name: 'lessTrans',
+    description: 'transitivity of "<"'
+   },
+
+   // TODO: Decide whether to keep or omit these two.
+   //
+   // {statement: '@ x < y => (R x & R y & R z & y < z => x < z)',
+   //  name: 'lessTrans2',
+   //  proof: function() {
+   //    const s1 = rules.fact('x < y & y < z => x < z');
+   //    const s2 = rules.isolateAsm(s1, 'x < y');
+   //    return s2;
+   //  },
+   // },
+
+   // {statement: '@ y < z => (R x & R y & R z & x < y => x < z)',
+   //  name: 'lessTrans3',
+   //  proof: function() {
+   //    const s1 = rules.fact('x < y & y < z => x < z');
+   //    const s2 = rules.isolateAsm(s1, 'y < z');
+   //    return s2;
+   //  },
+   // },
+
+   {statement: 'x < y => x + z < y + z', axiom: true,
+    description: 'ordering of reals and addition'
+   },
+
+   // Steven Lay, Axiom O4.
+   // Also like Wikibooks Real Analysis axiom.
+  {name: 'ordermul',
+   statement: 'x < y & 0 < z => x * z < y * z', axiom: true,
+   description: 'ordering of reals and multiplication'
+  },
+
+  // Similar to Wikipedia: "Real number"
+  //
+  // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
+  //  description: 'ordering of reals and multiplication'
+  // },
+
+  // The null value does not participate in orderings.
+  // TODO: This should be proved from (not (R none))
+  //   and "<" only applying to real numbers.
+  // TODO: Consider introducing a "domain" concept and
+  //   decree that "none" is not part of any domain.
+  {statement: 'not (x < none)', axiom: true},
+  {statement: 'not (none < x)', axiom: true},
+  
+);
+
+//// Completeness:
+//
+// infix (x is_ub S)
+// define is_ub = [x ∈ ℝ, S ⊆ ℝ. ∀ y ∈ S. y ≤ x]
+// ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
+//          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
+
+definition('x > y == y < x');
+definition('x <= y == x < y | x = y');
+definition('x >= y == x > y | x = y');
+
+
+// NN and ZZ
+
+declare(
+
+  // The definitions here related to NN follow
+  // Murray H. Protter, "Basic Elements of Real Analysis", 1998.
+  // Except that here NN includes 0, as in the Lean
+  // Natural Number Game, and recursive function theory
+  // back to at least Kleene's Introduction to Metamathematics.
+
+  {definition: 'succ n = n + 1'},
+
+
+  // Defining NN:
+  // Starting at 1, unlike the tutorial, which starts at 0
+
+  {definition: 'allSucc P == forall {x. P x => P (succ x)}'},
+  {definition: 'smallSucc N == forall {P. allSucc P => N subset? P}'},
+  {definition: 'isRealNN N == N 0 & allSucc N & smallSucc N'},
+  {definition: 'NN = the1 {N. isRealNN N}'},
+
+  {statement: 'exists1 {N. isRealNN N}'},  // Asserted
+
+  // True via "equalThe".
+  {statement: 'isRealNN S == S = NN'},  // Asserted
+  // True via zz and smallSucc properties of NN, then expanding definitions.
+  {statement:
+   'P 0 & forall {x. P x => P (x + 1)} => NN subset? P'},  // Asserted
+
+
+  // Defining ZZ:
+
+  // This is like allSucc, but with a biconditional.
+  {definition: 'zz1 Z == forall {x. Z x == Z (succ x)}'},
+  {definition: 'zz2 Z == forall {P. zz1 P => Z subset? P}'},
+  {definition: 'isRealZZ Z == Z 0 & zz1 Z & zz2 Z'},
+  {definition: 'ZZ = the1 {Z. isRealZZ Z}'},
+
+  {statement: 'exists1 {Z. isRealZZ Z}'},  // Asserted
+
+  // True via "equalThe".
+  {statement: 'isRealZZ S == S = ZZ'},  // Asserted
+  // True via zz and zz2 properties of ZZ, then expanding definitions.
+  {statement:
+   'P 0 & forall {x. R x & P x == P (x + 1)} => ZZ subset? P'},  // Asserted
+
+  {statement: 'ZZ x == floor x = x'},    // Asserted
+
+  // Sum from n to m of the value of function f applied to each value
+  // in the closed interval [n, m], incrementing by 1.
+  // Sum of an empty interval is 0.  Recursive.
+  {statement:
+   'sum m n f = if (n < m) 0 ((sum (m + 1) n f) + f m)'},  // Asserted
+
+);
+
+/*
+// This is natural number division, defined only for naturals.
+// It is defined as the natural number q whose product with the
+// divisor is greater than x - d, but not more than x;
+// in other words the greatest q in NN such q * d <= x.
+definition(`natdiv x d = if (NN x & NN d)
+                            (the {q. NN q &
+                                     x - d < q * d &
+                                     q * d <= x})
+                            none`);
+
+declare
+  (
+    {statement: 'NN x & NN d => exists! {q. NN q & x - d < q * d & q * d <= x}',
+     description: 'Condition needed by definition of natdiv'}
+  );
+
+definition('absdiv x d = natdiv (abs x) (abs d)');
+*/
+
+
+//// NN and ZZ facts
+
+// Mostly without proof.
+declare(
+  { fact: '@NN x == ZZ x & 0 < x' },
+  { statement: 'NN x => ZZ x',
+    priority: -5 },
+  { statement: 'NN x => R x',
+    priority: -5 },
+  { statement: 'NN x => 0 < x'},
+  { statement: 'NN x => x != 0'},
+
+  {
+    statement: 'ZZ x => R x', axiom: true,
+    description: 'ZZ is a subset of R',
+    priority: -5,
+  },
+  {
+    statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
+    description: 'ZZ is closed under addition',
+  },
+  {
+    statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
+    description: 'ZZ is closed under multiplication',
+  },
+  {
+    statement: 'R x & R y & x > 0 => exists {n. ZZ n & n * x > y}',
+    // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
+    description: 'Archimedean property of the reals',
+  },
+
+  { statement: 'ZZ x => floor x = x' } // Sometimes simplifies
+);
+
+
 definition('neg = {x. the1 (addInverses x)}');
 definition('(~*) = {x. the1 (mulInverses x)}');
 
@@ -610,109 +825,6 @@ definition('recip x = 1 / x');
  * definex('quotient',
  * 'exists {q. strict2 q & (R x & R y => q x y = x / y)}');
  */
-
-
-declare(
-
-  //// Ordering axioms
-
-  {statement: '@ x < y => R x & R y', axiom: true,
-   description: 'domain of "<" is the real numbers'
-  },
-   {statement: 'not (x < x)', axiom: true,
-    description: 'axiom 1 of "<"'
-   },
-   {statement: 'x < y => not (y < x)', axiom: true,
-    description: 'axiom 2 of "<"'
-   },
-   {statement: 'x < y | y < x | x = y', axiom: true,
-    description: 'axiom 3 of "<"'
-   },
-  );
-
-fact('@ x < y => R x', {
-  proof: function () {
-    return rules
-      .fact('@ x < y => R x & R y')
-      .andThen('chain0', 'a => b & c => (a => b)');
-  },
-  priority: -10,
-});
-
-fact('@ x < y => R y', {
-  proof: function () {
-    return rules
-      .fact('@ x < y => R x & R y')
-      .rewrite('/right', 'a & b == b & a')
-      .andThen('chain0', 'a => b & c => (a => b)');
-  },
-  priority: -10,
-});
-
-declare(
-   // Transitivity, in 3 forms
-   {statement: 'x < y & y < z => x < z', axiom: true,
-    name: 'lessTrans',
-    description: 'transitivity of "<"'
-   },
-
-   // TODO: Decide whether to keep or omit these two.
-   //
-   // {statement: '@ x < y => (R x & R y & R z & y < z => x < z)',
-   //  name: 'lessTrans2',
-   //  proof: function() {
-   //    const s1 = rules.fact('x < y & y < z => x < z');
-   //    const s2 = rules.isolateAsm(s1, 'x < y');
-   //    return s2;
-   //  },
-   // },
-
-   // {statement: '@ y < z => (R x & R y & R z & x < y => x < z)',
-   //  name: 'lessTrans3',
-   //  proof: function() {
-   //    const s1 = rules.fact('x < y & y < z => x < z');
-   //    const s2 = rules.isolateAsm(s1, 'y < z');
-   //    return s2;
-   //  },
-   // },
-
-   {statement: 'x < y => x + z < y + z', axiom: true,
-    description: 'ordering of reals and addition'
-   },
-
-   // Steven Lay, Axiom O4.
-   // Also like Wikibooks Real Analysis axiom.
-  {name: 'ordermul',
-   statement: 'x < y & 0 < z => x * z < y * z', axiom: true,
-   description: 'ordering of reals and multiplication'
-  },
-
-  // Similar to Wikipedia: "Real number"
-  //
-  // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
-  //  description: 'ordering of reals and multiplication'
-  // },
-
-  // The null value does not participate in orderings.
-  // TODO: This should be proved from (not (R none))
-  //   and "<" only applying to real numbers.
-  // TODO: Consider introducing a "domain" concept and
-  //   decree that "none" is not part of any domain.
-  {statement: 'not (x < none)', axiom: true},
-  {statement: 'not (none < x)', axiom: true},
-  
-);
-
-//// Completeness:
-//
-// infix (x is_ub S)
-// define is_ub = [x ∈ ℝ, S ⊆ ℝ. ∀ y ∈ S. y ≤ x]
-// ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
-//          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
-
-definition('x > y == y < x');
-definition('x <= y == x < y | x = y');
-definition('x >= y == x > y | x = y');
 
 //// Facts about ordering.
 declare(
@@ -4545,117 +4657,6 @@ definition('ceil x = neg (floor (neg x))');
 
 definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 1))');
 
-
-// NN and ZZ
-
-declare(
-
-  // The definitions here related to NN follow
-  // Murray H. Protter, "Basic Elements of Real Analysis", 1998.
-  // Except that here NN includes 0, as in the Lean
-  // Natural Number Game, and recursive function theory
-  // back to at least Kleene's Introduction to Metamathematics.
-
-  {definition: 'succ n = n + 1'},
-
-
-  // Defining NN:
-  // Starting at 1, unlike the tutorial, which starts at 0
-
-  {definition: 'allSucc P == forall {x. P x => P (succ x)}'},
-  {definition: 'smallSucc N == forall {P. allSucc P => N subset? P}'},
-  {definition: 'isRealNN N == N 0 & allSucc N & smallSucc N'},
-  {definition: 'NN = the1 {N. isRealNN N}'},
-
-  {statement: 'exists1 {N. isRealNN N}'},  // Asserted
-
-  // True via "equalThe".
-  {statement: 'isRealNN S == S = NN'},  // Asserted
-  // True via zz and smallSucc properties of NN, then expanding definitions.
-  {statement:
-   'P 0 & forall {x. P x => P (x + 1)} => NN subset? P'},  // Asserted
-
-
-  // Defining ZZ:
-
-  // This is like allSucc, but with a biconditional.
-  {definition: 'zz1 Z == forall {x. Z x == Z (succ x)}'},
-  {definition: 'zz2 Z == forall {P. zz1 P => Z subset? P}'},
-  {definition: 'isRealZZ Z == Z 0 & zz1 Z & zz2 Z'},
-  {definition: 'ZZ = the1 {Z. isRealZZ Z}'},
-
-  {statement: 'exists1 {Z. isRealZZ Z}'},  // Asserted
-
-  // True via "equalThe".
-  {statement: 'isRealZZ S == S = ZZ'},  // Asserted
-  // True via zz and zz2 properties of ZZ, then expanding definitions.
-  {statement:
-   'P 0 & forall {x. R x & P x == P (x + 1)} => ZZ subset? P'},  // Asserted
-
-  {statement: 'ZZ x == floor x = x'},    // Asserted
-
-  // Sum from n to m of the value of function f applied to each value
-  // in the closed interval [n, m], incrementing by 1.
-  // Sum of an empty interval is 0.  Recursive.
-  {statement:
-   'sum m n f = if (n < m) 0 ((sum (m + 1) n f) + f m)'},  // Asserted
-
-);
-
-/*
-// This is natural number division, defined only for naturals.
-// It is defined as the natural number q whose product with the
-// divisor is greater than x - d, but not more than x;
-// in other words the greatest q in NN such q * d <= x.
-definition(`natdiv x d = if (NN x & NN d)
-                            (the {q. NN q &
-                                     x - d < q * d &
-                                     q * d <= x})
-                            none`);
-
-declare
-  (
-    {statement: 'NN x & NN d => exists! {q. NN q & x - d < q * d & q * d <= x}',
-     description: 'Condition needed by definition of natdiv'}
-  );
-
-definition('absdiv x d = natdiv (abs x) (abs d)');
-*/
-
-
-//// NN and ZZ facts
-
-// Mostly without proof.
-declare(
-  { fact: '@NN x == ZZ x & 0 < x' },
-  { statement: 'NN x => ZZ x',
-    priority: -5 },
-  { statement: 'NN x => R x',
-    priority: -5 },
-  { statement: 'NN x => 0 < x'},
-  { statement: 'NN x => x != 0'},
-
-  {
-    statement: 'ZZ x => R x', axiom: true,
-    description: 'ZZ is a subset of R',
-    priority: -5,
-  },
-  {
-    statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
-    description: 'ZZ is closed under addition',
-  },
-  {
-    statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
-    description: 'ZZ is closed under multiplication',
-  },
-  {
-    statement: 'R x & R y & x > 0 => exists {n. ZZ n & n * x > y}',
-    // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
-    description: 'Archimedean property of the reals',
-  },
-
-  { statement: 'ZZ x => floor x = x' } // Sometimes simplifies
-);
 
 
 //// Div, mod, divides
