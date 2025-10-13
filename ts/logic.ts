@@ -11,8 +11,6 @@ export var tautExit;
 
 const Step = Expr;
 
-const definition = Toy.definition;
-
 // The book definition of F is just fine, and can be presented either
 // as a definition or as an ordinary fact.  But by taking [T != F] and
 // [F != T] as axioms we could skip some technical development and
@@ -2239,8 +2237,8 @@ declare(
   // Ultimately uses rules.rewrite and rules.replace, so resulting
   // assumptions will be simplified and arranged.
   {name: 'simplifySite',
-    action: function(step, path, opt_facts?) {
-      var result = rules._simplifySite(step, path, opt_facts);
+    action: function(step, path, opt_facts?, asms=true) {
+      var result = rules._simplifySite(step, path, opt_facts, asms);
       return result.justify('simplifySite', arguments, [step]);
     },
     inputs: {site: 1},
@@ -6700,20 +6698,23 @@ declare(
    },
   },
   */
+);
 
   // A simplifier that removes all lambda calls.
-  {name: 'reduceAll',
-   toOffer: function(step, term) {
-     return term && term.search(x => x.isLambdaCall());
-   },
-   action: function(step, path) {
-     return (rules.simplifySite(step, path, [{apply: tryReduce, pure: true}])
-             .justify('reduceAll', arguments, [step]));
-   },
-   inputs: {site: 1},
-   menu: 'reduce all function calls',
+rule('reduceAll', {
+  toOffer: function (step, term) {
+    return term && term.search((x) => x.isLambdaCall());
   },
+  action: function (step, path) {
+    return rules
+      .simplifySite(step, path, [{ apply: tryReduce, pure: true }], false)
+      .justify('reduceAll', arguments, [step]);
+  },
+  inputs: { site: 1 },
+  menu: 'reduce all function calls',
+});
 
+declare(
   // Beta-reduce the lambda call at the given path.  If the argument
   // of the call is a variable bound in a containing scope, rename it
   // using rules.unbind.
