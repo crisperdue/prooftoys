@@ -730,7 +730,7 @@ export function addRule(info) {
     assert(!info.action && !info.action2,
            'Both proof and action for {1}', name);
     // Coerce the proof to a proof function.
-    proof = check(Toy.asProof(info.proof));
+    proof = check(asProof(info.proof));
   }
 
   if (statement) {
@@ -2016,8 +2016,8 @@ export function findMatchingFact(facts_arg, cxt, term, pureOnly?) {
         //   progress.
         var fullFact = (factExpansion(stmt) ||
                         rules.arithFact && rules.arithFact(stmt) ||
-                        rules.tautology(stmt));
-        if (Toy.isError(fullFact)) {
+                        rules.tautology.attempt(stmt));
+        if (!fullFact || isError(fullFact)) {
           continue;
         }
         if (!(pureOnly && fullFact.isCall2('=>'))) {
@@ -2116,7 +2116,7 @@ export function _locateMatchingFact(expr, schema_arg, varsMap, context) {
   // This substitution might fail.
   // TODO: Consider how to handle its potential failure.
   if ((subst = expr.matchSchema(schema))) {
-    return Toy.withExit(exit => {
+    return withExit(exit => {
         // Checks if the given term of the schema matches some fact in
         // the appropriate factsList.  Only schema variables are
         // eligible to match.
