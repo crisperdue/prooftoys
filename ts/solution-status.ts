@@ -4,9 +4,6 @@ namespace Toy {
 
 'use strict';
 
-var isEmpty = Toy.isEmpty;  
-var ProofEditor = Toy.ProofEditor;
-var TermSet = Toy.TermSet;
 
 /**
  * Returns an object with properties having useful information about a

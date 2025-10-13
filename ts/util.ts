@@ -1106,8 +1106,8 @@ namespace Toy {
    * options.
    *
    * The value of Toy.proceeding influences interaction of this with the
-   * debugger.  A truthy value results in a different code path intended
-   * to not make the debugger pause here.
+   * debugger.  A truthy value results in a code path intended to avoid
+   * entering the debugger.
    * @type {function(any, ...any): never}
    */
   export function abort(msg?, ...args): never {
@@ -1316,9 +1316,9 @@ namespace Toy {
    * exits.  If the function returns normally this returns false.
    *
    * The optional second argument, defaulting to false, becomes a new
-   * binding for Toy.proceeding.  When abort runs and "proceeding" is
-   * truthy, it takes a code path normally configured not to enter the
-   * debugger.
+   * binding for Toy.proceeding.  When abort is called and "proceeding"
+   * is truthy, it still aborts, but taking a code path normally
+   * configured not to enter the debugger.
    *
    * This design has an advantage over passing a "catcher" function in
    * that the actions here can do local flow of control actions such as
@@ -1336,7 +1336,7 @@ namespace Toy {
     // For good measure:
     Toy.thrown = null;
     try {
-      Toy.rebind('proceeding', proceed, fn);
+      rebind('proceeding', proceed, fn);
       success = true;
     } finally {
       if (success) {
