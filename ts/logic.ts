@@ -2971,7 +2971,8 @@ declare(
       var step2 = rules.r(step1, b, '/left');
       // Use a property of =>; carefully because this is used
       // before tautologies are available.
-      var step3 = rules.rewriteOnly(step2, '/fn', '(=>) T = {y. y}');
+      const fact1 = factForCase('T', '=>');
+      var step3 = rules.rewriteOnlyFrom(step2, '/fn', fact1);
       // From T => x derive x.
       var step4 = rules.reduce(step3, '');
       return step4.justify('modusPonens', arguments, arguments);
@@ -3160,7 +3161,7 @@ declare(
             result = rules.r(defn, result, '/right' + _path);
           } else {
             // The op is "&", "|", or "=>".
-            const fact = factForCase(op, argName);
+            const fact = factForCase(argName, op);
             // No simplification can be needed here. These facts are
             // unconditional and applied on the RHS, so they don't
             // affect any assumptions.
@@ -3454,51 +3455,51 @@ Step.prototype.reduceSites = function(wff: Expr, map) {
   return step;
 };
 
-/**
- * Supporting function for evalBool.  Given the name of a defined
- * boolean operator "&", "|", or "=>" and a string T or F, returns the
- * relevant fact for simplifying a call with that first argument by
- * simplifying an "if".
- */
-function factForCase0(trueCases, falseCases, op, tf) {
+/** Private to ensureBoolCases and factFor Case */
+const opTrueCases = new Map();
+/** Private to ensureBoolCases and factFor Case */
+const opFalseCases = new Map();
 
-  /**
-   * This derives two facts for "&", "|", or "=>", one for the true
-   * case and one for the false case, reducing the outer lambda and
-   * evaluating the if-else within it.  This relies on those
-   * definitions to be an if-else inside lambdas.
-   */
+/**
+ * This ensures that two facts are derived and registered for each of
+ * "&", "|", or "=>"; one for the case where the first arg is true and
+ * one for the case where it is false, reducing the outer lambda and
+ * evaluating the if-else within it. This relies on those definitions to
+ * be an if-else inside lambdas.
+ */
+function ensureBoolCases() {
   function deriveCases(op) {
     const eqn = rules.definition(op);
 
     const t1 = rules.applyBoth(eqn, T);
     const t2 = rules.reduce(t1, '/right');
     const t3 = rules.rewriteOnly(t2, '/right/body', 'if T y z = y');
-    Toy.addFact({goal: t3, desimplifier: true});
-    trueCases.set(op, rules.fact(t3));
+    addFact({goal: t3, desimplifier: true});
+    opTrueCases.set(op, rules.fact(t3));
 
     const f1 = rules.applyBoth(eqn, F);
     const f2 = rules.reduce(f1, '/right');
     const f3 = rules.rewriteOnly(f2, '/right/body', 'if F y z = z');
-    Toy.addFact({goal: f3, desimplifier: true});
-    falseCases.set(op, rules.fact(f3));
+    addFact({goal: f3, desimplifier: true});
+    opFalseCases.set(op, rules.fact(f3));
   }
-
-  if (trueCases.size == 0) {
+  if (opTrueCases.size == 0) {
     deriveCases('&');
     deriveCases('|');
     deriveCases('=>');
   }
-
-  return tf == 'T' ? trueCases.get(op) : falseCases.get(op);
 }
-const factForCase = factForCase0.bind(null, new Map(), new Map());
 
-// Ensure that all of these facts are available early on.
-// This also proves them.
-$(function() {
-  factForCase('=>', 'T');
-});
+/**
+ * Supporting function for evalBool.  Given the name of a defined
+ * boolean operator "&", "|", or "=>" and a string T or F, returns the
+ * relevant fact for simplifying a call with that first argument by
+ * simplifying an "if".
+ */
+function factForCase(tf, op) {
+  ensureBoolCases();
+  return tf == 'T' ? opTrueCases.get(op) : opFalseCases.get(op);
+}
 
 // A few useful tautologies registered as facts.
 declare(
