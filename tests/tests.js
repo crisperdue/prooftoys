@@ -898,7 +898,7 @@ var testCase = {
     }
     {
       const thm = rules.fact('minv 0 = none');
-      assertEqual('((minv:(i i) 0:i) =:((o i) i) none:i)',
+      assertEqual('(((~*:(i i)) 0:i) =:((o i) i) none:i)',
                   thm.show('testing'));
       assert(thm.isProved());
     }
