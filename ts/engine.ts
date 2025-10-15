@@ -1064,6 +1064,7 @@ export function exercise(name, ...declarations) {
 // A structure is associated with a conjunction of properties iff the
 // properties are true of its carrier set, functions, and predicates.
 
+//// Definitions
 
 /**
  * Adds the given definition as a new fact provided it meets the
@@ -1146,7 +1147,6 @@ export function definitionOnly(defn_arg) {
  * facts.
  */
 function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
-  const definitions = Toy.definitions;
   let candidate: Expr =
     defn_arg instanceof Expr ? defn_arg : justParse(defn_arg);
   // Free occurrences of names of constants that do not have
