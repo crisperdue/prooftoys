@@ -16,7 +16,7 @@
   {{ $re := resources.Get "/js/rendering.js" }}
   {{ $so := resources.Get "/js/solution-status.js" }}
   {{ $pd := resources.Get "/js/proof-data.js" }}
-  {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nn $st $re $so $pd }}
+  {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $re $st $so $lo $nn $pd }}
   {{ $allJS := resources.Concat "/js/all.js" $all }}
   {{ if eq hugo.Environment "development" }}
     {{ range $all }}
