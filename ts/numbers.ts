@@ -11,10 +11,8 @@ namespace Toy {
   var T = constify('T');
   var F = constify('F');
 
-  // Private to isDistribFact.  A mapping from statement key to value
-  // that is truthy iff the statement is in distribFactData.
-  // TODO: Replace this and isDistribFact with a property in the
-  //   fact info, like "props: 'distributive'".
+  // Private to isDistribFact.  A set of fact descriptions, currently
+  // all strings, for distributivity facts.
   const _distribFacts = new Set();
 
   /**
@@ -1564,6 +1562,7 @@ rule('axiomArithmetic', {
       return rules
         .assert(infixCall(term, '=', rhs))
         .justify('axiomArithmetic', arguments);
+    // The term is not an infix call.
     } else if (term instanceof Call) {
       var op = term.fn;
       assert(op.isConst(), 'Unsupported operator: {1}', op);
@@ -3213,6 +3212,9 @@ declare(
 
 //// Distributivity
 
+// TODO: We also need distributivity of division over addition and
+// subtraction.
+/** This variable exists basically to group these facts. */
 const distribFacts =
   [
    {statement: '(a + b) * c = a * c + b * c',
@@ -3301,12 +3303,23 @@ const distribFacts =
     labels: 'algebra',
     converse: { labels: 'algebra' }
   }
-   ];
-declare.apply(null, distribFacts);
+];
+// console.log(JSON.stringify(distribFacts.map(f => f.statement), null, 1);
+declare( ...distribFacts);
 
-// TODO: Need distributivity of division over addition and subtraction.
-for (const obj of distribFacts) {
-  _distribFacts.add(resolveToFact(obj.statement));
+// These are the statements of all of the facts in the group above.
+{
+  const stmts = [
+    "(a + b) * c = a * c + b * c",
+    "a * b + b = (a + 1) * b",
+    "b + a * b = (1 + a) * b",
+    "a + a = 2 * a",
+    "a * (b - c) = a * b - a * c",
+    "(a - b) * c = a * c - b * c",
+    "a * b - b = (a - 1) * b",
+    "b - a * b = (1 - a) * b",
+  ];
+  stmts.forEach(st => _distribFacts.add(st));
 }
 
 const dFactsLeft = [
@@ -4742,6 +4755,7 @@ definition('odd x == ZZ x & not (even x)');
 // is true, otherwise 0.
 definition('true1 = {a. if a 1 0}');
 
+// XXX This here is stateful.
 // Add some numeric simplifiers.
 basicSimpFacts.push
   ({stmt: '@a + neg b = a - b',
