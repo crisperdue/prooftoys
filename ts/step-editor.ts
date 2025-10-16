@@ -2253,7 +2253,6 @@ class RuleMenu {
   _refresher;
   length: number;
   hovering;
-  timer: number;
   $modeList;
   $node;
   $items;
@@ -2283,9 +2282,6 @@ class RuleMenu {
     // A rule menu item node or null.  If the mouse is hovering over an
     // item at any given time, this will be it.
     self.hovering = null;
-    // Timer (from setTimeout) that will run an action unless cleared by
-    // mouse movement.  Helps detect "mouse still" conditions.
-    self.timer = null;
 
     const $modeList = $('<div class=modeList>');
     self.$modeList = $modeList;
@@ -2321,36 +2317,25 @@ class RuleMenu {
       $ed.toggleClass('ruleMenuHovered', event.type === 'mouseenter');
     });
     
-    // This code triggers potential change of menu mode when
-    // the mouse stops within one of the .mode regions.
-    // It sets up the timer on movement and also cancels any
-    // timer that is currently set, so the action only occurs
-    // if the mouse does not move (or leave the region) during
-    // the interval.
-    $modeList.on('mousemove', '.mode', function(event) {
+    // Change menu mode on click.
+    $modeList.on('click', '.mode', function(event) {
       const target = this;
       if (proofEditor.stepEditor.formShowing) {
         // Do not change modes if the rule form is displayed.
         return;
       }
+      const mode = target.dataset.mode;
       const $selected = $modeList.find('[class~=selected]');
-      const mode = this.dataset.mode;
       if (mode) {
-        if (!$selected.is(this)) {
-          clearTimeout(self.timer);
-          self.timer = setTimeout(event => {
-            // This is the action that changes the menu mode.
-            $selected.removeClass('selected');
-            $(target).addClass('selected');
-            proofEditor.showRuleType = mode;
-            proofEditor.ruleMenu.refresh();
-            proofEditor.stepEditor.hideForm();
-          }, 50);  // We are using a 50msec interval.
+        if (!$selected.is(target)) {
+          // This is the action that changes the menu mode.
+          $selected.removeClass('selected');
+          $(target).addClass('selected');
+          proofEditor.showRuleType = mode;
+          proofEditor.ruleMenu.refresh();
+          proofEditor.stepEditor.hideForm();
         }
       }
-    });
-    $modeList.on('mouseleave', '.mode', function(event) {
-      clearTimeout(self.timer);
     });
 
     $node.on('click', '.ruleItem', function(event) {
