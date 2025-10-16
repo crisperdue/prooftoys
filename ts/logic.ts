@@ -2214,7 +2214,11 @@ declare(
    * Simplifies repeatedly using basicSimpFacts.  If the main part of
    * the step is an equation, simplifies its right side, otherwise the
    * entire main part, then runs simplifyAsms.  Frequently invoked by
-   * simplifyUsual.
+   * simplifyUsual.  Similar to simplifySide, but more cautious about
+   * equations / equivalences.
+   * 
+   * TODO: Consider reporting simplifyUsual as simplifying the
+   * appropriate site, which is what happens here anyway.
    */
   {name: 'simplifyFocalPart',
    action: function(step) {
@@ -2224,7 +2228,7 @@ declare(
     },
     inputs: {step: 1},
     menu: 'simplify usual',
-    description: 'simplifying usual;; {in step step}',
+    description: 'simplifying target area;; {in step step}',
     labels: 'uncommon',
   },
 
@@ -7829,6 +7833,7 @@ definition('Intersect = {p. {x. forall {q. p q => q x}}}');
 
 //// Other initializations
 
+// XXX This is stateful.
 // Make defn facts available and stop deferring their proofs.
 enableDefnFacts();
 
