@@ -1905,7 +1905,7 @@ export class StepEditor {
       // TODO: Consider not running the rule at all.
       console.log('no change');
     } else {
-      // Success!
+      // Success!  The rule has run.
       // TODO: Trigger an event and let the proofDisplay show the step,
       //   removing most of this code.  It may be desirable for the
       //   proof display to trigger another event after the step is
@@ -1928,6 +1928,8 @@ export class StepEditor {
       this.proofDisplay.deselectStep();
       // Make sure the proof errors field is hidden.
       this.clearError();
+      // Set the menu mode back to general / basic.
+      self._proofEditor.ruleMenu.setMode('general');
       // After the browser repaints, try simplifying the step
       // and adding the result to the proof if simplification
       // has any effect.
@@ -2325,17 +2327,7 @@ class RuleMenu {
         return;
       }
       const mode = target.dataset.mode;
-      const $selected = $modeList.find('[class~=selected]');
-      if (mode) {
-        if (!$selected.is(target)) {
-          // This is the action that changes the menu mode.
-          $selected.removeClass('selected');
-          $(target).addClass('selected');
-          proofEditor.showRuleType = mode;
-          proofEditor.ruleMenu.refresh();
-          proofEditor.stepEditor.hideForm();
-        }
-      }
+      self.setMode(mode);
     });
 
     $node.on('click', '.ruleItem', function(event) {
@@ -2362,6 +2354,28 @@ class RuleMenu {
 
     // Ensure that the selected menu is initialized.
     this.refresh();
+  }
+
+  /**
+   * Sets the rule menu "mode" to one of the options, in other words
+   * setting which submenu is to be currently available, based on the
+   * name, stored in an elements data-mode attribute.
+   */
+  setMode(mode: string) {
+    if (mode) {
+      const ed = this.proofEditor;
+      const $modeList = this.$modeList;
+      const $selected = $modeList.find('[class~=selected]');
+      const $target = $modeList.find(`.mode[data-mode~=${mode}`);
+      if (!$selected.is($target)) {
+        // This is the action that changes the menu mode.
+        $selected.removeClass('selected');
+        $target.addClass('selected');
+        ed.showRuleType = mode;
+        ed.ruleMenu.refresh();
+        ed.stepEditor.hideForm();
+      }
+    }
   }
 
   /**
