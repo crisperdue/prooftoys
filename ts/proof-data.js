@@ -384,7 +384,7 @@ Toy.proofData = [
     ],
   },
   {
-    doc: '/zero-products/',
+    doc: '/direct-proof/',
     proof: [
       '(1 fact "x=0|y=0=>x*y=0")',
       '(2 fact "x*y=0=>x=0|y=0")',
