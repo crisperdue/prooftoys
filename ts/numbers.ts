@@ -11,9 +11,12 @@ namespace Toy {
   var T = constify('T');
   var F = constify('F');
 
-  // Private to isDistribFact.  A set of fact descriptions, currently
-  // all strings, for distributivity facts.
-  const _distribFacts = new Set();
+  /**
+   * Private to isDistribFact.  A set of fact statement WFFs extracted
+   * from fact resolutions.  Code using this relies on fact resolution
+   * results for the same fact to return WFFs that are ==.
+   */
+  const _distribFacts: Set<Expr> = new Set();
 
   /**
    * Returns a truthy value iff the statement is some version
@@ -3304,22 +3307,26 @@ const distribFacts =
     converse: { labels: 'algebra' }
   }
 ];
-// console.log(JSON.stringify(distribFacts.map(f => f.statement), null, 1);
 declare( ...distribFacts);
 
 // These are the statements of all of the facts in the group above.
 {
   const stmts = [
-    "(a + b) * c = a * c + b * c",
-    "a * b + b = (a + 1) * b",
-    "b + a * b = (1 + a) * b",
-    "a + a = 2 * a",
-    "a * (b - c) = a * b - a * c",
-    "(a - b) * c = a * c - b * c",
-    "a * b - b = (a - 1) * b",
-    "b - a * b = (1 - a) * b",
+    '(a + b) * c = a * c + b * c',
+    'a * b + b = (a + 1) * b',
+    'b + a * b = (1 + a) * b',
+    'a + a = 2 * a',
+    'a * (b - c) = a * b - a * c',
+    '(a - b) * c = a * c - b * c',
+    'a * b - b = (a - 1) * b',
+    'b - a * b = (1 - a) * b',
   ];
-  stmts.forEach(st => _distribFacts.add(st));
+  stmts.forEach((stmt) => {
+    _distribFacts.add(resolveToFact(stmt));
+    _distribFacts.add(resolveToFact(commuteEqn(termify(stmt))));
+  });
+  // For interactive testing:
+  // _distribFacts.forEach((f) => console.log(f.$$));
 }
 
 const dFactsLeft = [
