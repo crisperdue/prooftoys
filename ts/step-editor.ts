@@ -2240,12 +2240,15 @@ export interface Expr {
  *   simplifies only the focal part if the path is not on the asm side.
  *   Does the difference matter?
  */
-Step.prototype.simplifyUsual = function() {
+Step.prototype.simplifyUsual = function () {
   const step = this;
   const path = Toy.getStepSite(step);
-  return (path && step.isAsmSide(path)
-          ? rules.simplifySite(step, '/left')
-          : rules.simplifyFocalPart(step) || assert(false));
+  return path && step.isAsmSide(path)
+    ? rules.simplifySite(step, '/left')
+    // This has the effect of simplifyFocalPart, but is recorded
+    // as application of simplifySite, which shows just what area is
+    // being simplified.
+    : bind((p = step.pathToFocalPart()) => rules.simplifySite(step, p));
 };
 
 //// RULEMENU

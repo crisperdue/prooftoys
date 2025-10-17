@@ -1600,6 +1600,7 @@ export function resolveFactRef(stmt) {
  * Resolves the given statement wff to a full fact statement if
  * possible, otherwise returns null.  Like resolveFactRef, but
  * returns just the goal, as stated in the fact declaration.
+ * Anything resolving to the same fact will give an == result.
  */
 export function resolveToFact(stmt) {
   const info = resolveFactRef(stmt);
@@ -2861,7 +2862,7 @@ function setFactInfo(info) {
 function addSwappedFact(info) {
   var stmt = info.goal;
   if (stmt.isEquation()) {
-    var swapped = Toy.commuteEqn(stmt);
+    var swapped = commuteEqn(stmt);
     if (!isRecordedFact(swapped)) {
       function proveSwapped() {
         return rules.fact(stmt).andThen('eqnSwap');

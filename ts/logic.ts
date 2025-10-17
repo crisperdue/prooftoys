@@ -2217,8 +2217,8 @@ declare(
    * simplifyUsual.  Similar to simplifySide, but more cautious about
    * equations / equivalences.
    * 
-   * TODO: Consider reporting simplifyUsual as simplifying the
-   * appropriate site, which is what happens here anyway.
+   * Retained for backward compatibility.  The simplifyUsual method now
+   * calls simplifySite directly.
    */
   {name: 'simplifyFocalPart',
    action: function(step) {
@@ -5564,7 +5564,7 @@ declare(
         const simp = info.autoSimplify;
         return simp(step);
       } else {
-        if (Toy.isDistribFact && Toy.isDistribFact(stmt) &&
+        if (isDistribFact && isDistribFact(stmt) &&
             step.isMainSide(path)) {
           return rules.simplifyProducts(step, path);
         } else {
