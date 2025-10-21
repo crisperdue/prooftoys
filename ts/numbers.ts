@@ -4714,6 +4714,81 @@ declare(
 definition('even x == 2 divides x');
 definition('odd x == x mod 2 = 1');
 
+//// Pruning excess numeric type declarations
+
+/**
+ * Attempts to subsume one type declaration using a narrower one also in
+ * the assumptions.  Returns a continuation that provides the simplified
+ * step else null.  Call this repeatedly to narrow all such decls.
+ */
+function subsume1Numeric(step) {
+  const aConj = step.getAsms();
+  if (!aConj) {
+    return null;
+  }
+  const numTypes = ['R', 'QQ', 'ZZ', 'NN'];
+  // This is an array of the numeric declaration asms.
+  const decls: Call[] = [];
+  aConj.scanConj((a, p) => {
+    if (a.isCall1() && numTypes.includes(a.fn.name)) {
+      decls.push(a);
+    }
+  });
+
+  for (const decl of decls) {
+    const rank = numTypes.indexOf(decl.fn.name);
+    let bestRank = rank;
+    // If a matching decl is found with higher rank,
+    // this will be it.
+    let better;
+    decls.forEach((decl2: Call) => {
+      const rank2 = numTypes.indexOf(decl2.fn.name);
+      if (rank2 > bestRank && decl2.arg.matches(decl.arg)) {
+        bestRank = rank2;
+        better = decl2;
+      }
+    });
+    // After comparing decl with all decls, if better is set, it is the
+    // best.
+    if (better) {
+      // We found one, so return a continuation to compute it.
+      return () => {
+        const stmt = `${better.fn.name} x => ${decl.fn.name} x`;
+        const path = asPath('/left').concat(aConj.prettyPathTo(decl));
+        return rules.rewrite(step, path, stmt);
+      }
+    }
+  }
+  // Nothing interesting was found.
+  return null;
+}
+
+/**
+ * Find and eliminate all numeric type decls that are redundant due to
+ * narrower ones for the same term.
+ */
+function subsumeAllNumerics(step) {
+  return repeatedly(step, step => {
+    const fn = subsume1Numeric(step);
+    return fn && fn();
+  });
+}
+
+rule('subsumeNumerics', {
+  action2: function(step) {
+    const fn = subsume1Numeric(step);
+    return fn && (() => {
+      const first = fn();
+      return subsumeAllNumerics(first) || first;
+    });
+  },
+  labels: 'basic',
+  priority: 5,
+  inputs: {step: 1},
+  menu: 'prune numeric type declarations',
+  description: 'pruning numeric type declarations',
+});
+
 fact('odd x == ZZ x & not (even x)', {});
 
 //// Euclidean division:
