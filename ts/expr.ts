@@ -336,6 +336,7 @@ export function addFnMatch(schema, fn, expr, map, renamings) {
  * arithmetic is exact, returning it if so, raising an Error if not.
  */
 export function checkRange(number) {
+  // Math.abs handles JS Infinities.
   assert(Math.abs(number) <= Toy.MAX_INT,
          'Number out of range: {1}', number);
   return number;
@@ -3384,13 +3385,16 @@ export function constify(c) {
 
 /**
  * Converts a JS number to a numeric constant, checking that it
- * it is acceptable as a numeric constant.
+ * it is acceptable as a numeric constant, specifically an exact integer
+ * within the range of exact integers.
  */
 export function numify(num) {
   assert(typeof num === 'number');
-  Toy.checkRange(num);
+  checkRange(num);
   assert(Math.floor(num) === num);
-  return Toy.constify(num.toFixed(0));
+  // Yes, this converts the number to a string, then creates an Atom
+  // with numeric value from the string.
+  return constify(num.toFixed(0));
 }
 
 /**
@@ -4064,7 +4068,14 @@ export class Lambda extends Expr {
       return pth;
     } else {
       var p = this.body._prettyPath(pred, pth);
-      return p ? new Path('body', p) : null;
+      if (p) {
+        return new Path('body', p);
+      } else {
+        p = this.bound._prettyPath(pred, pth);
+        if (p) {
+          return new Path('bound', pth);
+        }
+      }
     }
   }
 
