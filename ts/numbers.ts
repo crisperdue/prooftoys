@@ -545,17 +545,15 @@ definition('x >= y == x > y | x = y');
 
 declare(
 
-  // The definitions here related to NN follow
-  // Murray H. Protter, "Basic Elements of Real Analysis", 1998.
-  // Except that here NN includes 0, as in the Lean
-  // Natural Number Game, and recursive function theory
-  // back to at least Kleene's Introduction to Metamathematics.
+  // The definitions here related to NN follow Murray H. Protter, "Basic
+  // Elements of Real Analysis", 1998. Except that here NN includes 0,
+  // as in the Lean Natural Number Game, and recursive function theory
+  // back to at least Kleene's Introduction to Metamathematics, 1952.
 
   {definition: 'succ n = n + 1'},
 
 
   // Defining NN:
-  // Starting at 1, unlike the tutorial, which starts at 0
 
   {definition: 'allSucc P == forall {x. P x => P (succ x)}'},
   {definition: 'smallSucc N == forall {P. allSucc P => N subset? P}'},
@@ -622,13 +620,12 @@ definition('absdiv x d = natdiv (abs x) (abs d)');
 
 // Mostly without proof.
 declare(
-  { fact: '@NN x == ZZ x & 0 < x' },
+  { fact: '@NN x == ZZ x & 0 <= x' },
   { statement: 'NN x => ZZ x',
     priority: -5 },
   { statement: 'NN x => R x',
     priority: -5 },
-  { statement: 'NN x => 0 < x'},
-  { statement: 'NN x => x != 0'},
+  { statement: 'NN x => 0 <= x'},
 
   {
     statement: 'ZZ x => R x', axiom: true,
@@ -648,10 +645,7 @@ declare(
     // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
     description: 'Archimedean property of the reals',
   },
-
-  { statement: 'ZZ x => floor x = x' } // Sometimes simplifies
 );
-
 
 definition('neg = {x. the1 (addInverses x)}');
 definition('(~*) = {x. the1 (mulInverses x)}');
@@ -818,6 +812,14 @@ declare(
 //   facts about fields and "/" based on recip.
 definition('x / y = the1 {z. R x & R y & R z & x = y * z}');
 definition('recip x = 1 / x');
+
+
+//// QQ (rational numbers)
+
+definition('QQ x == exists {y. exists {z. ZZ y & ZZ z & x = y / z}}');
+
+// fact('', {});
+
 
 /**
  * We desire something like this, but it needs some supporting
@@ -4681,18 +4683,20 @@ definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 1))');
 
 //// Div, mod, divides
 
-// We only define "mod"for positive integers ...
-// but might wish to extend to nonzero integers later.  
+// In these definitions and in axiomArithmetic, div is Knuth-style floor
+// division.  Given (real) numbers, div always gives an integer result
+// unless the divisor is 0.  The mod operation likewise gives a real
+// number result except if the modulus is zero.
 
 declare(
   {definition: 'x div y = floor (x / y)'},
   {definition: 'x mod m = x - m * (x div m)'},
 
-  {statement: 'R m => 0 mod m = 0', simplifier: true},
+  {statement: 'R m & m != 0 => 0 mod m = 0', simplifier: true},
   {statement:
    'R m => (x + y) mod m = ((x mod m) + (y mod m)) mod m'},
   {statement: 'R x & R m => R (x mod m)', simplifier: true},
-  {statement: 'R x & R m => (x mod m) mod m = x mod m',
+  {statement: 'R x & R m & m != 0 => (x mod m) mod m = x mod m',
    proof: [
      '(1 fact "R m => (x + y) mod m = ((x mod m) + (y mod m)) mod m")',
      '(2 instVar (s 1) (t 0) (t y))',
@@ -4702,17 +4706,15 @@ declare(
    simplifier: true,
   },
 
-  // Divisibility of integers
-  {definition: 'd divides x == ZZ d & ZZ x & x mod d = 0'},
+  // Divisibility
+  {definition: 'd divides x == x mod d = 0'},
   {fact: 'R x & x != 0 => 0 divides x'},
-  {fact:
-   '@ZZ x & ZZ y & ZZ z => (x divides z & y divides z == (x + y) divides z)'},
 );
 
 definition('even x == 2 divides x');
+definition('odd x == x mod 2 = 1');
 
-definition('odd x == ZZ x & not (even x)');
-
+fact('odd x == ZZ x & not (even x)', {});
 
 //// Euclidean division:
 
