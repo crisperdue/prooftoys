@@ -2371,52 +2371,6 @@ declare({
   labels: 'general',
 });
 
-      // TODO: Currently unused function, consider completing this
-      //   and uncommenting the call to it.  See below also.
-      /*
-      const findSubsumptions = () => {
-        const numTypes = ['NN', 'ZZ', 'QQ', 'R'];
-        const byPath = step.asmMap();
-        // This will become a map from type name to list of
-        // asm, path pairs assumed to be of that type.
-        const typeAsms = new Map([['R', []],
-                                  ['QQ', []],
-                                  ['ZZ', []],
-                                  ['NN', []]]);
-        // This puts each asm, path pair into the appropriate
-        // list according to the type it assumes; and the arg
-        // of the asm term.
-        byPath.forEach((asm, path) => {
-          if (asm.isCall1()) {
-            const fn = asm.fn.name;
-            const arg = asm.arg;
-            const list = typeAsms.get(fn);
-            if (list) {
-              list.push({path, asm, fn, arg, gone: false});
-            }
-          }
-        });
-        const subsumptions = [];
-        numTypes.forEach((ty, i) => {
-          const places = typeAsms.get(ty);
-          places.forEach(pLeft => {
-            const argLeft = pLeft.asm.arg;
-            numTypes.slice(i + 1).forEach(nm => {
-              typeAsms.get(nm).forEach(pRight => {
-                if (!pRight.gone && argLeft.sameAs(pRight.asm.arg)) {
-                  subsumptions.push([pLeft, pRight]);
-                  pRight.gone = true;
-                }
-              });
-            });
-          });
-        });
-        subsumptions.forEach(([l,r]) =>
-                             console.log('Subsumed:', l.asm.$$, '=>', r.asm.$$));
-        return subsumptions;
-      };
-       */
-
 /**
  * Function callable to simplify an entire step.  Useful when there is
  * no need to merge new assumptions added during simplification.
@@ -5596,7 +5550,8 @@ declare(
 //
 // For each match found, effectively replaces the target with a
 // substitution instance of the conclusion of the found fact or step.
-// For the chain1 variants, includes the selected step's assumptions.
+// For the chain1 variants, the result includes the selected step's
+// assumptions.
 function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
   if (selTerm && (!selStep.implies() || selTerm !== selStep.getRight())) {
     return null;
@@ -5666,7 +5621,7 @@ function chainDescription(step) {
  * matches.  In this case returns only information for the first match
  * found, to make the rule less prolific.
  * 
- * Currently in effect disabled.
+ * Effectively disabled at this time.
  */
 function detachMenuGen(ruleName, selStep, selTerm, editor) {
   // Menu generation for the detach is currently disabled.  It tends to
