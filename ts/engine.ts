@@ -2568,18 +2568,18 @@ export function conjunctionSchema(term) {
 
 export interface Expr {
 /**
- * Returns a Map with information about the bindings of variables that
- * are bound in the scope of the given path.  Keys of the map are
- * variable names, and each value is a path to the site where the
- * variable of that name is bound.
+ * Returns a Map with information about the bindings of variables in the
+ * scope of the given path.  Keys of the map are variable names, and
+ * each value is a path to the site where the variable of that name is
+ * bound.
  *
- * The path must only have segments fn, arg, and/or body.
+ * The path must be "ugly": only segments fn, arg, body and/or bound.
  *
  * TODO: Define a similar method that reports _all_ bindings.  If a
  *   name is bound in multiple parents of the target term, this
  *   only reports the innermost binding of that name.
  */
-pathBindings(path_arg);
+pathBindings(path_arg): Map<string, Path>;
 }
 Expr.prototype.pathBindings = function(path_arg) {
   const Path = Toy.Path;
@@ -2606,6 +2606,12 @@ Expr.prototype.pathBindings = function(path_arg) {
       bindings.set(term.bound.name, revPath.reverse());
       revPath = new Path('body', revPath);
       term = term.body;
+      break;
+    case 'bound':
+      assert(term instanceof Lambda, 'Not a Lambda: {1}', term);
+      bindings.set(term.bound.name, revPath.reverse());
+      revPath = new Path('bound', revPath);
+      term = term.bound;
       break;
     default:
       assert(false, 'Bad segment {1} in path {2}', segment, path_arg);
