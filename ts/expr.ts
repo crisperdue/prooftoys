@@ -317,7 +317,7 @@ export function addFnMatch(schema, fn, expr, map, renamings) {
   }
 
   if (expansions > 0) {
-    const bx = Toy.betaExpansions;
+    const bx = betaExpansions;
     var xpanded = bx.get(map);
     if (!xpanded) {
       xpanded = {};
@@ -724,9 +724,10 @@ export abstract class Expr {
   abstract asArray();
 
   /**
-   * Returns a copy of this expression.  If some part matches the path,
-   * that part is replaced by the result of calling the xformer function
-   * on it.
+   * Returns a potentially modified copy of this expression.  If a part
+   * of this is at the given path, replaces it with the result of
+   * applying the transformer function to it.  Caution: this method is
+   * not sensitive to variable bindings.
    */
   abstract replaceAt(path, xformer);
 

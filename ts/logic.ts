@@ -2813,6 +2813,10 @@ declare(
   // its input, justified as "instMultiVars".
   //
   // TODO: Check that uses of this check appropriately for errors.
+  //
+  // TODO: The reduceFns arg surely is not adequate.  Consider checking
+  // for entries in betaExpansions for the given map to see exactly
+  // which lambda calls should be beta-reduced, and how many times.
   {name: 'instMultiVars',
     action: function(step_arg: Step, map, reduceFns?) {
       assert(map && map.constructor && map.constructor === Object,
@@ -5375,6 +5379,11 @@ declare(
   // "A" is not an equation, rewrites its main part to A == T.
   // Performs the needed substitution, with higher-order matching, and
   // returns the result of that.
+  //
+  // I think the map_arg can support rewrites where the schema has a
+  // free variable that is not mapped by the mapping process.  This
+  // should make it straightforward to keep it distinct from other free
+  // variables in the result.
   {name: 'replacementFor',
    action2: function(step, path, eqn_arg, map_arg, reduce=true) {
 
@@ -7083,71 +7092,72 @@ function initMovers() {
 // proof display for it shows proofs of facts for rows in the truth
 // table that use tautologies, but all of those facts are proved
 // in this file without using truth tables.
-declare
-    ({statement: '(==) = {a. {b. if a b (not b)}}',
-      proof:
-      [
-       `(1 given
+declare({
+  statement: '(==) = {a. {b. if a b (not b)}}',
+  proof: [
+    `(1 given
          (t (forall {a. (forall {b. ((a == b) == ((if a b) (not b)))})})))`,
-       `(2 rewrite (s 1) (path "/main/right/arg/body")
+    `(2 rewrite (s 1) (path "/main/right/arg/body")
          (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
-       `(3 rewrite (s 2) (path "/main/right")
+    `(3 rewrite (s 2) (path "/main/right")
          (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
-       `(4 reduceAll (s 3) (path "/main/right"))`,
-       `(5 rewrite (s 4) (path "/main/right/right/right/right")
+    `(4 reduceAll (s 3) (path "/main/right"))`,
+    `(5 rewrite (s 4) (path "/main/right/right/right/right")
          (t (((if F x) y) = y)))`,
-       `(6 rewrite (s 5) (path "/main/right/right/right/right")
+    `(6 rewrite (s 5) (path "/main/right/right/right/right")
          (t ((not F) == T)))`,
-       `(7 rewrite (s 6) (path "/main/right/right/left/right")
+    `(7 rewrite (s 6) (path "/main/right/right/left/right")
          (t (((if F x) y) = y)))`,
-       `(8 rewrite (s 7) (path "/main/right/right/left/right")
+    `(8 rewrite (s 7) (path "/main/right/right/left/right")
          (t ((not T) == F)))`,
-       `(9 rewrite (s 8) (path "/main/right/left/right/right")
+    `(9 rewrite (s 8) (path "/main/right/left/right/right")
          (t (((if T x) y) = x)))`,
-       `(10 rewrite (s 9) (path "/main/right/left/left/right")
+    `(10 rewrite (s 9) (path "/main/right/left/left/right")
          (t (((if T x) y) = x)))`,
-       `(11 fact "x = x == T")`,
-       `(12 fact "T == F == F")`,
-       `(13 fact "F == T == F")`,
-       `(14 instantiateVar (s 11) (path "/main/left/left") (t T))`,
-       `(15 instantiateVar (s 11) (path "/main/left/left") (t F))`,
-       `(16 trueBy0 (s 10) (path "/main/right/right/right") (s 15))`,
-       `(17 trueBy0 (s 16) (path "/main/right/right/left") (s 13))`,
-       `(18 trueBy0 (s 17) (path "/main/right/left/right") (s 12))`,
-       `(19 trueBy0 (s 18) (path "/main/right/left/left") (s 14))`,
-       `(20 simplifySiteWith (s 19) (path "/main/right") (t ((T & T) == T)))`,
-       `(21 rewrite (s 20) (path "") (t ((x == T) == x)))`,
-       `(22 rewrite (s 21) (path "/main/arg/body")
+    `(11 fact "x = x == T")`,
+    `(12 fact "T == F == F")`,
+    `(13 fact "F == T == F")`,
+    `(14 instantiateVar (s 11) (path "/main/left/left") (t T))`,
+    `(15 instantiateVar (s 11) (path "/main/left/left") (t F))`,
+    `(16 trueBy0 (s 10) (path "/main/right/right/right") (s 15))`,
+    `(17 trueBy0 (s 16) (path "/main/right/right/left") (s 13))`,
+    `(18 trueBy0 (s 17) (path "/main/right/left/right") (s 12))`,
+    `(19 trueBy0 (s 18) (path "/main/right/left/left") (s 14))`,
+    `(20 simplifySiteWith (s 19) (path "/main/right") (t ((T & T) == T)))`,
+    `(21 rewrite (s 20) (path "") (t ((x == T) == x)))`,
+    `(22 rewrite (s 21) (path "/main/arg/body")
          (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
-       `(23 rewrite (s 22) (path "/main")
-         (t ((forall {x. ((f x) = (g x))}) == (f = g))))`
-      ]});
+    `(23 rewrite (s 22) (path "/main")
+         (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
   
 declare(
-   // Derive exists {x. p x} from a witnessing term.  This only replaces the
-   // selected occurrence, not substituting throughout. (5242)
-   //
-   // TODO: Supplant this with uses of "p x => exists p" as a rewrite
-   //   rule.  Typically one wants to prove existence, so exists p
-   //   trivially matches the goal.  Rewriting results in a new beta-
-   //   reducible goal.  Beta-reduce that, then substitute for x,
-   //   being careful to keep x distinct from other free variables
-   //   along the way.
-   {name: 'witnessExists',
-    precheck: function(step, path) {
+  // Derive exists {x. p x} from a witnessing term.  This only replaces the
+  // selected occurrence, not substituting throughout. (5242)
+  //
+  // TODO: Supplant this with uses of "p x => exists p" as a rewrite
+  //   rule.  Typically one wants to prove existence, so exists p
+  //   trivially matches the goal.  Rewriting results in a new beta-
+  //   reducible goal.  Beta-reduce that, then substitute for x,
+  //   being careful to keep x distinct from other free variables
+  //   along the way.
+  {
+    name: 'witnessExists',
+    precheck: function (step, path) {
       var term = step.get(path);
       // The current check merely excludes booleans.
       // TODO: Improve this when types are truly available.  Support
       //   predicates and functions of individuals, et cetera.
       // TODO: Also screen out terms with locally free occurrences
       //   of variables bound in an enclosing scope.
-      return term.type !== Toy.boolean;
+      return term.type !== boolean;
     },
-    action: function(step, path_arg) {
+    action: function (step, path_arg) {
       var path = step.asPath(path_arg);
       var term = step.get(path);
       var v = step.wff.freshVar('x');
-      function replacer(term) { return v; }
+      function replacer(term) {
+        return v;
+      }
       var replaced = step.wff.replaceAt(path, replacer);
       var test = Toy.lambda(v, replaced);
       var eqn = rules.axiom4(call(test, term));
@@ -7158,15 +7168,17 @@ declare(
       var result = rules.forwardChain(step2, fact);
       return result.justify('witnessExists', arguments, [step]);
     },
-    inputs: {site: 1},
-    menu: "conclude existence from {term}",
+    inputs: { site: 1 },
+    menu: 'conclude existence from {term}',
     description: 'witnessing existence',
-    labels: 'basic'
-   },
+    labels: 'basic',
+  }
+);
 
-   // 5304
+// 5304
 
-  // This triggers a warning about duplicate fact just because
+declare(
+   // This triggers a warning about duplicate fact just because
   // it is already generated from the definition of exists1.
    {name: 'exists1b',
     statement: 'exists1 p == exists {x. p = {y. y = x}}',
