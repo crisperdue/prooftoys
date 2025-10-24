@@ -816,7 +816,7 @@ definition('recip x = 1 / x');
 
 //// QQ (rational numbers)
 
-definition('QQ x == exists {y. exists {z. ZZ y & ZZ z & x = y / z}}');
+definition('QQ x == R x & exists {y. exists {z. ZZ y & ZZ z & x = y / z}}');
 
 // fact('', {});
 
