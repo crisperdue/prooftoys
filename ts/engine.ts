@@ -998,7 +998,7 @@ export function declare(...declarations) {
  * Like "declare", but specifically for a single fact.  Takes a
  * statement argument and additional properties.
  */
-export function fact(statement, properties) {
+export function fact(statement, properties={}) {
   declare({statement, ...properties});
 }
 
