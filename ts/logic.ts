@@ -5746,19 +5746,15 @@ function detachDescription(step) {
   }
 }
 
-// Chaining is a generalization of modus ponens that works with a step
-// and a conditional fact or step, which it uses as a schema to match.
-// The step argument concludes that an instance of the LHS of the
-// conditional schema is true, and chaining substitutes into the schema
-// to make them match.  Chain0 matches the schema antecedent against the
-// entire step, while chain1 and chain1Only match the schema antecedent
-// against only the conclusion of the (conditional) step.
-//  
-// With chain0, the result is an instance of the conclusion of the
-// schema.  The conclusion of the result of chain1 and chain1Only is
-// also an instance of the schema's conclusion, but with the assumptions
-// of the step carried over to the result. For chain1, if the result has
-// the form (a => (b => c)), the result has "a" and "b" conjoined.
+// Chain1 is a generalization of modus ponens that works with a
+// conditional step and a conditional fact (or step).  It matches the
+// consequent of the step agains the antecedent of the step, which it
+// treats as a schema to match.  Chain1 and chain1Only carry the
+// assumptions of the step into the conclusion, and chain1 merges
+// assumptions from the step with ones that come from the fact.
+// 
+// Chain0 similarly matches the schema antecedent against the entire
+// step.
 declare(
   // Forward reasoning: Chain a conditional step, matching its
   // conclusion with the left side of a conditional schema.  Available
@@ -5778,7 +5774,12 @@ declare(
      return map && (() => {
        const eqn = rules.rewriteOnly(step, '/right', 'a == (a == T)');
        const schema2 = rules.fact(schema);
-       const instance = rules.instMultiVars(schema2, map, true);
+       // We may have a step RHS that applies a lambda and a schema LHS
+       // like (p x), so don't beta reduce after instantiating.
+       const instance = rules.instMultiVars(schema2, map,
+        // TODO: Probably we should be precise about beta expansions and
+        // let instMultiVars figure it all out from the map.
+          betaExpansions.get(map));
        // Replace the antecedent of the schema with T (after substitution),
        // bringing over the assumptions from the step at the top level.
        const result = rules.r2(instance, '/left', eqn);
@@ -7130,6 +7131,8 @@ declare({
          (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
     `(23 rewrite (s 22) (path "/main")
          (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
+  ],
+});
   
 declare(
   // Derive exists {x. p x} from a witnessing term.  This only replaces the
