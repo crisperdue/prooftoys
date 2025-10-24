@@ -956,7 +956,8 @@ declare(
     form: ('Definition of <input name=string>'),
     menu: 'look up a definition',
     tooltip: 'look up a definition',
-    description: '=definition'
+    description: '=definition',
+    autoSimplify: noSimplify,
   },
 
   // Use the definition of the name at the given location in the given
@@ -3529,7 +3530,7 @@ declare(
     menu: 'assume explicitly (A &rArr; A)',
     tooltip: 'Statement to assume (show occurrences)',
     description: 'assuming explicitly;; (A &rArr; A)',
-    labels: 'basic',
+    labels: 'obsolete',
     autoSimplify: noSimplify,
   }
 
