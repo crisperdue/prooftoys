@@ -1877,7 +1877,7 @@ export class StepEditor {
     } else if (!isProved(result)) {
       // It is possible to display more information about thrown
       // errors (aborts), but it may not be helpful to the user.
-      let message = `Didn't work: ${ruleName}`;
+      let message = `Doesn't work out: ${ruleName}`;
 
       console.warn(`Rule ${ruleName} failed`);
       if (result instanceof Error) {
@@ -3116,6 +3116,8 @@ function acceptsSelection(step, ruleName) {
     // TODO: prevent selection of bound variables as terms.
     const result =
           (argInfo.site
+           // TODO: Consider supporting selection of just the bound
+           // variable rather than the whole lambda.
            || (argInfo.bindingSite && expr instanceof Toy.Lambda)
            || (argInfo.reducible
                && expr instanceof Toy.Call
