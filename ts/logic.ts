@@ -5429,7 +5429,7 @@ declare(
   // assumptions to any existing ones; does not deduplicate or arrange
   // them.
   {name: 'rewriteOnlyFrom',
-    action2: function(step, path_arg, eqn, map_arg?) {
+    action2: function(step, path_arg, eqn, map_arg=undefined) {
       const path = step.wff.asPath(path_arg);
       const replacement = rules.replacementFor.attempt0(step, path, eqn, map_arg);
       return ok(replacement, () =>
@@ -5447,7 +5447,7 @@ declare(
   // except takes a fact statement rather than a step. The "reduce"
   // argument is only used in the "induct" rule in natnums.js.
   {name: 'rewriteOnly',
-   action2: function(step, path_arg, stmt_arg, map_arg?, reduce=true) {
+   action2: function(step, path_arg, stmt_arg, map_arg=undefined, reduce=true) {
      const path = step.wff.asPath(path_arg);
      const fact = rules.fact(stmt_arg);
      const replacement =
@@ -5461,7 +5461,7 @@ declare(
     menu: 'primitive rewrite using a fact',
     isRewriter: true,
     description: 'using;; {fact} {&nbsp;in step siteStep}',
-    labels: 'other'
+    labels: 'basic'
   },
 
   // Variant of rules.rewrite for use from the UI when the equation
@@ -5471,7 +5471,7 @@ declare(
   // TODO: Render (programmatic) calls to this and "rewrite" according to
   //   whether the equation is a statement or a step.
   {name: 'rewriteFrom',
-    action2: function(step, path, equation, map_arg?) {
+    action2: function(step, path, equation, map_arg=undefined) {
       const step2 = rules.replacementFor.attempt0(step, path,
         equation, map_arg);
       return ok(step2, () => {
@@ -5481,7 +5481,7 @@ declare(
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using step <input name=equation>'),
-    menu: 'rewrite',
+    menu: 'rewrite from step',
     isRewriter: true,
     // TODO: Consider modifying descriptions of rewrite rules to
     //   say "replace" rather than "rewrite" when the substitution
@@ -5502,7 +5502,7 @@ declare(
   //   flagging them as part of substitution, then finding flagged
   //   points.
   {name: 'rewrite',
-    action2: function(step, path_arg, statement, map_arg?) {
+    action2: function(step, path_arg, statement, map_arg=undefined) {
       // Be careful to convert a possible search pattern into
       // an ordinary path _before_ replacing the target term.
       const path = step.asPath(path_arg);
@@ -5544,9 +5544,9 @@ declare(
     inputs: {site: 1, bool: 3},
     form: ('Rewrite {term} using fact <input name=bool>'),
     menu: 'rewrite using a fact',
-    labels: 'other',
+    labels: 'basic',
     isRewriter: true,
-    priority: 5,
+    priority: 2,
     description: 'using;; {fact} {&nbsp;in step siteStep}'
   },
 );
