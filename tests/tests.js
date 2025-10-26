@@ -1030,9 +1030,10 @@ var testCase = {
 
   testPath: function() {
     var Path = Toy.Path;
+    const asPath = Toy.asPath;
 
     var p = '/a/b';
-    var path = Toy.asPath(p);
+    var path = asPath(p);
     assertEqual(p, path.toString());
     assertEqual('a', path.segment);
     assert(Toy.asPath('').isMatch());
@@ -1055,6 +1056,13 @@ var testCase = {
 
     var right2 = new Path('right', new Path('right'));
     assertFails(() => e.get(right2));
+
+    const ee = asPath('');
+    assert(ee.equals(ee) === true);
+    assert(ee.equals('/arg') === false);
+    assert(asPath('/arg').equals(ee) === false);
+    assert(asPath('/arg').equals(asPath('/fn')) === false);
+    assert(asPath('/arg').equals(asPath('/arg')) === true);
   },
 
   testTraverse: function() {

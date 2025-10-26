@@ -139,6 +139,7 @@ export declare class Path {
   expand(): any;
   reverse(): any;
   remainder(path: any): this;
+  equals(path: any): boolean;
   /**
    * Returns truthy iff this path is equal to or extends the pathable
    * argument.  Untested.
@@ -553,6 +554,17 @@ Path.prototype.remainder = function(path) {
   }
   return self;
 };
+
+/**
+ * Tests for equality with this path.
+ */
+Path.prototype.equals = function(path_arg) {
+  const p = asPath(path_arg);
+  if (this.length() === p.length()) {
+    return !!this.remainder(p)?.isEnd();
+  }
+  return false;
+}
 
 Path.prototype.startsWith = function(path_arg) {
   const path = asPath(path_arg);
