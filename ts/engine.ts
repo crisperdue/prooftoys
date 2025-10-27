@@ -190,6 +190,7 @@ Expr.prototype.distinctifier = function(step2, path_arg, map) {
                ? Toy.genVar(name, avoidNames)
                : new Atom(name));
     avoidNames.add(v);
+    // @ts-ignore 2538
     result[name] = v;
   }
   return result;
