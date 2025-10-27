@@ -2411,9 +2411,9 @@ export abstract class Expr {
   }
 
   /**
-   * Returns an array of Paths from this Expr to each of the operands of
-   * a chain of calls to the given chainOp, as for chainTerms, but
-   * returning paths rather than terms.
+   * Returns an array of reverse Paths from this Expr to each of the
+   * operands of a chain of calls to the given chainOp, as for
+   * chainTerms, but returning paths rather than terms.
    */
   chainPaths(chainOp) {
     const result = [];
