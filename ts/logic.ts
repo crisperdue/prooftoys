@@ -6563,6 +6563,15 @@ declare(
    labels: 'algebra',
   },
 
+  /**
+   * If the target term is a member or "prefix" of a chain and not the
+   * top of a chain, moves it to become the rightmost chain element.
+   * 
+   * About the terminology: In a chain x + y + z, each of x, y, and z
+   * are chain elements.  The term x + y is a "prefix", and x + y + z is
+   * the top of the chain (unless it is a prefix of a larger chain).
+   * All of these terms are "chain parts".
+   */
   {name: 'moveRightmost',
    action2: function(step, path_arg) {
      // This removes /main if needed, and prettifies.
@@ -6572,13 +6581,18 @@ declare(
        // change the target paths.
        let righter = rules.consider(step);
        // Adjust the target path accordingly.
-       let p = asPath('/main/right').concat(path);
+       let p = asPath('/right').concat(path);
        let completer;
        while (true) {
         ({completer, path: p} = moverAction('right', righter, p));
          if (completer) {
            // If we can move further right, do so.
+           const implied = righter.implies();
            righter = completer();
+           if (righter.implies() && !implied) {
+             // Now there are asms, so adjust the path.
+             p = asPath('/right').concat(p);
+           }
          } else {
            // We are done.  Replace the entire step with the result.
            return rules.replace(step, '', righter);
