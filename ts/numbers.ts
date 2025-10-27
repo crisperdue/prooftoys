@@ -1374,14 +1374,18 @@ declare(
 
   // Multiplication of exponents, asserted.
   {statement: '(x ** y) ** z = x ** (y * z)'},
+);
 
-  // TODO: Prove this from x * y = 0 etc by deMorgan's Law.
-  {name: 'factNonzeroProduct',
-    statement: '@R x & R y => (x * y != 0 == x != 0 & y != 0)',
-  },
+// TODO: Prove this from x * y = 0 etc by deMorgan's Law.
+fact('@ R x & R y => (x * y != 0 == x != 0 & y != 0)',
+  {name: 'factNonzeroProduct'}
+);
+fact('@ R x & R y & x * y != 0 => x != 0');
+fact('@ R x & R y & x * y != 0 => y != 0');
 
-  // Closure properties
+// Closure properties
 
+declare(
   {name: 'realNegClosed',
     statement: '@ R x => R (neg x)',
     simplifier: true,
