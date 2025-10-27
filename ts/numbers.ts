@@ -2303,8 +2303,10 @@ declare
     },
 
     // This moves a factor to the right within a chain of multiplications.
-    // TODO: Remove.
+    // TODO: Bug: only works in a main part that has assumptions.
+    //   See cancelFactor.
     {name: 'factorToRightmost',
+     // Path is non-empty, with pretty parent that is "*".
      precheck: function(step_arg, path_arg) {
        const wff = step_arg.wff;
        const pretty = wff.prettifyPath(path_arg);
@@ -2363,11 +2365,24 @@ declare
      simplifier: true,
     },
 
+    /**
+     * Target must be within a division and possibly within multiplications
+     * directly within that division.  Currently works only if the
+     * target is in the dividend, amd probably only if in the consequent
+     * of a conditional, i.e. with assumptions.
+     * 
+     * Ambitiously tries to find a common "base variable" in both
+     * products, and with that expands exponents, cancels, and
+     * reinstates reduced exponents.
+     * 
+     * TODO: Debug this.
+     */
     {name: 'cancelFactor',
      precheck: function(step, path_arg) {
        const ppath = step.prettifyPath(step.asPath(path_arg));
+       // These are the target and containing terms, target first, up to
+       // and including the wff.
        const ancestors = step.wff.ancestors(ppath).reverse();
-       const target = ancestors[0];
        for (let i = 1; i < ancestors.length; i++) {
          const term = ancestors[i];
          if (term.isCall2('/')) {
@@ -2380,10 +2395,9 @@ declare
      },
      action: function(step, path) {
        const wff = step.wff;
-       const basePart = term => term.isCall2('**') ? term.getLeft() : term;
+       const basePart = term => term.isCall2('^') ? term.getLeft() : term;
        const ppath = wff.mainify(wff.prettifyPath(path));
        const term = step.get(ppath);
-       const termBase = basePart(term);
        // This is the path to the nearest enclosing division.
        const divPath =
              wff.mainify(wff.findParent(ppath, term => term.isCall2('/')));
@@ -2403,7 +2417,7 @@ declare
          // Find term identical to the selected one on "this" side.
          const pathInChain = thisChain.prettyPathTo(term);
          const thisPath = thisChainPath.concat(pathInChain);
-         // Move the selected term moved to rightmost position.
+         // Force the selected term moved to rightmost position.
          const moved1 = rules.factorToRightmost(flattened, thisPath);
 
          // Division node after first phase of movement.
@@ -2412,8 +2426,9 @@ declare
          const thatChain = div.descend(thatSeg);
          const thoseTerms = thatChain.chainTerms('*');
          const thosePaths = thatChain.chainPaths('*');
+         const termBase = basePart(term);
          const thatIndex = thosePaths.findIndex(
-           path => basePart(thatChain.revGet(path)).sameAs(termBase)
+           p => basePart(thatChain.revGet(p)).sameAs(termBase)
          );
          if (thatIndex >= 0) {
            //
@@ -2498,7 +2513,7 @@ declare
      },
      inputs: {site: 1},
      menu: 'cancel by division',
-     description: 'cancelling by division',
+     description: 'canceling by division',
      labels: 'algebra'
     },
        
