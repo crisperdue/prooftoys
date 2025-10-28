@@ -714,7 +714,7 @@ var testCase = {
     const e0 = Toy.parse('not a');
     const t0 = e0.chainTerms('*');
     assert(Array.isArray(t0));
-    assertEqual(['(not a)'], t0.map(t => t.toString()));
+    assertEqual(0, t0.length);
     const ee = Toy.parse('(x+2)*y*z');
     const tt = ee.chainTerms('*');
     assert(Array.isArray(tt));

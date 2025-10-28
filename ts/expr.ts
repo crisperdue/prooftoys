@@ -2390,6 +2390,7 @@ export abstract class Expr {
    * segment.)
    */
   chainTerms(chainOp) {
+    const top = this;
     const result = [];
     let node = this;
     if (node.isCall2(chainOp)) {
@@ -2404,8 +2405,8 @@ export abstract class Expr {
           break;
         }
       }
-    } else {
-      result.push(this);
+    } else if (node !== top) {
+      result.push(node);
     }
     return result;
   }
