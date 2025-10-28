@@ -733,6 +733,19 @@ var testCase = {
                 pp.map(p => ee.revGet(p).toString()));
   },
 
+  testChainParts: function() {
+    const e0 = Toy.parse('not a');
+    const t0 = e0.chainParts('*');
+    assert(Array.isArray(t0));
+    assertEqual(0, t0.length);
+    const ee = Toy.parse('(x+2)*y*z');
+    const tt = ee.chainParts('*');
+    assert(Array.isArray(tt));
+    assertEqual(['(((x + 2) * y) * z)', 'z', '((x + 2) * y)', 'y', '(x + 2)'],
+      tt.map(t => t.toString()));
+    assertEqual(0, ee.chainParts('+').length);
+  },
+
   testAsArray: function() {
     var term = Toy.parse('(f x (p y))');
     var array = term.asArray();

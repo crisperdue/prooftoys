@@ -2399,7 +2399,6 @@ export abstract class Expr {
         let next = node.getLeft();
         if (next.isCall2(chainOp)) {
           node = next;
-          continue;
         } else {
           result.push(next);
           break;
@@ -2428,7 +2427,6 @@ export abstract class Expr {
         if (next.isCall2(chainOp)) {
           node = next;
           chainPath = nextPath;
-          continue;
         } else {
           result.push(new Path('left', chainPath));
           break;
@@ -2436,6 +2434,25 @@ export abstract class Expr {
       }
     } else {
       result.push(Path.empty);
+    }
+    return result;
+  }
+
+  /**
+   * Returns an array of all terms that are either left-sideward
+   * descendents of this and have the named op as their binOp; or are a
+   * left or right child of one of those.
+   */
+  chainParts(chainOp) {
+    const result = [];
+    let term = this;
+    while (term.isCall2(chainOp)) {
+      result.push(term);
+      result.push(term.getRight());
+      term = term.getLeft();
+    }
+    if (term !== this) {
+      result.push(term);
     }
     return result;
   }
