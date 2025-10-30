@@ -2420,38 +2420,58 @@ export function asProof(info) {
  * Dev tools formatter for Exprs.  For documentation see:
  * https://firefox-source-docs.mozilla.org/devtools-user/custom_formatters/index.html
  */
-const exprFormatter = {
+export const exprFormatter = {
   header: function (obj, config = { level: 0 }) {
+    const prop = config['prop'];
     if (obj instanceof Expr) {
-      const prop = config['prop'];
       const label = prop ? prop + ': ' : '';
-      return ['div', {}, label, obj.constructor.name, ' ', obj.$$];
+      const num = obj.stepNumber;
+      const dnum = obj.rendering?.stepNumber;
+      const numStr = (num && `[${num}]`) ?? (dnum && `(${dnum})`);
+      const ruleName = bind((nm = obj.ruleName) => (nm ? ` "${nm}"` : ''));
+      const type = obj.isProved() ? numStr || '|-' : obj.constructor.name;
+      return ['div', {}, label, type, ' ', obj.asWff().$$, ruleName];
+    }
+    // TODO: Handle ruleArgs as part of the body.
+    if (obj instanceof Array && prop) {
+      return ['div', {}, prop, ['object', { object: obj }]];
     }
   },
   hasBody: function (obj, config = { level: 0 }) {
-    return !(obj instanceof Atom);
+    return obj instanceof Call || obj instanceof Lambda;
   },
   body: function (obj, config = { level: 0 }) {
+    const elements = [];
     const level = config.level;
     const style = () => ({ style: `margin-left: ${2 * config.level + 1}em;` });
-    const mkPart = (prop, what = obj[prop]) => [
-      'object',
-      { object: what, config: { prop, level: level + 1 } },
-    ];
-    const elements = [];
+    const mkPart = (prop, what = obj[prop]) => {
+      elements.push([
+        'object',
+        {
+          object: what,
+          config: { prop, level: level + 1, formatter: exprFormatter },
+        },
+      ]);
+    };
     if (obj instanceof Call) {
       if (obj.isCall2()) {
-        elements.push(
-          mkPart('op', obj.getBinOp()),
-          mkPart('left', obj.getLeft()),
-          mkPart('right', obj.getRight())
-        );
+        mkPart('op', obj.getBinOp());
+        mkPart('left', obj.getLeft());
+        mkPart('right', obj.getRight());
       } else {
-        elements.push(mkPart('fn'), mkPart('arg'));
+        mkPart('fn');
+        mkPart('arg');
       }
     } else if (obj instanceof Lambda) {
-      elements.push(mkPart('bound'), mkPart('body'));
+      mkPart('bound');
+      mkPart('body');
     }
+    // const args = obj.ruleArgs;
+    // if (args instanceof Array) {
+    //   args.forEach((arg, i) => {
+    //     mkPart(`Arg ${i}`, arg);
+    //   });
+    // }
     const result = ['div', style()].concat(elements);
     return result;
   },
