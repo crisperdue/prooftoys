@@ -2416,6 +2416,50 @@ export function asProof(info) {
   }
 }
 
+/**
+ * Dev tools formatter for Exprs.  For documentation see:
+ * https://firefox-source-docs.mozilla.org/devtools-user/custom_formatters/index.html
+ */
+const exprFormatter = {
+  header: function (obj, config = { level: 0 }) {
+    if (obj instanceof Expr) {
+      const prop = config['prop'];
+      const label = prop ? prop + ': ' : '';
+      return ['div', {}, label, obj.constructor.name, ' ', obj.$$];
+    }
+  },
+  hasBody: function (obj, config = { level: 0 }) {
+    return !(obj instanceof Atom);
+  },
+  body: function (obj, config = { level: 0 }) {
+    const level = config.level;
+    const style = () => ({ style: `margin-left: ${2 * config.level + 1}em;` });
+    const mkPart = (prop, what = obj[prop]) => [
+      'object',
+      { object: what, config: { prop, level: level + 1 } },
+    ];
+    const elements = [];
+    if (obj instanceof Call) {
+      if (obj.isCall2()) {
+        elements.push(
+          mkPart('op', obj.getBinOp()),
+          mkPart('left', obj.getLeft()),
+          mkPart('right', obj.getRight())
+        );
+      } else {
+        elements.push(mkPart('fn'), mkPart('arg'));
+      }
+    } else if (obj instanceof Lambda) {
+      elements.push(mkPart('bound'), mkPart('body'));
+    }
+    const result = ['div', style()].concat(elements);
+    return result;
+  },
+};
+
+window['devtoolsFormatters'] ??= [];
+window['devtoolsFormatters'].push(exprFormatter);
+
 Toy.loaded.trigger('xutil');
 
 }  // namespace;

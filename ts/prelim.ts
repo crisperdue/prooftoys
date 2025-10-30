@@ -571,4 +571,20 @@ Path.prototype.startsWith = function(path_arg) {
   return this.remainder(path) !== null;
 }
 
+/**
+ * This customizes the debugger's presentation of Path objects.
+ */
+const pathFormatter = {
+  header: function (obj, config) {
+    if (obj instanceof Path) {
+      return ['div', {}, `Path "${obj.$$}"`];
+    }
+  },
+  hasBody: (obj) => false,
+  body: (obj) => null,
+};
+
+window['devtoolsFormatters'] ??= [];
+window['devtoolsFormatters'].push(pathFormatter);
+
 }  // namespace;
