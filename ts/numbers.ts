@@ -633,11 +633,11 @@ declare(
     priority: -5,
   },
   {
-    statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
+    statement: '@ ZZ x & ZZ y => ZZ (x + y)', axiom: true,
     description: 'ZZ is closed under addition',
   },
   {
-    statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
+    statement: '@ ZZ x & ZZ y => ZZ (x * y)', axiom: true,
     description: 'ZZ is closed under multiplication',
   },
   {
@@ -1689,7 +1689,8 @@ declare(
   // T as the value.  Returns null if the input is not an arithmetic
   // fact.
 rule('arithFact', {
-  action: function (wff) {
+  action: function (wff_arg) {
+    const wff = mathParse(wff_arg);
     if (wff.isEquation()) {
       const result = tryArithmetic(wff.eqnLeft());
       if (result && result.alphaMatch(wff)) {
