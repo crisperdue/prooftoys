@@ -306,7 +306,7 @@ function computeMenuCategories(info) {
 
 // Maps fact labels to categories.  Private to computeMenuCategories.
 const categoryOfLabel = {
-  // The "none" label is assigned automatically when no labels
+  // This "none" label is assigned automatically when no labels
   // are given.
   none: 'default',
   // The "none" category means "do not offer this fact".
@@ -1904,6 +1904,20 @@ Expr.prototype.withoutEqT = function() {
 };
 
 /**
+ * Expands a statement (that may be a string or Expr) into an Expr that
+ * can be considered to be true, using standard convenient means.  This
+ * expands registered facts, arithmetic facts, and tautologies.
+ */
+export function legitimize(stmt) {
+  return (
+    isProved(stmt) && stmt ||
+    factExpansion(stmt) ||
+    (rules.arithFact && rules.arithFact(stmt)) ||
+    rules.tautology.attempt(stmt)
+  );
+}
+
+/**
  * Searches the given pattern list for one whose "schema part" matches
  * the given term.  If it finds one, returns info about it in a plain
  * object in the format described below.  The schema part of a
@@ -2016,9 +2030,7 @@ export function findMatchingFact(facts_arg, cxt, term, pureOnly?) {
         // TODO: Change this to match before checking for inProgress,
         //   and warn when a match is rejected due to fact proof in
         //   progress.
-        var fullFact = (factExpansion(stmt) ||
-                        rules.arithFact && rules.arithFact(stmt) ||
-                        rules.tautology.attempt(stmt));
+        var fullFact = legitimize(stmt);
         if (!fullFact || isError(fullFact)) {
           continue;
         }
