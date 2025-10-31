@@ -4484,6 +4484,24 @@ declare(
 
 );
 
+//// More exponent laws
+
+// Some of these rely on the fact that x ^ 0 = 1.
+
+fact('x > 0 => (x ^ y) ^ z = x ^ (y * z)', {});
+
+fact('@ R x & ZZ y & ZZ z => (x ^ y) ^ z = x ^ (y * z)', {});
+
+fact('x ^ 0 = 1', {simplifier: true});
+
+fact('@ ZZ n & R b & b != 0 => b ^ (neg n) = 1 / (b ^ n)', {});
+
+fact('@ ZZ m & ZZ n & R b => b ^ m * b ^ n = b ^ (m + n)', {});
+
+fact('@ ZZ m & ZZ n & R b => (b ^ m) ^ n = b ^ (m * n)', {});
+
+fact('@ ZZ n & R b & R c => b ^ n * c ^ n = (b * c) ^ n', {});
+
 //// Examples
 
 declare(
