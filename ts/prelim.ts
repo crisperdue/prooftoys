@@ -132,6 +132,7 @@ export declare class Path {
   upTo(tail: any): any;
   last(): any;
   isRight(): boolean;
+  isJustRight(): boolean;
   getRight(): any;
   tail(): any;
   toString(): string;
@@ -401,6 +402,13 @@ Path.prototype.isRight = function() {
   return this.segment == 'right' || this.segment == 'arg';
 };
 
+/**
+ * This path exactly equal to /right.
+ */
+Path.prototype.isJustRight = function() {
+  return this.equals('/right');
+}
+
 Path.prototype.getRight = function() {
   assert(this.isRight(), 'Not a rightward path: {1}', this);
   // TODO: Change this when changing the meaning of infix.
@@ -558,7 +566,7 @@ Path.prototype.remainder = function(path) {
 /**
  * Tests for equality with this path.
  */
-Path.prototype.equals = function(path_arg) {
+Path.prototype.equals = function(path_arg: Pathable) {
   const p = asPath(path_arg);
   if (this.length() === p.length()) {
     return !!this.remainder(p)?.isEnd();
