@@ -579,10 +579,12 @@ const pathFormatter = {
     const label = config['label'];
     const labelText = label ? `${label}: ` : '';
     if (obj instanceof Path) {
-      return ['div', {}, '● ', labelText, `Path "${obj.$$}"`];
+      return ['div', {}, labelText, `Path "${obj.$$}"`];
     }
   },
-  hasBody: (obj) => false,
+  hasBody: (obj) => obj instanceof Path,
+  // When hasBody returns true, a null value here means "use the default
+  // body presentation".
   body: (obj) => null,
 };
 

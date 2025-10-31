@@ -2429,15 +2429,13 @@ export const exprFormatter = {
       const dnum = obj.rendering?.stepNumber;
       // Display the step number in parens if it is a real step that has
       // a rendering.
-      const numStr = (num && `[${num}]`) ?? (dnum && `(${dnum})`);
+      const numStr = (num && `[Step ${num}]`) ?? (dnum && `(Step ${dnum})`);
       const ruleName = bind((nm = obj.ruleName) => (nm ? ` "${nm}"` : ''));
       const type = obj.isProved() ? numStr || '|-' : obj.constructor.name;
-      const bullet = obj instanceof Atom ? ' ● ' : '';
       return [
         'div',
         // Indent all but the first line.
         { style: 'text-indent: -2.5em; margin: 0 10px 0 2em;' },
-        bullet,
         labelText,
         type,
         ' ',
@@ -2447,9 +2445,14 @@ export const exprFormatter = {
     }
   },
   hasBody: function (obj, context = { level: 0 }) {
-    return obj instanceof Call || obj instanceof Lambda;
+    // This basically specifies that every Expr display is expandable.
+    return obj instanceof Expr;
   },
   body: function (obj, context = { level: 0 }) {
+    if (obj instanceof Atom) {
+      // When hasBody is true, this means "use the default".
+      return null;
+    }
     const level = context.level;
     const ems = 2 * level + 1;
     // Left margin is based on the level.
