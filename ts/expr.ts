@@ -1662,6 +1662,15 @@ export abstract class Expr {
   }
 
   /**
+   * Returns truthy iff the given path refers to the consequent of this
+   * conditional.
+   */
+  isConsequent(path: Path) {
+    return this.implies() && path.length() === 1 &&
+      ['right', 'arg', 'main'].includes(path.segment);
+  }
+
+  /**
    * Returns truthy iff this is a conditional and the path refers to an
    * assumption in its assumptions chain.  Usually "this" is a whole
    * step.
@@ -2439,9 +2448,9 @@ export abstract class Expr {
   }
 
   /**
-   * Returns an array of all terms that are either left-sideward
-   * descendents of this and have the named op as their binOp; or are a
-   * left or right child of one of those.
+   * Returns an array of all terms that are either this; or
+   * left-sideward descendents of this and have the named op as their
+   * binOp; or are a left or right child of one of those.
    */
   chainParts(chainOp) {
     const result = [];
@@ -2452,6 +2461,8 @@ export abstract class Expr {
       term = term.getLeft();
     }
     if (term !== this) {
+      // This picks up the leftmost term, which is not a call2 of the
+      // chainOp.
       result.push(term);
     }
     return result;
