@@ -3551,7 +3551,7 @@ declare(
     tooltip: ('Given [p] and [q], derive p & q'),
     description: 'p & q;; from steps {step1}, {step2}',
     autoSimplify: noSimplify,
-    labels: 'ignore'
+    labels: 'basic'
   },
 
   // Deduces the conjunction of two proved steps, extracting type
