@@ -575,9 +575,11 @@ Path.prototype.startsWith = function(path_arg) {
  * This customizes the debugger's presentation of Path objects.
  */
 const pathFormatter = {
-  header: function (obj, config) {
+  header: function (obj, config = {}) {
+    const label = config['label'];
+    const labelText = label ? `${label}: ` : '';
     if (obj instanceof Path) {
-      return ['div', {}, `Path "${obj.$$}"`];
+      return ['div', {}, '● ', labelText, `Path "${obj.$$}"`];
     }
   },
   hasBody: (obj) => false,

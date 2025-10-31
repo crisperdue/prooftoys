@@ -2421,38 +2421,51 @@ export function asProof(info) {
  * https://firefox-source-docs.mozilla.org/devtools-user/custom_formatters/index.html
  */
 export const exprFormatter = {
-  header: function (obj, config = { level: 0 }) {
-    const prop = config['prop'];
+  header: function (obj, context = { level: 0 }) {
+    const label = context['label'];
     if (obj instanceof Expr) {
-      const label = prop ? prop + ': ' : '';
+      const labelText = label ? label + ': ' : '';
       const num = obj.stepNumber;
       const dnum = obj.rendering?.stepNumber;
+      // Display the step number in parens if it is a real step that has
+      // a rendering.
       const numStr = (num && `[${num}]`) ?? (dnum && `(${dnum})`);
       const ruleName = bind((nm = obj.ruleName) => (nm ? ` "${nm}"` : ''));
       const type = obj.isProved() ? numStr || '|-' : obj.constructor.name;
-      return ['div', {}, label, type, ' ', obj.asWff().$$, ruleName];
-    }
-    // TODO: Handle ruleArgs as part of the body.
-    if (obj instanceof Array && prop) {
-      return ['div', {}, prop, ['object', { object: obj }]];
+      const bullet = obj instanceof Atom ? ' ● ' : '';
+      return [
+        'div',
+        // Indent all but the first line.
+        { style: 'text-indent: -2.5em; margin: 0 10px 0 2em;' },
+        bullet,
+        labelText,
+        type,
+        ' ',
+        obj.asWff().$$,
+        ruleName,
+      ];
     }
   },
-  hasBody: function (obj, config = { level: 0 }) {
+  hasBody: function (obj, context = { level: 0 }) {
     return obj instanceof Call || obj instanceof Lambda;
   },
-  body: function (obj, config = { level: 0 }) {
-    const elements = [];
-    const level = config.level;
-    const style = () => ({ style: `margin-left: ${2 * config.level + 1}em;` });
-    const mkPart = (prop, what = obj[prop]) => {
+  body: function (obj, context = { level: 0 }) {
+    const level = context.level;
+    const ems = 2 * level + 1;
+    // Left margin is based on the level.
+    const style = { style: `margin: 0 4px 0 ${ems}em;` };
+    const elements: any[] = ['div', style];
+
+    const mkPart = (label, what = obj[label]) => {
       elements.push([
         'object',
         {
           object: what,
-          config: { prop, level: level + 1, formatter: exprFormatter },
+          config: { label, level: level + 1 },
         },
       ]);
     };
+
     if (obj instanceof Call) {
       if (obj.isCall2()) {
         mkPart('op', obj.getBinOp());
@@ -2466,14 +2479,15 @@ export const exprFormatter = {
       mkPart('bound');
       mkPart('body');
     }
-    // const args = obj.ruleArgs;
-    // if (args instanceof Array) {
-    //   args.forEach((arg, i) => {
-    //     mkPart(`Arg ${i}`, arg);
-    //   });
-    // }
-    const result = ['div', style()].concat(elements);
-    return result;
+    const args = obj.ruleArgs;
+    if (args instanceof Array) {
+      args.forEach((arg, i) => {
+        mkPart(`Arg ${i}`, arg);
+      });
+    }
+    const result: any = ['div', style, elements];
+    // result.push(v, ['tr', 'aasdfasdf', 'flub'],);
+    return elements;
   },
 };
 
