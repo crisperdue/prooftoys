@@ -607,6 +607,13 @@ const ruleProps = new Set(propNames);
 //   class=data-arg=n> for a display of the nth ruleArg that is an
 //   Expr.
 //
+// priority: optional number, defaulting to zero, that controls order of
+//   presentation of the rule in the menu.  Higher priorities are
+//   presented before lower ones.  If no number is given, the priority is
+//   assigned as the number of leading spaces in the "menu" property.
+//   Can be overridden by menuGen; also available as a property of
+//   facts, affecting rewrites.
+//
 // menuGen: function to return zero or more menu entries for
 //   application(s) of the rule.  It will be passed the ruleName, step,
 //   selected term or null if none, and the ProofEditor for which it is
@@ -2739,6 +2746,7 @@ var factProperties = {
  * labels: Optional object/set of label names.  If given as a string,
  *   parses space-separated parts into a set.  The result constains just
  *   "none" if none are given.
+ * priority: priority for menu items using this fact as a rewriter.
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
  * 
