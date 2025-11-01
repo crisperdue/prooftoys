@@ -2261,6 +2261,7 @@ class RuleMenu {
   $modeList;
   $node;
   $items;
+  itemInfos;
   $title;
 
   /**
@@ -2304,6 +2305,8 @@ class RuleMenu {
     self.$node = $node;
     // Container node for menu items.
     self.$items = $('<div class=rulesItems>');
+    // Info that generates $items; here for debugging
+    self.itemInfos = [];
 
     self.$title = $('<div class=ruleMenuTitle>Actions:</div>');
 
@@ -2417,8 +2420,9 @@ class RuleMenu {
     const selection = selStep && selStep.selection;
     const sitePath = selection && selStep.prettyPathTo(selection);
 
-    // Array of plain objects, on per menu item.
-    var itemInfos = [];
+    // Array of plain objects, one per menu item.
+    self.itemInfos.length = 0;
+    const itemInfos = self.itemInfos;
 
     // Find inference rules that appear relevant to the current
     // selection and proof status.  Rule priorities default to 0.
