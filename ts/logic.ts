@@ -3665,6 +3665,84 @@ declare(
 );
 
 /**
+ * Given a conditional step and boolean term, adds the term to the
+ * conclusion by means of assuming it.
+ */
+rule('concludeRight', {
+  action2: function(step, term) {
+    if (step.implies() && term.isBoolean()) {
+      return () => {
+        const rewriter = (rules.tautology('a => (T == a)')
+          .andThen('instVar', term, 'a'));
+        const step2 = rules.rewriteOnly(step, '', '(a => b) == (a => b & T)');
+        const step3 = rules.rewriteOnly(step2, '/right/right', rewriter);
+        return step3;
+      }
+    }
+  },
+  inputs: {step: 1, bool: 2},
+  form: 'Conclude <input name=bool> assuming it as needed',
+  menu: 'conclude rightmost by assuming',
+  labels: 'basic',
+  description: 'concluding {bool} at right as assumption',
+});
+
+/**
+ * Given a conditional step and a path to one of its assumptions,
+ * conjoin it to the step's conclusion.  This works smoothly with a
+ * conjunction of new assumptions.
+ */
+rule('concludeLeft', {
+  action2: function(step, term) {
+    const fn = rules.concludeRight.prep(step, term);
+    return fn && (() => fn().andThen('moveLeftmost', '/right/right'));
+  },
+  inputs: {step: 1, bool: 2},
+  form: 'Conclude <input name=bool> assuming it as needed',
+  menu: 'conclude leftmost by assuming',
+  labels: 'basic',
+  description: 'concluding {bool} at left as assumption',
+});
+
+/**
+ * Given a conditional step and a path to one of its assumptions,
+ * conjoin it to the step's conclusion.
+ */
+rule('concludeAsmRight', {
+  action2: function(step, path_arg) {
+    const path = step.prettifyPath(path_arg);
+    if (step.isAsmPath(path)) {
+      return () => {
+        const term = step.get(path);
+        return rules.concludeRight(step, term);
+      }
+    }
+  },
+    inputs: {site: 1},
+    menu: 'conclude assumption {term} -- last',
+    labels: 'basic',
+    description: 'concluding assumption {site};; from step {siteStep}',
+});
+
+/**
+ * Given a conditional step and a path to one of its assumptions,
+ * conjoin it to the step's conclusion.
+ */
+rule('concludeAsmLeft', {
+  action2: function(step, path_arg) {
+    const fn = rules.concludeAsmRight.prep(step, path_arg);
+    if (fn) {
+      return () => fn().andThen('moveLeftmost', '/right/right');
+    }
+  },
+    inputs: {site: 1},
+    menu: 'conclude assumption {term} -- first',
+    labels: 'basic',
+    description: 'concluding assumption {site};; from step {siteStep}',
+});
+
+
+/**
  * Adds the selected term to the assumptions.  Offered only when it is
  * not already an assumption and all of its locally free vars are free
  * in context.
