@@ -3719,7 +3719,7 @@ rule('concludeAsmRight', {
     }
   },
     inputs: {site: 1},
-    menu: 'conclude assumption {term} -- last',
+    menu: 'conclude {term} (right)',
     labels: 'basic',
     description: 'concluding assumption {site};; from step {siteStep}',
 });
@@ -3736,7 +3736,7 @@ rule('concludeAsmLeft', {
     }
   },
     inputs: {site: 1},
-    menu: 'conclude assumption {term} -- first',
+    menu: 'conclude {term} (left)',
     labels: 'basic',
     description: 'concluding assumption {site};; from step {siteStep}',
 });
