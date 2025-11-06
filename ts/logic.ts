@@ -2242,9 +2242,11 @@ declare(
   // Ultimately uses rules.rewrite and rules.replace, so resulting
   // assumptions will be simplified and arranged.
   {name: 'simplifySite',
-    action: function(step, path, opt_facts?, asms=true) {
-      var result = rules._simplifySite(step, path, opt_facts, asms);
-      return result.justify('simplifySite', arguments, [step]);
+    action2: function(step, path_arg, opt_facts?, asms=true) {
+      const path = step.asPath(path_arg);
+      if (path.last() !== 'bound') {
+        return () => rules._simplifySite(step, path, opt_facts, asms);
+      }
     },
     inputs: {site: 1},
     minArgs: 2,
