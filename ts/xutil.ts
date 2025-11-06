@@ -2450,7 +2450,8 @@ export const exprFormatter = {
   },
   body: function (obj, context = { level: 0 }) {
     if (obj instanceof Atom) {
-      // When hasBody is true, this means "use the default".
+      // When hasBody is true, null / undefined requests default
+      // formatting.
       return null;
     }
     const level = context.level;

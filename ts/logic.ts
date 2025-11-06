@@ -6468,14 +6468,15 @@ declare(
  * "left" for leftward movers or "right" for rightward movers.  The step
  * and path refer to a term to be moved.
  * 
- * Searches through each fact of each "info" in order for a schema that
- * matches the appropriate parent of the target term, returning an
- * object with "completer" and "path" properties if found, or an empty
- * object if not.
+ * Searches through each fact of each "info" in the 'left' or 'right'
+ * property of moverFacts in order seeking a schema that matches the
+ * appropriate parent of the target term, returning an object with
+ * "completer" and "path" properties if found, or an empty object if
+ * not.
  * 
- * The completer is suitable as an action2 completer function and the
- * path points to the location of the term after being moved, assuming
- * the rewrite does not invalidate the input path argument.
+ * The returned completer is suitable as an action2 completer function
+ * and the path points to the location of the term after being moved,
+ * ignoring possible addition or modification of assumptions.
  */
 function moverAction(which, step, path_arg) {
   initMovers();
@@ -6643,7 +6644,8 @@ declare(
 
   /**
    * If the target term is a member or "prefix" of a chain and not the
-   * top of a chain, moves it to become the rightmost chain element.
+   * top of a chain, moves it to become the rightmost chain element,
+   * otherwise returns the input step.
    * 
    * About the terminology: In a chain x + y + z, each of x, y, and z
    * are chain elements.  The term x + y is a "prefix", and x + y + z is
@@ -6677,9 +6679,10 @@ declare(
          }
        }
      };
-     // This rule can apply if there is at least one chain term
-     // to the right, but see toOffer below here.
-     return rightChain(step, path_arg).length > 0 ? mover : null;
+     // This rule can always apply, but see toOffer below here.
+     return (rightChain(step, path_arg).length > 0
+       ? mover
+       : () => step);
    },
    inputs: {site: 1},
    toOffer: function(step, term) {
@@ -7245,7 +7248,7 @@ declare(
       //   predicates and functions of individuals, et cetera.
       // TODO: Also screen out terms with locally free occurrences
       //   of variables bound in an enclosing scope.
-      return term.type !== boolean;
+      return term.type !== boolean && step.asPath(path).last() !== 'bound';
     },
     action: function (step, path_arg) {
       var path = step.asPath(path_arg);
