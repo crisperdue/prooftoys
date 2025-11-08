@@ -281,28 +281,28 @@ if (!Toy['deeperFieldAxioms']) {
     {statement: '@ x + none = none',
      proof: function() {
        return (rules.fact('strict2 (+)')
-               .andThen('chain0', 'strict2 f => f x none = none'));
+               .andThen('chain0', '', 'strict2 f => f x none = none'));
      },
      simplifier: true,
     },
     {statement: '@ none + x = none',
      proof: function() {
        return (rules.fact('strict2 (+)')
-               .andThen('chain0', 'strict2 f => f none x = none'));
+               .andThen('chain0', '', 'strict2 f => f none x = none'));
      },
      simplifier: true,
     },
     {statement: '@ x * none = none',
      proof: function() {
        return (rules.fact('strict2 (*)')
-               .andThen('chain0', 'strict2 f => f x none = none'));
+               .andThen('chain0', '', 'strict2 f => f x none = none'));
      },
      simplifier: true,
     },
     {statement: '@ none * x = none',
      proof: function() {
        return (rules.fact('strict2 (*)')
-               .andThen('chain0', 'strict2 f => f none x = none'));
+               .andThen('chain0', '', 'strict2 f => f none x = none'));
      },
      simplifier: true,
     },
@@ -460,7 +460,7 @@ fact('@ x < y => R x', {
   proof: function () {
     return rules
       .fact('@ x < y => R x & R y')
-      .andThen('chain0', 'a => b & c => (a => b)');
+      .andThen('chain0', '', 'a => b & c => (a => b)');
   },
   priority: -10,
 });
@@ -470,7 +470,7 @@ fact('@ x < y => R y', {
     return rules
       .fact('@ x < y => R x & R y')
       .rewrite('/right', 'a & b == b & a')
-      .andThen('chain0', 'a => b & c => (a => b)');
+      .andThen('chain0', '', 'a => b & c => (a => b)');
   },
   priority: -10,
 });
@@ -782,14 +782,14 @@ declare(
   {statement: '@ x - none = none',
    proof: function() {
      return (rules.fact('strict2 (-)')
-             .andThen('chain0', 'strict2 f => f x none = none'));
+             .andThen('chain0', '', 'strict2 f => f x none = none'));
    },
    simplifier: true,
   },
   {statement: '@ none - x = none',
    proof: function() {
      return (rules.fact('strict2 (-)')
-             .andThen('chain0', 'strict2 f => f none x = none'));
+             .andThen('chain0', '', 'strict2 f => f none x = none'));
    },
    simplifier: true,
   },
@@ -849,9 +849,9 @@ declare(
     (2 extractHyp (s 1) (t ((x + z) < (y + z))))
     (3 fact "x < y => x + z < y + z")
     (4 extractHyp (s 3) (t (x < y)))
-    (5 chain0 (s 4)
+    (5 chain0 (s 4) (path "")
        (t ((a1 => (b => c)) => ((a2 => (c => b)) => ((a1 & a2) => (b == c))))))
-    (6 chain0 (s 2) (s 5))
+    (6 chain0 (s 2) (path "") (s 5))
     (7 simplifyAsms (s 6))`
   },
 
@@ -867,7 +867,7 @@ declare(
   {statement: 'u < v => x + u < x + v',
    proof: function() {
      return (rules.fact('u < v == x + u < x + v')
-             .andThen('chain0', 'a => (b == c) => (a & b => c)'));
+             .andThen('chain0', '', 'a => (b == c) => (a & b => c)'));
    },
   },
 
@@ -1632,7 +1632,7 @@ declare(
             } else if (left.isNumeral() && right.isConst('none')) {
               const s0 = (rules.axiomArithmetic(call('R', left))
                           .andThen('rewriteOnly', '', 'a == T == a'));
-              const s1 = rules.chain0(s0, 'R a => a != none');
+              const s1 = rules.chain0(s0, '', 'R a => a != none');
               const s2 = rules.rewriteOnly(s1, '', 'a != b == (a = b == F)');
               return s2;
             }

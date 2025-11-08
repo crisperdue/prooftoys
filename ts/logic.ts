@@ -4442,7 +4442,7 @@ declare(
    proof: [
      '(1 tautologous (t (((p x) => (q x)) => (((p x) & (a x)) => (q x)))))',
      '(2 toForall0 (s 1) "x")',
-     `(3 chain0 (s 2) 
+     `(3 chain0 (path "") (s 2) 
          (t ((forall {x. ((p x) => (q x))}) => ((forall p) => (forall q)))))`,
    ],
   },
@@ -5643,43 +5643,55 @@ declare(
   },
 );
 
-// Menu generator for chain0, chain1 and chain1Only. For chain0, works
-// from a selected step, taking its wff as the "target".  For chain1 and
-// chain1Only, works from a selected term that is the conclusion of a
-// conditional step, taking that term as the target. Searches through
-// recorded facts and proof steps, seeking ones that are conditional,
-// with the entire antecedent matching as a schema with the target term.
-//
-// For each match found, effectively replaces the target with a
-// substitution instance of the conclusion of the found fact or step.
-// For the chain1 variants, the result includes the selected step's
-// assumptions.
+/* 
+ * Menu generator for the chain0 and chain1 families of rules.  Checks
+ * for selection of a "chainPart" of the conjunctive "main" part of the
+ * step, or the entire main part.
+ *
+ * If there is such a selection, searches for facts and steps whose
+ * antecedents match as schemas with the selection, offering to apply
+ * each one that matches.
+ */
 function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
-  if (selTerm && (!selStep.implies() || selTerm !== selStep.getRight())) {
+  if (!selTerm) {
     return null;
   }
-  // True if this will set up invocations of chain0.
-  const chain0 = !selTerm;
-  const ruleName = chain0 ? 'chain0' : 'chain1';
-  if (ruleName !== ruleName_arg) {
+  const ppath = selStep.prettyPathTo(selTerm);
+  if (selStep.implies() && !ppath.isRight()) {
     return null;
   }
+
+  const main = selStep.getMain();
+  const hasAsms = selStep.implies();
+  const chainAll = selTerm === main;
+  const chainable = chainAll || main.chainParts('&').includes(selTerm);
+
+  if (!chainable) {
+    return null;
+  }
+
+  const ruleName = hasAsms
+    ? (chainAll ? 'chain1Only' : 'chain1OnlyPart')
+    : (chainAll ? 'chain0' : 'chain0Part');
+    
   const step = selStep.original;
-  // This is the term to match against the LHS of the schema conditional.
-  const target = chain0 ? step.wff : step.wff.getRight();
+  const target = step.get(ppath);
   const results = [];
-  Toy.eachFact(info => {
+
+  eachFact(info => {
     const goal = info.goal;
     if (goal.implies()) {
       const map = target.matchSchema(goal.getLeft());
       if (map) {
         results.push({ruleName,
-                      ruleArgs: [step, goal],
+                      ruleArgs: [step, ppath, goal],
                       html: 'chain with ' + goal.toHtml(),
+                      priority: 3,
                      });
       }
     }
   });
+
   editor.steps.forEach((step_arg, index) => {
     const schemaStep = step_arg.original;
     const schema = schemaStep.wff;
@@ -5687,9 +5699,9 @@ function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
       const map = target.matchSchema(schema.getLeft());
       if (map) {
         results.push({ruleName,
-                      ruleArgs: [step, schemaStep],
+                      ruleArgs: [step, ppath, schemaStep],
                       html: 'chain with step ' + (index + 1),
-                      priority: 2,
+                      priority: 3,
                      });
       }
     }
@@ -5697,13 +5709,16 @@ function chainMenuGen(ruleName_arg, selStep, selTerm, editor) {
   return results;
 }
 
+/**
+ * Computes the description for the chain0 and chain1 families of rules.
+ */
 function chainDescription(step) {
-  const [inStep, schema] = step.ruleArgs;
+  const [inStep, path, schema] = step.ruleArgs;
   if (Toy.isProved(schema)) {
     const rendering = schema.rendering;
-    return `chain;; from step {step} with step ${rendering.stepNumber}`;
+    return `chain;; from step {siteStep} with step ${rendering.stepNumber}`;
   } else {
-    return 'reasoning forward;; from step {step} with {fact}';
+    return 'reasoning forward;; from step {siteStep} with {fact}';
   }
 }
 
@@ -5838,29 +5853,40 @@ function detachDescription(step) {
   }
 }
 
-// Chain1 is a generalization of modus ponens that works with a
-// conditional step and a conditional fact (or step).  It matches the
-// consequent of the step agains the antecedent of the step, which it
-// treats as a schema to match.  Chain1 and chain1Only carry the
-// assumptions of the step into the conclusion, and chain1 merges
-// assumptions from the step with ones that come from the fact.
-// 
-// Chain0 similarly matches the schema antecedent against the entire
-// step.
+// All of the rules in this "chain" family effectively replace the
+// target term of the step with a substitution instance of the
+// conclusion of the given schema fact or step. For the chain1 variants,
+// the result has the selected step's assumptions.
+//
+// TODO: Consider supporting schema steps (and facts??) with two levels
+//   of assumptions.  In these cases, the inner level would be matched
+//   against the target term, and the outer level would carry down as
+//   assumptions of the final result.
+//
+//   Or make the user push the unwanted schema assumptions into the
+//   consequent, negating and disjoining them. (!)
 declare(
-  // Forward reasoning: Chain a conditional step, matching its
-  // conclusion with the left side of a conditional schema.  Available
-  // interactively only through menuGen.  Interactively select a
-  // proved step to match it against antecedents of conditional steps
-  // and facts (schemas).  Expects both inputs to be conditionals.
-  //
-  // TODO: Consider eliminating this by extending detach so it can match
-  //   an entire antecedent.
+  /**
+   * Forward reasoning: Chain a conditional step, matching its
+   * conclusion with the left side of a conditional schema.  Available
+   * interactively only through menuGen.  Interactively select a
+   * proved step to match it against antecedents of conditional steps
+   * and facts (schemas).  Expects both inputs to be conditionals.
+   */
   {name: 'chain1Only',
-   action2: function(step, schema_arg) {
-     const schema = termify(schema_arg);
-     assert(schema.implies(), 'Not conditional: {1}', schema);
-     assert(step.implies(), 'Not conditional: {1}', step);
+   action2: function(step, path_arg: Path, schema_arg) {
+     // See findMatchingFact for similar!!
+     const schema = isProved(schema_arg) ? schema_arg : factExpansion(schema_arg);
+     if (!schema.implies()) {
+       return null;
+     }
+     if (!step.implies()) {
+       return null;
+     }
+     const path = step.asPath(path_arg);
+     if (!path.isJustRight()) {
+       return null;
+     }
      const target = step.wff.getRight();
      const map = target.matchSchema(schema.getLeft());
      return map && (() => {
@@ -5869,9 +5895,9 @@ declare(
        // We may have a step RHS that applies a lambda and a schema LHS
        // like (p x), so don't beta reduce after instantiating.
        const instance = rules.instMultiVars(schema2, map,
-        // TODO: Probably we should be precise about beta expansions and
-        // let instMultiVars figure it all out from the map.
-          betaExpansions.get(map));
+         // TODO: Probably we should be precise about beta expansions and
+         // let instMultiVars figure it all out from the map.
+         betaExpansions.get(map));
        // Replace the antecedent of the schema with T (after substitution),
        // bringing over the assumptions from the step at the top level.
        const result = rules.r2(instance, '/left', eqn);
@@ -5880,64 +5906,180 @@ declare(
        return conclusion;
      });
    },
-   labels: 'uncommon',
-   inputs: {step: 1, bool: 2},
+   labels: 'ignore',
+   inputs: {site: 1, bool: 3},
    description: chainDescription,
-   menuGen: chainMenuGen,
+   menuGen: () => null,
   },
 
-  // Forward reasoning, like chain1Only, but where that returns
-  // (a => (b => c)), this combines and simplifies "a" and "b"
-  // as the assumptions.  Succeeds when chain1Only succeeds.
-  {name: 'chain1',
-   action2: function(step, schema_arg) {
-     const schema = termify(schema_arg);
-     const onward = rules.chain1Only.prep(step, schema);
-     if (onward) {
-       const chained = onward();
-       const withAsms = Toy.applyMatchingFact(
-         chained,
-         '',
-         ['a => (b => c) == a & b => c'],
-         'rewriteOnly'
-       );
-       const simpler = withAsms && rules.simplifyAsms(withAsms);
-       return () => simpler || chained;
+  /**
+   * This is like chain1Only, but here the target must be a "proper
+   * chain part" of the consequent, which must be a chain of conjuncts.
+   * Transforms the consequent into a conjunction with the target as the
+   * second conjunct.  Then splits the conditional into two, applies
+   * chain1Only to the one with the target term as its consequent, then
+   * rejoins the result of that with the other conditional.
+   */
+  {name: 'chain1OnlyPart',
+   action2: function(step, path: Path, schema_arg) {
+     // See findMatchingFact for similar!!
+     const schema = isProved(schema_arg) ? schema_arg : factExpansion(schema_arg);
+     if (!schema.implies() || !step.implies() || !step.isMainSide(path)) {
+       return null;
+     }
+     if (step.isConsequent(path)) {
+       return null;
+     }
+     const target = step.get(path);
+     const parts = step.getRight().chainParts('&');
+     if (!parts.includes(target)) {
+       return null;
+     }
+     const map = target.matchSchema(schema.getLeft());
+     return map && (() => {
+       if (path.equals('/right')) {
+         return rules.chain1Only(step, path, schema);
+       } else {
+         const split = rules.moveRightmost(step, path);
+         // The matched part of the consequent is "c" below.
+         const left = rules.chain0(split, '', '(a => b & c) => (a => b)');
+         const right = rules.chain0(split, '', '(a => b & c) => (a => c)');
+         const chained = rules.chain1Only(right, '/right', schema);
+         const both = rules.and(left, chained);
+         const rejoined = rules.rewriteOnly(both, '',
+           '(a => b) & (a => c) == (a => c & b)');
+         const result = rules.flattenAnd(rejoined, '/right');
+         return result;
+       }
+     });
+   },
+   menu: 'chain from here',
+   form: 'Chain with <input name=bool>',
+   labels: 'basic',
+   inputs: {site: 1, bool: 3},
+   description: chainDescription,
+   // This rule has the menu generation for the other chain rules that
+   // lack it.
+   menuGen: chainMenuGen,
+   priority: 10,
+  },
+
+  /**
+   * Forward reasoning, like chain1Only, but where that returns
+   * (a => (b => c)), this combines and simplifies "a" and "b"
+   * as the assumptions.  Succeeds when chain1Only succeeds.
+   *
+   * TODO: Not supported yet by menuGen.  XXX
+   */
+  // {name: 'chain1',
+  //  action2: function(step, schema_arg) {
+  //    const schema = termify(schema_arg);
+  //    const onward = rules.chain1Only.prep(step, schema);
+  //    if (onward) {
+  //      const chained = onward();
+  //      const withAsms = applyMatchingFact(
+  //        chained,
+  //        '',
+  //        ['a => (b => c) == a & b => c'],
+  //        'rewriteOnly'
+  //      );
+  //      const simpler = withAsms && rules.simplifyAsms(withAsms);
+  //      return () => simpler || chained;
+  //    }
+  //  },
+  //  labels: 'basic',
+  //  inputs: {step: 1, bool: 2},
+  //  description: chainDescription,
+  //  menuGen: () => null,
+  // },
+
+  /**
+   * Incomplete.
+   */
+  // {name: 'chain1Part',
+  //   action2: function(step, path_arg, schema_arg) {
+  //     const path = step.asPath(path_arg);
+  //     if (step.implies() && path.isRight()) {
+  //       const target = step.get(path);
+  //       const schema = termify(schema_arg);
+  //       const map = target.matchSchema(schema);
+  //       if (map) {
+
+  //       }
+  //     }
+  //   }
+  // },
+
+  // Forward reasoning: Chain from a proved step that is a conjunction
+  // and a schema step or fact.  The target must be a chainPart of the
+  // conjunction, but not the whole thing.
+  // This matches the target with the antecedent of the schema,
+  // replacing it with the appropriate instance of the schema's consequent.
+  {name: 'chain0Part',
+   action2: function(step, path_arg, schema_arg) {
+     const schema = legitimize(schema_arg);
+     const path = step.asPath(path_arg);
+     if (schema.implies()) {
+       const target = step.get(path);
+       if (path.isEnd() || !step.chainParts('&').includes(target)) {
+         return null;
+       }
+       const map = target.matchSchema(schema.getLeft());
+       if (map) {
+         return () => {
+           // Move rightmost; prove each half; chain0; rejoin.
+           const split = rules.moveRightmost(step, path);
+           // The matched part of the consequent is "c" below.
+           const left = rules.chain0(split, '', 'a & b => a');
+           const right = rules.chain0(split, '', 'a & b => b');
+           const chained = rules.chain0(right, '', schema);
+           const both = rules.and(chained, left);
+           return both;
+         }
+       }
      }
    },
-   labels: 'basic',
-   inputs: {step: 1, bool: 2},
+   inputs: {site: 1, bool: 3},
+   labels: 'ignore',
    description: chainDescription,
-   menuGen: chainMenuGen,
+   menuGen: () => null,
   },
 
-  // Forward reasoning: Chain from a proved step, matching all of it
-  // with the left side of the conditional schema step or fact
-  // statement.  This proves an instance of the conclusion of the
-  // schema.  Available interactively only through menuGen.
-  // Interactively select the consequent of a step to match it against
-  // antecedents of conditional steps and facts (schemas).
+  /**
+   * Forward reasoning: Chain from a proved step, matching all of it
+   * with the left side of the conditional schema step or fact
+   * statement.  This proves an instance of the conclusion of the
+   * schema.  Available interactively only through menuGen.
+   * Interactively select the consequent of a step to match it against
+   * antecedents of conditional steps and facts (schemas).
+   */
   {name: 'chain0',
-   action: function(step, schema_arg) {
-     const schema = termify(schema_arg);
-     assert(schema.implies(), 'Not conditional: {1}', schema);
+   action2: function(step, path: Path, schema_arg) {
+     // See findMatchingFact for similar!!
+     const schema = legitimize(schema_arg);
+     assert(schema, 'Not factual: {1}', schema_arg);
+     if (!schema.implies()) {
+       return null;
+     }
      const target = step.wff;
      const map = target.matchSchema(schema.getLeft());
-     const proved = schema.isProved();
-     assert(map, 'In chain0 {1} does not match schema {2}',
-            step, schema.getLeft());
-     const eqn = rules.rewriteOnly(step, '', 'a == (a == T)');
-     const schema2 = rules.fact(schema);
-     const instance = rules.instMultiVars(schema2, map, true);
-     const replaced = rules.replace(instance, '/left', eqn);
-     const result = rules.rewriteOnly(replaced, '', 'T => a == a');
-     return result.justify('chain0', arguments,
-                           proved ? [step, schema] : [step]);
+     if (map) {
+       return (() => {
+         const eqn = rules.rewriteOnly(step, '', 'a == (a == T)');
+         const schema2 = rules.fact(schema);
+         const instance = rules.instMultiVars(schema2, map, true);
+          // TODO: Refine this, see also the chain1 rules.
+          // betaExpansions.get(map));
+         const replaced = rules.replace(instance, '/left', eqn);
+         const result = rules.rewriteOnly(replaced, '', '(T => a) == a');
+         return result;
+     })
+    }
    },
-   inputs: {step: 1, bool: 2},
-   labels: 'basic',
+   inputs: {site: 1, bool: 3},
+   labels: 'ignore',
    description: chainDescription,
-   menuGen: chainMenuGen,
+   menuGen: () => null,
   },
 
   // Matches the conclusion of a conditional proved step with part of
@@ -5955,7 +6097,7 @@ declare(
   // producing a step suitable for use as a schema.
   //
   // Compare with forwardChain, which matches the entire step with an
-  // entire schema antecedent, chain0, chain1, and chain1Only.
+  // entire schema antecedent, and the "chain..." rules.
   {name: 'detach',
    action2: function(step, schema_arg, path_arg) {
      const schema = (Toy.isProved(schema_arg)
@@ -6237,9 +6379,10 @@ declare(
     tooltip: 'extract an assumption'
   },
 
+  // TODO: re-implement this.
   {name: 'isolateAsmAt',
     precheck: function(step, path_arg) {
-      const path = Toy.asPath(path_arg);
+      const path = step.asPath(path_arg);
       const pathstr = step.wff.prettifyPath(path).toString();
       const asms = step.asmMap();
       return asms.has(pathstr);
@@ -7886,10 +8029,10 @@ declare(
        (t ((strict2 f) ==
            ((forall {x. ((f x none) = none)}) &
             (forall {x. ((f none x) = none)})))))
-    (3 chain0 (s 2) (t ((a == (b & c)) => (a => b))))
+    (3 chain0 (s 2) (path "") (t ((a == (b & c)) => (a => b))))
     (4 rewrite (s 3) (path "")
        (t ((p => (forall q)) == (forall {x. (p => (q x))}))))
-    (5 chain0 (s 4) (t ((forall p) => (p x))))`,
+    (5 chain0 (s 4) (path "") (t ((forall p) => (p x))))`,
   },
 
   {statement: 'strict2 f => f none x = none',
@@ -7900,10 +8043,10 @@ declare(
           ((forall {x. ((f x none) = none)}) &
            (forall {x. ((f none x) = none)})))))
    (3 moveLeft (s 2) (path "/main/right/right"))
-   (4 chain0 (s 3) (t ((a == (b & c)) => (a => b))))
+   (4 chain0 (s 3) (path "") (t ((a == (b & c)) => (a => b))))
    (5 rewrite (s 4) (path "")
       (t ((p => (forall q)) == (forall {x. (p => (q x))}))))
-   (6 chain0 (s 5) (t ((forall p) => (p x))))`,
+   (6 chain0 (s 5) (path "") (t ((forall p) => (p x))))`,
   },
 
 );
