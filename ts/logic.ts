@@ -4150,6 +4150,18 @@ declare(
     labels: 'uncommon'
   },
 
+  // Probably not useful:
+  // {statement: 'forall {x. forall {y. p x y}} => p x y',
+  //   proof: `(steps
+  //     (1 fact "forall p => p x")
+  //     (2 instVar (s 1) (t ({x. (forall {y. (p x y)})})) (t (p)))
+  //     (3 reduceAll (s 2) (path "/right"))
+  //     (4 fact "forall p => p x")
+  //     (5 instVar (s 4) (t (y)) (t (x)))
+  //     (6 chain1Only (s 3) (path "/right") (s 5))
+  //     (7 reduceAll (s 6) (path "/right")))`,
+  // },
+
   // 2104
   {name: 'r2104',
     statement: 'forall {x. p x => q x} => (forall p => forall q)',
