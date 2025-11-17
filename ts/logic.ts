@@ -400,7 +400,7 @@ export interface Expr {
  * little or as much internal sharing as allowable by well-formedness.
  */
 Expr.prototype.ruleRCore = function(target, path_arg) {
-  // Type substitutions in Rule R to both inputs must give results
+  // Type substitutions in Rule R to both inputs must give results that
   // match in their types as well as their subexpressions.  As a
   // consequence, all further substitutions into the results must also
   // match in this way, for example substitutions with constant types.
@@ -451,7 +451,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
   // of variables of the target step.
   const pairs = [];
   // Substitution map for types, from x types to y types.
-  const typeMap = new Map();
+  const typeMap = new Map<string, TypeEx>();
 
   const lhs = eqn.getLeft();
   const rhs = eqn.getRight();
@@ -460,11 +460,11 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
   // Mappings from names of in-scope bound variables to their binding
   // level, during calls to "match".  These may contain mappings to
   // "undefined", meaning that there is no current binding.
-  const xLevels = new Map();
-  const yLevels = new Map();
+  const xLevels = new Map<string, number>();
+  const yLevels = new Map<string, number>();
 
-  // Tests whether strings x and y represent corresponding variables
-  // of the terms being matched, in the current scope.
+  // Tests whether strings x and y represent corresponding bound
+  // variables of the terms being matched, in the current scope.
   const namesMatch = (x, y) => {
     const xlev = xLevels.get(x);
     const ylev = yLevels.get(y);
@@ -481,13 +481,16 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
   // executions of "match", below.
   let level = 0;
   let uGood = true;
-  const unify = Toy.andUnifTypes;
+  const unify = andUnifTypes;
 
   // Checks if terms x and y are the same up to renamings of bound
-  // variables, returning a boolean value.  Types of corresponding
-  // terms may differ, but must be unifiable in the context of this
-  // application of Rule R.  This adds any such constraints to the
-  // pairs to be unified.
+  // variables, returning a boolean value.  Types of corresponding terms
+  // may differ, but must be unifiable in the context of this
+  // application of Rule R.  This also does unification processing as it
+  // traverses the two terms.
+  //
+  // The outermost invocation applies this to the equation LHS and the
+  // target term.
   const match = (x, y) => {
     const ct = x.constructor;
     const yc = y.constructor;
@@ -519,8 +522,8 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
     }
   };
 
-  // Makes a copy of the given typed term, copying over type
-  // information from the given term.  For occurrences of variables
+  // Makes a copy of the given typed term, copying over its type
+  // information.  For occurrences of variables
   // within the target term, adds constraints that the type must
   // also match the type of any variable it aliases, with occurrence
   // or binding outside the target term.
@@ -567,10 +570,11 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
       return new Lambda(v, body)._typeFrom(x);
     }
   }
-  // This returns a copy of the given term with the target term
-  // replaced by a copy of the equation RHS.  The result has a single
-  // Atom for each truly distinct variable in it.  As a side effect,
-  // adds to the pairs of types to be unified in the result of the
+
+  // This returns a copy of the given term with its target term replaced
+  // by a copy of rhs (the equation RHS).  The result has a single Atom
+  // for each truly distinct variable in it.  As a side effect, this may
+  // add to the pairs of types to be unified in the result of the
   // replacement.
   //
   // This traverses all subterms of the given term, copying each with
@@ -587,7 +591,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
       // Copy the replacement term into the result.
       return copy(rhs);
     } else if (c === Atom) {
-      // Atoms should occur only at the match location.
+      // Atoms can only occur at the target location, if at all.
       abort('Internal error in ruleRCore');
     } else if (c === Call) {
       const segment = path.segment;
@@ -617,7 +621,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
   const m = match(lhs, targex);
   const result = replaced(target, path);
   if (m) {
-    uGood &&= Toy.unifTypesList(typeMap, pairs);
+    uGood &&= unifTypesList(typeMap, pairs);
   }
 
   // Type unification can fail either during matching or in
@@ -629,7 +633,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
     return newError('Rule R, not matched:\n{2} and\n{3}',
                     target, targex, lhs);
   }
-  const subst = Toy.resolve(typeMap);
+  const subst = resolve(typeMap);
   // Remember, replaceTypes usually modifies types in result.
   result.replaceTypes(subst);
   const badex = result.search(x => !x.type);
