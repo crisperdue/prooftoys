@@ -55,6 +55,7 @@ export const unicodeNames = {
   NN: '\u2115',       // Natural numbers
   QQ: '\u211a',       // Rational numbers
   ZZ: '\u2124',       // Integers
+  ZZ1: '\u2124\u207a\u200a',  // Positive integers (superscript +)
   forall: '\u2200',
   exists: '\u2203',
   exists1: '\u2203!',
@@ -1306,6 +1307,15 @@ export abstract class Expr {
   getStringValue() {
     assert(this.isString(), 'Not a string literal: {1}', this);
     return (this as unknown as Atom)._value;  // TODO: Fix - unsafe
+  }
+
+  /**
+   * If this is an Atom that is a number or string literal, returns its
+   * value, otherwise undefined.
+   */
+  getValue() {
+    // @ts-expect-error
+    return this._value;
   }
 
   /**
