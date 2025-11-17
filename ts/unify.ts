@@ -6,33 +6,23 @@
 
 namespace Toy {
 
-const abort = Toy.abort;
-const Expr = Toy.Expr;
-const Atom = Toy.Atom;
-const Call = Toy.Call;
-const Lambda = Toy.Lambda;
-
-const TypeVariable = Toy.TypeVariable;
-const TypeConstant = Toy.TypeConstant;
-const FunctionType = Toy.FunctionType;
-const Bindings = Toy.Bindings;
-const findBinding = Toy.findBinding;
-
-// Given a Map from type variable names to type terms, a variable
-// name, and a term, returns true iff the term is a (type) variable
-// and repeated application of the map yields that term.  Otherwise
-// the result is false.
-//
-// If the term is composite, this applies the map to its parts
-// recursively, and if it ever reaches a variable of the same name, it
-// fails by returning null (the "occurs" check); else false as stated
-// above.
-//
-// So we say that a value of true indicates a "trivial" match; false
-// indicates matching is not trivial; and null is a unification
-// failure (cycle).
-//
-// Note that all recursive calls here supply the same Map and name.
+/**
+ * Given a Map from type variable names to type terms, a variable
+ * name, and a term, returns true iff the term is a (type) variable
+ * and repeated application of the map yields that term.  Otherwise
+ * the result is false.
+ * 
+ * If the term is composite, this applies the map to its parts
+ * recursively, and if it ever reaches a variable of the same name, it
+ * fails by returning null (the "occurs" check); else false as stated
+ * above.
+ * 
+ * So we say that a value of true indicates a "trivial" match; false
+ * indicates matching is not trivial; and null is a unification
+ * failure (cycle).
+ * 
+ * Note that all recursive calls here supply the same Map and name.
+ */
 export function checkTriv(map, name, term) {
   if (term instanceof TypeVariable) {
     const n2 = term.name;
@@ -59,8 +49,10 @@ export function checkTriv(map, name, term) {
   }
 }
 
-// Straw man, just checks for trivial type variable unification.
-// Has no "occurs check", DO NOT USE.
+/**
+ * Straw man, just checks for trivial type variable unification.
+ * Has no "occurs check", DO NOT USE.
+ */
 function justCheckTriv(map, name, term) {
   while (term instanceof TypeVariable) {
     const tnm = term.name;
@@ -73,10 +65,12 @@ function justCheckTriv(map, name, term) {
   return false;
 }
 
-// Considers an additional pair to be unified in the context of the
-// given map of bindings and array of pairs still to be unified,
-// updating the map if needed so it can be resolved into a successful
-// unifier.  Returns falsy if unification fails, else truthy.
+/**
+ * Considers an additional pair to be unified in the context of the
+ * given map of bindings and array of pairs still to be unified,
+ * updating the map if needed so it can be resolved into a successful
+ * unifier.  Returns falsy if unification fails, else truthy.
+ */
 export function andUnifTypes(type1, type2, map, pairs) {
   const c1 = type1.constructor;
   const c2 = type2.constructor;
@@ -115,11 +109,13 @@ export function andUnifTypes(type1, type2, map, pairs) {
   }
 }
 
-// If the pairs unify given existing substitutions in the map, returns
-// the updated map holding the unification, or null if they do not.
-// The unification may still need to be resolved.  Treats the pairs as
-// a stack, so examines the last pair first.  May consume some of the
-// pairs, or all if successful.
+/**
+ * If the pairs unify given existing substitutions in the map, returns
+ * the updated map holding the unification, or null if they do not.
+ * The unification may still need to be resolved.  Treats the pairs as
+ * a stack, so examines the last pair first.  May consume some of the
+ * pairs, or all if successful.
+ */
 export function unifTypesList(map_arg, pairs_arg) {
   const map = map_arg;
   const pairs = pairs_arg;
@@ -132,9 +128,11 @@ export function unifTypesList(map_arg, pairs_arg) {
   return map;
 }
 
-// Converts a Map resulting from unification into a single
-// substitution that does the entire work, or returns null
-// if given null.
+/**
+ * Converts a Map resulting from unification into a single
+ * substitution that does the entire work, or returns null
+ * if given null.
+ */
 export function resolve(map) {
   if (!map) {
     return map;
@@ -159,10 +157,12 @@ export function resolve(map) {
   return map;
 }
 
-// Attempts to unify two type terms, returning the unifying Map on
-// success; otherwise null.  If successful there is a unifier,
-// but the unification is not "resolved".  See "resolve" or
-// fullUnifTypes for this.
+/**
+ * Attempts to unify two type terms, returning the unifying Map on
+ * success; otherwise null.  If successful there is a unifier,
+ * but the unification is not "resolved".  See "resolve" or
+ * fullUnifTypes for this. 
+ */
 export function coreUnifTypes(type1, type2) {
   const pairs = [];
   const map = new Map()
@@ -170,8 +170,10 @@ export function coreUnifTypes(type1, type2) {
           unifTypesList(map, pairs));
 }
 
-// Returns a Map with the result of fully unifying just type1 and
-// type2, or null if the terms do not unify.
+/** 
+ * Returns a Map with the result of fully unifying just type1 and
+ * type2, or null if the terms do not unify.
+ */
 export function fullUnifTypes(type1, type2) {
   const map = coreUnifTypes(type1, type2);
   return map ? resolve(map) : null;
@@ -280,9 +282,11 @@ TypeConstant.prototype.tsubst = function(map) {
 export interface FunctionType {
   tsubst(map);
 }
-// Substitutes for type variables in this type.  The implementation
-// takes some care to share existing instances rather than creating new
-// ones, the main purpose being to avoid using unnecessary space.
+/** 
+ * Substitutes for type variables in this type.  The implementation
+ * takes some care to share existing instances rather than creating new
+ * ones, the main purpose being to avoid using unnecessary space.
+ */
 FunctionType.prototype.tsubst = function(map, seen = []) {
   const from = this.fromType.tsubst(map, seen);
   const to = this.toType.tsubst(map, seen);
