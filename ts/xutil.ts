@@ -28,7 +28,7 @@ export class TypeCheckError extends Error {
 }
 
 // Base class constructor for type expressions.
-export class TypeEx {
+export abstract class TypeEx {
 
   /**
    * Returns a copy of this type term, with the same constraints but all
@@ -391,6 +391,11 @@ export interface Expr {
    *   in its original context, that can become more general as part of
    *   this operation.  The term "f = g" in axiom3 seems an interesting
    *   case.
+   * 
+   *   In fact application of axiom4 to a Call with type information for
+   *   a subterm can become an issue.  Consider applying bindEqn to a
+   *   step "A == A".  Stripping the types from the input step results
+   *   in generalized types that are not what was intended.
    */
   typedCopy(mustCopy?: boolean);
 }
@@ -399,9 +404,9 @@ Expr.prototype.typedCopy = function(mustCopy) {
     return this;
   }
   const self = this;
-  // This is a list of variables bound in the current scope,
-  // innermost first.
-  const boundVars = [];
+  // This is a list of Atoms representing variables bound in the current
+  // scope, innermost first.
+  const boundVars:Atom[] = [];
   // This is a Map of all free variables seen so far, keyed by
   // variable name.
   const freeVars = new Map();
@@ -2417,10 +2422,17 @@ export function asProof(info) {
 }
 
 /**
- * Dev tools formatter for Exprs.  For documentation see:
+ * Dev tools formatter for Exprs.  For documentation of formatters see:
  * https://firefox-source-docs.mozilla.org/devtools-user/custom_formatters/index.html
+ * 
  */
 export const exprFormatter = {
+  /**
+   * The header shows the typical debug presentation of an Expr.
+   * If it is rendered, [<step>]; if it has a rendering, (<step>).
+   * If proved but not displayed, show the "|-".  Otherwise just
+   * prefixes the display with the name of the constructor.
+   */
   header: function (obj, context = { level: 0 }) {
     const label = context['label'];
     if (obj instanceof Expr) {
@@ -2431,15 +2443,17 @@ export const exprFormatter = {
       // a rendering.
       const numStr = (num && `[Step ${num}]`) ?? (dnum && `(Step ${dnum})`);
       const ruleName = bind((nm = obj.ruleName) => (nm ? ` "${nm}"` : ''));
-      const type = obj.isProved() ? numStr || '|-' : obj.constructor.name;
+      const provedVariety = obj.isProved() ? numStr || '|-' : obj.constructor.name;
+      const typeStr = obj.type ? ':' + obj.type.$$ : '';
       return [
         'div',
         // Indent all but the first line.
         { style: 'text-indent: -2.5em; margin: 0 10px 0 2em;' },
         labelText,
-        type,
+        provedVariety,
         ' ',
         obj.asWff().$$,
+        typeStr,
         ruleName,
       ];
     }
