@@ -4155,16 +4155,29 @@ declare(
   },
 
   // Probably not useful:
-  // {statement: 'forall {x. forall {y. p x y}} => p x y',
-  //   proof: `(steps
-  //     (1 fact "forall p => p x")
-  //     (2 instVar (s 1) (t ({x. (forall {y. (p x y)})})) (t (p)))
-  //     (3 reduceAll (s 2) (path "/right"))
-  //     (4 fact "forall p => p x")
-  //     (5 instVar (s 4) (t (y)) (t (x)))
-  //     (6 chain1Only (s 3) (path "/right") (s 5))
-  //     (7 reduceAll (s 6) (path "/right")))`,
-  // },
+  {statement: 'forall {x. forall {y. p x y}} => p x y',
+    proof: `(steps
+      (1 fact "forall p => p x")
+      (2 instVar (s 1) (t ({x. (forall {y. (p x y)})})) (t (p)))
+      (3 reduceAll (s 2) (path "/right"))
+      (4 fact "forall p => p x")
+      (5 instVar (s 4) (t (y)) (t (x)))
+      (6 chain1Only (s 3) (path "/right") (s 5))
+      (7 reduceAll (s 6) (path "/right")))`,
+  },
+
+  {statement: 'p x y => exists {x. exists {y. p x y}}',
+    proof: `(steps
+      (1 fact "forall {x. forall {y. p x y}} => p x y")
+      (2 instVar (s 1) (t ((negate2 p))) (t (p)))
+      (3 rewrite (s 2) (path "") (t (((a => b) == ((not b) => (not a))))))
+      (4 rewrite (s 3) (path "/left/arg") (t ((((negate2 p x) y) == (not (p x y))))))
+      (5 simplifySite (s 4) "/left")
+      (6 rewrite (s 5) (path "/right") (t (((not (forall p)) == (exists {x. (not (p x))})))))
+      (7 rewrite (s 6) (path "/right/arg/body") (t (((not (forall p)) == (exists {x. (not (p x))})))))
+      (8 rewrite (s 7) (path "/right/arg/body/arg/body/arg") (t ((((negate2 p x) y) == (not (p x y))))))
+      (9 simplifySite (s 8) "/main"))`,
+  },
 
   // 2104
   {name: 'r2104',
