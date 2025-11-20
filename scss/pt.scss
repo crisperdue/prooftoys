@@ -8,6 +8,12 @@
 //   download size.
 //
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400&family=Roboto+Flex:wght@300;400;500;700&display=swap');
+// Or with condensed/expanded:
+// @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400&family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&display=swap');
+
+// To use width say for example: font-variation-settings: "wdth" 50;
+//   or the semi-obsolette: font-stretch: 50%;
+// This unfortunately only affects chars present in Roboto Flex.
 
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 
@@ -199,6 +205,14 @@
   sub, sup {
     // As in reboot.css.
     font-size: 75%;
+  }
+
+  // Function arrows render this way:
+  .lamArrow::before {
+    font-weight: 200;
+    font-size: 90%;
+    padding: 0 1px;
+    content: "\21A6";
   }
 
   //// Utilities

@@ -715,11 +715,6 @@ span.stepRef {
   font-size: 90%;
 }
 
-.expr .logicAnd, .expr .logicOr {
-    font-size: 70%;
-    color: #555;
-}
-
 /* This puts padding on each infix operator. */
 .expr.infix {
   padding: 0 .2em;
@@ -728,6 +723,16 @@ span.stepRef {
 .expr.infix.exponent {
   font-size: 75%;
   padding: 0;
+}
+
+.expr .logicAnd, .expr .logicOr {
+    font-size: 70%;
+    color: #555;
+    padding: 0 .2em;
+}
+
+.expr .divide {
+  padding: 0 1px;
 }
 
 // Multiplicative inverse styling is superscript-like.
