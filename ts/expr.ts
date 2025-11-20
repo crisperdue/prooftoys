@@ -23,7 +23,15 @@ export type Call2 = {fn: Call1, arg: Expr}
 
 export const _typeNums = new Map();
 
+/**
+ * When true, render "&", "|" as "and", "or".
+ */
 export let alphaAndOr = true;
+
+/**
+ * Names of numeric "type" predicates.
+ */
+export const numTypes = ['R', 'QQ', 'ZZ', 'NN', 'ZZ1'];
 
 // Translations of names, applied during conversion to Unicode.
 // (When generating HTML and/or Unicode text.)
@@ -1001,19 +1009,14 @@ export abstract class Expr {
   }
 
   /**
-   * Returns truthy if this has the form of a type test, i.e.
-   * application of a "type predicate" to a value; intended to extend to
-   * more types, currently R or NN or QQ or ZZ.
+   * Returns truthy iff this has the form of a type test, i.e.
+   * application of a "type predicate" to a value.
    */
   isTypeTest() {
     if (this.isCall1()) {
       const self = this satisfies Call1;
-      return (self.fn.name === 'R' ||
-        self.fn.name === 'NN' ||
-        self.fn.name === 'QQ' ||
-        self.fn.name === 'ZZ');
-    } else {
-      return false;
+      const nm = self.fn.name;
+      return numTypes.includes(nm);
     }
   }
 
