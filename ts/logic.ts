@@ -6409,13 +6409,20 @@ declare(
     tooltip: 'extract an assumption'
   },
 
-  // TODO: re-implement this.
+  /**
+   * Among chainParts of the asms of a step, pull out the selection as a
+   * lone assumption.
+   * 
+   * TODO: Add rules to move asm chainParts between levels of asms,
+   *   e.g. A => (B => C) has 2 levels.  Moving out or in may create a
+   *   new level if none now exists.
+   */
   {name: 'isolateAsmAt',
     precheck: function(step, path_arg) {
-      const path = step.asPath(path_arg);
-      const pathstr = step.wff.prettifyPath(path).toString();
-      const asms = step.asmMap();
-      return asms.has(pathstr);
+      if (step.implies()) {
+        const parts = step.getAsms().chainParts('&');
+        return parts.includes(step.get(path_arg));
+      }
     },
     action: function(step, path) {
       const hyp = step.get(path);
@@ -6427,14 +6434,17 @@ declare(
     labels: 'basic'
   },
 
-  // Like isolateAsmAt, accepting a term to be matched against the
-  // assumptions.  Useful for pulling out implicit assumptions such as
-  // variable types.
+  /**
+   * Like isolateAsmAt, accepting a term to be matched against the
+   * assumptions.  Useful for pulling out implicit assumptions such as
+   * variable types.
+   */
   {name: 'isolateAsm',
    precheck: function(step, asm_arg) {
      const asm = termify(asm_arg);
      const asms = step.getAsms();
-     return asms && asms.scanConj(a => a.sameAs(asm)) || false;
+     const matches = asms.chainParts('&').filter(a => a.sameAs(asm));
+     return matches.length && matches[0];
    },
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
@@ -6442,8 +6452,8 @@ declare(
       if (hyp.matches(step.getLeft())) {
         var result = step;
       } else {
-        var taut = rules.tautology(step.getLeft().hypMover(hyp));
-        var step1 = rules.rewriteOnly(step, '/left', taut);
+        const path = step.pathTo(hyp);
+        const step1 = rules.moveRightmost(step, path);
         var taut2 = rules.tautology('a & b => c == b => (a => c)');
         var result = rules.rewriteOnly(step1, '', taut2);
       }
