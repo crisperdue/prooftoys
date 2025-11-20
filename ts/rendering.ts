@@ -1365,6 +1365,8 @@ export function specialClasses(name) {
     return ['implies'];
   case '*':
     return ['multiply'];
+  case '/':
+    return ['divide'];
   case '^':
     return ['exponent'];
   case '~*':
@@ -1616,12 +1618,13 @@ Lambda.prototype.render = function(minPower) {
   const type = this.type;
   const $body = this.body.render(0);
   const isSet = type && type.isSetType();
+  const $arrow = $('<span class=lamArrow>')
   if (isSet && !type.fromType.equal(Toy.boolean)) {
     // Maps from non-boolean to boolean: render with braces
     // and "dot".
     $expr.append('{');
     $expr.append(this.bound.render(0));
-    $expr.append('. ');
+    $expr.append($arrow);
     $expr.append($body);
     $expr.append('}');
   } else {
@@ -1629,8 +1632,8 @@ Lambda.prototype.render = function(minPower) {
     $expr.append('(');
     $expr.append(this.bound.render(0));
     // Unicode rightward arrow from bar ("mapsto"). See e.g.
-    // https://en.wikipedia.org/Function_(mathematics)#Arrow_notation
-    $expr.append(' \u21a6 ');
+    // https://en.wikipedia.org/wiki/Function_(mathematics)#Arrow_notation
+    $expr.append($arrow);
     $expr.append($body);
     $expr.append(')');
   }
@@ -1704,8 +1707,8 @@ export interface Expr {
   shortForm();
 }
 /**
- * Removes "minor" conditions from the assumptions, returning an Expr.
- * Applied to a WFF, typically a Step.
+ * Removes "minor" conditions from the assumptions, currently just "R
+ * x", returning an Expr. Applied to a WFF, typically a Step.
  */
 Expr.prototype.shortForm = function () {
   const infix = Toy.infixCall;
@@ -1713,6 +1716,7 @@ Expr.prototype.shortForm = function () {
   let shorts = null;
   if (asms) {
     asms.scanConj((asm) => {
+      // TODO: Consider a condition such as isTypeTest instead of this.
       if (!asm.matchSchema('R x')) {
         shorts = shorts ? infix(shorts, '&', asm) : asm;
       }
@@ -2033,7 +2037,9 @@ export function expandMarkup(step, markup) {
                  : places[index]);
     if (place) {
       var stepArg = argStep(place - 1);
-      if (markupRest && adjacentSteps(stepArg, step)) {
+      // Removing "false" here causes mention of the "preceding" step to
+      // be elided.
+      if (false && markupRest && adjacentSteps(stepArg, step)) {
         return '';
       } else {
         return markupRest + '<span class=stepReference>' +
@@ -2159,7 +2165,10 @@ export function defaultStepRefs(step, description) {
 
 /**
  * Formatting functions for steps.  The function should return
- * an HTML description string.
+ * an HTML description string.  Invoked when a description string has
+ * the form '=<key>'.
+ * 
+ * TODO: Pass a function arg instead of using this.
  */
 var stepFormatters = {
   definition: function(step) {
