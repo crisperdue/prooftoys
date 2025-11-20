@@ -95,6 +95,9 @@ definition('the = {p. if (exists1 p) (the1 p) none}');
 definition('negate = {p. {x. not (p x)}}',
   {simplifier: false, desimplifier: false});
 
+definition('negate2 p = {x. {y. not (p x y)}}',
+  {simplifier: false, desimplifier: false});
+
 declare(
   {statement: 'not (negate p x) == p x',
    proof: function() {
@@ -1067,7 +1070,7 @@ declare(
     menu: 'consider a term to transform (A = A)',
     toOffer: 'return step == null',
     tooltip: ('consider a term to transform'),
-    description: 'expression equal to itself',
+    description: 'term equal to itself',
     labels: 'basic'
   },
 
@@ -1328,8 +1331,8 @@ declare(
       }
     },
     tooltip: ('Applies a lambda to its argument'),
-    description: '=reduce',
-    labels: 'uncommon'
+    description: 'apply function',
+    labels: 'basic'
   }
 
 );
@@ -4015,7 +4018,8 @@ rule('applyAsmHere', {
   },
   inputs: {site: 1, bool: 3},
   // This shows the applied asm.
-  description: step => `applying assumed ${step.ruleArgs[2].termDisplay()} here`,
+  description: step => 
+    `applying assumed ${step.ruleArgs[2].termDisplay()};; {in step siteStep}`,
 });
 
 /**
@@ -4428,6 +4432,9 @@ declare(
 
   // 2134.  This does almost all the work for the
   // "Exists rule" (2135, 5244).
+  // 
+  // 2135 in effect applies toForall1 and then this to the RHS of A =>
+  // forall {x. p x => q}.  So x is not free in A or q.
   //
   // The LHS quantifier limits the "E rule" to usage where x is not
   // free in any assumptions, and since "q" appears with x bound,
@@ -5575,7 +5582,7 @@ declare(
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
     menu: 'primitive rewrite using a fact',
     isRewriter: true,
-    description: 'using;; {fact} {&nbsp;in step siteStep}',
+    description: 'using;; {shortFact} {&nbsp;in step siteStep}',
     labels: 'basic'
   },
 
@@ -5662,7 +5669,7 @@ declare(
     labels: 'basic',
     isRewriter: true,
     priority: 2,
-    description: 'using;; {fact} {&nbsp;in step siteStep}'
+    description: 'using;; {shortFact} {&nbsp;in step siteStep}'
   },
 );
 
@@ -6708,6 +6715,8 @@ const chainOps: string[] = [].concat( ...chainTypes);
  * the parent of the target (if there is one). If the target term is not
  * part of a chain, the result is an empty array.  The path must be
  * pretty.
+ * 
+ * The target term may be a chain part ("prefix") or chain element.
  */
 export function rightChain(step, path): Expr[] {
   const bop = term => term.isCall2() && term.getBinOp().name;
@@ -6808,7 +6817,7 @@ declare(
    },
    inputs: {site: 1},
    menu: '   move term {term} right',
-   description: 'moving to the right',
+   description: 'moving term to the right;; {in step siteStep}',
    labels: 'algebra',
   },
 
@@ -6818,7 +6827,7 @@ declare(
    },
    inputs: {site: 1},
    menu: '   move term {term} left',
-   description: 'moving to the left',
+   description: 'moving term to the left;; {in step siteStep}',
    labels: 'algebra',
   },
 
@@ -6860,7 +6869,7 @@ declare(
        }
      };
      // This rule can always apply, but see toOffer below here.
-     return (rightChain(step, path_arg).length > 0
+     return (rightChain(step, path).length > 0
        ? mover
        : () => step);
    },
@@ -6871,7 +6880,7 @@ declare(
      return chain.length > 1;
    },
    menu: '   move term {term} rightmost',
-   description: 'moving to rightmost',
+   description: 'moving term to rightmost;; {in step siteStep}',
    labels: 'algebra',
   },
 
@@ -6902,7 +6911,7 @@ declare(
      return chain.length > 1;
    },
    menu: '   move term {term} leftmost',
-   description: 'moving to leftmost',
+   description: 'moving term to leftmost;; {in step siteStep}',
    labels: 'algebra',
   },
 
@@ -6957,7 +6966,8 @@ rule('reduceAll', {
       .justify('reduceAll', arguments, [step]);
   },
   inputs: { site: 1 },
-  menu: 'reduce all function calls',
+  menu: 'reduce function calls',
+  description: 'applying function(s);; {in step siteStep}',
 });
 
 declare(
