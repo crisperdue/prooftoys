@@ -616,10 +616,20 @@ definition('absdiv x d = natdiv (abs x) (abs d)');
 */
 
 
-//// NN and ZZ facts
+//// NN, ZZ1, and ZZ facts
 
 // Mostly without proof.
 declare(
+  // ZZ1 facts
+  { fact: '@ ZZ1 x => NN x'},
+  { fact: '@ ZZ1 x => ZZ x'},
+  { fact: '@ ZZ1 x => R x'},
+  { fact: '@ ZZ1 x => x > 0'},
+  { fact: '@ ZZ1 x => 0 < x'},
+  { fact: '@ ZZ1 x => x != 0'},
+  { fact: '@ ZZ1 x & ZZ1 y => ZZ1 (x + y)'},
+  { fact: '@ ZZ1 x & ZZ1 y => ZZ1 (x * y)'},
+
   { fact: '@NN x == ZZ x & 0 <= x' },
   { statement: 'NN x => ZZ x',
     priority: -5 },
@@ -4756,22 +4766,40 @@ definition('odd x == x mod 2 = 1');
 
 /**
  * Attempts to subsume one type declaration using a narrower one also in
- * the assumptions.  Returns a continuation that provides the simplified
- * step else null.  Call this repeatedly to narrow all such decls.
+ * the assumptions.  Also removes nonzero conditions on terms when the
+ * same term is declared to be ZZ1, which must be greater than zero.
+ * Returns a continuation that provides the simplified step else null.
+ * Call this repeatedly to narrow all such decls.
  */
 function subsume1Numeric(step) {
   const aConj = step.getAsms();
   if (!aConj) {
     return null;
   }
-  const numTypes = ['R', 'QQ', 'ZZ', 'NN'];
   // This is an array of the numeric declaration asms.
   const decls: Call[] = [];
+  const nzChecks: Call[] = [];
   aConj.scanConj((a, p) => {
     if (a.isCall1() && numTypes.includes(a.fn.name)) {
       decls.push(a);
     }
+    if (a.matchSchema('not (x = 0)') || a.matchSchema('x != 0')) {
+      // TODO: Consider also terms like 0 != x.
+      nzChecks.push(a);
+    }
   });
+
+  for (const nzCheck of nzChecks) {
+    for (const decl of decls) {
+      if (decl.fn.name == 'ZZ1') {
+        return (() => {
+          const path = asPath('/left').concat(aConj.prettyPathTo(nzCheck));
+          return applyMatchingFact(step, path,
+            ['@ ZZ1 x => x != 0', '@ ZZ1 x => not (x = 0)']);
+        });
+      }
+    };
+  }
 
   for (const decl of decls) {
     const rank = numTypes.indexOf(decl.fn.name);
@@ -4793,7 +4821,7 @@ function subsume1Numeric(step) {
       return () => {
         const stmt = `${better.fn.name} x => ${decl.fn.name} x`;
         const path = asPath('/left').concat(aConj.prettyPathTo(decl));
-        return rules.rewrite(step, path, stmt);
+        return rules.rewriteOnly(step, path, stmt);
       }
     }
   }
@@ -4812,6 +4840,11 @@ function subsumeAllNumerics(step) {
   });
 }
 
+/**
+ * Calls subsume1Numeric to determine if any relevant simplifications
+ * exist.  If so, does all such simplifications, otherwise indicates
+ * failure returning nullish.
+ */
 rule('subsumeNumerics', {
   action2: function(step) {
     const fn = subsume1Numeric(step);
@@ -4823,8 +4856,8 @@ rule('subsumeNumerics', {
   labels: 'basic',
   priority: 5,
   inputs: {step: 1},
-  menu: 'prune numeric type declarations',
-  description: 'pruning numeric type declarations',
+  menu: 'remove excess type declarations',
+  description: 'removing excess type declarations',
 });
 
 fact('odd x == ZZ x & not (even x)', {});

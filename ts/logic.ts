@@ -2334,11 +2334,16 @@ declare(
 );
 
 declare({
-  // Uses the given facts to simplify the tree of assumptions of the
-  // given step, first by repeatedly trying all asmSimplifiers to the
-  // tree nodes in top-down order, using rewriteOnly on success. Any
-  // assumption that simplifies to T is removed unless it is the last
-  // one remaining.  Rewrites may re-order the asms and/or add new ones.
+  /**
+   * Uses the given facts to simplify the chain of assumptions of the
+   * given step by repeatedly trying all asmSimplifiers to the them
+   * right to left, using rewriteOnly on success. Any assumption that
+   * simplifies to T is removed on the next pass unless it is the last
+   * one remaining.  Rewrites may re-order the asms and/or add new ones.
+   * 
+   * TODO: Break out a function to simplify one time, and call it
+   * once to control whether this is offered.
+   */
   name: 'simplifyAsms',
   action: function (step_arg) {
     if (!step_arg.implies()) {
@@ -2361,7 +2366,7 @@ declare({
         function walkConjuncts(term, path) {
           tryFacts(path, ['a & T == a', 'T & a == a']);
           const patterns = [
-            { match: 'a & b', a: walkConjuncts, b: walkConjuncts },
+            { match: 'a & b', a: walkConjuncts, b: tryConjunct },
             { match: 'a', a: tryConjunct },
           ];
           term.walkPatterns(patterns, path);
@@ -2370,7 +2375,8 @@ declare({
       });
       return v;
     });
-    return result.justify('simplifyAsms', arguments, [step_arg]);
+    const subsumed = rules.subsumeNumerics.attempt(result);
+    return (subsumed || result).justify('simplifyAsms', arguments, [step_arg]);
   },
   inputs: { step: 1 },
   menu: 'simplify assumptions',
