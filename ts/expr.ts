@@ -86,9 +86,12 @@ export const betaExpansions = new WeakMap();
  * literals other than 0 and 1 are not considered names, but as
  * abbreviations for expressions containing 0 and 1.
  * 
- * TODO: Remove this and its uses.
+ * TODO: Convert this to a Map, and for monomorphic constants, map the
+ *   name to a typed Atom.  This change would enable us to make "==" be
+ *   such a monomorphic constant.  It would also enable monomorphic
+ *   constant Atoms to be shared when not rendered.
  */
-export const namedConstants = new Set();
+export const namedConstants = new Set<string>();
 
 export let showTypes;
 
