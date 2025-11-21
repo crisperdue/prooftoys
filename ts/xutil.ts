@@ -27,7 +27,10 @@ export class TypeCheckError extends Error {
   }
 }
 
-// Base class constructor for type expressions.
+/**
+ * Base class constructor for type expressions.  Note that all instances
+ * are immutable.
+ */
 export abstract class TypeEx {
 
   /**
@@ -445,7 +448,14 @@ Expr.prototype.typedCopy = function(mustCopy) {
     if (cx === Atom) {
       const a = x as Atom;
       // It is some kind of constant.
-      const xpnm = a.pname;
+      let xpnm = a.pname;
+      // Do not convert boolean equality to generic equality,
+      // as that alters the intention.
+      //
+      // TODO: This may or may not help, but seems reasonable.  
+      if (xpnm === '=' && a.type == booleanBinOpType()) {
+        xpnm = '==';
+      }
       const constType = constantTypes.get(xpnm);
       // This relies on constantTypes to include entries
       // for aliases, currently just "==".
@@ -710,8 +720,18 @@ export function dereference(type, map) {
 //// The only primitive constants currently are the built-in T, F, =,
 //// "the", but others may be defined.
 
+// Internal to booleanBinOpType.
+let bbopType: FunctionType;
+
+/**
+ * Returns a type for bool x bool -> bool.
+ */
 export function booleanBinOpType() {
-  return new FunctionType(boolean, new FunctionType(boolean, boolean));
+  if (bbopType) {
+    return bbopType;
+  }
+  bbopType = new FunctionType(boolean, new FunctionType(boolean, boolean));
+  return bbopType;
 }
 
 /**
