@@ -5113,14 +5113,14 @@ declare(
     labels: 'algebra',
   },
 
-  // Version of Andrews Rule R' that uses a conditional rather than
-  // hypotheses.  Uses a potentially conditional equation to replace a
-  // term in a target step.  Replaces the target as done by r1, and
-  // describing the inputs as A => B = C, and D, produces a result that
-  // is schematically A => D', where D' is like D, with an occurrence of
-  // B replaced by C.  In other words, if the equation has assumptions
-  // (A), they become the assumptions of the result.  If D has the form
-  // E => F, the result in this case has the form A => (E => F')
+  // Version of Andrews Rule R' that accepts a conditional equation
+  // rather than "hypotheses".  Replaces the target as done by
+  // r1, and describing the inputs as A => B = C, and D, produces a
+  // result that is schematically A => D', where D' is like D, with an
+  // occurrence of B replaced by C.  In other words, if the equation has
+  // assumptions (A), they become the assumptions of the result.  If D
+  // has the form E => F, the result in this case has the form A => (E
+  // => F')
   //
   // The "replace" rule (below) is much like this one, but also merges
   // any assumptions of D with the new assumptions A using arrangeAsms.
@@ -5152,7 +5152,7 @@ declare(
       // same as LHS of step3; see below for h, eq and step3.
       function quantEquation() {
         var boundNames = target.boundNames(path);
-        Toy.removeExcept(boundNames, equation.freeVars());
+        removeExcept(boundNames, equation.freeVars());
         const hypFreeNames = h.freeVars();
         const eqFreeNames = eq.freeVars();
         // Quantify over just the variables free in the equation and
@@ -6669,7 +6669,8 @@ declare(
  * property of moverFacts in order seeking a schema that matches the
  * appropriate parent of the target term, returning an object with
  * "completer" and "path" properties if found, or an empty object if
- * not.
+ * not.  To be movable, a term's immediate parent must be an operator
+ * that supports moving operands.
  * 
  * The returned completer is suitable as an action2 completer function
  * and the path points to the location of the term after being moved,
@@ -6711,6 +6712,7 @@ function moverAction(which, step, path_arg) {
 /**
  * Array of arrays of strings naming chainable operators.
  * Each element is an array of names of compatible chainable operators.
+ * TODO: -> chainGroups
  */
 const chainTypes: string[][] = [['+', '-'], ['*', '/'], ['&'], ['|']];
 
@@ -6757,7 +6759,7 @@ export function rightChain(step, path): Expr[] {
       chain.push(up.getRight());
     }
     rpath = rpath.rest;
-    // This segment leads to "up".  
+    // This segment comes down from "up", and must go left.
     if (rpath.segment !== 'left') {
       break;
     }
@@ -7322,7 +7324,7 @@ declare(
  * moved, and "after" is a relative path to its location after the move.
  *
  * Caution: initMovers reverses the "left" array after filling
- * everything in, because left movers use the 2 operator facts if
+ * everything in, because left movers use the 2-operator facts if
  * applicable, so they need to be first.
  */
 export const moverFacts = {

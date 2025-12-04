@@ -1926,7 +1926,8 @@ export abstract class Expr {
 
   /**
    * Returns an equivalent path that replaces combinations of "fn" and
-   * "arg" with "left", "right", and "binop" where feasible.
+   * "arg" with "left", "right", and "binop" where feasible.  Other
+   * segments including "main" are preserved.
    */
   prettifyPath(path_arg: Pathable) {
     const p = this.asPath(path_arg);
