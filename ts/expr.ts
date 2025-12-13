@@ -1000,14 +1000,14 @@ export abstract class Expr {
    *
    * TODO: Make this available for Step objects.
    */
-  getMain() {
+  getMain(): Expr {
     return this.isCall2('=>') ? this.getRight() : this;
   }
 
   /**
    * Returns the assumptions of a conditional, if any, else null.
    */
-  getAsms() {
+  getAsms(): Expr {
     return this.isCall2('=>') ? this.getLeft() : null;
   }
 
@@ -2468,6 +2468,8 @@ export abstract class Expr {
    * Returns an array of all terms that are either this; or
    * left-sideward descendents of this and have the named op as their
    * binOp; or are a left or right child of one of those.
+   * 
+   * The array elements are chain elements or "prefixes" of the chain.
    */
   chainParts(chainOp) {
     const result = [];
@@ -2677,7 +2679,7 @@ export abstract class Expr {
   }
 
   /**
-   * Taking this expression as a chain of assumptions, applies the given
+   * Taking this expression as a chain of conjuncts, applies the given
    * action function to each conjunct in the chain, going from left to
    * right, passing a reverse path from this to the conjunct.
    *

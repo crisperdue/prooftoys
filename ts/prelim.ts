@@ -293,6 +293,7 @@ Path.prototype.uglify = function(opt_isImplies) {
 /**
  * Returns a Path that has all but the last segment of this path.
  * If this path has no segments, throws an error.
+ * TODO: Implement with "above".
  */
 Path.prototype.parent = function() {
   var segment = this.segment;

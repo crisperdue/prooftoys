@@ -2428,7 +2428,9 @@ declare(
    },
    inputs: {site: 1},
    labels: 'tactic',
-   menu: ' flatten conjunction',
+   priority: 1,
+   menu: 'flatten conjunction',
+   description: 'flattening "and"',
   },
 );
 
@@ -2884,7 +2886,7 @@ declare(
   // If either theorem is unconditional, omits a1 or a2 or both
   // accordingly.
   //
-  // TODO: obsolete?
+  // TODO: Add menuGen with Q as last step so far.
   {name: 'makeConjunction',
     action: function(a, b) {
       var stepa = rules.rewriteOnly(a, '/main', 'a == (T == a)');
@@ -2897,13 +2899,13 @@ declare(
               .justify('makeConjunction', arguments, [a, b]));
     },
     inputs: {step: [1, 2]},
-    labels: 'ignore',
+    labels: 'basic',
     // An approximation, good enough until we can remove this whole rule.
     toOffer: 'return step.isCall2("=>");',
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
-    menu: '[a1 => p] and [a2 => q] to [a1 & a2 => p & q]',
+    menu: '[p] and [q] to [p & q] merging assumptions',
     tooltip: ('Given a and b, derive a & b'),
-    description: 'p & q;; using steps {step1}, {step2}'
+    description: 'asms => p & q;; using steps {step1}, {step2}'
   },
 
   // (5222) Given two theorems that are substitutions of T and
@@ -3740,8 +3742,8 @@ rule('concludeAsmRight', {
 });
 
 /**
- * Given a conditional step and a path to one of its assumptions,
- * conjoin it to the step's conclusion.
+ * Given a conditional step and a path to an assumption or chain of
+ * them, conjoin it / them to the step's conclusion.
  */
 rule('concludeAsmLeft', {
   action2: function(step, path_arg) {
@@ -4666,14 +4668,13 @@ declare(
   // Removes an irrelevant type assumption at the target site, where v
   // is a variable.
   //
-  // Inline version of removeTypeAsm.
-  // TODO: Modify this to use a term rather than a path.
+  // TODO: Modify this to use a term rather than a path?
   //
   // TODO: Merge this into removeLet and rename as e.g. "removeIrrelevant".
   {name: 'removeTypeAsm',
     precheck: function(step, path_arg) {
       var path = Toy.asPath(path_arg);
-      if (!(step.isAsmPath(path))) {
+      if (!step.isAsmPath(path)) {
         return false;
       }
       var term = step.get(path);
@@ -4719,7 +4720,8 @@ declare(
     inputs: {site: 1},
     labels: 'basic',
     form: (''),
-    menu: '  drop irrelevant {term}',
+    priority: 2,
+    menu: 'drop irrelevant {term}',
     tooltip: 'Drop irrelevant type assumption',
     description: 'dropping irrelevant {site};; {in step siteStep}'
   },
@@ -5113,8 +5115,8 @@ declare(
     labels: 'algebra',
   },
 
-  // Version of Andrews Rule R' that accepts a conditional equation
-  // rather than "hypotheses".  Replaces the target as done by
+  // Version of Andrews Rule R' ("R prime") that accepts a conditional
+  // equation rather than "hypotheses".  Replaces the target as done by
   // r1, and describing the inputs as A => B = C, and D, produces a
   // result that is schematically A => D', where D' is like D, with an
   // occurrence of B replaced by C.  In other words, if the equation has
@@ -5124,7 +5126,7 @@ declare(
   //
   // The "replace" rule (below) is much like this one, but also merges
   // any assumptions of D with the new assumptions A using arrangeAsms.
-  {name: 'r2',
+  {name: 'r2',  // Yes, this is "R prime" (R').
    // This precheck is commented out until proven useful.
    // This precheck tests for conflicting bindings, where a bound
    // variable occurs in both the hyps and the free names of
@@ -5463,10 +5465,10 @@ export interface Expr {
   canRewrite(path, term);
 }
 /**
-// Interprets the term argument as a potential rewriter for the
-// part of this step at the given path, and determines a substitution
-// to match it with that part of the step.  Returns the substitution,
-// or null if it finds none.
+ * Interprets the term argument as a potential rewriter for the
+ * part of this step at the given path, and determines a substitution
+ * to match it with that part of the step.  Returns the substitution,
+ * or null if it finds none.
  */
 Step.prototype.canRewrite = function(path, term) {
   const expr = this.get(path);
@@ -6674,7 +6676,8 @@ declare(
  * 
  * The returned completer is suitable as an action2 completer function
  * and the path points to the location of the term after being moved,
- * ignoring possible addition or modification of assumptions.
+ * ignoring possible addition or modification of assumptions.  The
+ * returned path is a "pretty" path.
  */
 function moverAction(which, step, path_arg) {
   initMovers();
@@ -6798,8 +6801,9 @@ function leftmost(term_arg: Expr): Path {
 /**
  * Returns an array of terms within the step similarly to rightChain.
  * The terms are all operands of a chain compatible with the binary
- * operator of the parent of the target term, and all to the left of
- * the target.
+ * operator of the parent of the target term, and all to the left of the
+ * target.  If the target is a chain part rather than a chain element,
+ * returns an empty array since there is nothing to its left.
  */
 export function leftChain(step: Step, path_arg: Pathable) {
   const path = step.prettifyPath(path_arg);
@@ -6891,7 +6895,8 @@ declare(
      const chain = rightChain(step, path);
      return chain.length > 1;
    },
-   menu: '   move term {term} rightmost',
+   priority: 3,
+   menu: 'move term {term} rightmost',
    description: 'moving term to rightmost;; {in step siteStep}',
    labels: 'algebra',
   },
@@ -6922,49 +6927,13 @@ declare(
      const chain = leftChain(step, path);
      return chain.length > 1;
    },
-   menu: '   move term {term} leftmost',
+   menu: 'move term {term} leftmost',
+   priority: 3,
    description: 'moving term to leftmost;; {in step siteStep}',
    labels: 'algebra',
   },
 
-  /* This effect is easily gained by repeated use of (reverse)
-     associativity of "&".
-  {name: 'splitChain',      // Commented out!
-   action2: function(step, path_arg) {
-     const asms = step.getAsms();
-     if (asms) {
-       // This is the path from the LHS to the target term.
-       const path = step.prettifyPath(path_arg).shift();
-       // First parent is the chain of all asms.
-       const parents = asms.ancestors(path);
-       const target = parents.pop();
-       // Last parent is the parent of the target term.
-       //
-       // Only split if there is at least one level of parent of
-       // the target term.
-       if (parents.length) {
-         // These segments include the one to the target term.
-         const segs = path.segments();
-         if (segs.every(x => x === 'left')) {
-           if (parents.every(term => term.getBinOp() === '&')) {
-             // The selection is suitable for splitting, so
-             // return a function that does it.
-             return () => {
-               let asms = rules.consider(parents[0]);
-               for (let i = 0; i < parents.length; i++) {
-                 asms = rules.rewriteOnly(asms, '/right',
-                                          'a & b & c == a & (b & c)');
-               }
-               // Now replace all the asms with the transformed ones.
-               // XXX
-             };
-           }
-         }
-       }
-     }
-   },
   },
-  */
 );
 
   // A simplifier that removes all lambda calls.
