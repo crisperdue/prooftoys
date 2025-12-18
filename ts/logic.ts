@@ -9,6 +9,8 @@ namespace Toy {
 /** Rebindable exit */
 export var tautExit;
 
+export const tautologyCounts = new Map();
+
 const Step = Expr;
 
 // The book definition of F is just fine, and can be presented either
