@@ -6810,6 +6810,10 @@ export function leftChain(step: Step, path_arg: Pathable) {
   if (path.isEnd()) {
     return [];
   }
+  if (path.last() === 'left') {
+    // It is a chain part, so nothing is to its left.
+    return [];
+  }
   const above = path.above();
   const term = step.get(above);
   const lpath = leftmost(term);
