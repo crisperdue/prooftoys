@@ -6905,25 +6905,44 @@ declare(
    labels: 'algebra',
   },
 
+  /**
+   * Make the target be the leftmost part of its chain.  If there is no
+   * chain or it is already leftmost, return the input step.
+   */
   {name: 'moveLeftmost',
    action2: function(step, path_arg) {
      // Implementation is very much like moveRightmost.
+     const path = step.prettifyPath(step.asPath(path_arg));
      const mover = () => {
+       // At each stage this is a possibly conditional equation with the
+       // full step as its LHS. Starts being equiv to self.
+       // TODO: Maybe consider just one level above the target
+       //   to keep terms smaller and save work.
+       //   That would be path.above().
        let lefter = rules.consider(step);
-       let path = Toy.asPath('/main/right').concat(step.asPath(path_arg));
+       // 
+       // Adjust "p" to account for the "consider" step.
+       let p = asPath('/right').concat(path);
        let completer;
        while (true) {
-         ({completer, path} = moverAction('left', lefter, path));
+         ({completer, path: p} = moverAction('left', lefter, p));
          if (completer) {
+           const implied = lefter.implies();
            lefter = completer();
+           if (!implied && lefter.implies()) {
+             // Adjust the path to account for presence of assumptions
+             // in the new step.
+             p = asPath('/right').concat(p);
+           }
          } else {
            return rules.replace(step, '', lefter);
          }
        }
      };
-     // This rule can apply if there is at least one chain term
-     // to the left, but see toOffer below here.
-     return leftChain(step, path_arg).length > 0 ? mover : null;
+     // This rule can always apply, but see toOffer below here.
+     return (leftChain(step, path_arg).length > 0
+      ? mover 
+      : () => step);
    },
    inputs: {site: 1},
    toOffer: function(step, term) {
@@ -6936,6 +6955,7 @@ declare(
    description: 'moving term to leftmost;; {in step siteStep}',
    labels: 'algebra',
   },
+);
 
   },
 );
