@@ -3685,7 +3685,8 @@ declare(
 
 /**
  * Given a conditional step and boolean term, adds the term to the
- * conclusion by means of assuming it.
+ * conclusion by means of assuming it.  The term may itself be a
+ * conjunction.
  */
 rule('concludeRight', {
   action2: function(step, term) {
@@ -3724,12 +3725,20 @@ rule('concludeLeft', {
 });
 
 /**
- * Given a conditional step and a path to one of its assumptions,
- * conjoin it to the step's conclusion.
+ * Given a conditional step and a path to an assumption or chain of
+ * them, conjoin it / them to the step's conclusion.
  */
 rule('concludeAsmRight', {
   action2: function(step, path_arg) {
     const path = step.prettifyPath(path_arg);
+    const target = step.get(path);
+    const asms = step.asmPart();
+    // This test might pass with a selected term merely sameAs an
+    // assumption, but gives a logically correct result.  See
+    // chainPartPaths for the start of an alternative.
+    if (asms && asms.chainParts().includes(target)) {
+      return () => rules.concludeRight(step, target);
+    }
     if (step.isAsmPath(path)) {
       return () => {
         const term = step.get(path);
@@ -3745,7 +3754,7 @@ rule('concludeAsmRight', {
 
 /**
  * Given a conditional step and a path to an assumption or chain of
- * them, conjoin it / them to the step's conclusion.
+ * them, conjoin it / them to the left side of the step's conclusion.
  */
 rule('concludeAsmLeft', {
   action2: function(step, path_arg) {
