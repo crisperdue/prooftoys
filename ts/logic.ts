@@ -5962,6 +5962,10 @@ declare(
    * second conjunct.  Then splits the conditional into two, applies
    * chain1Only to the one with the target term as its consequent, then
    * rejoins the result of that with the other conditional.
+   * 
+   * TODO: Modify this into a limited substitutivity of implication.
+   * Note that it currently places the replacement term as the first
+   * "half" of the consequent.
    */
   {name: 'chain1OnlyPart',
    action2: function(step, path: Path, schema_arg) {
@@ -5991,8 +5995,7 @@ declare(
          const both = rules.and(left, chained);
          const rejoined = rules.rewriteOnly(both, '',
            '(a => b) & (a => c) == (a => c & b)');
-         const result = rules.flattenAnd(rejoined, '/right');
-         return result;
+         return rejoined;
        }
      });
    },
