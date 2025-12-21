@@ -2465,6 +2465,24 @@ export abstract class Expr {
   }
 
   /**
+   * Returns the chain prefixes of this term based on the given chain
+   * operator as an array, in order from right to left.  All but the
+   * last result are binary calls to that operator.  There is always at
+   * least one result.  Paths to the result terms are predictably all to
+   * the left.
+   */
+  chainPrefixes(chainOp) {
+    const result = [];
+    let term = this;
+    while (term?.isCall2(chainOp)) {
+      result.push(term);
+      term = term.getLeft();
+    }
+    result.push(term);
+    return result;
+  }
+
+  /**
    * Returns an array of all terms that are either this; or
    * left-sideward descendents of this and have the named op as their
    * binOp; or are a left or right child of one of those.
@@ -2483,6 +2501,31 @@ export abstract class Expr {
       // This picks up the leftmost term, which is not a call2 of the
       // chainOp.
       result.push(term);
+    }
+    return result;
+  }
+
+  /**
+   * Returns an array of reverse paths to all terms that are either
+   * this; or left-sideward descendents of this and have the named op as
+   * their binOp; or are a left or right child of one of those.
+   * 
+   * The paths refer to chain elements or "prefixes" of the chain.
+   */
+  chainPartPaths(chainOp): Path[] {
+    let term = this;
+    let path = Path.empty;
+    const result: Path[] = [];
+    while (term.isCall2(chainOp)) {
+      result.push(path);
+      result.push(new Path('right', path));
+      path = new Path('left', path);
+      term = term.getLeft();
+    }
+    if (term !== this) {
+      // This picks up the path of the leftmost term, which is not a
+      // call2 of the chainOp.
+      result.push(path);
     }
     return result;
   }

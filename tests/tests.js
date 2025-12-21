@@ -746,6 +746,17 @@ var testCase = {
     assertEqual(0, ee.chainParts('+').length);
   },
 
+  testChainPartPaths: function() {
+    const asms = Toy.parse('ZZ x & ZZ1 y & ZZ z & ZZ1 w');
+    const parts = asms.chainParts('&');
+    const pp = asms.chainPartPaths('&');
+    const targets = pp.map(p => asms.revGet(p));
+    assert(parts.length === targets.length);
+    for (let i = 1; i < parts.length; i++) {
+      assert(parts[i] === targets[i]);
+    }
+  },
+
   testAsArray: function() {
     var term = Toy.parse('(f x (p y))');
     var array = term.asArray();
