@@ -6971,8 +6971,38 @@ declare(
   },
 );
 
+/**
+ * Given a reference to a prefix of the asms, splits the asms just after
+ * the selection into exactly two terms connected as a conjunction.
+ */
+rule('splitAsms', {
+  action2: function (step, path_arg) {
+    const asms = step.getAsms();
+    if (asms) {
+      const target = step.get(path_arg);
+      const prefixes = asms.chainPrefixes('&');
+      const index = prefixes.indexOf(target);
+      if (index > 1) {
+        // The target is a prefix, and is not the entirety of the asms.
+        // Notice that moveRightmost applies to it since its parent is a
+        // binop "&".  If index were 1, the target would already be in
+        // the "a" position.
+        return () => {
+          // This moves the target term to the last, or "b" position
+          // within the asms.
+          const right = rules.moveRightmost(step, path_arg);
+          // This moves it to the "a" position as desired.
+          return rules.rewriteOnly(right, '/left', 'a & b == b & a');
+        };
+      }
+    }
+    // Otherwise this rule does not apply.
   },
-);
+  labels: 'basic',
+  inputs: { site: 1 },
+  priority: 10,
+  menu: 'split assumptions after {term}',
+});
 
   // A simplifier that removes all lambda calls.
 rule('reduceAll', {
