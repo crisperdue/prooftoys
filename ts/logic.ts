@@ -6231,6 +6231,28 @@ declare(
     labels: 'basic'
   },
 
+/**
+ * The seeds of an attempt to create a "Rule C".  This seems to be
+ * trying to find variables not free in "other" assumptions and not free
+ * in the conclusion of the step.
+ */
+// rule('ruleC', {
+//   action2: function (step: Step, names: string[]) {
+//     if (names.length && step.implies()) {
+//       const nm = names[0];
+//       const asmPart = step.getAsms();
+//       const asms = [];
+//       let grouped = step;
+//       asmPart.scanConj(asm => {
+//         if (asm.freeVarSet().has(nm)) {
+//           rules.moveLeftmost(grouped.pathTo(asm));
+//           return true;
+//         }
+//       });
+//     }
+//   },
+// });
+
   ////
   //// Conjunction management
   //// 
