@@ -8146,10 +8146,6 @@ definition('Intersect = {p. {x. forall {q. p q => q x}}}');
 enableDefnFacts();
 
 
-//// EXPORT NAMES
-
-export const tautologyCounts = new Map();
-
 /** 
  * List of asm simplifiers used by simplifyAsms to simplify internally
  * in rules such as rewriters. These typically use closure properties,
