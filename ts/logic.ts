@@ -8145,6 +8145,28 @@ definition('Intersect = {p. {x. forall {q. p q => q x}}}');
 // Make defn facts available and stop deferring their proofs.
 enableDefnFacts();
 
+// This block of code finds facts of the form a == b & c & ... From them
+// it generates facts of the form a => b, a => c, and so on.
+// Only partially implemented.  XXX
+eachFact(info => {
+  const {goal} = info;
+  console.log('Goal', goal);
+  return;  // XXX
+  if (goal.matchSchema('a == b & c')) {
+    const rhs = goal.getRight();
+    const fact = rules.fact(goal);
+    let cond = rules.rewriteOnly(fact, '', '(a == b) => (a => b)');
+    while (true) {
+      const map = cond.matchSchema('a => b & c');
+      if (!map) {
+        break;
+      }
+      const part = rules.rewriteOnly(cond, '', '(a => b & c) => (a => c)');
+      // Record part
+      cond = rules.rewriteOnly(cond, '', '(a => b & c) => (a => b)');
+    }
+  }
+});
 
 /** 
  * List of asm simplifiers used by simplifyAsms to simplify internally
