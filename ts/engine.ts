@@ -1281,6 +1281,8 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
   // Add the related facts now or later.
   if (deferringDefnFacts) {
     deferredDefnFacts.push(addFacts);
+    Object.defineProperty(addFacts, 'name', {value: 'Def-' + name});
+    // Extra tracing here: console.log('Defer defn', name);
   } else {
     addFacts();
   }
