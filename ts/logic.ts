@@ -6918,58 +6918,61 @@ declare(
    description: 'moving term to rightmost;; {in step siteStep}',
    labels: 'algebra',
   },
+);
 
   /**
    * Make the target be the leftmost part of its chain.  If there is no
    * chain or it is already leftmost, return the input step.
    */
-  {name: 'moveLeftmost',
-   action2: function(step, path_arg) {
-     // Implementation is very much like moveRightmost.
-     const path = step.prettifyPath(step.asPath(path_arg));
-     const mover = () => {
-       // At each stage this is a possibly conditional equation with the
-       // full step as its LHS. Starts being equiv to self.
-       // TODO: Maybe consider just one level above the target
-       //   to keep terms smaller and save work.
-       //   That would be path.above().
-       let lefter = rules.consider(step);
-       // 
-       // Adjust "p" to account for the "consider" step.
-       let p = asPath('/right').concat(path);
-       let completer;
-       while (true) {
-         ({completer, path: p} = moverAction('left', lefter, p));
-         if (completer) {
-           const implied = lefter.implies();
-           lefter = completer();
-           if (!implied && lefter.implies()) {
-             // Adjust the path to account for presence of assumptions
-             // in the new step.
-             p = asPath('/right').concat(p);
-           }
-         } else {
-           return rules.replace(step, '', lefter);
-         }
-       }
-     };
-     // This rule can always apply, but see toOffer below here.
-     return (leftChain(step, path_arg).length > 0
-      ? mover 
-      : () => step);
-   },
-   inputs: {site: 1},
-   toOffer: function(step, term) {
-     const path = step.prettyPathTo(term);
-     const chain = leftChain(step, path);
-     return chain.length > 1;
-   },
-   menu: 'move term {term} leftmost',
-   priority: 3,
-   description: 'moving term to leftmost;; {in step siteStep}',
-   labels: 'algebra',
+rule('moveLeftmost', {
+  action2: function (step, path_arg) {
+    // Implementation is very much like moveRightmost.
+    const path = step.prettifyPath(step.asPath(path_arg));
+    let mustMerge = false;
+    const mover = () => {
+      // At each stage this is a possibly conditional equation with the
+      // full step as its LHS. Starts being equiv to self.
+      // TODO: Maybe consider just one level above the target
+      //   to keep terms smaller and save work.
+      //   That would be path.above().
+      let lefter = rules.consider(step);
+      //
+      // Adjust "p" to account for the "consider" step.
+      let p = asPath('/right').concat(path);
+      let completer;
+      while (true) {
+        ({ completer, path: p } = moverAction('left', lefter, p));
+        if (completer) {
+          const implied = lefter.implies();
+          lefter = completer();
+          if (!implied && lefter.implies()) {
+            // Adjust the path to account for presence of assumptions
+            // in the new step.
+            p = asPath('/right').concat(p);
+            if (step.implies()) {
+              mustMerge = true;
+            }
+          }
+        } else {
+          const s1 = rules.replace(step, '', lefter);
+          return mustMerge ? rules.mergeAsms(s1) : s1;
+        }
+      }
+    };
+    // This rule can always apply, but see toOffer below here.
+    return leftChain(step, path_arg).length > 0 ? mover : () => step;
   },
-);
+  inputs: { site: 1 },
+  toOffer: function (step, term) {
+    const path = step.prettyPathTo(term);
+    const chain = leftChain(step, path);
+    return chain.length > 1;
+  },
+  menu: 'move term {term} leftmost',
+  priority: 3,
+  description: 'moving term to leftmost;; {in step siteStep}',
+  labels: 'algebra',
+});
 
 /**
  * Given a reference to a prefix of the asms, splits the asms just after
