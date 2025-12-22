@@ -5959,7 +5959,7 @@ declare(
    * This is like chain1Only, but here the target must be a "proper
    * chain part" of the consequent, which must be a chain of conjuncts.
    * Transforms the consequent into a conjunction with the target as the
-   * second conjunct.  Then splits the conditional into two, applies
+   * second conjunct.  Then splits the consequent into two, applies
    * chain1Only to the one with the target term as its consequent, then
    * rejoins the result of that with the other conditional.
    * 
@@ -6177,59 +6177,57 @@ declare(
 );
 
 declare(
-  // E-Rule (5244), specified by a step and name.  Checks first for
-  // assumptions preceding a boolean term containing the variable,
-  // then for a simple conditional with it in the antecedent.
-  {name: 'eRule',
-    precheck: function(step, name) {
-      var map = (step.matchPattern('a => (p => q)')
-                 || step.matchPattern('p => q'));
-      // Returns the map if all preconditions are OK.
-      return (map && (!map.a || !map.a.freeVars()[name]) &&
-              map.p.freeVars()[name] &&
-              !map.q.freeVars()[name] &&
-              map);
+  // E-Rule (5244), specified by a step and name.  Checks that it is
+  // free in the antecedent and not the consequent.  If so, uses
+  // existImplies to convert the antecedent to be existential.
+  {
+    name: 'eRule',
+    precheck: function (step, name) {
+      var map = step.matchPattern('p => q');
+      // Returns the map if the preconditions are OK.
+      return map && map.p.freeVars()[name] && !map.q.freeVars()[name] && map;
     },
-    action: function(step, name) {
+    action: function (step, name) {
       var map = Toy._actionInfo;
-      if (map.a) {
-        var qstep = rules.toForall1(step, name);
-        return (rules.rewrite(qstep, '/main/left', rules.existImplies())
-                .justify('eRule', arguments, [step]));
-      } else {
-        var qstep = rules.toForall0(step, name);
-        return (rules.rewrite(qstep, '/main', rules.existImplies())
-                .justify('eRule', arguments, [step]));
-      }
+      var qstep = rules.toForall0(step, name);
+      return rules
+        .rewrite(qstep, '/main', rules.existImplies())
+        .justify('eRule', arguments, [step]);
     },
-    inputs: {step: 1, varName: 2},
-    form: ('In step <input name=step>, existentially quantify ' +
-           '<input name=varName>'),
+    inputs: { step: 1, varName: 2 },
+    form:
+      'In step <input name=step>, existentially quantify ' +
+      '<input name=varName>',
     menu: 'existentially quantify',
-    tooltip: ('Existentially quantify antecedent'),
-    description: '&exist; {var};; {in step step}'
-  },
+    tooltip: 'Existentially quantify antecedent',
+    description: 'assuming &exist; {var};; {in step step}',
+  }
+);
 
+declare(
   // E-Rule (5244), specified by a step and a path to an occurrence of
   // a free variable.  The variable must occur free in a suitable part
   // of the step.
-  {name: 'eRule2',
-    precheck: function(step, path) {
+  {
+    name: 'eRule2',
+    precheck: function (step, path) {
       var v = step.get(path);
       var name = v.isVariable() && v.name;
-      return rules.eRule.precheck(step, name);
+      return name && rules.eRule.precheck(step, name);
     },
-    action: function(step, path) {
+    action: function (step, path) {
       var name = step.get(path).name;
-      // Note that this rule is currently inline.
+      // Note that eRule2 is currently inline.
       return rules.eRule(step, name);
     },
-    inputs: {site: 1},
-    menu: ('[A => B] to [&exist; A => B]'),
+    inputs: { site: 1 },
+    menu: '[A => B] to [&exist; A => B]',
     tooltip: 'Existentially quantify antecedent',
-    description: '&exist; {site};; {in step step}',
-    labels: 'basic'
-  },
+    description: 'assuming &exist; {site};; {in step step}',
+    labels: 'basic',
+  }
+);
+
 
 /**
  * The seeds of an attempt to create a "Rule C".  This seems to be
@@ -6253,6 +6251,7 @@ declare(
 //   },
 // });
 
+declare(
   ////
   //// Conjunction management
   //// 
