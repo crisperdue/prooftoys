@@ -6228,6 +6228,65 @@ declare(
   }
 );
 
+// Experimental, probably to be removed.
+//
+// export type MenuInfo = {
+//   ruleName: string;
+//   ruleArgs: any[];
+//   priority?: number;
+//   html: string;
+//   $node: JQuery;
+// }
+
+// export interface MenuGenFun {
+//   (ruleName: string, step: Step, term: Expr, editor: ProofEditor): MenuInfo[];
+// }
+
+// const eRuleGen: MenuGenFun = function (ruleName, dStep, term, editor) {
+//   const asmPart = dStep.getAsms();
+//   const mInfos: MenuInfo[] = [];
+//   if (asmPart) {
+//     const ppath = dStep.prettyPathTo(term);
+//     if (ppath.isAsmSide()) {
+//       // The step is displayed, so the same term never appears at multiple
+//       // paths.
+//       const parts = asmPart.chainParts('&');
+//       if (parts.includes(term)) {
+//         // const asms = asmPart.chainTerms('&');
+//         const zone = term.isCall2('&') ? term.chainTerms('&') : [term];
+//         const inFrees = new Set<string>();
+//         const outFrees = dStep.getMain().freeVarSet();
+//         const addTo = (to: Set<string>, more: Set<string>) => {
+//           more.forEach((x) => to.add(x));
+//         };
+
+//         asmPart.scanConj((c) => {
+//           const frees = c.freeVarSet();
+//           if (zone.includes(c)) {
+//             addTo(inFrees, frees);
+//           } else {
+//             addTo(outFrees, frees);
+//           }
+//         });
+
+//         const extraVars = Array.from(setDiff(inFrees, outFrees));
+//         const step = dStep.original;
+//         const genItems = (nm) => {
+//           const ruleName = 'eRule';
+//           const ruleArgs = [nm];
+//           const priority = 3;
+//           const html = 'foo';
+//           const $node = $('<div>');
+//           mInfos.push({ ruleName, ruleArgs, priority, html, $node });
+//         };
+
+//         extraVars.forEach(nm => genItems(nm));
+//       }
+//     }
+//   }
+//   return mInfos;
+// };
+// Experimental to here.
 
 /**
  * The seeds of an attempt to create a "Rule C".  This seems to be
