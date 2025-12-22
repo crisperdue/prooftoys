@@ -4772,7 +4772,7 @@ declare(
     },
     action: function(step, schema_arg) {
       const [schema, substitution] = Toy._actionInfo;
-      const step2 = rules.instMultiVars(schema, substitution, true);
+      const step2 = rules.instMultiVars(schema, substitution, false);
       const step3 = rules.modusPonens(step, step2);
       // Experimentally allow the schema to count as a dependency.
       // 
