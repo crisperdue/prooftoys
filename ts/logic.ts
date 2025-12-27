@@ -5514,7 +5514,8 @@ declare(
   // Utility for all of the rewriters.  If the equation fact argument
   // "A" is not an equation, rewrites its main part to A == T.
   // Performs the needed substitution, with higher-order matching, and
-  // returns the result of that.
+  // returns the result of that.  If present, the map_arg provides
+  // default values for arguments not determined by pattern matching.
   //
   // I think the map_arg can support rewrites where the schema has a
   // free variable that is not mapped by the mapping process.  This
@@ -5626,13 +5627,12 @@ declare(
   },
 
   // Version of the rewrite rule good for general use in code and for
-  // indirect use in the UI with well-known facts.  (In the display
-  // this does not give access to the proof of the fact.)  This applies
-  // simplifyAsms after rewriting.
+  // indirect use in the UI with well-known facts.  (In the display this
+  // does not give access to the proof of the fact.)  This applies
+  // simplifyAsms after rewriting.  If given, the map_arg provides
+  // default values for the map when not determined by pattern matching.
   //
-  // TODO: Modify all of these rewrite* rules to return Error objects
-  //   in case preconditions are not met.
-  // TODO: In all of these, avoiding reducing in the term to use as a
+  // TODO: In all of these, avoid reducing in the term to use as a
   //   replacement. Reduce lambdas introduced by the H-O match, probably
   //   flagging them as part of substitution, then finding flagged
   //   points.
@@ -6173,8 +6173,147 @@ declare(
    description: detachDescription,
    menuGen: detachMenuGen,
   },
-
 );
+
+/**
+ * Find conditional facts with LHS matching the target,
+ * which must be on the main side.
+ */
+var chainOnlyMenuGen: MenuGenFun = function(ruleName, step, target, editor) {
+  if (!target) {
+    return null;
+  }
+  const path = step.prettyPathTo(target);
+  const infos: MenuInfo[] = [];
+  if (!step.isMainSide(path)) {
+    return infos;
+  }
+  // TODO: Iterate over proof steps as well.
+  editor.steps.forEach((step, index) => {
+    ;
+  });
+  eachFact(info => {
+    const goal = info.goal;
+    if (ok(rules.chainOnly.prep(step.original, path, goal))) {
+      const i = {
+        ruleName: 'chainOnly',
+        ruleArgs: [step.original, path, goal],
+        priority: 5,
+        html: `consequence of ${goal.toHtml()}`,
+        // $node:
+      };
+      infos.push(i);
+    }
+  });
+  return infos;
+};
+
+/**
+ * This implements a limited form of Andrews' substitutivity of
+ * implication.  Given a target term in the main part of a step and a
+ * conditional schema with LHS that matches the target, checks that the
+ * parents of the target are conjunctions up to the root of the main,
+ * and if so first proves a conditional with LHS the same as the step's
+ * main, then applies that to get its result.
+ * 
+ * TODO: This can be easily expanded to also support parent terms that
+ *   may be disjunctions without changing the structure of the
+ *   deduction.
+ */
+rule('chainOnly', {
+  action2: function (step, path_arg, schema) {
+    if (step.isMainSide(path_arg)) {
+      const condMap = schema.matchSchema('a => b');
+      if (condMap) {
+        const main = step.getMain();
+        const target = step.get(path_arg);
+        // The target must match the schema LHS.
+        const factMap = target.matchSchema(condMap.a);
+        if (!factMap) {
+          return null;
+        }
+        const { a: left, b: right } = condMap;
+        // This is the prettified target path relative to step's main.
+        const relPath = bind((p = step.prettifyPath(path_arg)) =>
+          step.implies() ? p.rest : p
+        );
+        // Now we descend from main, following the tail path,
+        // checking that the parents of the target are suitable.
+        let term = main;
+        let tail = relPath;
+        while (!tail.isEnd()) {
+          if (!term.isCall2()) {
+            return null;
+          }
+          const op = term.getBinOp().name;
+          if (!['&'].includes(op)) {
+            return null;
+          }
+          if (!['left', 'right'].includes(tail.segment)) {
+            return null;
+          }
+          term = term.descend(tail.segment);
+          tail = tail.rest;
+        }
+        // The parent terms are good, so return a continuation.
+        return () => {
+          const chainer = rules.fact(schema);
+          /**
+           * Given a provable schema with LHS matching the part of the
+           * term at tail, proves and returns a conditional with LHS
+           * same as the term, in effect transforming the schema for the
+           * current needs.
+           */
+          const xform = (term: Expr, tail: Path) => {
+            if (tail.isEnd()) {
+              const proved = rules.fact(schema);
+              return rules.instMultiVars(proved, factMap);
+            }
+            const seg = tail.segment;
+            if (term.isCall2('&')) {
+              if (seg == 'left') {
+                const step1 = xform(term.getLeft(), tail.rest);
+                const map = {
+                  a: step1.getLeft(),
+                  c: step1.getRight(),
+                  b: term.getRight(),
+                };
+                const taut = rules.tautology('(a => c) => (a & b => c & b)');
+                const step2 = rules.instMultiVars(taut, map);
+                return rules.modusPonens(step1, step2);
+              } else if (seg === 'right') {
+                const step1 = xform(term.getRight(), tail.rest);
+                const map = {
+                  b: step1.getLeft(),
+                  c: step1.getRight(),
+                  a: term.getLeft(),
+                };
+                const taut = rules.tautology('(b => c) => (a & b => a & c)');
+                const step2 = rules.instMultiVars(taut, map);
+                let result = rules.modusPonens(step1, step2);
+                console.log('result', result);
+                return result;
+              }
+            }
+          };
+          const expanded = xform(main, relPath);
+          const pattern = step.implies()
+            ? '(a => b) & (b => c) => (a => c)'
+            : 'b & (b => c) => (b => c)';
+          const s3 = rules.p2(step, expanded, pattern);
+          return s3;
+        };
+      }
+    }
+  },
+  priority: 5,
+  labels: 'basic',
+  inputs: { site: 1, bool: 3 },
+  menuGen: chainOnlyMenuGen,
+  // menu: 'chain ahead',
+  form: 'Chain by <input name=bool>',
+  description: 'reasoning forward',
+});
 
 declare(
   // E-Rule (5244), specified by a step and name.  Checks that it is
@@ -6228,19 +6367,26 @@ declare(
   }
 );
 
+/**
+ * Records to return from "menuGen" functions.
+ */
+export type MenuInfo = {
+  ruleName: string;
+  ruleArgs: any[];
+  priority?: number;
+  html: string;
+  $node?: JQuery;
+}
+
+/**
+ * Type declaration for "menuGen" functions.
+ */
+export interface MenuGenFun {
+  (ruleName: string, step: Step, term: Expr, editor: ProofEditor): MenuInfo[];
+}
+
 // Experimental, probably to be removed.
 //
-// export type MenuInfo = {
-//   ruleName: string;
-//   ruleArgs: any[];
-//   priority?: number;
-//   html: string;
-//   $node: JQuery;
-// }
-
-// export interface MenuGenFun {
-//   (ruleName: string, step: Step, term: Expr, editor: ProofEditor): MenuInfo[];
-// }
 
 // const eRuleGen: MenuGenFun = function (ruleName, dStep, term, editor) {
 //   const asmPart = dStep.getAsms();
