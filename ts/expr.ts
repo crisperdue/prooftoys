@@ -712,12 +712,15 @@ export abstract class Expr {
    * Converts expression to a string like toString, but without special
    * handling of functions of more than one argument or infix operators.
    * A simple text format not dependent on styling options, usable for
-   * keys in maps with Expr values. * 
+   * keys in maps with Expr values.
+   * 
    * TODO: Consider making it insensitive to bound variable names, so for
-   *   example terms that match with "matches" have the same dump. * 
+   *   example terms that match with "matches" have the same dump.
+   * 
    * OOPS, this does not dump any type information, so it may conflate
    * terms that are not really the same.  It is not relied on by
-   * deduction, so the flaw is non-fatal. * 
+   * deduction, so the flaw is non-fatal.
+   * 
    * Internal calls accept a Bindings object as an argument.
    */
   abstract dump(bindings?): string;
@@ -760,7 +763,8 @@ export abstract class Expr {
    * Throws an error unless this and expr2 have the same syntax tree
    * structure and variable names match everywhere except the T/F cases.
    * The newVar should not appear anywhere in this or expr2, to ensure
-   * that the result will have this and expr2 as substitution instances.   * 
+   * that the result will have this and expr2 as substitution instances.
+   * 
    * The optional bindings (used in recursive calls) map from names of
    * bound variables in expressions containing this, to names of
    * corresponding bound variables in expressions containing expr2.
@@ -833,21 +837,19 @@ export abstract class Expr {
   /**
    * Returns the number of nodes in this Expr, up to an optional
    * maximum.
-   * 
+   *
    * @param max maximum size.  If this has more than this many nodes,
    *   stops visiting and returns this maximum.  Defaults to MAX_INT.
    */
-  size(max=MAX_INT) {
+  size(max = MAX_INT) {
     let total = 0;
     const visit = (t) => {
       if (total >= max) return;
       total++;
       const c = t.constructor;
-      if (c === Toy.Call)
-        visit(t.fn), visit(t.arg);
-      else if (c === Toy.Lambda)
-        visit(t.bound), visit(t.body);
-    }
+      if (c === Toy.Call) visit(t.fn), visit(t.arg);
+      else if (c === Toy.Lambda) visit(t.bound), visit(t.body);
+    };
     visit(this);
     return total;
   }
@@ -913,7 +915,7 @@ export abstract class Expr {
     // e.g. exponentiation.  Since <, >, and & are separated by spaces,
     // this is adequate in practice.
     const html = this.toUnicode();
-    const result = (trimmed && html[0] === '(') ? html.slice(1, -1) : html;
+    const result = trimmed && html[0] === '(' ? html.slice(1, -1) : html;
     return result;
   }
 
@@ -924,8 +926,7 @@ export abstract class Expr {
    */
   isCall1(name?): this is Call1 {
     if (this instanceof Call) {
-      return (this.fn instanceof Atom &&
-              (name == null || this.fn.name == name));
+      return this.fn instanceof Atom && (name == null || this.fn.name == name);
     } else {
       return false;
     }
@@ -939,9 +940,11 @@ export abstract class Expr {
   isCall2(name?) {
     if (this instanceof Call) {
       var left = this.fn;
-      return left instanceof Call
-        && left.fn instanceof Atom
-        && (name == null || left.fn.name == name || left.fn.pname == name);
+      return (
+        left instanceof Call &&
+        left.fn instanceof Atom &&
+        (name == null || left.fn.name == name || left.fn.pname == name)
+      );
     } else {
       return false;
     }
@@ -1030,14 +1033,15 @@ export abstract class Expr {
     return this.isTypeTest() && (this as unknown as Call).arg.isVariable();
   }
 
-
   /**
    * Returns truthy iff this looks like a subgoal.
    */
   likeSubgoal() {
-    return (!this.isTypeTest() &&
-            !this.matchSchema('not (x = y)') &&
-            !this.matchSchema('x != y'));
+    return (
+      !this.isTypeTest() &&
+      !this.matchSchema('not (x = y)') &&
+      !this.matchSchema('x != y')
+    );
   }
 
   /**
@@ -1047,7 +1051,7 @@ export abstract class Expr {
    */
   hasSubgoal() {
     const asms = this.getAsms();
-    return asms && asms.scanConj(x => x.likeSubgoal());
+    return asms && asms.scanConj((x) => x.likeSubgoal());
   }
 
   /**
@@ -1060,7 +1064,7 @@ export abstract class Expr {
     this.__type = type;
     return this;
   }
-    
+
   /**
    * Sets the type of this from another term, returning this. Only valid
    * if no type has been previously set.  Use with caution (in type
@@ -1132,7 +1136,7 @@ export abstract class Expr {
    *
    * TODO: Allow names of bound variables to differ.
    */
-  sameAs(other, andTypes=false, exact=false) {
+  sameAs(other, andTypes = false, exact = false) {
     // Based on the assumption that typed inputs are properly typed,
     // this only checks types of Atoms, because the types of the Atoms
     // determines all other types in the term.
@@ -1149,8 +1153,12 @@ export abstract class Expr {
           // match.  This satisfies the specification.
           const t1 = a.hasType();
           const t2 = b.hasType();
-          return (!andTypes || !t1 || !t2 ||
-                  (exact ? t1.equal(t2) : t1.equiv(t2, map)));
+          return (
+            !andTypes ||
+            !t1 ||
+            !t2 ||
+            (exact ? t1.equal(t2) : t1.equiv(t2, map))
+          );
         }
       } else if (c === Call) {
         return same(a.fn, b.fn) && same(a.arg, b.arg);
@@ -1168,7 +1176,7 @@ export abstract class Expr {
    */
   occurrences(names) {
     const result = new Set();
-    const search = term => {
+    const search = (term) => {
       const c = term.constructor;
       if (c === Atom) {
         if (names.has(term.name)) {
@@ -1228,7 +1236,7 @@ export abstract class Expr {
    */
   constantNames() {
     const result = new Set();
-    const traverse = term => {
+    const traverse = (term) => {
       const ct = term.constructor;
       if (ct === Atom) {
         if (term.isNamedConst()) {
@@ -1277,8 +1285,7 @@ export abstract class Expr {
   displaysIdentifier() {
     if (this instanceof Atom) {
       var uni = this.toUnicode();
-      return (uni.match(identifierRegex) ||
-              uni.match(moreLettersRegex));
+      return uni.match(identifierRegex) || uni.match(moreLettersRegex);
     }
   }
 
@@ -1296,7 +1303,7 @@ export abstract class Expr {
   getNumValue() {
     var self = this;
     assert(this.isNumeral(), 'Not a numeral: {1}', self);
-    return (this as unknown as Atom)._value;  // TODO: Fix - unsafe
+    return (this as unknown as Atom)._value; // TODO: Fix - unsafe
   }
 
   /**
@@ -1312,7 +1319,7 @@ export abstract class Expr {
    */
   getStringValue() {
     assert(this.isString(), 'Not a string literal: {1}', this);
-    return (this as unknown as Atom)._value;  // TODO: Fix - unsafe
+    return (this as unknown as Atom)._value; // TODO: Fix - unsafe
   }
 
   /**
@@ -1328,8 +1335,7 @@ export abstract class Expr {
    * This is a constant T or F.
    */
   isBoolConst() {
-    return (this instanceof Atom &&
-            (this.name == 'T' || this.name == 'F'));
+    return this instanceof Atom && (this.name == 'T' || this.name == 'F');
   }
 
   /**
@@ -1346,10 +1352,12 @@ export abstract class Expr {
    * defined to display as infix.
    */
   isInfixCall() {
-    return (this instanceof Call
-            && this.fn instanceof Call
-            && this.fn.fn instanceof Atom
-            && isInfixOp(this.fn.fn));
+    return (
+      this instanceof Call &&
+      this.fn instanceof Call &&
+      this.fn.fn instanceof Atom &&
+      isInfixOp(this.fn.fn)
+    );
   }
 
   /**
@@ -1358,7 +1366,7 @@ export abstract class Expr {
    * starting point for the name of the new variable, otherwise "x".
    * Given an additional term, avoids its free variables also.
    */
-  freshVar(name='x', term2?: Expr) {
+  freshVar(name = 'x', term2?: Expr) {
     if (term2) {
       const names = Object.assign(this.freeVars(), term2.freeVars());
       return genVar(name, names);
@@ -1380,8 +1388,7 @@ export abstract class Expr {
       return this;
     }
     if (expr.isCall2(op)) {
-      return infixCall(this.concat(expr.getLeft(), op),
-                      op, expr.getRight());
+      return infixCall(this.concat(expr.getLeft(), op), op, expr.getRight());
     } else {
       return infixCall(this, op, expr);
     }
@@ -1424,12 +1431,11 @@ export abstract class Expr {
     const self = this;
     const p = Toy.asPath;
     if (self.implies()) {
-      return self.getRight().isCall2('=') ?  p('/right/left') : p('/right');
+      return self.getRight().isCall2('=') ? p('/right/left') : p('/right');
     } else {
       return self.isCall2('=') ? p('/left') : Path.empty;
     }
   }
-    
 
   /**
    * Matches the given "schematic" expression against this. Returns a
@@ -1459,7 +1465,7 @@ export abstract class Expr {
    *   part of the substitution operation, as indicated by the extended
    *   information associated with the computed substitution.
    */
-  matchSchema(schema_arg): (null | Record<string, Expr>) {
+  matchSchema(schema_arg): null | Record<string, Expr> {
     const schema = schema_arg instanceof Expr ? schema_arg : parse(schema_arg);
     var substitution = {};
     var result = schema._matchAsSchema(this, substitution, null);
@@ -1501,7 +1507,7 @@ export abstract class Expr {
     var rsubst = {};
     for (var name in subst) {
       var value = subst[name];
-      if (!(value.isVariable())) {
+      if (!value.isVariable()) {
         return false;
       }
       if (rsubst[value.name]) {
@@ -1511,7 +1517,6 @@ export abstract class Expr {
     }
     return subst;
   }
-
 
   /**
    * Attempts to match part of this to part of the given schema.  The
@@ -1637,7 +1642,7 @@ export abstract class Expr {
    * untyped.
    */
   rename(map) {
-    const rename = term => {
+    const rename = (term) => {
       const ct = term.constructor;
       if (ct === Atom) {
         return map[term.name] || term;
@@ -1657,9 +1662,7 @@ export abstract class Expr {
    */
   pathToFocalPart() {
     var main = this.getMain();
-    return Toy.asPath(main.isCall2('=')
-                      ? '/main/right'
-                      : '/main');
+    return Toy.asPath(main.isCall2('=') ? '/main/right' : '/main');
   }
 
   /**
@@ -1682,8 +1685,11 @@ export abstract class Expr {
    * conditional.
    */
   isConsequent(path: Path) {
-    return this.implies() && path.length() === 1 &&
-      ['right', 'arg', 'main'].includes(path.segment);
+    return (
+      this.implies() &&
+      path.length() === 1 &&
+      ['right', 'arg', 'main'].includes(path.segment)
+    );
   }
 
   /**
@@ -1703,11 +1709,11 @@ export abstract class Expr {
         return !isAnd;
       } else if (isAnd) {
         const seg = p.segment;
-        return (seg === 'left'
-                ? isChainEnd(term.getLeft(), p.rest)
-                : seg === 'right'
-                ? isChainEnd(term.getRight(), p.rest)
-                : false);
+        return seg === 'left'
+          ? isChainEnd(term.getLeft(), p.rest)
+          : seg === 'right'
+          ? isChainEnd(term.getRight(), p.rest)
+          : false;
       } else {
         return false;
       }
@@ -1769,7 +1775,7 @@ export abstract class Expr {
    *   for variables according to their names.
    */
   mathVars() {
-    var map:Record<string, true> = {}; 
+    var map: Record<string, true> = {};
     this._addMathVars(null, map);
     return map;
   }
@@ -1785,24 +1791,24 @@ export abstract class Expr {
    * If the optional expr is present, uses that as an initial conjunct
    * to add to.
    */
-  mathVarConditions(this:Expr, expr?) {
+  mathVarConditions(this: Expr, expr?) {
     var real = new Atom('R');
     // Order the names for nice presentation.
     var names = [];
     const freeVars = Array.from(this.freeVarSet());
     const numVars = this.mathVars();
-    freeVars.forEach(function(name) {
-        if (numVars[name]) {
-          names.push(name);
-        }
-      });
-    names.forEach(function(name) {
-        if (expr) {
-          expr = Toy.infixCall(expr, '&', Toy.call(real, name));
-        } else {
-          expr = Toy.call(real, name);
-        }
-      });
+    freeVars.forEach(function (name) {
+      if (numVars[name]) {
+        names.push(name);
+      }
+    });
+    names.forEach(function (name) {
+      if (expr) {
+        expr = Toy.infixCall(expr, '&', Toy.call(real, name));
+      } else {
+        expr = Toy.call(real, name);
+      }
+    });
     return expr;
   }
 
@@ -1848,9 +1854,9 @@ export abstract class Expr {
    * Lambda or Atom, returning it.
    */
   funPart() {
-    return (this instanceof Call ? this.fn.funPart() : this);
+    return this instanceof Call ? this.fn.funPart() : this;
   }
-  
+
   /**
    * If this term is a call, returns the first "fn" descendent that
    * is an atom, otherwise returns null.
@@ -1901,7 +1907,7 @@ export abstract class Expr {
    * nested within its function part.
    */
   hasArgs(n) {
-    return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
+    return n < 1 ? true : this instanceof Call && this.fn.hasArgs(n - 1);
   }
 
   /**
@@ -1911,9 +1917,7 @@ export abstract class Expr {
    * given a Lambda or Atom.
    */
   argsPassed() {
-    return (this instanceof Call
-            ? this.fn.argsPassed() + 1
-            : 0);
+    return this instanceof Call ? this.fn.argsPassed() + 1 : 0;
   }
 
   /**
@@ -1991,18 +1995,20 @@ export abstract class Expr {
     return main.isCall2('=') ? main.getRight() : null;
   }
 
-
   /**
    * Throw an error with message if this is not a call to a function
    * with the given name.  If no name is given, any named function will
    * do.
    */
   assertCall1(name) {
-    assert(this.isCall1(name),
-          (name === undefined
-            ? 'Not a 1-argument call: {1}'
-            : 'Not a 1-argument call to {2}: {1}'),
-            this, name);
+    assert(
+      this.isCall1(name),
+      name === undefined
+        ? 'Not a 1-argument call: {1}'
+        : 'Not a 1-argument call to {2}: {1}',
+      this,
+      name
+    );
   }
 
   /**
@@ -2017,14 +2023,14 @@ export abstract class Expr {
       '=>': 'a conditional',
       '=': 'an equation',
       '&': 'a conjunction',
-      '|': 'a disjunction'
+      '|': 'a disjunction',
     };
     var message;
     if (name == null) {
       message = 'Not a call to a named 2-argument function';
     } else {
       var uni = unicodeNames[name] || name;
-      message = ('Not ' + (map[name] || 'a call to ' + uni) + ': ' + this);
+      message = 'Not ' + (map[name] || 'a call to ' + uni) + ': ' + this;
     }
     assert(false, message);
   }
@@ -2074,7 +2080,7 @@ export abstract class Expr {
    * Converts the argument into a path within this Expr.  Given a Path
    * or path string, this adjusts a leading occurrence of "/main" based
    * on the structure of this Expr.
-   * 
+   *
    * If the argument is a string either empty or beginning with "/",
    * parses it into a Path object; otherwise treats a string as an Expr,
    * parsing it into a term.  Accepts a Bindings object, interpreting it
@@ -2207,11 +2213,12 @@ export abstract class Expr {
    */
   asWff() {
     if (this.isProved()) {
-      const wff = (this instanceof Call
-                  ? new Call(this.fn, this.arg)._typeFrom(this)
-                  : this instanceof Atom
-                  ? new Atom(this.name)._typeFrom(this)
-                  : abort());
+      const wff =
+        this instanceof Call
+          ? new Call(this.fn, this.arg)._typeFrom(this)
+          : this instanceof Atom
+          ? new Atom(this.name)._typeFrom(this)
+          : abort();
       wff.fromStep = this;
       return wff;
     } else {
@@ -2266,7 +2273,9 @@ export abstract class Expr {
   prettyPathTo(pred) {
     if (pred instanceof Expr) {
       var target = pred;
-      pred = function(term) { return target == term; };
+      pred = function (term) {
+        return target == term;
+      };
     }
     var p = this._prettyPath(pred, Toy.asPath(''));
     return p;
@@ -2400,7 +2409,9 @@ export abstract class Expr {
    * Returns the parent subexpression that is a binary call to '=' (or '==')
    */
   parentEqn(path) {
-    return this.findParent(path, function(term) { return term.isCall2('='); });
+    return this.findParent(path, function (term) {
+      return term.isCall2('=');
+    });
   }
 
   /**
@@ -2486,7 +2497,7 @@ export abstract class Expr {
    * Returns an array of all terms that are either this; or
    * left-sideward descendents of this and have the named op as their
    * binOp; or are a left or right child of one of those.
-   * 
+   *
    * The array elements are chain elements or "prefixes" of the chain.
    */
   chainParts(chainOp) {
@@ -2509,7 +2520,7 @@ export abstract class Expr {
    * Returns an array of reverse paths to all terms that are either
    * this; or left-sideward descendents of this and have the named op as
    * their binOp; or are a left or right child of one of those.
-   * 
+   *
    * The paths refer to chain elements or "prefixes" of the chain.
    */
   chainPartPaths(chainOp): Path[] {
@@ -2537,7 +2548,7 @@ export abstract class Expr {
    * not members of the chain unless they are "leftmost", i.e. not a
    * call with compatible binop.
    *
-   * This descends through the path, 
+   * This descends through the path,
    */
   nearestChain(path) {
     let p = Toy.asPath(path);
@@ -2561,7 +2572,7 @@ export abstract class Expr {
     let segment = null;
 
     // If the term is a named binary operator, returns the name, else falsy.
-    const bopName = term => term.isCall2() ? term.getBinOp().name : null;
+    const bopName = (term) => (term.isCall2() ? term.getBinOp().name : null);
 
     // The term starts a new chain.  It could be an element of the
     // previous current chain.
@@ -2612,9 +2623,9 @@ export abstract class Expr {
     const vbl = termify(vbl_arg);
     const left = this.eqnLeft();
     const right = this.eqnRight();
-    const lPath = check(left.prettyPathTo(term => term.matches(vbl)))
-    const rPath = check(right.prettyPathTo(term => term.matches(vbl)));
-    return {from: lPath, to: rPath};
+    const lPath = check(left.prettyPathTo((term) => term.matches(vbl)));
+    const rPath = check(right.prettyPathTo((term) => term.matches(vbl)));
+    return { from: lPath, to: rPath };
   }
 
   /**
@@ -2628,7 +2639,9 @@ export abstract class Expr {
   pathToBinding(pred) {
     if (pred instanceof Expr) {
       var target = pred;
-      pred = function(term) { return target.matches(term); };
+      pred = function (term) {
+        return target.matches(term);
+      };
     }
     var revPath = this._bindingPath(pred, Toy.asPath(''));
     return revPath ? revPath.reverse() : null;
@@ -2670,11 +2683,15 @@ export abstract class Expr {
       } else {
         // Self is a conjunction.
         var right = locater(self.getRight(), pos);
-        assert(right instanceof Atom,
-              'Internal error, not an Atom: {1}', right);
-        var left = (right == h
-                    ? new Atom('h' + (pos + 1))
-                    : locater(self.getLeft(), pos + 1));
+        assert(
+          right instanceof Atom,
+          'Internal error, not an Atom: {1}',
+          right
+        );
+        var left =
+          right == h
+            ? new Atom('h' + (pos + 1))
+            : locater(self.getLeft(), pos + 1);
         return infixCall(left, '&', right);
       }
     }
@@ -2703,18 +2720,18 @@ export abstract class Expr {
     var lhs = null;
     var rhs = null;
     var found = false;
-    this.scanConj(function(term) {
-        var h;
-        if (term.matches(toMove)) {
-          h = new Atom('h');
-          found = true;
-        } else {
-          h = new Atom('h' + i);
-          rhs = rhs ? infixCall(rhs, '&', h) : h;
-        }
-        lhs = lhs ? infixCall(lhs, '&', h) : h;
-        i++;
-      });
+    this.scanConj(function (term) {
+      var h;
+      if (term.matches(toMove)) {
+        h = new Atom('h');
+        found = true;
+      } else {
+        h = new Atom('h' + i);
+        rhs = rhs ? infixCall(rhs, '&', h) : h;
+      }
+      lhs = lhs ? infixCall(lhs, '&', h) : h;
+      i++;
+    });
     if (found) {
       rhs = rhs ? infixCall(rhs, '&', new Atom('h')) : new Atom('h');
     }
@@ -2730,10 +2747,12 @@ export abstract class Expr {
    * immediately becomes the value of the call.  Otherwise returns
    * the value of the last call to the action.
    */
-  scanConj(action, revPath=Path.empty) {
+  scanConj(action, revPath = Path.empty) {
     if (this.isCall2('&')) {
-      return (this.getLeft().scanConj(action, new Path('left', revPath)) ||
-              action(this.getRight(), new Path('right', revPath)));
+      return (
+        this.getLeft().scanConj(action, new Path('left', revPath)) ||
+        action(this.getRight(), new Path('right', revPath))
+      );
     } else {
       return action(this, revPath);
     }
@@ -2758,8 +2777,10 @@ export abstract class Expr {
    */
   scanDisjuncts(action) {
     if (this.isCall2('|')) {
-      return (this.getLeft().scanDisjuncts(action) ||
-              this.getRight().scanDisjuncts(action));
+      return (
+        this.getLeft().scanDisjuncts(action) ||
+        this.getRight().scanDisjuncts(action)
+      );
     } else {
       return action(this);
     }
@@ -2774,8 +2795,10 @@ export abstract class Expr {
    */
   scanConjuncts(action) {
     if (this.isCall2('&')) {
-      return (this.getLeft().scanConjuncts(action) ||
-              this.getRight().scanConjuncts(action));
+      return (
+        this.getLeft().scanConjuncts(action) ||
+        this.getRight().scanConjuncts(action)
+      );
     } else {
       return action(this);
     }
@@ -2785,14 +2808,14 @@ export abstract class Expr {
    * Build and return a TermSet containing the assumptions
    * of this wff.  If the wff is not conditional, returns
    * an empty set.
-   * 
+   *
    * The optional predicate filters the asms to include in the set.  By
    * default it includes all of them.
    */
   asmSet(pred = truly) {
-    return (this.isCall2('=>')
-            ? makeConjunctionSet(this.getLeft(), pred)
-            : new TermSet());
+    return this.isCall2('=>')
+      ? makeConjunctionSet(this.getLeft(), pred)
+      : new TermSet();
   }
 
   /**
@@ -2805,9 +2828,10 @@ export abstract class Expr {
   eachConjunct(action, rpath_arg) {
     const rpath = rpath_arg ? Toy.asPath(rpath_arg) : Path.empty;
     if (this.isCall2('&')) {
-      return this.getLeft()
-        .eachConjunct(action, new Path('left', rpath)) ||
-        action(this.getRight(), new Path('right', rpath));
+      return (
+        this.getLeft().eachConjunct(action, new Path('left', rpath)) ||
+        action(this.getRight(), new Path('right', rpath))
+      );
     } else {
       return action(this, rpath);
     }
@@ -2823,9 +2847,11 @@ export abstract class Expr {
    */
   transformConjuncts(xform) {
     if (this.isCall2('&')) {
-      return infixCall(this.getLeft().transformConjuncts(xform),
-                      '&',
-                      xform(this.getRight()));
+      return infixCall(
+        this.getLeft().transformConjuncts(xform),
+        '&',
+        xform(this.getRight())
+      );
     } else {
       return xform(this);
     }
@@ -2842,10 +2868,13 @@ export abstract class Expr {
       path = Toy.asPath('');
     }
     var op = this.isCall2() && this.getBinOp().name;
-    return (test(this, path) ||
-            (op && op in _searchTermsOps &&
-            (this.getRight().searchTerms(test, new Path('right', path)) ||
-              this.getLeft().searchTerms(test, new Path('left', path)))));
+    return (
+      test(this, path) ||
+      (op &&
+        op in _searchTermsOps &&
+        (this.getRight().searchTerms(test, new Path('right', path)) ||
+          this.getLeft().searchTerms(test, new Path('left', path))))
+    );
   }
 
   /**
@@ -2863,9 +2892,8 @@ export abstract class Expr {
    * the schema, the value of each being the action function for that
    * schema variable.
    *
-   * The optional path argument is a path that will be prepended to the
-   * path passed to the path passed to any patternInfo function that may
-   * be called.
+   * The optional path argument will be prepended to the path passed to
+   * any patternInfo function that may be called.
    */
   walkPatterns(patternInfos, path_arg) {
     var self = this;
@@ -2878,8 +2906,11 @@ export abstract class Expr {
         if (name && patternInfo[name]) {
           // Call the function associated with the name of this
           // variable in the schema.
-          patternInfo[name].call(null, map[name],
-                                cxtPath.concat(revPath.reverse()));
+          patternInfo[name].call(
+            null,
+            map[name],
+            cxtPath.concat(revPath.reverse())
+          );
         }
       }
     }
@@ -2903,7 +2934,7 @@ export abstract class Expr {
   freeVarsMap() {
     const byName = new Map();
     const boundNames = [];
-    const traverse = term => {
+    const traverse = (term) => {
       const ct = term.constructor;
       if (ct === Atom) {
         if (term.isVariable() && !boundNames.includes(term.name)) {
@@ -2918,7 +2949,7 @@ export abstract class Expr {
         traverse(term.body);
         boundNames.pop();
       }
-    }
+    };
     traverse(this);
     return byName;
   }
@@ -2927,12 +2958,12 @@ export abstract class Expr {
    * The result of this method is very similar to toString, but this
    * uses the "name" property of atoms, so it equates atoms that are
    * aliases.  Intended for use in mapping stated references to facts
-   * with declared facts.  
+   * with declared facts.
    *
    * TODO: Consider properly handling type information here.
    */
   toKey() {
-    const key = x => {
+    const key = (x) => {
       const c = x.constructor;
       if (c === Atom) {
         const isInfix = Toy.isInfixOp(x);
@@ -2941,11 +2972,25 @@ export abstract class Expr {
         if (x.isCall2()) {
           const op = x.getBinOp();
           if (isInfixOp(op)) {
-            return ('(' + key(x.getLeft()) + ' ' + op.name +
-                    ' ' + key(x.getRight()) + ')');
+            return (
+              '(' +
+              key(x.getLeft()) +
+              ' ' +
+              op.name +
+              ' ' +
+              key(x.getRight()) +
+              ')'
+            );
           } else {
-            return ('(' + key(op) + ' ' + key(x.getLeft()) +
-                    ' ' + key(x.getRight()) + ')');
+            return (
+              '(' +
+              key(op) +
+              ' ' +
+              key(x.getLeft()) +
+              ' ' +
+              key(x.getRight()) +
+              ')'
+            );
           }
         } else {
           return '(' + key(x.fn) + ' ' + key(x.arg) + ')';
@@ -2955,7 +3000,7 @@ export abstract class Expr {
       } else {
         abort('Bad input: {1}', x);
       }
-    }
+    };
     return key(this);
   }
 
@@ -2973,7 +3018,7 @@ export abstract class Expr {
    * are no assumptions. The paths use /left and /right.
    */
   asmMap() {
-    const scan = function(expr, pathStr) {
+    const scan = function (expr, pathStr) {
       if (expr.isCall2('&')) {
         scan(expr.getLeft(), pathStr + '/left');
         asms.set(pathStr + '/right', expr.getRight());
@@ -2988,14 +3033,12 @@ export abstract class Expr {
     return asms;
   }
 
-
   /**
    * Alternate name for Expr.matchSchema.
    */
   findSubst(schema) {
     return this.matchSchema(schema);
   }
-
 }
 
 //// Atoms -- functions
