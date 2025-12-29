@@ -2740,6 +2740,16 @@ export abstract class Expr {
   }
 
   /**
+   * The value is truthy iff no member of the chain is a conjunction
+   * with a conjunction as its right arg.
+   */
+  isFlatConj() {
+    return !this.scanConj(
+      (term) => term.isCall2('&') && term.getRight().isCall2('&')
+    );
+  }
+
+  /**
    * Taking this is a tree of disjuncts, applies the given action
    * function to each leaf node, in order from left to right.  If any
    * call returns a truthy value, that becomes immediately the result,
