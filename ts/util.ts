@@ -758,8 +758,9 @@ namespace Toy {
   }
 
   /**
-   * Checks for Error values.  Calls the function with the error
-   * if it is an Error, otherwise just returns the value.
+   * Checks for Error values.  Calls the function, defaulting to
+   * "abort", with the error if it is an Error, otherwise just returns
+   * the value.
    */
   export function check(v, f = Toy.abort) {
     return v instanceof Error ? f(v) : v;

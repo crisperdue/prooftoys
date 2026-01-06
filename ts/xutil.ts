@@ -1433,8 +1433,8 @@ export interface Expr {
   stripAsms(strippable);
 }
 /**
- * Returns the wff, omitting any assumptions that are "strippable"
- * removed, tested by applying the function argument to the
+ * Returns the wff, omitting any terms in the assumptions chain that are
+ * "strippable", determined by applying the function argument to the
  * assumption term.
  */
 Expr.prototype.stripAsms = function(strippable) {
@@ -1828,7 +1828,7 @@ Expr.prototype.replacementTerm = function() {
 
 /**
  * Calls a function given as an Expr or name of a constant, passing
- * one or more arguments, that may be passed as strings.
+ * one or more arguments.  String arguments are termified.
  */
 // TODO: Eliminate use of binops in favor of infixCall.  This will
 // be problematic for some infix operators.
@@ -2420,24 +2420,24 @@ export function dumpProof(proofEditor) {
  *
  * This does not set up caching of the proof result.
  */
-export function asProof(info) {
-  const type = typeof info;
+export function asProof(data) {
+  const type = typeof data;
   if (type === 'function') {
-    assert(info.length === 0,
+    assert(data.length === 0,
            'Alleged proof, but needs parameters: ${info}');
-    return info;
+    return data;
   } else if (type === 'string') {
     return () => {
-      const decoded = decodeSteps(info);
+      const decoded = decodeSteps(data);
       // Checking "instanceof Error" is hitting a JS VM bug here.
       return (decoded instanceof Array
               ? decoded[decoded.length - 1]
               : decoded);
     }
-  } else if (Array.isArray(info)) {
-    return asProof(['(steps '].concat(info, ')').join('\n'));
+  } else if (Array.isArray(data)) {
+    return asProof(['(steps '].concat(data, ')').join('\n'));
   } else {
-    abort(`Not a proof: ${info}`);
+    abort(`Not a proof: ${data}`);
   }
 }
 

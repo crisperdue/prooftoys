@@ -9,6 +9,7 @@ namespace Toy {
 /** Rebindable exit */
 export var tautExit;
 
+/** Counts of usage of each tautology */
 export const tautologyCounts = new Map();
 
 const Step = Expr;
@@ -3335,7 +3336,7 @@ declare(
   // derives an instantiation of the tautology using the substitution.
   // The tautology can be given as a parseable string.
   //
-  // TODO: Automatically detect the relevant tautology. 
+  // TODO: Remove.
   {name: 'tautInst',
     action: function(h_tautology_arg, map) {
       var tautology = termify(h_tautology_arg);
@@ -5342,11 +5343,10 @@ declare(
   },
 
   // If the step has the form a => (b => c), moves all the members of
-  // that chain to the inner level and finally erases the outer "=>".
-  // Then uses arrangeAsms to flatten, re-order, and deduplicate the
-  // entire set, removing occurrences of T.  This is used by
-  // rules.replace, in which "a" is the assumptions of the input
-  // equation.
+  // the "a" chain to the inner level and finally erases the outer "=>".
+  // In any case uses arrangeAsms to deduplicate the entire set,
+  // removing occurrences of T.  This is used by rules.replace, in which
+  // "a" is the assumptions of the input equation.
   //
   // TODO: Consider retaining the original order of the "a"
   //   assumptions, perhaps by just calling arrangeAsms, which it
@@ -5366,7 +5366,6 @@ declare(
           flatter = once(flatter, '',
 		         ['a => (b => c) == (b & a => c)'],
 		         'rewriteOnly');
-          // TODO: Consider ways to deduplicate more efficiently.
           const deduped = rules.arrangeAsms(flatter);
           return deduped.justify('mergeAsms', arguments, [step]);
         }
@@ -8415,7 +8414,7 @@ enableDefnFacts();
 // Only partially implemented.  XXX
 eachFact(info => {
   const {goal} = info;
-  console.log('Goal', goal);
+  // For debugging: console.log('Goal', goal);
   return;  // XXX
   if (goal.matchSchema('a == b & c')) {
     const rhs = goal.getRight();
