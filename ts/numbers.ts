@@ -1393,6 +1393,19 @@ fact('@ R x & R y => (x * y != 0 == x != 0 & y != 0)',
 fact('@ R x & R y & x * y != 0 => x != 0');
 fact('@ R x & R y & x * y != 0 => y != 0');
 
+fact('A & x * y != 0 == A & x != 0 & y != 0', {
+  proof: function () {
+    return rules
+      .consider('A & x * y != 0')
+      .andThen('rewrite', '/right/right', 'x * y != 0 == x != 0 & y != 0')
+      .andThen('rewrite', '/main/right', 'a & (b & c) == a & b & c');
+  },
+});
+
+// Generate a pre-flattened conjunction rather than
+// a plain conjunction here.
+asmSimps2.push('A & x * y != 0 == A & x != 0 & y != 0');
+
 // Closure properties
 
 declare(
@@ -2018,7 +2031,6 @@ asmSimplifiers.push
    'R x & R m => R (x mod m)',
    'x != 0 => R (recip x)',
    'x != 0 => recip x != 0',
-   'x * y != 0 == x != 0 & y != 0',
    'x ** 1 = x',
    'x ** 2 != 0 == x != 0',
    'x ** 3 != 0 == x != 0',

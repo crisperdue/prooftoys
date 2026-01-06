@@ -12,6 +12,17 @@ export var tautExit;
 /** Counts of usage of each tautology */
 export const tautologyCounts = new Map();
 
+/** 
+ * These are asm simplifiers that operate on conjunctions.
+ * More are pushed in numbers.ts.
+ * 
+ * TODO: right here we could add 'a & (b & c) == a & b & c', so
+ *   simplifyAsms always flattens conjunctions. Probably better,
+ *   simplifier rewrites that generate conjunctions could flag them so
+ *   this could find and flatten just these newly-generated ones.
+ */
+export const asmSimps2 = ['a & T == a', 'T & a == a'];
+
 const Step = Expr;
 
 // The book definition of F is just fine, and can be presented either
@@ -2399,7 +2410,8 @@ declare({
       const v = withExit((exit) => {
         function tryFacts(path, facts) {
           // Using rewriteOnly here should have the effect of applying
-          // only asmSimplifiers during this entire process.
+          // only asmSimplifiers and asmSimps2 during this entire
+          // process.
           const next = applyMatchingFact(step, path, facts, 'rewriteOnly');
           if (next) {
             exit(next);
@@ -2409,7 +2421,7 @@ declare({
           tryFacts(path, asmSimplifiers);
         }
         function walkConjuncts(term, path) {
-          tryFacts(path, ['a & T == a', 'T & a == a']);
+          tryFacts(path, asmSimps2);
           const patterns = [
             { match: 'a & b', a: walkConjuncts, b: tryConjunct },
             { match: 'a', a: tryConjunct },
@@ -2427,6 +2439,7 @@ declare({
   menu: 'simplify assumptions',
   description: 'simplifying assumptions;; {in step step}',
   labels: 'general',
+  autoSimplify: noSimplify,
 });
 
 /**
