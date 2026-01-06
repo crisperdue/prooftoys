@@ -1728,12 +1728,12 @@ declare(
 );
 
 /**
- * Given a proof step and a path to a term in it, returns the
- * continuation in case the term matches an assumption of the step, but
- * is not one of the assumptions itself. A truthy third argument
- * requests matching against an assumption that is its negation. If a
- * goal wff is also given, also looks for such an assumption in the
- * given goal.  Returns a truthy value on success.
+ * Given a proof step and a path to a term in it, returns a truthy value
+ * in case the term matches an assumption of the step, but is a
+ * duplicate or not an assumption at all.  A truthy third argument
+ * requests matching against an assumption that is the target's
+ * negation. If a goal wff is also given, also looks for such an
+ * assumption in the given goal.
  */
 function assumedPrep(step: Expr, path_arg: Pathable,
     negated: boolean = false, goal?: Expr) {
@@ -1741,10 +1741,17 @@ function assumedPrep(step: Expr, path_arg: Pathable,
   // and not A are assumed.
   let path = step.prettifyPath(path_arg);
   const target = step.get(path);
-  if (!target.isBoolean() || step.isAsmPath(path) ||
+  if (!target.isBoolean() ||
       // No locally free vars are bound in context.
       step.wff.freeBound(path).size > 0) {
     return false;
+  }
+  if (step.isAsmPath(path)) {
+    // Support removal of duplicate assumptions.
+    const chain = step.getAsms().chainTerms('&');
+    if (chain.filter(t => t.sameAs(target)).length < 2) {
+      return false;
+    }
   }
   const asms = step.wff.getAsms();
   const gasms = goal?.getAsms();
