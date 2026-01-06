@@ -2245,6 +2245,12 @@ export function jsonFacts(arg) {
  * The string may be a sequence of steps or "(steps <seq>)".
  *
  * Aborts in case of failure.
+ * 
+ * Experimentally supports debugging, for proofs invoked on demand by
+ * other proofs.  Insert the word "debug" with no step number or
+ * parentheses before the description of any step to enter the debugger
+ * before execution of that step.  That will also cause entry to the
+ * debugger just before returning a value.
  */
 export function decodeSteps(input) {
   const parsed =
@@ -2255,13 +2261,23 @@ export function decodeSteps(input) {
          : input);
   const descriptions = parsed.asArray();
   const outSteps = [];
+  // Step number adjustment for descriptions that properly do not have a
+  // step number.
+  let adjust = 0;
+  let debugging = false;
   for (let i = 1; i < descriptions.length; i++) {
     let message = '';
     // Ignore the first "description" by starting at 1.
     const stepTerm = descriptions[i];
+    if (stepTerm.matches(justParse('debug'))) {
+      adjust++;
+      debugger;
+      continue;
+    }
     const stepInfo = stepTerm.asArray();
-    assert(stepInfo.shift().getNumValue() == i, function() {
-        return 'Mismatched step number in: ' + stepInfo;
+    const stepNum = stepInfo.shift();
+    assert(stepNum.getNumValue() == i - adjust, function() {
+        abort(`Mismatched step number ${stepNum} in: ${stepInfo}`);
       });
     const ruleName = stepInfo.shift().name;
     // The remainder of the array is arguments to the rule.
@@ -2282,6 +2298,9 @@ export function decodeSteps(input) {
     } else {
       abort(`No such rule: ${rule}`);
     }
+  }
+  if (debugging) {
+    debugger;
   }
   return outSteps;
 }
