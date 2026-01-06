@@ -2265,8 +2265,9 @@ export function transformApplyInvert(term_arg, eqn_arg, fact) {
 
 /**
  * Apply the given function to the step repeatedly until the result of
- * the call is falsy or identical to its input.  Return the result of
- * the last call that was not falsy or same.
+ * the call is falsy or identical to its input, updating the step at
+ * each iteration.  Return the result of the last call that was not
+ * falsy or same.
  */
 export function repeatedly(step, fn) {
   var simpler = step;

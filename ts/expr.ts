@@ -2476,6 +2476,24 @@ export abstract class Expr {
   }
 
   /**
+   * Iterates through prefixes of this from right to left based on the
+   * chainOp string, applying the callback to the term and path, which
+   * can be treated as regular or reversed.
+   */
+  scanPrefixes(chainOp, fn) {
+    let term = this;
+    let path = Path.empty;
+    while (term?.isCall2(chainOp)) {
+      const v = fn(term, path);
+      if (v !== undefined) {
+        return v;
+      }
+      term = term.getLeft();
+      path = new Path('left', path);
+    }
+  }
+
+  /**
    * Returns the chain prefixes of this term based on the given chain
    * operator as an array, in order from right to left.  All but the
    * last result are binary calls to that operator.  There is always at

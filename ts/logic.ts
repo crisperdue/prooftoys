@@ -2338,6 +2338,45 @@ declare(
   },
 );
 
+/**
+ * If the target is a chain of conjuncts, remove all conjuncts that are "T".
+ */
+rule('removeTs', {
+  action2: function (step, path) {
+    // TODO: Generalize the implementation to something like
+    //   "simplifyPrefixes".  Using searchForMatchingFact looks
+    //   unnecessary.
+    const target = step.get(path);
+    const conjuncts = target.chainTerms('&').filter(t => t.sameAs(T));
+    if (conjuncts.length == 0) {
+      return false;
+    }
+    // Return a continuation to do the deduction.
+    return () => {
+      const facts = ['a & T == a', 'T & a == a'];
+      // Repeatedly scan for prefixes matching one of the facts and
+      // applying the fact.  Return the result of the last successful
+      // transformation.
+      return repeatedly(step, (step) =>
+        step
+          .get(path)
+          .scanPrefixes('&', (term, innerPath) =>
+            applyMatchingFact(
+              step,
+              path.concat(innerPath),
+              facts,
+              'rewriteOnly'
+            )
+          )
+      );
+    };
+  },
+  inputs: { site: 1 },
+  menu: 'eliminate T\'s',
+  description: 'removing T\'s;; {in step siteStep}',
+  labels: 'general',
+});
+
 declare({
   /**
    * Uses the given facts to simplify the chain of assumptions of the
@@ -2425,7 +2464,7 @@ declare(
    action2: function(step, path) {
      const target = step.get(path);
      if (target.matchSchema('a & b')) {
-       return () => Toy.arrange(step, path, contextAnd, 'flatteners');
+       return () => arrange(step, path, contextAnd, 'flatteners');
      }
    },
    inputs: {site: 1},
