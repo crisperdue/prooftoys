@@ -7511,8 +7511,7 @@ declare(
           return proved.justify('fact', arguments);
         }
       }
-      // From here, synopsis should be a WFF. 
-      if (Toy.isProved(synopsis)) {
+      if (isProved(synopsis)) {
         // Argument is an already proved statement.
         // Behavior of "fact" is inline.
         return synopsis;
@@ -7527,15 +7526,28 @@ declare(
       // Try ordinary registered facts.
       if (factInfo) {
         factInfo.usage = (factInfo.usage || 0) + 1;
-        var fact = Toy.getResult0(factInfo);
-        // TODO: Consider computing the map more efficiently by
-        //   factoring out computation of the map from factExpansion.
-        const expansion = Toy.factExpansion(synopsis);
+        // Now get the actual proved fact.
+        var fact = getResult0(factInfo);
+        // Next try to change variable names of the proved
+        // fact to match names used in the reference.
+        const expansion = factExpansion(synopsis);
+        // These matching efforts are all approximations.
+        // TODO: Make the rules and the process more clear cut.
         if (expansion) {
-          // Maps free variables of the fact into ones given here.
-          // Currently only maps variables in the main part.
-          const map = expansion.stripSomeDecls()
+          // This maps free variables of the fact into ones given here.
+          let map = expansion.stripSomeDecls()
                 .matchSchema(fact.stripSomeDecls());
+          if (!map) {
+            console.warn('Can\'t match reference asms with fact.',
+              '\nReferenced:', expansion.$$,
+              '\nProved:', fact.$$);
+            map = expansion.getMain().matchSchema(fact.getMain());
+            if (!map) {
+              // The matching process is not guaranteed to succeed in
+              // every case where a renaming is possible!
+              abort('Fact fails to match reference');
+            }
+          }
           const instance = rules.instMultiVars(fact, map);
           // Remember the proof for future reference.
           ((typeof synopsis === 'string') && (_factMap.set(synopsis, instance)));
