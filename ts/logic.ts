@@ -3711,37 +3711,38 @@ declare(
     tooltip: ('[p] and [q] and [p & q => r] to [r]'),
     description: 'consequence;; of step {step1} and step {step2} using {bool}'
   },
-
-  // Adds an assumption to the given step and deduplicates it, or a
-  // set of assumptions given as a conjunction, not necessarily flat.
-  // If there are no existing asms, adds them as-is.
-  {name: 'andAssume',
-    action: function(step, expr_arg) {
-      var expr = termify(expr_arg);
-      let result;
-      if (step.isCall2('=>')) {
-        const taut = rules.tautology('(p => q) => (p & a => q)');
-        const map = {p: step.getLeft(), q: step.getRight(), a: expr};
-        const step1 = rules.tautInst(taut, map);
-        const step2 = rules.modusPonens(step, step1);
-        result = rules.arrangeAsms(step2);
-      } else {
-        const taut = rules.tautology('p => (a => p)');
-        const map = {p: step, a: expr};
-        const step1 = rules.tautInst(taut, map);
-        result = rules.modusPonens(step, step1);
-        // Does not arrange.  Suppose a == T for example.
-      }
-      return result.justify('andAssume', arguments, [step]);
-    },
-    autoSimplify: noSimplify,
-    inputs: {step: 1, bool: 2},
-    form: ('Add assumption <input name=bool> in step <input name=step>'),
-    menu: 'add assumption(s)',
-    labels: 'basic',
-    description: 'adding assumption {bool};; {in step step}'
-  },
 );
+
+  // Adds a single assumption to the given step as the last assumption
+  // if it is not a duplicate. Given a conjunctive chain of assumptions,
+  // adds all of them.
+rule('andAssume', {
+  action: function (step, expr_arg) {
+    var expr = termify(expr_arg);
+    let result;
+    if (step.isCall2('=>')) {
+      const taut = rules.tautology('(p => q) => (a & p => q)');
+      const map = { p: step.getLeft(), q: step.getRight(), a: expr };
+      const step1 = rules.instMultiVars(taut, map);
+      const step2 = rules.modusPonens(step, step1);
+      result = rules
+        .moveLeftmost(step2, '/left/right')
+        .andThen('arrangeAsms');
+    } else {
+      const taut = rules.tautology('p => (a => p)');
+      const map = { p: step, a: expr };
+      const step1 = rules.tautInst(taut, map);
+      result = rules.modusPonens(step, step1);
+    }
+    return result.justify('andAssume', arguments, [step]);
+  },
+  autoSimplify: noSimplify,
+  inputs: { step: 1, bool: 2 },
+  form: 'Add assumption <input name=bool> in step <input name=step>',
+  menu: 'add assumption(s)',
+  labels: 'basic',
+  description: 'also assuming {bool};; {in step step}',
+});
 
 /**
  * Given a conditional step and boolean term, adds the term to the
@@ -6845,94 +6846,70 @@ declare(
       return result.justify('conjunctsImplyConjunct', arguments);
     }
   },
+);
 
-  // Treats conj as a tree of conjunctions.  Equates it with a
-  // deduplicated and "linearized" version, omitting occurrences of T.
-  {name: 'conjunctionArranger',
-    // Implemented by building an appropriate equivalence tautology,
-    // proving it with rules.tautology, and instantiating.
-    //
-    // TODO: The tautology could be proved in a number of proof steps
-    //   quadratic in length of A.  For a list A of conjunctions,
-    //   pre-prove [A => Ai] for each member of A, each taking time
-    //   linear in length of A.  Use these to prove each conjunct
-    //   separately, then build the equal list with rules.and.  Also
-    //   prove in the opposite direction if desired.
-    //
-    //   The cases are those with one variable in the consequent being
-    //   false, and one with them all true.  These cases each trivially
-    //   simplify to true, and case analysis proves the whole thing
-    //   true.
-    //   
-    //   There is a family of statements like axiom1 and provable from
-    //   axiom1, expressing the idea that these are the required cases.
-    action: function(conj, comparator) {
-      const map = new TermMap();
-      // This traverses a tree of conjunctions, inserting entries into
-      // the TermMap in left-to-right textual order.
-      function transform(term) {
-        if (term.isCall2('&')) {
-          return infixCall(
-            transform(term.getLeft()),
-            '&',
-            transform(term.getRight())
-          );
-        } else if (term.sameAs(T)) {
-          // Return it without mapping it to a variable.
-          return T;
-        } else {
-          return map.addTerm(term);
-        }
-      }
-      // The schema is a tree of conjuncts where each conjunct is the
-      // variable for the term at the same location in conj, or T if
-      // the term in conj is T.  The result of applying map.subst to
-      // the schema will be exactly conj.
-      const schema = transform(conj);
-
-      // Create a list of the variables for terms that will go into the
-      // RHS of the result equation, sorted by the desired ordering of
-      // the terms themselves.
-      
-      function compare(a, b) {
-        // TODO: Remove the sorting here altogether.
-        return 0;
-      }
-      const keepTermsInfo = sortMap(map.subst, compare);
-      // This is the desired list of variables.  If the comparator
-      // is a no-op, it is in order of insertion into map.subst,
-      // so that substituting the terms back in keeps the original
-      // order of the first occurrence of each term.
-      const keepTerms = keepTermsInfo.map(function (pair) {
-        return pair.key;
-      });
-      const rewriter = Toy.infixCall(
-        schema,
-        '==',
-        Toy.chainCall('&', keepTerms, T)
-      );
-      // TODO: Caution!!!! This may assert the key tautology that makes
-      //   this rule work.
-      const rule = map.size() > 7 ? rules.assert : rules.tautology;
-      const result = rules.instMultiVars(rule(rewriter), map.subst);
-      return result.justify('conjunctionArranger', arguments);
-    }
-  },
-
-  // Derives a step with the input step's assumptions flattened,
-  // deduplicated and ordered as by conjunctionArranger given
-  // Toy.asmComparator, including removal of occurrences of T.
+// Treats its argument as a chain of conjunctions.  Equates it with a
+// deduplicated version, omitting occurrences of T.
+rule('conjunctionArranger', {
+  // Implemented by building an appropriate equivalence tautology,
+  // proving it with rules.tautology, and instantiating.
   //
-  // If the optional removeAll argument is truthy (the default), this
-  // also removes any lone remaining assumption of T, transforming a
-  // conditional step into an unconditional step.  
-  {name: 'arrangeAsms',
-    action: function(step, removeAll=true) {
+  // TODO: The tautology could be proved in a number of proof steps
+  //   quadratic in length of A.  For a list A of conjunctions,
+  //   pre-prove [A => Ai] for each member of A, each taking time
+  //   linear in length of A.  Use these to prove each conjunct
+  //   separately, then build the equal list with rules.and.  Also
+  //   prove in the opposite direction if desired.
+  //
+  //   The cases are those with one variable in the consequent being
+  //   false, and one with them all true.  These cases each trivially
+  //   simplify to true, and case analysis proves the whole thing
+  //   true.
+  //
+  //   There is a family of statements like axiom1 and provable from
+  //   axiom1, expressing the idea that these are the required cases.
+  action: function (conjunction) {
+    const map = new TermMap();
+    // This is a list of terms in the chain, left to right.
+    const terms0 = conjunction.chainTerms('&').reverse();
+    const termList = terms0.length ? terms0 : [conjunction];
+    // This is a list of terms, one for each term in the chain.
+    // Each chain term not equal to T becomes a variable name here.
+    const nameList = termList.map((t) => (t.sameAs(T) ? T : map.addTerm(t)));
+    const schema = chainCall('&', nameList, T);
+
+    // This a list of variable names, one for each distinct term that
+    // will go into the RHS of the result equation, in order by first
+    // occurrence.  In ES6+, this is guaranteed to retain insertion
+    // order.
+    const names = Object.getOwnPropertyNames(map.subst);
+
+    const rewriter = infixCall(
+      schema,
+      '==',
+      chainCall('&', names, T)
+    );
+    // TODO: Caution!!!! This may assert without proof the key tautology
+    //   that makes this rule work.
+    const rule = map.size() > 7 ? rules.assert : rules.tautology; // XXX
+    const result = rules.instMultiVars(rule(rewriter), map.subst);
+    return result.justify('conjunctionArranger', arguments);
+  },
+});
+
+  /**
+   * Derives a step with the input step's assumptions deduplicated and
+   * occurrences of T removed. If the optional removeT argument is
+   * truthy (the default), this also removes any lone remaining
+   * assumption of T, transforming a conditional step into an
+   * unconditional step.  
+  */
+  rule('arrangeAsms', {
+    action: function(step, removeT=true) {
       if (!step.isCall2('=>')) {
         return step;
       }
-      // conjunctionArranger also sorts assumptions, which we
-      // currently expect to be done, and removes occurrences of T,
+      // conjunctionArranger also removes occurrences of T,
       // which is not exactly desired, but convenient to do there.
       // See TODOs there for some ideas.
       var deduper =
@@ -6953,8 +6930,8 @@ declare(
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    tooltip: 'remove redundant assumptions',
-    description: 'arranging assumptions;; in step {step}',
+    menu: 'prune assumptions',
+    description: 'pruning assumptions;; in step {step}',
     labels: 'uncommon'
   },
 );
