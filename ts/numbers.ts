@@ -853,16 +853,14 @@ declare(
    }
   },
 
-  {statement: 'u < v == u + x < v + x',
+  {statement: 'x < y == x + z < y + z',
    proof:
    `(1 fact "x + z < y + z => x < y")
-    (2 extractHyp (s 1) (t ((x + z) < (y + z))))
+    (2 extractHyp (s 1) (t (((x + z) < (y + z)))))
     (3 fact "x < y => x + z < y + z")
-    (4 extractHyp (s 3) (t (x < y)))
-    (5 chain0 (s 4) (path "")
-       (t ((a1 => (b => c)) => ((a2 => (c => b)) => ((a1 & a2) => (b == c))))))
-    (6 chain0 (s 2) (path "") (s 5))
-    (7 simplifyAsms (s 6))`
+    (4 extractHyp (s 3) (t ((x < y))))
+    (5 join (s 2) (s 4))
+    (6 rewrite (s 5) (path "/right") (t ((((a => b) & (b => a)) == (b == a)))))`
   },
 
   // Same thing, commuted.

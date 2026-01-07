@@ -279,7 +279,7 @@ export class ProofEditor {
     // Exercises often override the default empty value.
     self.initialSteps = options.steps
       // TODO: Handle this much like data.proof.
-      ? Toy.unrenderedDeps(Toy.asProof(options.steps)())
+      ? unrenderedDeps(asProof(options.steps)())
       : [];
       // Container for an element with the current suggestion, if any.
       this.suggestionBox = dom($('<div class=suggestionBox></div>'));
