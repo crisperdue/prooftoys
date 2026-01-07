@@ -826,9 +826,10 @@ definition('recip x = 1 / x');
 
 //// QQ (rational numbers)
 
-definition('QQ x == R x & exists {y. exists {z. ZZ y & ZZ z & x = y / z}}');
-
-// fact('', {});
+/**
+ * Definition of a rational number.
+ */
+definition('QQ x == exists {y. exists {z. ZZ y & ZZ1 z & x = y / z}}');
 
 
 /**
