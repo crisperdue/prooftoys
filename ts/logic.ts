@@ -6399,12 +6399,7 @@ rule('chainOnly', {
   description: 'reasoning forward',
 });
 
-declare(
-  // E-Rule (5244), specified by a step and name.  Checks that it is
-  // free in the antecedent and not the consequent.  If so, uses
-  // existImplies to convert the antecedent to be existential.
-  {
-    name: 'eRule',
+rule('eRule', {
     precheck: function (step, name) {
       var map = step.matchPattern('p => q');
       // Returns the map if the preconditions are OK.
@@ -6422,17 +6417,16 @@ declare(
       'In step <input name=step>, existentially quantify ' +
       '<input name=varName>',
     menu: 'existentially quantify',
-    tooltip: 'Existentially quantify antecedent',
-    description: 'assuming &exist; {var};; {in step step}',
+    description: 'converting to &exist; {var};; {in step step}',
   }
 );
 
-declare(
-  // E-Rule (5244), specified by a step and a path to an occurrence of
-  // a free variable.  The variable must occur free in a suitable part
-  // of the step.
-  {
-    name: 'eRule2',
+/**
+ * E-Rule (5244), specified by a step and a path to an occurrence of
+ * a free variable.  The variable must occur free in a suitable part
+ * of the step.  Currently inline.
+ */
+rule('eRule2', {
     precheck: function (step, path) {
       var v = step.get(path);
       var name = v.isVariable() && v.name;
@@ -6445,8 +6439,7 @@ declare(
     },
     inputs: { site: 1 },
     menu: '[A => B] to [&exist; A => B]',
-    tooltip: 'Existentially quantify antecedent',
-    description: 'assuming &exist; {site};; {in step step}',
+    description: 'converting to &exist; {site};; {in step step}',
     labels: 'basic',
   }
 );
