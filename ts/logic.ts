@@ -2179,10 +2179,10 @@ declare(
 	const step2b = rules.reduceAll(step1c, '/right');
 	const step3a1 = rules.eqT(F);
 	const step3a2 = rules.eqnSwap(step3a1);
-	const step3a = rules.r1(step2b, '/right/left', step3a2);
-	const step3bb = rules.r5218(F);
-	const step3b = rules.r1(step3a, '/right/right', step3bb);
-	const step3c = rules.r1(step3b, '/right', step3bb);
+	const step3a3 = rules.r1(step2b, '/right/left', step3a2);
+	const step3b1 = rules.r5218(F);
+	const step3b2 = rules.r1(step3a3, '/right/right', step3b1);
+	const step3c = rules.r1(step3b2, '/right', step3b1);
 	// From this point most of the work is basically a proof
 	// that [A => F] => not A, a tautology.
 	const step4 = rules.rewriteOnly(step3c, '', 'p == (T == p)');
