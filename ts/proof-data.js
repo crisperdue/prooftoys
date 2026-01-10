@@ -327,8 +327,9 @@ Toy.proofData = [
       '(39 simplifyFocalPart (s 38))',
       '(40 rewriteFrom (s 38) (path "/left") (s 35))',
       '(41 simplifyFocalPart (s 40))',
-      '(42 rewrite (s 41) (path "/right") (t ((not (x = y)) == (x != y))))',
-      '(43 copy (s 42))',
+      '(42 removeT (s 41) (path "/left"))',
+      '(43 rewrite (s 42) (path "/right") (t ((not (x = y)) == (x != y))))',
+      '(44 copy (s 43))',
     ],
   },
   {

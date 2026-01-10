@@ -2971,8 +2971,7 @@ function asFactProver(prover, goal) {
         // Conceivably the assumptions could have other free variables
         // that could still be reconciled, but we are not that
         // ambitious at present.
-        var proved = (rules.instMultiVars(result, subst2)
-                       .andThen('arrangeAsms'));
+        var proved = (rules.instMultiVars(result, subst2));
         if (proved.matches(goal)) {
           return proved;
         }
@@ -3013,7 +3012,7 @@ function asFactProver(prover, goal) {
     if (Toy.assertOnMismatch) {
       return rules.assert(goal);
     } else {
-      abort('Proof mismatch');
+      abort('Proof mismatch: got ' + proved.$$ + ' vs ' + goal.$$);
     }
   }
   return factProverWrapper;

@@ -2316,9 +2316,8 @@ declare(
 
   // Inline version of simplifySite.  Uses full rewriting and replace,
   // so resulting assumptions are simplified with simplifyAsms unless
-  // suppressed with a falsy optional fourth argument.  If the resulting
-  // step matches T => a, converts it to just "a".  Returns the input
-  // step if nothing is done.
+  // suppressed with a falsy optional fourth argument.  Returns the
+  // input step if nothing is done.
   {name: '_simplifySite',
    action: function(step, path, opt_facts?, asms=true) {
       var eqn = rules.consider(step.get(path));
@@ -2332,7 +2331,7 @@ declare(
       });
       const replaced = rules.replace(step, path, simpler);
       const simpler2 = asms ? rules.simplifyAsms(replaced) : replaced;
-      return applyMatchingFact(simpler2, '', ['T => a == a']) || simpler2;
+      return simpler2;
     }
   },
 
@@ -2356,6 +2355,31 @@ declare(
     }
   },
 );
+
+/**
+ * Remove a referenced occurrence of T, either in a conjunction or as
+ * the LHS of a conditional.
+ */
+rule('removeT', {
+  action2: function(step, path) {
+    const target = step.get(path);
+    if (target.sameAs(T)) {
+      const p = step.prettifyPath(path);
+      const ppath = p.parent();
+      const parent = step.get(ppath);
+      const facts = ['T & a = a', 'a & T = a', 'T => a == a'];
+      const info = findMatchingFact(facts, null, parent);
+      if (info) {
+        return () => rules.rewriteOnly(step, ppath, info.stmt);
+      }
+    }
+  },
+  inputs: { site: 1 },
+  menu: 'remove T',
+  description: 'removing T;; {in step siteStep}',
+  labels: 'general',
+  priority: 10,
+});
 
 /**
  * If the target is a chain of conjuncts, remove all conjuncts that are "T".
@@ -2394,6 +2418,7 @@ rule('removeTs', {
   menu: 'eliminate T\'s',
   description: 'removing T\'s;; {in step siteStep}',
   labels: 'general',
+  priority: 5,
 });
 
 declare({

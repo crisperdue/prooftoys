@@ -387,7 +387,8 @@ declare(
        return (rules.fact('0 = the1 isAddIdentity')
                .andThen('rewrite', '',
                         'exists1 p => (x = the1 p == p x)')
-               .andThen('rewrite', '/left', 'exists1 isAddIdentity'));
+               .andThen('rewrite', '/left', 'exists1 isAddIdentity')
+               .andThen('removeT', '/left'));
     }
    },
 
@@ -404,7 +405,8 @@ declare(
        return (rules.fact('1 = the1 isMulIdentity')
                .andThen('rewrite', '',
                         'exists1 p => (x = the1 p == p x)')
-               .andThen('rewrite', '/left', 'exists1 isMulIdentity'));
+               .andThen('rewrite', '/left', 'exists1 isMulIdentity')
+               .andThen('removeT', '/left'));
      }
    },
 
@@ -1250,7 +1252,8 @@ declare(
       [
        '(1 fact "x + neg x = 0")',
        '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
-       '(3 rewrite (s 2) (path "/right/left") (t ((R a) => ((0 + a) = a))))'
+       '(3 rewrite (s 2) (path "/right/left") (t ((R a) => ((0 + a) = a))))',
+       '(4 removeT (s 3) (path "/left"))'
        ]
      },
 
@@ -4657,7 +4660,8 @@ declare(
    proof: function() {
      return (rules.fact('@R x & x < y => x != y')
              .andThen('instMultiVars', {x: '0', y: 'pi'})
-             .andThen('rewrite', '0 < pi', '0 < pi'));
+             .andThen('rewrite', '0 < pi', '0 < pi')
+             .andThen('removeT', '/left'));
    }
   },
 
