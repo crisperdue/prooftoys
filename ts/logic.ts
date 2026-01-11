@@ -3669,7 +3669,7 @@ declare(
     },
     inputs: {step: [1, 2]},
     tooltip: ('From [ ... p] and [ ... q], derive [ ... p & q]'),
-    description: 'combining steps {step1} and {step2}',
+    description: 'merging steps {step1} and {step2}',
     autoSimplify: noSimplify,
     labels: 'basic',
     menuGen: (ruleName, step, term, editor) => {
@@ -3682,7 +3682,7 @@ declare(
       }
       const stepNum = editor.steps.indexOf(step) + 1;
       const item = {
-        html: `combine step ${stepNum} and step ${len}`,
+        html: `merge step ${stepNum} and step ${len}`,
         ruleName: 'join',
         ruleArgs: [step.original, editor.steps[len - 1].original],
         priority: 3,
@@ -6399,7 +6399,12 @@ rule('chainOnly', {
   description: 'reasoning forward',
 });
 
-rule('eRule', {
+
+/**
+ * E-Rule (5244), specified by a step and a variable name.  The variable
+ * must occur free in the asms, but not in the conclusion.
+ */
+rule('eRule1', {
     precheck: function (step, name) {
       var map = step.matchPattern('p => q');
       // Returns the map if the preconditions are OK.
@@ -6410,37 +6415,38 @@ rule('eRule', {
       var qstep = rules.toForall0(step, name);
       return rules
         .rewrite(qstep, '/main', rules.existImplies())
-        .justify('eRule', arguments, [step]);
+        .justify('eRule1', arguments, [step]);
     },
     inputs: { step: 1, varName: 2 },
     form:
       'In step <input name=step>, existentially quantify ' +
       '<input name=varName>',
     menu: 'existentially quantify',
-    description: 'converting to &exist; {var};; {in step step}',
+    description: 'to &exist;&lcub;{var}. A&rcub; &rArr; B ;;{in step step}',
   }
 );
 
 /**
  * E-Rule (5244), specified by a step and a path to an occurrence of
- * a free variable.  The variable must occur free in a suitable part
- * of the step.  Currently inline.
+ * a free variable.  The variable must occur free in asms but not in the
+ * conclusion.  Currently inline.
  */
 rule('eRule2', {
     precheck: function (step, path) {
       var v = step.get(path);
       var name = v.isVariable() && v.name;
-      return name && rules.eRule.precheck(step, name);
+      return name && rules.eRule1.precheck(step, name);
     },
     action: function (step, path) {
       var name = step.get(path).name;
       // Note that eRule2 is currently inline.
-      return rules.eRule(step, name);
+      return rules.eRule1(step, name);
     },
     inputs: { site: 1 },
     menu: '[A => B] to [&exist; A => B]',
     description: 'converting to &exist; {site};; {in step step}',
     labels: 'basic',
+    priority: 5,
   }
 );
 
