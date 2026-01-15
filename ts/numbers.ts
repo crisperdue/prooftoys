@@ -833,7 +833,6 @@ definition('recip x = 1 / x');
  */
 definition('QQ x == exists {y. exists {z. ZZ y & ZZ1 z & x = y / z}}');
 
-
 /**
  * We desire something like this, but it needs some supporting
  * theorems such as probably 5307.
@@ -4876,6 +4875,36 @@ rule('subsumeNumerics', {
 });
 
 fact('odd x == ZZ x & not (even x)', {});
+
+//// Rational number facts:
+
+fact('@ QQ r & QQ s => QQ (r * s)', {
+  proof: `(steps
+    (1 consider (t ((r * s))))
+    (2 andAssume (s 1) (t ((((((ZZ x) & (ZZ z)) & ((ZZ1 y) & (ZZ1 w))) & (r = (x / y))) & (s = (z / w))))))
+    (3 concludeAsmLeft (s 2) (path "/left/left/left"))
+    (4 flattenAnd (s 3) (path "/left"))
+    (5 applyAsmHere (s 4) (path "/right/right/right") (t ((r = (x / y)))))
+    (6 applyAsmHere (s 5) (path "/right/right/right") (t ((s = (z / w)))))
+    (7 rewrite (s 6) (path "/right/right/right") (t ((((((((c != 0) & (d != 0)) & (R c)) & (R d)) & (R a)) & (R b)) => (((a / c) * (b / d)) = ((a * b) / (c * d)))))))
+    (8 chainOnly (s 7) (path "/right/left/left") (t ((((ZZ x) & (ZZ y)) => (ZZ (x * y))))))
+    (9 chainOnly (s 8) (path "/right/left/right") (t ((((ZZ1 x) & (ZZ1 y)) => (ZZ1 (x * y))))))
+    (10 consider (t ((({x. {y. (((ZZ x) & (ZZ1 y)) & ((r * s) = (x / y)))}} (x * z)) (y * w)))))
+    (11 reduceAll (s 10) (path "/left"))
+    (12 rewriteFrom (s 9) (path "/right") (s 11))
+    (13 chainOnly (s 12) (path "/right") (t (((p x y) => (exists {x. (exists {y. (p x y)})})))))
+    (14 rewrite (s 13) (path "/right") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
+    (15 tautologous (t ((((((((ZZ x) & (ZZ z)) & (ZZ1 y)) & (ZZ1 w)) & (r = (x / y))) & (s = (z / w))) == ((((ZZ x) & (ZZ1 y)) & (r = (x / y))) & (((ZZ z) & (ZZ1 w)) & (s = (z / w))))))))
+    (16 rewriteFrom (s 14) (path "/left") (s 15))
+    (17 eRuleFull (s 16) (path "/left/left") "y")
+    (18 eRuleFull (s 17) (path "/left/left") "x")
+    (19 rewrite (s 18) (path "/left/left") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
+    (20 eRuleFull (s 19) (path "/left/right") "w")
+    (21 eRuleFull (s 20) (path "/left/left") "z")
+    (22 rewrite (s 21) (path "/left/left") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
+    (23 rewrite (s 22) (path "/left") (t (((a & b) == (b & a)))))
+    )`,
+});
 
 //// Euclidean division:
 
