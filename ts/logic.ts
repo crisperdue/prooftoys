@@ -6557,6 +6557,8 @@ declare(
   // the second.
   //
   // While bubbling left, removes duplicates.
+  //
+  // TODO: Review and perhaps discard.
   {name: 'bubbleLeft',
     action: function(chain, less) {
       // This does all the work except the justification of the subproof.
@@ -7282,6 +7284,8 @@ rule('splitAsms', {
           // This moves it to the "a" position as desired.
           return rules.rewriteOnly(right, '/left', 'a & b == b & a');
         };
+      } else if (index === 1) {
+        return () => step;
       }
     }
     // Otherwise this rule does not apply.
