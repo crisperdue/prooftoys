@@ -6471,50 +6471,157 @@ export interface MenuGenFun {
 // Experimental, probably to be removed.
 //
 
-// const eRuleGen: MenuGenFun = function (ruleName, dStep, term, editor) {
-//   const asmPart = dStep.getAsms();
-//   const mInfos: MenuInfo[] = [];
-//   if (asmPart) {
-//     const ppath = dStep.prettyPathTo(term);
-//     if (ppath.isAsmSide()) {
-//       // The step is displayed, so the same term never appears at multiple
-//       // paths.
-//       const parts = asmPart.chainParts('&');
-//       if (parts.includes(term)) {
-//         // const asms = asmPart.chainTerms('&');
-//         const zone = term.isCall2('&') ? term.chainTerms('&') : [term];
-//         const inFrees = new Set<string>();
-//         const outFrees = dStep.getMain().freeVarSet();
-//         const addTo = (to: Set<string>, more: Set<string>) => {
-//           more.forEach((x) => to.add(x));
-//         };
+/**
+ * Given a conditional step, path to a chainPart of its asm side, and a
+ * Set of names of free vars in its main side, calculates and returns a
+ * Set of names free in the target that do not appear free elsewhere in
+ * the step.
+ */
+function extraFrees(
+  step: Step,
+  path: Path,
+  mainFrees: Set<string>
+): Set<string> {
+  const asms = step.getAsms();
+  const target = step.get(path);
+  // The step is displayed, so the same term never appears at multiple
+  // paths.
+  const parts = asms.chainParts('&');
+  if (parts.includes(target)) {
+    let inFrees: Set<string> = new Set();
+    const outFrees = new Set(mainFrees);
+    const patterns = [
+      { match: 'a & b', a: visitBranch, b: visitLeaf },
+      { match: 'a', a: visitLeaf },
+    ];
+    function visitLeaf(term, path) {
+      if (term == target) {
+        inFrees = term.freeVarSet();
+      } else {
+        term.freeVarSet().forEach((x) => outFrees.add(x));
+      }
+    }
+    function visitBranch(term, path) {
+      if (term == target) {
+        inFrees = term.freeVarSet();
+      } else if (term.isVariable()) {
+        outFrees.add(term.name);
+      } else {
+        term.walkPatterns(patterns, path);
+      }
+    }
+    visitBranch(asms, Path.empty);
+    return setDiff(inFrees, outFrees) as Set<string>;
+  }
+}
 
-//         asmPart.scanConj((c) => {
-//           const frees = c.freeVarSet();
-//           if (zone.includes(c)) {
-//             addTo(inFrees, frees);
-//           } else {
-//             addTo(outFrees, frees);
-//           }
-//         });
+/**
+ * Menu generator function for eRuleFull.  If the step is conditional
+ * and the target is a chainPart of its asms, this offers to
+ * existentially quantify each variable that appears free in the target
+ * and nowhere else in the step.
+ * 
+ * TODO: Test the case with all asms as target.
+ */
+const eRuleGen: MenuGenFun = function (ruleName, dStep, target, editor) {
+  if (!target) {
+    return null;
+  }
+  const asmPart = dStep.getAsms();
+  if (!asmPart) {
+    return null;
+  }
+  const ppath = dStep.prettyPathTo(target);
+  const mInfos: MenuInfo[] = [];
+  const step = dStep.original;
+  const extraVars = extraFrees(
+    step,
+    ppath,
+    step.getMain().freeVarSet()
+  );
+  const genItems = (nm, path?) => {
+    const ruleName = path ? 'eRuleFull' : 'eRule1';
+    const ruleArgs = path ? [step, path, nm] : [step, nm];
+    const priority = 3;
+    const html = 'ruly';
+    const $node = $(`<div>\u27ad &exist; &lbrace;${nm} ... &rbrace;</div>`);
+    mInfos.push({ ruleName, ruleArgs, priority, html, $node });
+  };
+  if (asmPart) {
+    if (ppath.equals('/left')) {
+      extraVars.forEach((nm) => genItems(nm));
+    } else if (step.isAsmSide(ppath)) {
+      extraVars.forEach((nm) => genItems(nm, ppath));
+    }
+  }
+  return mInfos;
+};
 
-//         const extraVars = Array.from(setDiff(inFrees, outFrees));
-//         const step = dStep.original;
-//         const genItems = (nm) => {
-//           const ruleName = 'eRule';
-//           const ruleArgs = [nm];
-//           const priority = 3;
-//           const html = 'foo';
-//           const $node = $('<div>');
-//           mInfos.push({ ruleName, ruleArgs, priority, html, $node });
-//         };
+/**
+ * Given a conditional step and path to a site in the chainParts of its
+ * asms, convert the site to be existentially quantified over the named
+ * variable, which must be free in the target and nowhere else in the
+ * step.
+ * 
+ * TODO: Return the quantified term to its original location after
+ * converting it.
+ */
+rule('eRuleFull', {
+  action2: function (step: Step, path: Path, name: string) {
+    const asms = step.getAsms();
+    if (!step.isAsmSide(path)) {
+      return null;
+    }
+    if (path.equals('/left')) {
+      return null;  // TODO: apply eRule1 in this case.
+    }
+    const extras = extraFrees(step, path, step.getMain().freeVarSet());
+    if (!extras.has(name)) {
+      return null;
+    }
+    return () => {
+      const s1 = rules.moveRightmost(step, path);
+      const s11 = rules.rewriteOnly(s1, '/left', 'a & b == b & a');
+      const s2 = rules.toForall0(s11, name);
+      // const s3 = rules.splitAsms(step, path);
+      const s4 = rules.rewrite(
+        s2,
+        '',
+        'forall {x. p x & q => r} == exists p & q => r'
+      );
+      return s4;
+    };
+  },
+  inputs: {site: 1, varName: 3},
+  menuGen: eRuleGen,
+  description: (step) => {
+    const [inStep, path, name] = step.ruleArgs;
+    return `to &exist; &lbrace;${name}. &hellip; &rbrace;`;
+  },
+});
 
-//         extraVars.forEach(nm => genItems(nm));
-//       }
-//     }
-//   }
-//   return mInfos;
-// };
+/**
+ * This is r2134 extended to work with a conjunctive LHS.
+ */
+fact('forall {x. p x & q => r} == (exists p) & q => r', {
+  name: 'r2134a',
+  proof: function() {
+    const s1 = rules.consider('forall {x. p x & q => r}');
+    const s2 = rules.rewriteOnly(
+      s1,
+      'p x & q => r',
+      'a & b => c == a => (b => c)'
+    );
+    const s3 = rules.rewriteOnly(
+      s2,
+      '/right',
+      'forall {x. p x => q} == exists p => q'
+    );
+    const s4 = rules.rewriteOnly(s3, '/right', 'a => (b => c) == a & b => c');
+    return s4;
+  },
+});
+
 // Experimental to here.
 
 /**
