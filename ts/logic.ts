@@ -6351,7 +6351,7 @@ rule('chainOnly', {
           const xform = (term: Expr, tail: Path) => {
             if (tail.isEnd()) {
               const proved = rules.fact(schema);
-              return rules.instMultiVars(proved, factMap);
+              return rules.instMultiVars(proved, factMap, true);  // ???
             }
             const seg = tail.segment;
             if (term.isCall2('&')) {
