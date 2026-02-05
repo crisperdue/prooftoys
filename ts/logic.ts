@@ -81,10 +81,20 @@ declare(
    simplifier: true}
 );
 
+/**
+ * Reusable info for definitions not useful for simplification and not
+ * to be prominently offered.
+ */
+const minimalDefn = {
+  ...simplifiesNeither,
+  labels: {uncommon: true},
+  converse: { labels: {uncommon: true}},
+};
+
 // We will derive the T/F cases facts after defining some inference rules.
-definition('(&) = {x. {y. if x y F}}');
-definition('(|) = {x. {y. if x T y}}');
-definition('(=>) = {x. {y. if x y T}}');
+definition('(&) = {x. {y. if x y F}}', minimalDefn);
+definition('(|) = {x. {y. if x T y}}', minimalDefn);
+definition('(=>) = {x. {y. if x y T}}', minimalDefn);
 
 definition('empty = {x. F}');
 // TODO: Rename none to nil and make None mean "equal to empty".
