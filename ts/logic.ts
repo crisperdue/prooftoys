@@ -232,7 +232,7 @@ declare(
   {name: 'axiom4',
     action: function(call_arg) {
       const call1 = (typeof call_arg == 'string'
-                     ? Toy.parse(call_arg)
+                     ? parse(call_arg)
                      : call_arg);
       assert(call1.isLambdaCall(),
              'Axiom 4 needs ({v. B} A), got: {1}', call_arg);
@@ -241,9 +241,9 @@ declare(
       const result =
         equal(call, lambda.body.axiom4Core(call.arg, lambda.bound));
       // Carefully install a few bits of needed type information by hand.
-      result.fn._withType(new Toy.FunctionType(call.type, Toy.boolean));
-      result.fn.fn._withType(Toy.equalityType(call.type));
-      result._withType(Toy.boolean);
+      result.fn._withType(new FunctionType(call.type, boolean));
+      result.fn.fn._withType(equalityType(call.type));
+      result._withType(boolean);
       const badex = result.search(x => !x.type);
       assert(!badex,
              'Axiom4 result on {1} has untyped {2}', call_arg, badex);

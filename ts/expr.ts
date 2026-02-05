@@ -237,7 +237,7 @@ export function checkFnMatch(schema, fn, expr, map, bindings) {
     path = new Path('fn', path);
   }
   let reduced = try_(() => {
-    // TODO: In HOL, substitutions call fail.
+    // TODO: In HOL, substitutions can fail.
     //   Consider how to handle that here.
     rules.consider(schema).andThen('instVar', lambdas, name);
   });
@@ -251,7 +251,7 @@ export function checkFnMatch(schema, fn, expr, map, bindings) {
     }
     if (reducible.isLambdaCall()) {
       // Reduce further.
-      reduced = Toy.rules.reduce(reduced, '/right');
+      reduced = rules.reduce(reduced, '/right');
     } else {
       return null;
     }
