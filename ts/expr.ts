@@ -73,6 +73,7 @@ export const unicodeNames = {
   'intersect': '\u2229',
   'union': '\u222a',
 };
+
 /**
  * For each substitution map that has expansions of terms into
  * lambdas, a count of the number of expansions applied to
@@ -208,19 +209,15 @@ export function multiReducer(term) {
 /**
  * This attempts to confirm that the schema, a call to a function
  * variable, with one or more arguments, constitutes a higher-order
- * match with "expr", combined with an established substitution into
- * the schema defined by the map from the given function variable "fn"
- * to a potentially nested lambda term.
+ * match with "expr" after applying the given substitution to the
+ * function variable fn.
  * 
- * If it does, returns a proved equation from the schema to a term
- * that "matches" expr in this binding context, otherwise null, done by
- * substituting the lambda term for the variable and reducing until it
- * finds a match.
+ * If it does, returns a proved equation from the schema to a term that
+ * "matches" expr in this binding context, otherwise null.  It does this
+ * by substituting the lambda term for the variable and reducing until
+ * it finds a match.
  * 
  * Internal to _matchAsSchema.
- *
- * As currently implemented, this does not actually beta reduce
- * "expr".
  */
 export function checkFnMatch(schema, fn, expr, map, bindings) {
   const name = fn.name;
@@ -230,8 +227,9 @@ export function checkFnMatch(schema, fn, expr, map, bindings) {
     return null;
   }
 
-  // The path will be built as a reverse path, but all /fn so
-  // it will be the same as its reverse.
+  // This will be a path to the innermost Call of the schema term.  It
+  // is built as a reverse path, but all segments are /fn, so it will be
+  // the same as its reverse.
   let path = Path.empty;
   for (let term = schema;
        term instanceof Call && term.fn instanceof Call;
@@ -262,28 +260,25 @@ export function checkFnMatch(schema, fn, expr, map, bindings) {
 }
 
 /**
- * Given a schema that is a function call whose function is a
- * variable, this attempts to build a lambda term or nested lambda
- * terms to substitute for the variable, resulting in the given expr
- * after also beta reducing the calls to those lambda(s).  Returns
- * true and extends the map on success, as for _matchAsSchema.  On
- * success, this works in the context of the given bound variable
- * renamings from the schema to the matched term.  Internal to
- * _matchAsSchema.
+ * Given a schema that is a function call whose function is a variable,
+ * this attempts to build a lambda term or nested lambda terms to
+ * substitute for the variable, resulting in the given expr after also
+ * beta reducing the calls to those lambda(s).  Returns true and extends
+ * the map on success, as for _matchAsSchema.  All of this is done in
+ * the context of the given bound variable renamings from the schema to
+ * the matched term.  Internal to _matchAsSchema.
  */
 export function addFnMatch(schema, fn, expr, map, renamings) {
-  // Key point: Suppose all variables bound in the context of the
-  // schema, whose counterparts of the same name occur free in expr,
-  // appear as actual arguments to the function, we can find a
-  // substitution.
+  // Key point: If all variables bound in the context of the schema,
+  // whose counterparts of the same name occur free in expr, appear as
+  // actual arguments to the function, we can find a substitution.
   var args = schema.args();
   // These are free in expr, but may be bound in expr's context.
   var exprVars = expr.freeVarSet();
-  // If any variable occurring (free) in expr is bound in expr's
-  // context and thus needs to have a bound variable here
-  // substituted for it, but that bound variable is not in the args,
-  // the substitution fails.
-  var findBindingValue = Toy.findBindingValue;
+  // If any variable occurring (free) in expr is bound in expr's context
+  // and thus needs to have a bound variable here substituted for it,
+  // but that bound variable is not in the schema args, the substitution
+  // fails.
   for (var name of exprVars) {
     var b = findBindingValue(name, renamings);
     if (b) {
@@ -633,17 +628,15 @@ export class TermMap extends ToyMap {
 // _matchAsSchema(that, substitution, bindings)
 //
 // Checks that this expression matches the argument expression under the
-// given substitution (map from names in this to expressions in that).  The
-// bindings indicate the variable bindings in effect for this and the
-// argument expression, mapping from variable name in this to variable name
-// in that.
+// given substitution (map from free names in this to expressions in
+// that). The bindings map bound variable names in the context of this
+// to bound names in the context of the argument expression.
 //
 // Returns true iff they can match, and extends the substitution to map
 // all free variables of this.  Returns false if necessary to avoid
-// capturing 
-// variables in expr, and smart about using calls to function variables
-// in this to enable substitution in spite of capturing.  Matching here
-// is as defined for the "matches" method.
+// capturing variables in expr, and smart about using calls to function
+// variables in this to enable substitution in spite of capturing.
+// Matching here is as defined for the "matches" method.
 //
 //
 // _asPattern()

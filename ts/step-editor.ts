@@ -1754,11 +1754,10 @@ export class StepEditor {
   }
 
   /**
-   * Try to fill in a field of the form with the selection.  For
-   * steps this will be a reference to the step, and for terms it
-   * will be a textual rendering of the selected expression.
-   *
-   * Only call this if the rule does not use a site (usesSite).
+   * If there is a selection, this searches the inputs of the form for
+   * an unfilled field compatible with the selection, and fills the
+   * first one it finds, the step number for a step, parseable text for
+   * a term.
    */
   addSelectionToForm(rule) {
     var proofDisplay = this.proofDisplay;
@@ -2118,7 +2117,7 @@ export class StepEditor {
 }
 
 /**
- * Computes whether a rule needs a "site" type as an input.
+ * Computes whether a rule takes a "site" type as an input.
  */
 function usesSite(rule) {
   var inputs = rule.info.inputs;
@@ -2558,9 +2557,9 @@ class RuleMenu {
           }
         }
 
-        // Facts and steps are treated similarly, but facts are
-        // automatically renamed here to avoid unneeded identification
-        // of variables.
+        // Facts and steps are treated similarly, but free variables in
+        // facts are automatically renamed here to avoid unneeded
+        // identification of variables.
 
         const schema = fact.matchPart();
         if (!checkSchema(schema)) {
@@ -3097,16 +3096,13 @@ const catsOfMenu =
                                   'desimplifier', 'forward'])]]);
 
 /**
- * This matches a step against the inputs descriptor of an inference
- * rule.  The step is the selected proof step, ruleName is the name of
- * the rule to match against.  Only call this if a step or part of a
- * step is selected.
- *
- * If something is selected, this accepts rules whose inputs descriptor
- * is compatible with the selection.  See the code for details.
- *
- * The rule can also require other inputs as well as ones the
- * selection can supply
+ * This indicates whether policy is to show the given rule (ruleName) in
+ * the menu when there is a selected step or term within a step.
+ * Arguments are a selected rendered step and the ruleName. 
+ * 
+ * The decision is based on the inputs descriptor of the rule. The rule
+ * can also require additional inputs, not just ones the selection can
+ * supply.
  */
 function acceptsSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;

@@ -222,6 +222,12 @@ declare(
    * expresses the equality of the input and its beta reduction, in
    * other words, a substitution.  This will make a typed copy of its
    * argument if it is not already typed.
+   * 
+   * This and "assert" are the only primitive ways to make a proved
+   * statement from an input that may not be a proved statement.
+   * 
+   * This and parsing ("parse") are the only primitive public ways to
+   * make a fully-typed term from one that is not.
    */
   {name: 'axiom4',
     action: function(call_arg) {
@@ -665,8 +671,7 @@ declare(
    * Converts the argument to a WFF and returns it as justified by
    * "assert".  This registers the type of any constant name first seen
    * in this assertion, permanantly fixing its type.  Does not record
-   * the statement as a fact for future use, e.g. in rewriters, nor any
-   * related statements such as a converse.
+   * the statement as a fact for future use.
    */
   {name: 'assert',
     action: function(assertion_arg) {
@@ -6475,7 +6480,8 @@ export interface MenuGenFun {
  * Given a conditional step, path to a chainPart of its asm side, and a
  * Set of names of free vars in its main side, calculates and returns a
  * Set of names free in the target that do not appear free elsewhere in
- * the step.
+ * the step.  If the path is not to a suitable target, the return Set is
+ * empty.
  */
 function extraFrees(
   step: Step,

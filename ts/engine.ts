@@ -595,9 +595,13 @@ const ruleProps = new Set(propNames);
 //   null if not selected, and if the function returns a falsy value,
 //   the step editor will not offer it.
 //
-// form: HTML template for the rule's input form to be presented by
-//   the step editor, as a template allowing {term} for the selected
-//   term.  StepEditor will never offer a rule without a form
+// form: HTML template for the rule's input form to be presented by the
+//   step editor, as a template allowing {term} for the selected term.
+//   Alternatively a function to return a string, jQuery, or DOM content
+//   to append within the standard form skeleton.  The function will be
+//   passed the selected step, or a nullish value if there is none.
+// 
+//   StepEditor will never offer a rule without a form
 //   property, at least an empty one.
 //   TODO: Separate out this kind of non-offerability.
 //
