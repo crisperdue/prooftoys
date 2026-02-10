@@ -1741,7 +1741,7 @@ export class StepEditor {
       var value = args[i];
       if (value === undefined && i < required) {
         if (reportError) {
-          this.error('Undefined argument ' + i);
+          this.error(`Undefined rule argument ${i}`);
         }
         return false
       } else if (value instanceof Error) {
@@ -1941,7 +1941,7 @@ export class StepEditor {
       // After the browser repaints, try simplifying the step
       // and adding the result to the proof if simplification
       // has any effect.
-      Toy.afterRepaint(function() {
+      afterRepaint(function() {
         cleanup();
         const simplified = autoSimplify(result);
         if (!simplified.sameAs(result)) {
@@ -2611,7 +2611,7 @@ class RuleMenu {
         const mainText = Toy.trimParens(shorty.toHtml());
         const prefix = info.definitional ? '' : ' ';
         const blurb = (info.definitional
-                      ? 'definition of ' + info.definitional
+                      ? ' definition of ' + info.definitional
                       : using + mainText);
         const classes = 'description' + (isShort ? '' : ' black');
         html = prefix + html + '<span class="' + classes + '">' + 
@@ -3022,18 +3022,15 @@ class RuleMenu {
           return false;
         }
       }
-      // Check if the rule accepts the selection.
-      if (acceptsSelection(step, ruleName)) {
+      // Check if the rule can use the selection.
+      if (offerWhenSelection(step, ruleName)) {
         // If the rule has a "toOffer" property, apply it as a further
         // test of offerability.
         //
         // TODO: Consider moving this to the "policy" section
         //   (labelApproved).
-        var offerTest = info.toOffer;
-        if (info.toOffer) {
-          return offerTest(step, step.selection);
-        }
-        return true;
+        const offerTest = info.toOffer;
+        return !offerTest || offerTest(step, step.selection);
       } else {
         return false;
       }
@@ -3119,7 +3116,7 @@ const catsOfMenu =
  * can also require additional inputs, not just ones the selection can
  * supply.
  */
-function acceptsSelection(step, ruleName) {
+function offerWhenSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;
   var argInfo = info.inputs;
   // Selected expression (within a step).

@@ -25,8 +25,8 @@ export var _latestDetails;
 //// THEOREMS AND RULES
 
 // Predefine some common constants.
-var T = constify('T');
-var F = constify('F');
+export const T = constify('T');
+export const F = constify('F');
 
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.
