@@ -2756,15 +2756,21 @@ class RuleMenu {
       // TODO: In the proof editor set up an event handler so the step editor
       //   can be aware of selections in the proof display (and also suppress
       //   selections instead of "selectLock").
-      var step = proofEditor.proofDisplay.selection;
-      var term = step && step.selection;
-      var formatArgs = {term: (term && term.toHtml()) || '{term}'};
+      var dStep = proofEditor.proofDisplay.selection;
+      var term = dStep?.selection;
+      var formatArgs = {term: term?.toHtml() || '{term}'};
       if (template) {
         // TODO: Make this block of code into a step editor method.
         // The template is not just an empty string.
         // Note that reset of the step editor will return the hidden
         // status back to normal.
-        stepEditor.$form.find('.customForm').html(format(template, formatArgs));
+        const $outerForm = stepEditor.$form.find('.customForm');
+        
+        if (typeof template === 'function') {
+          $outerForm.empty().append(template(dStep));
+        } else {
+          $outerForm.html(format(template, formatArgs));
+        }
         stepEditor.showForm();
         addClassInfo(stepEditor.$form);
         if (!usesSite(rule)) {
