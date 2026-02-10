@@ -2789,6 +2789,9 @@ class RuleMenu {
         stepEditor.error(format('Rule needs a form: {1}', ruleName));
       }
     } else if (ruleName.slice(0, 5) === 'fact ') {
+      debugger;
+      abort('Obsolete rewrite?');
+
       // TODO: Verify that this case is unused, and remove.
       // 
       // Values "fact etc" indicate use of rules.rewrite, and
