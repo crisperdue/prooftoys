@@ -1160,8 +1160,16 @@ function buildProofButtons(editor) {
   const $copyText = $('<input class=copyText disabled>');
   // The fa and fa-copy classes put a "copy" icon into the
   // text of the button.
-  const $copyButton = $('<button class="fa fa-copy">');
+  const $copyButton = $('<button class="fa fa-copy" title="copy text">');
   $copyButton.css({fontSize: '.8rem'});
+  window.tippy(dom($copyButton), {
+    theme: 'tippytoys',
+    trigger: 'click',
+    content: 'text copied',
+    onShow(instance) {
+      setTimeout(() => instance.hide(), 1000);
+    },
+  });
 
   // The ruleStats are visible except when a proof is brand new and
   // there is nothing to show.
@@ -1183,7 +1191,7 @@ function buildProofButtons(editor) {
   });
   $proofButtons.append($ux);
   // Set up a fancy tooltip.
-  const tp = window.tippy(dom($ux), {
+  window.tippy(dom($ux), {
     theme: 'tippytoys',
     allowHTML: true,
     delay: 400,
@@ -1199,15 +1207,16 @@ function buildProofButtons(editor) {
   // Main and worksheet controls event handlers
 
   $copyButton.on('click', function(event) {
-      Toy.copyToClipboard($copyText.val());
-      // I tried using the TOUCHDOWN event and event.preventDefault()
-      // in Chrome, without success.
-      $copyText.select();
-    });
+    copyToClipboard($copyText.val());
+    // I tried using the TOUCHDOWN event and event.preventDefault()
+    // in Chrome, without success.
+    $copyText.select();
+  });
 
   $wksButton.on('click', function() {
-      editor._wksControls.toggle();
-    });
+    editor._wksControls.toggle();
+  });
+
   const result = {
     $node: $proofButtons,
     $copyText: $copyText,
