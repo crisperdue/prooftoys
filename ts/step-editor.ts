@@ -2777,9 +2777,13 @@ class RuleMenu {
           // This filtering based on using a site is a bit arbitrary.
           stepEditor.addSelectionToForm();
         }
-        // Focus the first empty text field of the form.
+        // Focus the first empty text field of the form, or if none, the
+        // first text field if none are empty.
         stepEditor.$form.find('input[type=text],input:not([type])')
-          .each(function() {
+          .each(function(ix) {
+            if (ix === 0) {
+              this.focus();
+            }
             if (!this.value) {
               this.focus();
               // Focus just the first one.
