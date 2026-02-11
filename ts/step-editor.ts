@@ -1944,7 +1944,8 @@ export class StepEditor {
       afterRepaint(function() {
         cleanup();
         const simplified = autoSimplify(result);
-        if (!simplified.sameAs(result)) {
+        // Ignore no-op autoSimplify results and "trivially true" ones.
+        if (!simplified.sameAs(result) && !simplified.getMain().sameAs(T)) {
           self.proofDisplay.addDerivation(simplified);
         }
       });
