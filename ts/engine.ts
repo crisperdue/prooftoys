@@ -491,6 +491,9 @@ const ruleProps = new Set(propNames);
 //   returning the non-continuation result of the "prep".  Attempt0
 //   is the same except it does not auto-justify the step.
 //
+//   Return of an Error or string causes the plain rule to report the
+//   message in an abort.
+//
 // proof: for a theorem (no args), use this instead of "action".  Do
 //   not call "justify", that is done automatically and the proof is
 //   memoized.  For a theorem, this may be given as an array of steps
@@ -852,7 +855,7 @@ export function addRule(info) {
             // TODO: Consider how to better handle a falsy result.
             abort('Falsy result from rule {1}', name);
           }
-        } else if (more instanceof Error) {
+        } else if (typeof more === 'string' || more instanceof Error) {
           abort(more);
         } else {
           // In this case the cause is allowable, but not very useful.
