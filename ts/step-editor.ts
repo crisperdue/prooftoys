@@ -1768,7 +1768,7 @@ export class StepEditor {
    * first one it finds, the step number for a step, parseable text for
    * a term.
    */
-  addSelectionToForm(rule) {
+  addSelectionToForm() {
     var proofDisplay = this.proofDisplay;
     var step = proofDisplay.selection;
     if (step) {
@@ -1779,13 +1779,13 @@ export class StepEditor {
       // selection and fill it in with selection information.
       // @ts-ignore 2345
       form.find('input').each(function() {
-        var fieldType = this.name.match(/^(.*?)\d*$/)[1];
+        // This is the name attribute without any trailing digits.
+        const fieldType = this.name.match(/^(.*?)\d*$/)[1];
         if (expr) {
-          // TODO: Don't use the selection as a term if it will be used
-          // by the rule as a site.
-          if (fieldType == 'term') {
+          if (['term', 'bool'].includes(fieldType)) {
+            // Fill in the value, but only if not pre-filled.
             // TODO: Use printing that is guaranteed reversible.
-            this.value = expr.toString();
+            this.value || (this.value = expr.toString());
             // Stop iteration.
             return false;
           }
@@ -1793,7 +1793,7 @@ export class StepEditor {
           if (fieldType == 'step'
               || (fieldType == 'equation' && step.isEquation())
               || (fieldType == 'implication' && step.implies())) {
-            this.value = n;
+            this.value || (this.value = n);
             // Stop iteration.
             return false;
           }
@@ -2774,7 +2774,8 @@ class RuleMenu {
         stepEditor.showForm();
         addClassInfo(stepEditor.$form);
         if (!usesSite(rule)) {
-          stepEditor.addSelectionToForm(rule);
+          // This filtering based on using a site is a bit arbitrary.
+          stepEditor.addSelectionToForm();
         }
         // Focus the first empty text field of the form.
         stepEditor.$form.find('input[type=text],input:not([type])')
