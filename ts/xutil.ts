@@ -927,6 +927,8 @@ export function isFunDef(name) {
  * If the conditions are met, this asserts the given definition and
  * returns it.  It functions like an axiom, but with assurance that it
  * will not introduce any contradiction into the system.
+ * 
+ * TODO: This is wrong; remove it.  The existence must be unique.
  *
  * TODO: Consider supporting definition of multiple constants with one
  *   defining fact (with multiple existentially quantified variables).

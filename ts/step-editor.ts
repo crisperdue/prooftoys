@@ -2170,8 +2170,8 @@ export function tryRuleSoon(stepEditor, ruleName, args) {
       }
     });
   stepEditor._proofEditor.toggleClass('waitingForProver', true);
-  // Try running the rule once the UI shows that the prover is working.
-  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, ruleName, args));
+  // After updating the display, try running the rule.
+  afterRepaint(stepEditor._tryRule.bind(stepEditor, ruleName, args));
 }
 
 // Computes an array of significant subgoals added to the given step
