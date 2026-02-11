@@ -309,7 +309,6 @@ export class ProofEditor {
     // The tabindex lets it handle keyboard events. ???
     const $formParent = $('<div xtabindex="-1" style="position: relative">');
     $formParent.append(stepEditor.$form);
-    // $formParent.append('<div class=overlay></div>');
 
     const proofButtons = buildProofButtons(self);
     self.$copyText = proofButtons.$copyText;
@@ -1821,7 +1820,6 @@ export class StepEditor {
         this.checkArgs(args, minArgs, true)) {
       tryRuleSoon(this, ruleName, args);
     }
-    this.hideForm();
   }
 
   /**
@@ -1930,6 +1928,8 @@ export class StepEditor {
         cleanup();
         return;
       }
+      // Hide the form (if displayed)
+      this.hideForm();
       // Clean up after any autosimplification.
       deferCleanup = true;
       // The new step is successfully rendered.
