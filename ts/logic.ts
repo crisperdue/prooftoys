@@ -259,13 +259,14 @@ declare(
              'Axiom4 result on {1} has untyped {2}', call_arg, badex);
       return result.justify('axiom4', [call]);
     },
-    labels: 'primitive',
-    inputs: {term: 1},  // Specifically a Call to a Lambda.
     toOffer: (step, term) => term.isCall1() && term.fn instanceof Lambda,
+    labels: 'uncommon',
+    priority: 3,
+    inputs: {term: 1},
     form: 'Enter {v. body} expr <input name=term>',
     menu: 'apply a lambda to its argument',
     description: 'axiom of substitution',
-    tooltip: ('')
+    autoSimplify: noSimplify,
   },
 
   {name: 'axiom5',
@@ -277,6 +278,54 @@ declare(
     description: 'axiom of description'
   }
 );
+
+/**
+ * Use axiom4 to convert the target term to a redex / lambda call. This
+ * pre-fills its form with a sample including the selection, and leaves
+ * it to the user to decide which term to "pull out" and which
+ * occurrences of it to replace with the bound variable in the lambda.
+ * 
+ * Useful as preparation for existential "generalization".
+ */
+rule('toRedex', {
+  action2: function (step, path, redex) {
+    if (!redex.isLambdaCall()) {
+      return 'Not a redex / lambda call';
+    }
+    const target = step.get(path);
+    // This is an unusual case where we want to run an inference during
+    // the prep phase.
+    const step1 = rules.axiom4(redex);
+    if (step1.getRight().matches(target)) {
+      const step0 = step.original;
+      return () => {
+        const step2 = rules.eqnSwap(step1);
+        const step3 = rules.replace(step0, path, step2);
+        return step3;
+      };
+    } else {
+      return 'No match';
+    }
+  },
+  labels: 'advanced',
+  inputs: { site: 1, term: 3 },
+  form: (step) => {
+    const $tpl = $(
+      '<span>Enter {v. body} expr <input name=term size=40></span>',
+    );
+    const text = step.selection.toString(); // step.selection.node.textContent;
+    $tpl.find('input').val(`{v. ${text}} xyz`);
+    return $tpl;
+  },
+  menu: 'as <b>{v. &lt;term&gt;} &lt;term2&gt;</b>',
+  description: 'as explicit function call',
+  priority: 5,
+  // Using this rule generally doesn't make sense if it is already in a
+  // simple function call form.
+  toOffer: (dstep, term) => {
+    return !term.isCall1() && !term.isLambdaCall();
+  },
+});
 
 export interface Expr {
   axiom4Core(repl, vbl);
