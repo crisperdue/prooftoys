@@ -210,9 +210,9 @@
   // Function arrows render this way:
   .lamArrow::before {
     font-weight: 200;
-    font-size: 90%;
-    padding: 0 1px;
-    content: "\21A6";
+    font-size: 70%;
+    padding: 0 2px;
+    content: "\25b9"; // white right-pointing small triangle
   }
 
   //// Utilities

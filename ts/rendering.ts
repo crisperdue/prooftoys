@@ -1594,7 +1594,7 @@ Call.prototype.render = function(minPower) {
                    '(', this.arg.render(Toy.unaryPower), ')');
     } else {
       // Unary operator; ensure space before, then op and arg.
-      $expr.append('&nbsp;', this.fn.render(0, true),
+      $expr.append('&thinsp;', this.fn.render(0, true),
                    this.arg.render(Toy.unaryPower));
     }
   } else {
@@ -1621,7 +1621,7 @@ Lambda.prototype.render = function(minPower) {
   const $arrow = $('<span class=lamArrow>')
   if (isSet && !type.fromType.equal(Toy.boolean)) {
     // Maps from non-boolean to boolean: render with braces
-    // and "dot".
+    // and "lambda arrow".
     $expr.append('{');
     $expr.append(this.bound.render(0));
     $expr.append($arrow);
@@ -1631,7 +1631,7 @@ Lambda.prototype.render = function(minPower) {
     // Render with parens and arrow.
     $expr.append('(');
     $expr.append(this.bound.render(0));
-    // Unicode rightward arrow from bar ("mapsto"). See e.g.
+    // We are using "arrow-style" notation.  See e.g.
     // https://en.wikipedia.org/wiki/Function_(mathematics)#Arrow_notation
     $expr.append($arrow);
     $expr.append($body);
