@@ -751,6 +751,7 @@ declare(
     form: ('Assert <input name=bool>'),
     menu: 'assert without proof',
     labels: 'advanced',
+    priority: 5,
     description: 'assertion',
     tooltip: 'WFF to assert (possibly to prove later)'
   },
@@ -3340,7 +3341,7 @@ declare(
         }
       }
       if (Toy.isError(result)) {
-        return Toy.newError('Not a tautology: {1} -- {2}',
+        return Toy.newError('tautology: Not a tautology: {1} -- {2}',
                             wff_arg, result.message);
       } else {
         _tautologies.set(key, result);
@@ -3351,8 +3352,8 @@ declare(
       return result;
     },
     inputs: {bool: 1},
-    menu: 'check a tautology',
-    form: 'Enter tautology: <input name=bool size=40>',
+    menu: 'verify a tautology',
+    form: 'Propose a tautology: <input name=bool size=40>',
     autoSimplify: noSimplify,
   },
 
@@ -3431,9 +3432,8 @@ declare(
       }
     },  
     inputs: {bool: 1},
-    form: 'Enter statement: <input name=bool size=40>',
-    menu: 'check a tautology instance',
-    tooltip: ('Tautology instantiator'),
+    form: 'Statement to verify: <input name=bool size=40>',
+    menu: 'verify a tautology instance',
     autoSimplify: noSimplify,
     description: 'tautology instance'
   },
