@@ -77,58 +77,86 @@ export function exerData() {
 
 //// Popups
 
-/**
- * Set of nodes of popups not to be hidden by hidePopups.
- * Currently used only for very ephemeral exemption, e.g.
- * during event propagation.
- */
-const exemptPopups = new Set();
+// These utilities support a set of nodes within proof editors that can
+// have a "poppedUp" class, presumably indicating that they are visible.
+// Calling showPopup adds the class.
+// Calling hidePopup removes the class.
+// Calling hidePopups removes the class from all within .logicZone.
+// Most mouse clicks and handling of ESC key hide all popups
+//   "automatically".  Exceptions are if a handler has called
+//   noHidePops or if the click is on a popup.
+// Explicit show/hide suppresses auto-hiding until return to the event
+//   loop.
 
 /**
- * Hide all popups in case of an appropriate event.  Called as an event
- * handler.
+ * Suppress event-triggered popup hiding.  Intended to be true just
+ * until event handling completes.  Internal to the popups utilities.
  */
-function hidePopups(ev) {
-  if (ev.type == "click" || (ev.type == "keydown" && ev.key == "Escape")) {
-    $(document)
-      .find(".logicZone .proofEditor .poppedUp")
-      .filter((i, elt) => !exemptPopups.has(elt))
-      .removeClass("poppedUp");
+var allowAutoHidePops = true;
+
+/**
+ * Temporarily suppresses auto-hiding, at least until the next relevant
+ * event arrives.
+ */
+function noHidePops() {
+  allowAutoHidePops = false;
+}
+
+/**
+ * Hide all popups in case of an appropriate event.  No-op if hiding is
+ * suppressed.
+ */
+function popupsHider(ev) {
+  if (!allowAutoHidePops) {
+    return;
+  }
+  if (ev.type == 'click' || (ev.type == 'keydown' && ev.key == 'Escape')) {
+    hidePopups();
   }
 }
 
 /**
- * Show the given node or jQuery as a "popup".  See also popDown and
- * hidePopups.
+ * Remove .poppedUp class from nodes in .logicZone, hiding them.
  */
-function showPopup(node) {
-  const $node = $(node);
-  $node.addClass('poppedUp');
-  // Ensure there is exactly one hidePopups handler for these events.
-  $(document).off('click', hidePopups);
-  $(document).off('keydown', hidePopups);
-  $(document).on('click', hidePopups);
-  $(document).on('keydown', hidePopups);
-  // Exempt this popup from being hidden by click or Esc,
-  // but re-enable those actions after return to the event loop.
-  const d = domify(node);
-  // Exempt this popup just until control returns to the main loop.
-  exemptPopups.add(d);
-  // We don't need this line if the popup is shown from a click or kbd
-  // event handler.
-  soonDo(() => exemptPopups.delete(d));
+function hidePopups() {
+  $(document)
+    .find('.logicZone .poppedUp')
+    .removeClass('poppedUp');
 }
 
-function hidePopup(node) {
-  $(node).removeClass('poppedUp');
+// Clicking on popups temporarily disallows auto-hiding. This action
+// occurs after the capture mode listener that allows them.
+$('.logicZone').on('click', '.poppedUp',  noHidePops);
+
+// Auto-hide popups on certain events unless suppressed
+// in a prior handler for the same event.
+$(document).on('click', popupsHider);
+$(document).on('keydown', popupsHider);
+// Each event firing initially allows auto-hiding.
+// Note that this happens in capture phase.
+document.addEventListener('click', () => allowAutoHidePops = true, true);
+document.addEventListener('keydown', () => allowAutoHidePops = true, true);
+
+/**
+ * Show the given node or jQuery as a "popup".  See also popDown and
+ * hidePopups.  Temporarily suppresses auto-hiding.
+ */
+function showPopup(node) {
+  $(node).addClass('poppedUp');
+  noHidePops();
 }
 
 /**
- * The Right Way to disappear a popup.
+ * Hide a popup shown with showPopup.  Temporarily suppresses
+ * auto-hiding.
  */
-function popDown(node) {
+function hidePopup(node) {
   $(node).removeClass('poppedUp');
+  noHidePops();
 }
+
+
+//// FIXED-POSITION RULE MENU (work in progress)
 
 /**
  * If truthy, place a single rule menu and suggestions at a fixed
@@ -495,7 +523,7 @@ export class ProofEditor {
         // same event.
         elt.checked = state;
       });
-      popDown(self.$node.find('.uxDialog'));
+      hidePopup(self.$node.find('.uxDialog'));
     });
 
     self.$node.find('.clearWork').on('click', function() {
@@ -1650,10 +1678,16 @@ export class StepEditor {
 
     // Clicking the button or hitting <enter> triggers trying the rule.
     $form.append(' <button class=go>Go</button>');
-    // Note that the document's click handler will remove this exemption.
-    $form.on('click', () => exemptPopups.add(domify($form)));
-    $form.on('click', 'button.go', function() {
-      self.tryRuleFromForm();
+    const goButton = dom($form.find('button.go'));
+    $form.on('click', function(ev) {
+      // The form is a popup, so the click does not auto-hide popups.
+      // Both the form and errors can be popped up for rules such
+      // as "fact" and "tautology".  Hide the errors.
+      hidePopup(self.$proofErrors);
+      if (ev.target === goButton){
+        // Try running the rule, _after_ hiding the errors, not before.
+        self.tryRuleFromForm();
+      }
     });
     // Keyboard events bubble to here from the inputs in the form.
     $form.on('keydown', function(event) {
@@ -1701,7 +1735,7 @@ export class StepEditor {
    * Hides the error display.
    */
   clearError() {
-    popDown(this.$proofErrors);
+    hidePopup(this.$proofErrors);
   }
 
   /**
@@ -1878,7 +1912,7 @@ export class StepEditor {
     // indicating failure, such as a rule that attempts to prove a
     // statement.
     if (result === true) {
-      // The was successful without affecting the proof.
+      // The rule succeeded without affecting the proof.
       // Do nothing.
     } else if (!isProved(result)) {
       // It is possible to display more information about thrown

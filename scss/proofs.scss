@@ -116,6 +116,11 @@ wffblock- > * {
   animation-duration: 0.01s;
 }
 
+// Displayed popup.  Move to pt.scss?
+.poppedUp {
+  visibility: visible !important;
+}
+
 /* Proof displays -- rendering.js */
 
 .proofEditor {
@@ -132,10 +137,6 @@ wffblock- > * {
     box-shadow: #aaa 1px 1px 2px;
     // overflow-anchor: none;  Can this tame unwanted scrolling?
 
-    // Displayed popup.
-    .poppedUp {
-      visibility: visible !important;
-    }
 }
 
 /* If an error in loading the proof editor, then show. */
