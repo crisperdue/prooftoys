@@ -2528,7 +2528,7 @@ declare({
       });
       return v;
     });
-    const subsumed = rules.subsumeNumerics.attempt(result);
+    const subsumed = rules.subsumeNumerics?.attempt(result);
     return (subsumed || result).justify('simplifyAsms', arguments, [step_arg]);
   },
   inputs: { step: 1 },
@@ -6578,6 +6578,7 @@ function extraFrees(
     visitBranch(asms, Path.empty);
     return setDiff(inFrees, outFrees) as Set<string>;
   }
+  return new Set();
 }
 
 /**
