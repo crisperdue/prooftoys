@@ -6695,7 +6695,91 @@ fact('forall {x. p x & q => r} == (exists p) & q => r', {
   },
 });
 
-// Experimental to here.
+/**
+ * Attempts to wrap the boolean target term in an existential
+ * quantifier, replacing as many occurrences of the witness term as
+ * possible with the user's choice of variable, and of course
+ * eliminating the witness term. The target must be boolean.
+ * 
+ * Replacing all is not always the best choice, as in a term "1 * 1 =
+ * 1", which can be a witness for a few different existential
+ * statements.
+ */
+rule('eQuantify', {
+  action2: function(step, path, witness_arg) {
+    if (!ok(rules.chainOnly.prep(step, path, parse('a => a')))) {
+      return null;
+    }
+    const witness = termify(witness_arg);
+    // The eventual internal call to axiom4 should succeed since the new
+    // variable can take the same type as the term occurrences it is
+    // replacing, and the body of the new Lambda already has the "right
+    // type".
+    const target = step.get(path);
+    const targetSet = target.freeVarSet();
+    const newVar = genVar('v', targetSet);
+    // These are the free vars in oldTerm.
+    const oldSet = witness.freeVarSet();
+    // A quick validity check??
+    // if (setDiff(oldSet, targetSet).size > 0) {
+    //   return null;
+    // }
+    const xformed = withExit(exit => {
+      // This transforms the given term, replacing all occurrences of
+      // oldTerm with newVar except where it would cause capturing.
+      function xform(term) {
+        // Is it possible for a typed copy of the result of this to have a
+        // more general type than the original term?
+        if (term.matches(witness)) {
+          return newVar;
+        }
+        let c = term.constructor;
+        if (c == Atom) {
+          return term;
+        } else if (c == Call) {
+          return new Call(xform(term.fn), xform(term.arg));
+        } else if (c == Lambda) {
+          const v = term.bound;
+          if (!oldSet.has(v.name)) {
+            return new Lambda(v, xform(term.body));
+          } else {
+            return term;
+          }
+        }
+      }
+      return xform(target);
+    });
+    if (!xformed.matches(target)) {
+      return () => {
+        const redex = new Call(new Lambda(newVar, xformed), witness);
+        const step1 = rules.axiom4(redex);
+        const step2 = rules.eqnSwap(step1);
+        // TODO: Let chaining do the replacement.
+        const step3 = rules.replace(step, path, step2);
+        // The target is now replaced by a redex.
+        const step4 = rules.chainOnly(step3, path, 'p x => exists p');
+        return step4;
+      }
+    }
+    // Not applicable
+  },
+  inputs: {site: 1, bool: 3},
+  toOffer: (step, term) => {
+    if (!term.isBoolean() || !(term instanceof Call) || term.isCall1()) {
+      return false;
+    }
+    const path = step.prettyPathTo(term);
+    if (!ok(rules.chainOnly.prep(step, path, parse('a => a')))) {
+      return false;
+    }
+    return true;
+  },
+  menu: 'existence by witness',
+  description: 'existence by witness',
+  form: 'Witnessing term: <input name=bool>',
+  labels: 'advanced',
+  priority: 5,
+});
 
 /**
  * The seeds of an attempt to create a "Rule C".  This seems to be
