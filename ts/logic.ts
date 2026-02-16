@@ -6347,7 +6347,7 @@ var chainOnlyMenuGen: MenuGenFun = function(ruleName, step, target, editor) {
         ruleName: 'chainOnly',
         ruleArgs: [step.original, path, goal],
         priority: 5,
-        html: `consequence of ${goal.toHtml()}`,
+        html: `reason forward with ${goal.toHtml()}`,
         // $node:
       };
       infos.push(i);
@@ -6364,13 +6364,14 @@ var chainOnlyMenuGen: MenuGenFun = function(ruleName, step, target, editor) {
  * and if so first proves a conditional with LHS the same as the step's
  * main, then applies that to get its result.
  * 
- * TODO: This can be easily expanded to also support parent terms that
+ * TODO: This can be easily extended to support parent terms that
  *   may be disjunctions without changing the structure of the
  *   deduction.
  */
 rule('chainOnly', {
-  action2: function (step, path_arg, schema) {
+  action2: function (step, path_arg, schema_arg) {
     if (step.isMainSide(path_arg)) {
+      const schema = termify(schema_arg);
       const condMap = schema.matchSchema('a => b');
       if (condMap) {
         const main = step.getMain();
@@ -6415,7 +6416,7 @@ rule('chainOnly', {
           const xform = (term: Expr, tail: Path) => {
             if (tail.isEnd()) {
               const proved = rules.fact(schema);
-              return rules.instMultiVars(proved, factMap, true);  // ???
+              return rules.instMultiVars(proved, factMap, false);  // ???
             }
             const seg = tail.segment;
             if (term.isCall2('&')) {
@@ -6427,7 +6428,7 @@ rule('chainOnly', {
                   b: term.getRight(),
                 };
                 const taut = rules.tautology('(a => c) => (a & b => c & b)');
-                const step2 = rules.instMultiVars(taut, map);
+                const step2 = rules.instMultiVars(taut, map, false);
                 return rules.modusPonens(step1, step2);
               } else if (seg === 'right') {
                 const step1 = xform(term.getRight(), tail.rest);
@@ -6437,7 +6438,7 @@ rule('chainOnly', {
                   a: term.getLeft(),
                 };
                 const taut = rules.tautology('(b => c) => (a & b => a & c)');
-                const step2 = rules.instMultiVars(taut, map);
+                const step2 = rules.instMultiVars(taut, map, false);
                 let result = rules.modusPonens(step1, step2);
                 console.log('result', result);
                 return result;
@@ -6445,6 +6446,7 @@ rule('chainOnly', {
             }
           };
           const expanded = xform(main, relPath);
+          // return expanded;
           const pattern = step.implies()
             ? '(a => b) & (b => c) => (a => c)'
             : 'b & (b => c) => (b => c)';
@@ -6460,7 +6462,7 @@ rule('chainOnly', {
   menuGen: chainOnlyMenuGen,
   // menu: 'chain ahead',
   form: 'Chain by <input name=bool>',
-  description: 'reasoning forward',
+  description: 'chaining forward',
 });
 
 
