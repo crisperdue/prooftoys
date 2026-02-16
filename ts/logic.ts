@@ -6329,28 +6329,31 @@ declare(
 );
 
 /**
- * Find conditional facts with LHS matching the target,
- * which must be on the main side.
+ * Find conditional facts with LHS matching the target, which must be on
+ * the main side and pass the prep part of the full rule.
+ *
+ * TODO: Also search for matching steps.
  */
-var chainOnlyMenuGen: MenuGenFun = function(ruleName, step, target, editor) {
+var chainOnlyMenuGen: MenuGenFun = function(ruleName, dStep, target, editor) {
   if (!target) {
     return null;
   }
-  const path = step.prettyPathTo(target);
+  const path = dStep.prettyPathTo(target);
   const infos: MenuInfo[] = [];
-  if (!step.isMainSide(path)) {
+  // Can we do a more thorough cheap check here?
+  if (!dStep.isMainSide(path)) {
     return infos;
   }
   // TODO: Iterate over proof steps as well.
-  editor.steps.forEach((step, index) => {
+  editor.steps.forEach((pStep, index) => {
     ;
   });
   eachFact(info => {
     const goal = info.goal;
-    if (ok(rules.chainOnly.prep(step.original, path, goal))) {
+    if (ok(rules.chainOnly.prep(dStep.original, path, goal))) {
       const i = {
         ruleName: 'chainOnly',
-        ruleArgs: [step.original, path, goal],
+        ruleArgs: [dStep.original, path, goal],
         priority: 5,
         html: `reason forward with ${goal.toHtml()}`,
         // $node:
@@ -6368,6 +6371,9 @@ var chainOnlyMenuGen: MenuGenFun = function(ruleName, step, target, editor) {
  * parents of the target are conjunctions up to the root of the main,
  * and if so first proves a conditional with LHS the same as the step's
  * main, then applies that to get its result.
+ * 
+ * In the UI, select a suitable main side condition.  The menuGen will
+ * propose facts (and soon steps) that could be applied.
  * 
  * TODO: This can be easily extended to support parent terms that
  *   may be disjunctions without changing the structure of the
