@@ -117,11 +117,13 @@ function popupsHider(ev) {
 
 /**
  * Remove .poppedUp class from nodes in .logicZone, hiding them.
+ * Also indicate that the rule form is hidden.
  */
 function hidePopups() {
   $(document)
     .find('.logicZone .poppedUp')
     .removeClass('poppedUp');
+  $('.proofEditor').removeClass('ruleFormVisible');
 }
 
 // Clicking on popups temporarily disallows auto-hiding. This action
@@ -574,7 +576,7 @@ export class ProofEditor {
           //   .subproofExpander pops subproof displays up and down
           //   .input, .button, and .select are typical form controls
           //   .wksControlsOuter is the main box for worksheet controls
-          const selectors = ('.stepAndNum, .ruleMenu, .above, ' +
+          const selectors = ('.stepAndNum, .ruleMenu, .poppedUp, .above, ' +
                             '.subproofExpander, .inferenceDisplay, ' +
                             '.wksControlsOuter, input, button, select');
           // Mousedown in most places removes any step or expr selection.
@@ -1747,6 +1749,7 @@ export class StepEditor {
   showForm() {
     this.formShowing = true;
     showPopup(this.$form);
+    this._proofEditor.$node.addClass('ruleFormVisible');
   }
 
   /**
@@ -1755,6 +1758,7 @@ export class StepEditor {
   hideForm() {
     this.formShowing = false;
     hidePopup(this.$form);
+    this._proofEditor.$node.removeClass('ruleFormVisible');
   }
 
   /**

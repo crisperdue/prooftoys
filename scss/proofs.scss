@@ -772,16 +772,6 @@ span.stepRef {
   z-index: 1001;
 }
 
-// The ruleFormVisible class makes the form and the
-// overlay both visible.
-.proofEditor.ruleFormVisible .ruleForm {
-  visibility: visible;
-}
-
-.proofEditor.ruleFormVisible .overlay {
-  visibility: visible;
-}
-
 // Container for error displays
 .proofEditor .proofErrors {
   position: absolute;
