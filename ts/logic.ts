@@ -315,9 +315,14 @@ rule('toRedex', {
     );
     const text = step.selection.toString(); // step.selection.node.textContent;
     $tpl.find('input').val(`{v. ${text}} xyz`);
+    $tpl.append(
+      '<br><br>Edit the input so it beta-reduces to the selected term.' +
+      '<br>You can replace <b>v</b> with a different name.' +
+      '<br>Use any part of the lambda in place of <b>xyz</b>.'
+    )
     return $tpl;
   },
-  menu: 'as <b>{v. &lt;term&gt;} &lt;term2&gt;</b>',
+  menu: 'as <b>(p &lt;term&gt;)</b> with <b>p</b> a lambda',
   description: 'as explicit function call',
   priority: 5,
   // Using this rule generally doesn't make sense if it is already in a
