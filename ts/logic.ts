@@ -6722,8 +6722,7 @@ rule('eQuantify', {
     // replacing, and the body of the new Lambda already has the "right
     // type".
     const target = step.get(path);
-    const targetSet = target.freeVarSet();
-    const newVar = genVar('v', targetSet);
+    const newVar = genVar('v', target.allNames());
     // These are the free vars in oldTerm.
     const oldSet = witness.freeVarSet();
     // A quick validity check??
@@ -6769,9 +6768,9 @@ rule('eQuantify', {
     }
     // Not applicable
   },
-  inputs: {site: 1, bool: 3},
+  inputs: {site: 1, term: 3},
   toOffer: (step, term) => {
-    if (!term.isBoolean() || !(term instanceof Call) || term.isCall1()) {
+    if (!term.isBoolean()) {
       return false;
     }
     const path = step.prettyPathTo(term);
@@ -6782,7 +6781,7 @@ rule('eQuantify', {
   },
   menu: 'existence by witness',
   description: 'existence by witness',
-  form: 'Witnessing term: <input name=bool>',
+  form: 'Witnessing term: <input name=term>',
   labels: 'advanced',
   priority: 5,
 });
