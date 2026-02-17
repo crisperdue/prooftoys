@@ -6597,7 +6597,7 @@ function extraFrees(
 /**
  * Menu generator function for eRuleFull.  If the step is conditional
  * and the target is a chainPart of its asms, this offers to
- * existentially quantify each variable that appears free in the target
+ * existentially quantify any variable that appears free in the target
  * and nowhere else in the step.
  * 
  * TODO: Test the case with all asms as target.
@@ -6619,11 +6619,12 @@ const eRuleGen: MenuGenFun = function (ruleName, dStep, target, editor) {
     step.getMain().freeVarSet()
   );
   const genItems = (nm, path?) => {
+    // TODO: Always request eRuleFull.
     const ruleName = path ? 'eRuleFull' : 'eRule1';
     const ruleArgs = path ? [step, path, nm] : [step, nm];
     const priority = 3;
     const html = 'ruly';
-    const $node = $(`<div>\u27ad &exist; &lbrace;${nm} ... &rbrace;</div>`);
+    const $node = $(`<div>\u27ad <b>&exist; &lbrace;${nm} ... &rbrace;</b></div>`);
     mInfos.push({ ruleName, ruleArgs, priority, html, $node });
   };
   if (asmPart) {
@@ -6646,36 +6647,50 @@ const eRuleGen: MenuGenFun = function (ruleName, dStep, target, editor) {
  * converting it.
  */
 rule('eRuleFull', {
-  action2: function (step: Step, path: Path, name: string) {
+  action2: function (step: Step, path_arg, name: string) {
+    const path = step.prettifyPath(path_arg);
     const asms = step.getAsms();
     if (!step.isAsmSide(path)) {
       return null;
-    }
-    if (path.equals('/left')) {
-      return null;  // TODO: apply eRule1 in this case.
     }
     const extras = extraFrees(step, path, step.getMain().freeVarSet());
     if (!extras.has(name)) {
       return null;
     }
+    if (path.equals('/left')) {
+      return rules.eRule1(step, name);
+    }
+    // This is the path relative to asms, reversed.
+    const rev = path.rest.reverse();
+    const parts = asms.chainPartPaths('&');
+    if (!parts.find(p => p.equals(rev))) {
+      return null;
+    }
     return () => {
       const s1 = rules.moveRightmost(step, path);
-      const s11 = rules.rewriteOnly(s1, '/left', 'a & b == b & a');
-      const s2 = rules.toForall0(s11, name);
-      // const s3 = rules.splitAsms(step, path);
+      const s3 = rules.toForall0(s1, name);
       const s4 = rules.rewrite(
-        s2,
+        s3,
         '',
-        'forall {x. p x & q => r} == exists p & q => r'
+        'forall {x. q & p x => r} == q & exists p => r'
       );
-      return s4;
+      // This is a path to "q" in the result of the rewrite.
+      let p = asPath('/left/right');
+      let moved = s4;
+      // Move the "q" term left to where it came from.
+      while (true && !p.equals(path)) {
+        const p2 = moverAction('left', moved, p).path;
+        moved = rules.moveLeft(moved, p);
+        p = p2;
+      }
+      return moved;
     };
   },
   inputs: {site: 1, varName: 3},
   menuGen: eRuleGen,
   description: (step) => {
     const [inStep, path, name] = step.ruleArgs;
-    return `to &exist; &lbrace;${name}. &hellip; &rbrace;`;
+    return `to <b>&exist; &lbrace;${name}. &hellip; &rbrace;</b>`;
   },
 });
 
@@ -6698,6 +6713,19 @@ fact('forall {x. p x & q => r} == (exists p) & q => r', {
     );
     const s4 = rules.rewriteOnly(s3, '/right', 'a => (b => c) == a & b => c');
     return s4;
+  },
+});
+
+/**
+ * Like r2134a
+ */
+fact('forall {x. q & p x => r} == q & (exists p) => r', {
+  name: 'r2134b',
+  proof: function() {
+    const s1 = rules.r2134a();
+    const s2 = rules.rewriteOnly(s1, 'p x & q', 'a & b == b & a');
+    const s3 = rules.rewriteOnly(s2, '(exists p) & q', 'a & b == b & a');
+    return s3;
   },
 });
 
