@@ -4878,32 +4878,38 @@ fact('odd x == ZZ x & not (even x)', {});
 
 //// Rational number facts:
 
-fact('@ QQ r & QQ s => QQ (r * s)', {
+fact('@ QQ a & QQ b => QQ (a * b)', {
   proof: `(steps
-    (1 consider (t ((r * s))))
-    (2 andAssume (s 1) (t ((((((ZZ x) & (ZZ z)) & ((ZZ1 y) & (ZZ1 w))) & (r = (x / y))) & (s = (z / w))))))
-    (3 concludeAsmLeft (s 2) (path "/left/left/left"))
-    (4 flattenAnd (s 3) (path "/left"))
-    (5 applyAsmHere (s 4) (path "/right/right/right") (t ((r = (x / y)))))
-    (6 applyAsmHere (s 5) (path "/right/right/right") (t ((s = (z / w)))))
-    (7 rewrite (s 6) (path "/right/right/right") (t ((((((((c != 0) & (d != 0)) & (R c)) & (R d)) & (R a)) & (R b)) => (((a / c) * (b / d)) = ((a * b) / (c * d)))))))
-    (8 chainOnly (s 7) (path "/right/left/left") (t ((((ZZ x) & (ZZ y)) => (ZZ (x * y))))))
-    (9 chainOnly (s 8) (path "/right/left/right") (t ((((ZZ1 x) & (ZZ1 y)) => (ZZ1 (x * y))))))
-    (10 consider (t ((({x. {y. (((ZZ x) & (ZZ1 y)) & ((r * s) = (x / y)))}} (x * z)) (y * w)))))
-    (11 reduceAll (s 10) (path "/left"))
-    (12 rewriteFrom (s 9) (path "/right") (s 11))
-    (13 chainOnly (s 12) (path "/right") (t (((p x y) => (exists {x. (exists {y. (p x y)})})))))
-    (14 rewrite (s 13) (path "/right") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
-    (15 tautologous (t ((((((((ZZ x) & (ZZ z)) & (ZZ1 y)) & (ZZ1 w)) & (r = (x / y))) & (s = (z / w))) == ((((ZZ x) & (ZZ1 y)) & (r = (x / y))) & (((ZZ z) & (ZZ1 w)) & (s = (z / w))))))))
-    (16 rewriteFrom (s 14) (path "/left") (s 15))
-    (17 eRuleFull (s 16) (path "/left/left") "y")
-    (18 eRuleFull (s 17) (path "/left/left") "x")
-    (19 rewrite (s 18) (path "/left/left") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
-    (20 eRuleFull (s 19) (path "/left/right") "w")
-    (21 eRuleFull (s 20) (path "/left/left") "z")
-    (22 rewrite (s 21) (path "/left/left") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
-    (23 rewrite (s 22) (path "/left") (t (((a & b) == (b & a)))))
-    )`,
+(1 consider (t ((a * b))))
+(2 andAssume (s 1) (t (((((((ZZ p) & (ZZ1 q)) & (ZZ r)) & (ZZ1 s)) & (a = (p / q))) & (b = (r / s))))))
+(3 applyAsmHere (s 2) (path "/right/right/left") (t ((a = (p / q)))))
+(4 applyAsmHere (s 3) (path "/right/right/right") (t ((b = (r / s)))))
+(5 rewrite (s 4) (path "/right/right") (t ((((((((c != 0) & (d != 0)) & (R c)) & (R d)) & (R a)) & (R b)) => (((a / c) * (b / d)) = ((a * b) / (c * d)))))))
+(6 concludeAsmRight (s 5) (path "/left/left/left/left/left/left"))
+(7 concludeAsmRight (s 6) (path "/left/left/left/left/right"))
+(8 moveRightmost (s 7) (path "/right/left/left"))
+(9 chainOnly (s 8) (path "/right/left") (t ((((ZZ x) & (ZZ y)) => (ZZ (x * y))))))
+(10 concludeAsmRight (s 9) (path "/left/left/left/left/left/right"))
+(11 concludeAsmRight (s 10) (path "/left/left/left/right"))
+(12 moveRightmost (s 11) (path "/right/left/left"))
+(13 chainOnly (s 12) (path "/right/left") (t ((((ZZ1 x) & (ZZ1 y)) => (ZZ1 (x * y))))))
+(14 flattenAnd (s 13) (path "/right"))
+(15 moveLeft (s 14) (path "/right/left/right"))
+(16 eQuantify (s 15) (path "/right") (t ((q * s))))
+(17 eQuantify (s 16) (path "/right") (t ((p * r))))
+(18 rewrite (s 17) (path "/right") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
+(19 moveRightmost (s 18) (path "/left/left/left/left/right"))
+(20 moveRightmost (s 19) (path "/left/left/left/left/right"))
+(21 moveRightmost (s 20) (path "/left/left/left/right"))
+(22 eRuleFull (s 21) (path "/left/left/left/left") "q")
+(23 eRuleFull (s 22) (path "/left/left/left/left") "p")
+(24 rewrite (s 23) (path "/left/left/left/left") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
+(25 splitAsms (s 24) (path "/left/left/left/left"))
+(26 eRuleFull (s 25) (path "/left/right") "s")
+(27 eRuleFull (s 26) (path "/left/right") "r")
+(28 rewrite (s 27) (path "/left/right") (t (((exists {y. (exists {z. (((ZZ y) & (ZZ1 z)) & (x = (y / z)))})}) == (QQ x)))))
+)
+`,
 });
 
 //// Euclidean division:
