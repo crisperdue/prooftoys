@@ -7233,7 +7233,7 @@ rule('conjunctionArranger', {
 
 /**
  * This function implements the core actions for moving right and left,
- * for use in computing an "action2".  The "where" value is either
+ * for use in computing an "action2".  The "which" value is either
  * "left" for leftward movers or "right" for rightward movers.  The step
  * and path refer to a term to be moved.
  * 
@@ -7559,7 +7559,7 @@ rule('splitAsms', {
     }
     // Otherwise this rule does not apply.
   },
-  labels: 'basic',
+  labels: 'tactic',
   inputs: { site: 1 },
   priority: 10,
   menu: 'split assumptions after {term}',
