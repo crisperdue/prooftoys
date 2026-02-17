@@ -136,7 +136,7 @@ export declare class Path {
   getRight(): any;
   tail(): any;
   toString(): string;
-  concat(p: any): any;
+  concat(p: Pathable): Path;
   expand(): any;
   reverse(): any;
   remainder(path: any): this;
@@ -499,8 +499,8 @@ export function asPath(arg) {
  * Create a path that contains all the segments of this path followed
  * by all the segments of the path argument.
  */
-Path.prototype.concat = function(p) {
-  p = Toy.asPath(p);
+Path.prototype.concat = function(p_arg) {
+  const p = asPath(p_arg);
   if (this == _end) {
     return p;
   } else {
