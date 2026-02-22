@@ -4688,11 +4688,12 @@ declare(
 definition('sqrts x = {y. y * y = x}');  
 
 declare(
-  // sqrt exists, uniquely, for nonnegative real numbers.
+  // sqrts exists, uniquely, for nonnegative real numbers.
   {statement: '@0 <= x => exists1 (sqrts x)'},  // Asserted
 );
 
-definition('sqrt x = the (sqrts x)');
+// The usual non-negative square root function.
+definition('sqrt x = the {y. (sqrts x) y & 0 <= y}');
 
 declare(
   {statement: 'sqrt (x ** 2) = abs x'},  // Asserted
