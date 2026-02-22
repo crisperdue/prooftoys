@@ -150,10 +150,12 @@ export function mathMarkup0(text, useWords) {
         return '&#x22C2;';
       case 'Union':
         return '&#x22C3;';
+      case 'subsetneq':
+        return '&subsetneq;';
       case 'subset':
-        return '&subset;';
-      case 'subseteq':
         return '&subseteq;';
+      case 'emptyset':
+        return '&empty;';
       case 'CC':
         return '&#x2102;';
       case 'NN':
