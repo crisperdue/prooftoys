@@ -995,7 +995,7 @@ var _tokens = new RegExp(
 
 /**
  * In most cases the Unicode displays can serve as alternative names
- * for the more ASCCI-style tokens known to the parsing code.
+ * for the more ASCII-style tokens known to the parsing code.
  *
  * TODO: Consider making most or all non-ASCII operator characters
  * self-delimiting, meaning that a sequence of them is always a
@@ -1205,7 +1205,7 @@ export function justParse1(input) {
    * context. Returns the parsed expression or null if none is
    * available, i.e. if the next token is not an opening bracket, a
    * prefix operator, or a token with precedence of namePower.  Returns
-   * the term, or null if it is unable to parse in thtis context.
+   * the term, or null if it is unable to parse in this context.
    * 
    * The "-" is parsed as one of the operator characters, so it can
    * appear in a sequence of them as part of a token.  If appearing
@@ -1215,7 +1215,7 @@ export function justParse1(input) {
    * 
    * This function is responsible for parsing a subexpression that was
    * preceded by an infix operator or opening "bracket", or start of
-   * text.
+   * input.
    */
   function tryParse1() {
     // This is a top-down operator precedence parser.

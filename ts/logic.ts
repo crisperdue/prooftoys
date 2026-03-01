@@ -1860,7 +1860,7 @@ declare(
        const gasms = goal && goal.getAsms();
        const items = [];
        const matcher = gasm => {
-         const map = gasm.matchSchema(term);
+         const map = gasm.matchSchema(term);  // TODO: Or just "matches"?
          if (map) {
            items.push({
              ruleName,
@@ -3055,7 +3055,7 @@ declare(
       return (step3.andThen('arrangeAsms')
               .justify('makeConjunction', arguments, [a, b]));
     },
-    inputs: {step: [1, 2]},
+    inputs: {step: [1, 2]},  // TODO: Add menuGen for this.
     labels: 'basic',
     // An approximation, good enough until we can remove this whole rule.
     toOffer: 'return step.isCall2("=>");',
@@ -3717,7 +3717,7 @@ declare(
               .andThen('replaceT0', '/left', step1)
               .justify('and', arguments, arguments));
     },
-    inputs: {step: [1, 2]},
+    inputs: {step: [1, 2]},  // TODO: Add menuGen for this.
     form: ('Prove conjunction of step <input name=step1> ' +
            'and step <input name=step2>'),
     menu: '[p] and [q] to [p & q]',
@@ -3796,7 +3796,7 @@ declare(
       var result = rules.forwardChain(conj, schema);
       return result.justify('p2', arguments, [step1, step2]);
     },
-    inputs: {step: [1, 2], bool: 3},
+    inputs: {step: [1, 2], bool: 3},  // TODO: Add menuGen.
     labels: 'ignore',  // Use forwardChain instead
     menu: '[p] and [q] and [p & q => r] to [r]',
     form: ('Match step <input name=step1> and ' +

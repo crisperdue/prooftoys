@@ -1576,6 +1576,7 @@ Call.prototype.render = function(minPower) {
       this.fn.node = dom($fn);
       $expr.append($fn, '&thinsp;', this.arg.render(Toy.namePower + 1));
     }
+  // Now we know this is not a Call2.
   } else if (Toy.isInfixOp(this.fn)) {
     // Infix operator, but only one argument: render like "(+) x"
     // Parenthesize both function and argument if they are calls.

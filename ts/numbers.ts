@@ -1086,6 +1086,7 @@ declare(
        '(16 rewrite (s 15) (path "/right") (t ((x = y) == (y = x))))'
        ]
      },
+     
      // This uses the arithmetic fact that -1 is neg 1.  In principle
      // -1 is just an abbreviation for (neg 1), so it would not be
      // appropriate to define neg x = -1 * x, as "neg" appears in the
