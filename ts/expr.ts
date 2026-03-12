@@ -901,6 +901,8 @@ export abstract class Expr {
    * these are one and the same; toUnicode may disappear.
    * If trimmed output is requested and there is a leading
    * open parenthesis, trim it and the closing one.
+   * 
+   * Careful: this does not call Atom.toHtml.
    */
   toHtml(trimmed?) {
     // Really toUnicode does produce marked-up HTML for
@@ -1199,9 +1201,9 @@ export abstract class Expr {
 
   /**
    * Returns boolean indicating if this is named as a constant: an Atom
-   * not named as a variable and not a literal. (Currently 0, 1, and the empty
-   * string are named constants.  With complex numbers, "ii"(?) becomes
-   * another named constant that is also a literal.)
+   * not marked as a variable and not a literal. (Currently 0, 1, and
+   * the empty string are named constants.  With complex numbers,
+   * "ii"(?) becomes another named constant that is also a literal.)
    */
   isNamedConst() {
     // In some sense this check is optional:
@@ -1211,7 +1213,7 @@ export abstract class Expr {
     // If not an Atom or is a variable, _value is "undefined"
     // and this is not a named constant.
     var v = this._value;
-    // Null here means "named as a constant, not a variable."
+    // Null here means "marked as a constant, not a variable."
     return v === null || v === 0 || v === 1 || v === '';
   }
 
@@ -3170,6 +3172,7 @@ export const inputAliases: Map<string, string> =
   asMap({'**': '^', 'minv': '~*', '!': 'not'});
 
 //// Atom
+
 /**
  * Make an Atom with the given name.  If a non-null integer position
  * is given, use it to record the index in the input stream.  If the
@@ -3179,6 +3182,16 @@ export const inputAliases: Map<string, string> =
  *
  * An Atom object can represent a variable (free or bound) or a
  * constant, either literal or named (see isConstantName).
+ * 
+ * Properties:
+ *   name: read-only string of text as passed to the constructor,
+ *     except if passed "==" this is "=".
+ *     TODO: Reconsider this approach for string literals.
+ *   pname: read-only string, same as name except for aliases, i.e. "==".
+ *   _value: For variables, undefined; for named constant, null;
+ *     for integer literals including 0 and 1, the number; for string literals, the
+ *     string value (after parsing).
+ *   pos: position if passed in; intended for use in lexing / tokens.
  *
  * CAUTION: This constructor is for internal use by code in this file
  * and implementations of methods on Expr, Atom, Call, and Lambda
@@ -3209,8 +3222,8 @@ export class Atom extends Expr {
     // that integer, or if it represents a string, sets the _value
     // property to the string.
     //
-    // Variables have _value of "undefined" and named constants have
-    // _value of null, based on the name.
+    // Variables have _value of "undefined" based on the name.  Other
+    // non-literal constants have _value of null.
     this._value = isVariableName(name)
       ? undefined
       : isIntegerLiteral(name)
@@ -3285,9 +3298,12 @@ export class Atom extends Expr {
     return result + info.primes;
   }
 
-  // This is useful in itself, but Expr.toHtml does not invoke this
-  // internally for Atoms, though rendering does so.
-  // TODO: Fix Expr.toHtml. (?)
+  /**
+   * This is useful in itself, but Expr.toHtml does not invoke this
+   * internally for Atoms, though rendering does so.
+   *
+   * TODO: Decide exactly what you want this to do, then refactor.
+   */
   toHtml() {
     // Always show boolean equality as such.
     // Using pname helps here in some obsolescent usage.
@@ -4093,7 +4109,6 @@ export class Call extends Expr {
       return here + 1;
     }
   }
-
 }
 
 //// Lambda
@@ -4132,9 +4147,11 @@ export class Lambda extends Expr {
     if (this._string) {
       return this._string;
     }
+    // TODO: Aovid parenthesizing the body (unless it is a bare infix
+    //   operator).
     // TODO: Fix dependencies so we can display with arrows
-    // even when producing ASCII text.  That probably means fixing
-    // parsing to handle the arrows.
+    //   even when producing ASCII text.  That probably means fixing
+    //   parsing to handle the arrows.
     if (useUnicode) {
       const type = this.type;
       if (type && type.isSetType() && !type.fromType.equal(Toy.boolean)) {
