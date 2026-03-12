@@ -6433,7 +6433,7 @@ rule('chainOnly', {
           const xform = (term: Expr, tail: Path) => {
             if (tail.isEnd()) {
               const proved = rules.fact(schema);
-              return rules.instMultiVars(proved, factMap, false);  // ???
+              return rules.instMultiVars(proved, factMap, false);
             }
             const seg = tail.segment;
             if (term.isCall2('&')) {
