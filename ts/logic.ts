@@ -4880,8 +4880,10 @@ declare(
                    ? rules.rewrite(step1, '', 'a => (b => c) == b => (a => c)')
                    : step1);
       var step3 = rules.toForall0(step2, vName);
-      var equiv = rules.fact('forall {x. p x => q} == exists p => q');
-      var step4 = rules.rewriteOnly(step3, '', equiv);
+      var step4 = rules.rewriteOnly(
+        step3,
+        '',
+        'forall {x. p x => q} == exists p => q');
       var exists = rules.fact(new Call(new Atom('exists'), asm.fn));
       var step5 = rules.trueBy0(step4, '/left', exists);
       var step6 = rules.rewrite(step5, '', 'T => x == x');
