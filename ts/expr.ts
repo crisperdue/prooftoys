@@ -3195,11 +3195,12 @@ export class Atom extends Expr {
   __name;
   _value;
 
-  constructor(name_arg, position=null) {
+  constructor(name_arg, position?) {
     super();
     const name = inputAliases.get(name_arg) || name_arg;
     this.__pname = this.__name = name;
-    if (isConstantName(name))
+    if (position !== undefined)
+      // Is this just a micro-level space optimization?
       this.pos = position;
     if (aliases.hasOwnProperty(name)) {
       this.__name = aliases[name];
@@ -3215,7 +3216,7 @@ export class Atom extends Expr {
       : isIntegerLiteral(name)
       ? parseInt(name)
       : name.charAt(0) === '"'
-      ? Toy.parseStringContent(name)
+      ? parseStringContent(name)
       // Named constants:
       : null;
   }
