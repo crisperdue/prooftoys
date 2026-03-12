@@ -3623,8 +3623,8 @@ export class Call extends Expr {
   /**
    * Keys in this object are legitimate paths to apply to a Call.
    */
-  static readonly _callSegmentNames = {fn: true, arg: true};
-  static readonly _binopSegmentNames = {left: true, right: true, binop: true};
+  static readonly _callSegmentNames = { fn: true, arg: true };
+  static readonly _binopSegmentNames = { left: true, right: true, binop: true };
 
   _fn;
   _arg;
@@ -3727,29 +3727,29 @@ export class Call extends Expr {
     // least two operands, numbered starting from 0 on the right.  So n
     // operators support up to n+1 operands, but if there are n+1
     // operands, the last segment of the path is left rather than right.
-    const ops = (typeof ops_arg == 'string'
-                ? [ops_arg]
-                : Array.isArray(ops_arg)
-                ? ops_arg
-                : assert(false, 'Bad argument') as never);
-    const inChain = term => term.isCall2() && ops.includes(term.getBinOp().name);
+    const ops =
+      typeof ops_arg == 'string'
+        ? [ops_arg]
+        : Array.isArray(ops_arg)
+          ? ops_arg
+          : (assert(false, 'Bad argument') as never);
+    const inChain = (term) =>
+      term.isCall2() && ops.includes(term.getBinOp().name);
     // assert(inChain(this), 'No chain of operators');
     if (!inChain(this)) {
       return null;
     }
-    for (let i = 0,
-          // In each iteration revPath will lead to opTerm.
-          revPath = Path.empty,
-          // In each iteration, opTerm provides access to operand i,
-          // and if it is the last of the chain, to operand i+1.
-          opTerm = this;
-
-        // Iterate up to n+1 times.
-        i <= n;
-
-        i++,
-          opTerm = opTerm.getLeft(),
-          revPath = new Path('left', revPath)) {
+    for (
+      let i = 0,
+        // In each iteration revPath will lead to opTerm.
+        revPath = Path.empty,
+        // In each iteration, opTerm provides access to operand i,
+        // and if it is the last of the chain, to operand i+1.
+        opTerm = this;
+      // Iterate up to n+1 times.
+      i <= n;
+      i++, opTerm = opTerm.getLeft(), revPath = new Path('left', revPath)
+    ) {
       if (inChain(opTerm)) {
         if (i == n) {
           // There are at least n + 1 suitable operators in the chain, so
@@ -3835,12 +3835,12 @@ export class Call extends Expr {
       var op = this.fn.name;
       var result = false;
       switch (op) {
-      case 'neg':
-      case 'recip':
-        if (isFreeVar(this.arg)) {
-          set[this.arg.name] = true;
-        }
-        result = true;
+        case 'neg':
+        case 'recip':
+          if (isFreeVar(this.arg)) {
+            set[this.arg.name] = true;
+          }
+          result = true;
       }
       this.arg._addMathVars(bindings, set);
       return result;
@@ -3858,20 +3858,20 @@ export class Call extends Expr {
       }
       var result = false;
       switch (op) {
-      case '+':
-      case '-':
-      case '*':
-      case '/':
-      case '^':
-        addVars();
-        result = true;
-        break;
-      case '<':
-      case '<=':
-      case '>':
-      case '>=':
-        addVars();
-        break;
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+        case '^':
+          addVars();
+          result = true;
+          break;
+        case '<':
+        case '<=':
+        case '>':
+        case '>=':
+          addVars();
+          break;
       }
       var isLeftReal = left._addMathVars(bindings, set);
       var isRightReal = right._addMathVars(bindings, set);
@@ -3898,17 +3898,23 @@ export class Call extends Expr {
       var segment = path.segment;
       if (this.fn instanceof Call) {
         if (segment === 'left') {
-          return infixCall(this.getLeft().replaceAt(path.rest, xformer),
-                          this.getBinOp(),
-                          this.getRight());
+          return infixCall(
+            this.getLeft().replaceAt(path.rest, xformer),
+            this.getBinOp(),
+            this.getRight(),
+          );
         } else if (segment === 'binop') {
-          return infixCall(this.getLeft(),
-                          this.getBinOp().replaceAt(path.rest, xformer),
-                          this.getRight());
+          return infixCall(
+            this.getLeft(),
+            this.getBinOp().replaceAt(path.rest, xformer),
+            this.getRight(),
+          );
         } else if (segment === 'right') {
-          return infixCall(this.getLeft(),
-                          this.getBinOp(),
-                          this.getRight().replaceAt(path.rest, xformer));
+          return infixCall(
+            this.getLeft(),
+            this.getBinOp(),
+            this.getRight().replaceAt(path.rest, xformer),
+          );
         }
       }
       if (segment === 'fn') {
@@ -3925,8 +3931,10 @@ export class Call extends Expr {
       return true;
     }
     if (expr instanceof Call) {
-      return (this.fn.matches(expr.fn, bindings)
-              && this.arg.matches(expr.arg, bindings));
+      return (
+        this.fn.matches(expr.fn, bindings) &&
+        this.arg.matches(expr.arg, bindings)
+      );
     } else {
       return false;
     }
@@ -3951,14 +3959,14 @@ export class Call extends Expr {
     }
     var fn = this.fn.generalizeTF(expr2.fn, newVar, bindings);
     var arg = this.arg.generalizeTF(expr2.arg, newVar, bindings);
-    return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
+    return fn == this.fn && arg == this.arg ? this : new Call(fn, arg);
   }
 
   _path(pred, revPath) {
     return pred(this)
       ? revPath
-      : this.arg._path(pred, new Path('arg', revPath))
-        || this.fn._path(pred, new Path('fn', revPath));
+      : this.arg._path(pred, new Path('arg', revPath)) ||
+          this.fn._path(pred, new Path('fn', revPath));
   }
 
   _prettyPath(pred, pth) {
@@ -3994,15 +4002,21 @@ export class Call extends Expr {
   }
 
   _bindingPath(pred, revPath) {
-    return (this.fn._bindingPath(pred, new Path('fn', revPath))
-            || this.arg._bindingPath(pred, new Path('arg', revPath)));
+    return (
+      this.fn._bindingPath(pred, new Path('fn', revPath)) ||
+      this.arg._bindingPath(pred, new Path('arg', revPath))
+    );
   }
 
   _checkSegment(path) {
-    assert(this.isCall2()
-          ? path.segment in Call._binopSegmentNames 
-          : path.segment in Call._callSegmentNames,
-          'Path segment {1} is not applicable to Call {2}', path.segment, this);
+    assert(
+      this.isCall2()
+        ? path.segment in Call._binopSegmentNames
+        : path.segment in Call._callSegmentNames,
+      'Path segment {1} is not applicable to Call {2}',
+      path.segment,
+      this,
+    );
   }
 
   findAll(name, action1, expr2, action2) {
@@ -4014,9 +4028,11 @@ export class Call extends Expr {
     // If there is a match without introducing lambdas, use it.
     // Copy the substitution and restore it if necessary.
     var map2 = Object.assign({}, map);
-    if (expr instanceof Call
-        && this.fn._matchAsSchema(expr.fn, map, bindings)
-        && this.arg._matchAsSchema(expr.arg, map, bindings)) {
+    if (
+      expr instanceof Call &&
+      this.fn._matchAsSchema(expr.fn, map, bindings) &&
+      this.arg._matchAsSchema(expr.arg, map, bindings)
+    ) {
       return true;
     }
     // TODO: If the arg is free in this context, consider doing a
@@ -4027,7 +4043,9 @@ export class Call extends Expr {
     //
     // Clear the map to remove any additional substitutions tried and
     // restore the substitution to its state on entry to this method.
-    Object.keys(map).forEach(function(key) { delete map[key]; });
+    Object.keys(map).forEach(function (key) {
+      delete map[key];
+    });
     Object.assign(map, map2);
     var fn = this.func();
     if (fn && fn.isVariable() && !getBinding(fn.name, bindings)) {
@@ -4044,9 +4062,11 @@ export class Call extends Expr {
   }
 
   _matchAsPattern(term, map) {
-    return (term instanceof Call &&
-            this.fn._matchAsPattern(term.fn, map) &&
-            this.arg._matchAsPattern(term.arg, map));
+    return (
+      term instanceof Call &&
+      this.fn._matchAsPattern(term.fn, map) &&
+      this.arg._matchAsPattern(term.arg, map)
+    );
   }
 
   _asPattern(term) {
@@ -4054,11 +4074,13 @@ export class Call extends Expr {
   }
 
   searchMost(fn, path, bindings) {
-    return (fn(this, path, bindings) ||
-            // Try the arg first to help substitutions apply toward the
-            // right sides of formulas.
-            this.arg.searchMost(fn, new Path('arg', path), bindings) ||
-            this.fn.searchMost(fn, new Path('fn', path), bindings));
+    return (
+      fn(this, path, bindings) ||
+      // Try the arg first to help substitutions apply toward the
+      // right sides of formulas.
+      this.arg.searchMost(fn, new Path('arg', path), bindings) ||
+      this.fn.searchMost(fn, new Path('fn', path), bindings)
+    );
   }
 
   _nthArg(n) {
