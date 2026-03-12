@@ -1177,7 +1177,7 @@ declare(
     },
     tooltip: ('statement to take as given'),
     description: 'given',
-    labels: 'more',
+    labels: 'ignore',
     autoSimplify: noSimplify,
   },
 
@@ -5072,7 +5072,7 @@ declare(
     inputs: {bool: [1, 3], path: 2},
     form: ('Apply equation <input name=bool2> to <input name=bool1> at ' +
            '<input name=path>'),
-    menu: 'prove A = B => (C == D) where D is C with an A replaced by B',
+    menu: 'prove A = B => (C = D) where D is C with an A replaced by B',
     labels: 'advanced',
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
