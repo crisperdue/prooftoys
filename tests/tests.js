@@ -606,11 +606,9 @@ var testCase = {
   },
 
   testToUnicode: function() {
+    // TODO: Add some real tests of Unicode.
     assertEqual('T', T.toUnicode());
-    // toUnicode does not automatically show types, but name
-    // parsing, tested only here, does parse some type info.
-    assertEqual('a', Toy.varify('a:R').toUnicode());
-    assertEqual('xx', new Toy.Atom('xx:RR').toUnicode());
+    assertEqual('a', Toy.varify('a').toUnicode());
   },
 
   testExprIn: function() {
@@ -922,7 +920,7 @@ var testCase = {
     }
     {
       const thm = rules.fact('minv 0 = none');
-      assertEqual('(((~*:(i i)) 0:i) =:((o i) i) none:i)',
+      assertEqual('((~*:(i i) 0:i) =:((o i) i) none:i)',
                   thm.show('testing'));
       assert(thm.isProved());
     }
@@ -937,14 +935,14 @@ var testCase = {
     // We see that it replaces just the free occurrence,
     // but the current implementation renames all bindings of
     // "v" to be on the safe side.
-    assertEqual('({v_1. v_1} v)', result);
+    assertEqual('({v1. v1} v)', result);
     // A case where decapturing is needed.
     result = Toy.parse('{y. x} x').subFree({x: y});
-    assertEqual('({y_1. y} y)', result);
+    assertEqual('({y1. y} y)', result);
     // A very similar case where it is not needed,
     result = Toy.parse('{y. T} x').subFree({x: y});
     // but our algorithm renames anyway rather than checking precisely.
-    assertEqual('({y_1. T} y)', result);
+    assertEqual('({y1. T} y)', result);
     // Multiple substitution.
     result = Toy.parse('x + y').subFree({y: x, x: y});
     assertEqual('(y + x)', result);
@@ -1744,9 +1742,9 @@ var testCase = {
     };
     const eq = termify('R x & R y & R c => (x = y == x + c = y + c)');
     check('c = c', '', eq,
-          {x: null, y: null}, {c: 'c_10'});
+          {x: null, y: null}, {c: 'c10'});
     check('{a. T} = {a. T}', '/left/body', 'T == T | a',
-          {}, {a: 'a_10'});
+          {}, {a: 'a10'});
   },
 
 
@@ -1871,7 +1869,7 @@ var testCase = {
     // Successful typing of the identity function
     check('o', '({x. x} p) = p');
 
-    check('(o o)', 'not');
+    check('(o o)', 'not');  //
     check('(o (o t))', '(!=) {x. F}');
     check('(o (o t))', '{x. x != {y. F}}');
 
@@ -2164,7 +2162,7 @@ var testCase = {
     var result = Toy.rules.casesTF(trueCase,
                                    falseCase,
                                    x);
-    assertEqual('(({x_1. x_1} x) == x)', result);
+    assertEqual('(({x1. x1} x) == x)', result);
   },
 
   testModusPonens: function() {

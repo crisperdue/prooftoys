@@ -60,7 +60,7 @@ definition('forall = (=) {x. T}');
 // Note that if the truth table for == is given as an axiom,
 // F need not be defined.
 definition('F == forall {x. x}');
-definition('not = (=) F');
+definition('not = (==) F');
 definition('x != y == not (x = y)', simplifiesNeither);
 definition('exists p == p != {x. F}', simplifiesLeft);
 definition('exists1 p == exists {x. p = {y. y = x}}', simplifiesLeft);

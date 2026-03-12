@@ -1450,14 +1450,9 @@ Atom.prototype.render = function(minPower, isFn) {
     return $(this.node);
   }
 
-  // Note that this does not style any subscript differently than
-  // the main part of the variable name.
   var $expr = exprJq(true);
   this.node = dom($expr);
-
-  // This line says "render without parens if it occurs in function
-  // position or is not syntactically an operator".  XXX
-  const html = this.toHtml(isFn || !this.isOperator());  // XXX
+  const html = this.toHtml();
   const name = this.isEquivOp() ? '==' : this.name;
   specialClasses(name).forEach(function(cl) { $expr.addClass(cl); });
   if (isFn) {
@@ -1550,7 +1545,7 @@ Call.prototype.render = function(minPower) {
       } else if (op.name == '^') {
         $op.addClass('infix');
         // Strongly encourage parens around the left arg.
-        const lpower = left instanceof Atom ? 1 : 200;
+        const lpower = left instanceof Atom ? 1 : muchPower;
         var $fn = exprJq().append(left.render(lpower), $op);
         const $right = right.render(thisPower(right) + 1);
         if (right instanceof Atom) {
@@ -1592,16 +1587,16 @@ Call.prototype.render = function(minPower) {
       // Render e.g. neg 7 as -(7) to distinguish from a negative
       // number.
       $expr.append(this.fn.render(0, true),
-                   '(', this.arg.render(Toy.unaryPower), ')');
+                   '(', this.arg.render(muchPower), ')');
     } else {
       // Unary operator; ensure space before, then op and arg.
       $expr.append('&thinsp;', this.fn.render(0, true),
-                   this.arg.render(Toy.unaryPower));
+                   this.arg.render(muchPower));
     }
   } else {
     // Other function call, e.g. just one or more than 2 args.
-    $expr.append(this.fn.render(Toy.namePower, true), '&thinsp;',
-                 this.arg.render(Toy.unaryPower));
+    $expr.append(this.fn.render(namePower, true), '&thinsp;',
+                 this.arg.render(muchPower));
   }
   if (parens) {
     $expr.append(')');

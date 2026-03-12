@@ -40,8 +40,7 @@ export const unicodeNames = {
   // or '==': '\u21d4',     // Two-headed horizontal double arrow.
   '&': '\u2227',      // &and;
   '|': '\u2228',      // &or;
-  'not': '\u00ac',    // &not;
-  '!': '\u00ac',    // &not;
+  'not': '~',
   '=>': '\u21d2',     // &rArr; ("implies") (\u27f9 is longer)
   '=>>': '\u21db',    // rightwards triple arrow
   '!=': '\u2260',     // &ne;
@@ -675,7 +674,7 @@ export abstract class Expr {
   // Obsolete:
   __var;
 
-  abstract _toString(foo?);
+  abstract _toString();
   abstract _nthArg(n);
   abstract _subFree(a, b, c);
   abstract _addFreeVars(a, b);
@@ -849,7 +848,8 @@ export abstract class Expr {
 
   /**
    * Converts to a string.  If "simply", even operators
-   * are presented without parentheses.
+   * are presented without parentheses.  Otherwise atoms with infix
+   * precedences display with parentheses around them.
    */
   toString(simply?) {
     const str = this._toString();
@@ -859,8 +859,7 @@ export abstract class Expr {
     // Parsing is generally strict about use of infix operators in other
     // contexts, so be sure to display them in parentheses by default.
     // Calls to functions that are infix operators can display as infix.
-    const isOp = isOperator(this);
-    return isOp ? '(' + str + ')' : str;
+    return isInfixOp(this) ? '(' + str + ')' : str;
   }
 
   /**
@@ -3054,46 +3053,51 @@ export abstract class Expr {
 
 //// Atoms -- functions
 
-// Categorization of Atoms:
+//// Categorization of Atoms:
 //
-// Identifiers
-//   Variables (start with a single lowercase ASCII letter)
-//   Consts (such as sin, cos, forall, exists)
+// Identifiers ("alphabetic")
+//   Variables (officially start with a single letter, followed by
+//   optional digits, followed by optional underscores indicating
+//   "prime"s).
+//   Unoffically also start with "$" followed by one or more alphadigits
+//   and optional "?".
+//   Alphabetically-named constants start with multiple letters
 // Literals (numeric, string, etc)
-// OpSyntax (+, -, etc)
+// Operators (+, -, etc)
 
-// All "opSyntax" Vars are operators, plus some designated
-// identifers, currently "forall" and "exists".
+// String pattern (greedy; not anchored) that matches "alphabetic"
+// identifiers, used in the *tokenizer* and also identifierRegex.  The
+// tokenizer recognizes exactly things matching this as being
+// identifiers.  Now with optional terminal "?".
+// 
+// In the tokenizer most(!) character sequences not matched by
+// this are treated as operator symbols.
+export const identifierPattern = '[$a-zA-Z][_a-zA-Z0-9]*[?]?';
 
-// String pattern that matches identifiers, used in the tokenizer and
-// identifierRegex.  The tokenizer recognizes exactly things matching
-// this as being identifiers.  The system can create identifers not
-// matching this expression, but parses only these.  Now with optional
-// terminal "?".
-
-export const identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*[?]?';
-
-// Names matching this regex are identifiers.
+// Names matching this regex are (alphabetic) identifiers.
 // The trailing "$" ensures that the entire name is matched
 // up to any extensions for unique ID and/or type information.
-// Note that not all identifiers can be entered through the parser,
-// in particular ones with ":" for type information.  TODO: Remove the
-// ":" here.
-var identifierRegex = new RegExp('^' + identifierPattern + '([:]|$)');
+const identifierRegex = new RegExp('^' + identifierPattern + '$');
 
 // Variables in particular, not including identifiers for constants.
 // The "." and ":" provide for extension with bound variable unique
 // identifiers and type signatures.  Currently a variable name must
 // be an identifier.
 //
-// TODO: Make variable naming and subscripting consistent and
-// rational!  Currently variable names of a single alphabetic
-// character optionally followed by digits and underscores;
-// or "$" followed by alphadigits.
-var variableRegex = /^[a-zA-Z][0-9_]*([.:]|$)|^_|[$][a-zA-Z0-9]+/;
+// Currently variable names are a single alphabetic character followed
+// by optional digits then optional underscores; or "$" followed by
+// alphadigits and optional "?".
+const variableRegex = /^[a-zA-Z][0-9]*_*$|^[$][a-zA-Z0-9]+[?]?$/;
 
-// Numeric literals.
-var numeralRegex = /^-?[0-9]+$/;
+// Numeric literals (base 10); includes optional minus sign.
+const numeralRegex = /^-?[0-9]+$/;
+
+/**
+ * This is conceptually derived from other regexes, especially the
+ * others in this section.  An atom name emitted by the tokenizer and
+ * matching this is a "symbolic" infix op (not alphabetic identifier).
+ */
+export const nonInfixOpCheckRegex = /^[$a-zA-Z0-9~"]|^-[0-9]/;
 
 // Constant names having the same form as a usual variable name.
 // TODO: Consider handling of other constants such as C, Q, Z, N,
@@ -3312,6 +3316,15 @@ export class Atom extends Expr {
     return this.name;
   }
 
+  /**
+   * True for tokens spelled as Atoms of any kind, not just language
+   * syntax characters.  Not needed when the Atom is part of a parse
+   * tree.
+   */
+  isAtomical() {
+    return /^[^.(){}\[\]\s]/.test(this.name);
+  }
+
   _subFree(map, freeVars, allNames) {
     // Note that in some cases it is important not to copy this
     // Atom if not necessary, e.g. when used within Axiom 4.
@@ -3486,16 +3499,18 @@ export class Atom extends Expr {
    * Parses the Atom's name into the base name (e.g. "x"), subscript if
    * any (digits), and a type expression, returning information as an
    * object with properties "name", "sub", and "type", which are
-   * undefined if not present.  The subscript is the part following any
-   * underscores.
+   * undefined if not present.  The subscript is the digits following
+   * any initial letters.
+   * 
+   * TODO: Consider supporting names starting with "$".
    * 
    * TODO: Somehow handle variables separately from named constants.
    */
   parseName() {
-    const nm = this.name.replace(/_+(:|$)/, '$1');
-    const primes = '′'.repeat(this.name.length - nm.length);
-    var match = nm.match(/^(.+?)(_(.*?))?(:(.*))?$/);
-    return {name: match[1], sub: match[3], type: match[5], primes};
+    var match = this.name.match(/^(.+?)([0-9]*)(_*)$/);
+    // TODO: Check if the name fits this pattern.
+    const primes = match[3] && match[3].replace(/_/g, '′');
+    return {name: match[1], sub: match[2], primes};
   }
 
   /**
@@ -3566,11 +3581,11 @@ export function genName(name, existingNames) {
   var candidate = name;
   if (existingNames instanceof Set) {
     for (var i = 10; existingNames.has(candidate); i++) {
-      candidate = base + '_' + i;
+      candidate = base + i;
     }
   } else {
     for (var i = 1; existingNames[candidate]; i++) {
-      candidate = base + '_' + i;
+      candidate = base + i;
     }
   }
   return candidate;
@@ -3593,7 +3608,7 @@ function _genBoundVar(name, freeVars) {
   // avoid names with multiple numeric parts.
   let newName;
   let counter = 10;
-  while ((newName = name[0] + '_' + counter++) in freeVars) {}
+  while ((newName = name[0] + counter++) in freeVars) {}
   return new Atom(newName);
 }
 
@@ -3631,30 +3646,73 @@ export class Call extends Expr {
     abort('Readonly: arg');
   }
 
-//// Methods for Call -- application of a function to an argument
+  //// Methods for Call -- application of a function to an argument
 
+  /**
+   * Main part of unparsing.
+   * 
+   * TODO: This implementation is still a mess.  Here is a draft of a
+   * specification:
+   * 
+   * Each subtree has a "basic display", based on the following
+   * definition of subtrees.  A subtree is:
+   * 
+   * - An infix operator and its two operands (presented as infix); or
+   * - a "prefix" n-ary call with atomic or lambda "head", with its
+   *   "full set" of arguments, included greedily; or
+   * - a lambda; or
+   * - a lambda body; or
+   * - an Atom; or
+   * - an infix operator and 1 argument, in prefix form.
+   * 
+   * Infix operators and negative numbers must be parenthesized as follows:
+   * - negative number: anywhere in a prefix form.
+   * - infix operator: anywhere it is not used syntactically as an infix
+   *   operator.  (This constraint could be relaxed if the parser were to
+   *   accept some more relaxed forms.)
+   */
   _toString() {
     if (this._string) {
       return this._string;
     }
+    // This avoids escaping infix operators.
+    const str = (term) => term.toString(true);
+    const isNegNum = (term) => term.isNumeral() && term.getNumValue() < 0;
+    // This escapes negnums and infix ops.
+    const escape = (term) => {
+      const text = str(term);
+      const needsIt = isNegNum(term) || isInfixOp(term);
+      const str1 = needsIt ? `(${text})` : text;
+      return str1;
+    };
+    // Note that string concatenation converts terms to strings with
+    // toString rather than _toString, so see Expr.toString.
     if (this.isCall2()) {
       const op = this.getBinOp();
+      const left = this.getLeft();
+      const right = this.getRight();
       if (isInfixOp(op)) {
         if (useUnicode && op.name == '^') {
           // Use HTML for exponentiation.  So "Unicode" here is
           // currently a misnomer.
-          return this.getLeft() + '<sup>' + this.getRight() + '</sup>';
+          return `${escape(left)}<sup>${right}</sup>`;
         } else {
-          const opStr = op._toString();
-          return ('(' + this.getLeft() + ' ' + opStr +
-                  ' ' + this.getRight() + ')');
+          // Display the operator without parentheses.
+          const rt = isInfixOp(right) ? right : str(right);
+          return `(${str(left)} ${str(op)} ${rt})`;
         }
       } else {
-        return ('(' + op + ' ' + this.getLeft() +
-                ' ' + this.getRight() + ')');
+        return `(${op} ${escape(left)} ${escape(right)})`;
       }
     } else {
-      return '(' + this.fn + ' ' + this.arg + ')';
+      const fun = this.func();
+      if (fun instanceof Atom) {
+        const args = this.args();
+        let text = `(${escape(fun)} ${args.map(escape).join(' ')})`;
+        return text;
+      } else {
+        return `(${this.fn} ${escape(this.arg)})`;
+      }
     }
   }
 

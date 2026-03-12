@@ -615,8 +615,8 @@ Atom.prototype.isPrimitive = function() {
   return _primitives.hasOwnProperty(this.name);
 };
 
-Atom.prototype.isUnary = function() {
-  return getPrecedence(this) === unaryPower;
+Atom.prototype.isUnary = function() {  // Unused
+  return getPrecedence(this) === muchPower;
 }
 
 // Note that if the type of the replacement term has no type variables
@@ -969,7 +969,7 @@ export function definex(name_arg, fact) {
 // oriented displays, both text and HTML, show them as Unicode.
 
 // Tokens pattern, private to tokenize.
-var _tokens = new RegExp(
+export var _tokens = new RegExp(
   [
     // The "type" identifiers in the comments here are currently just
     // comments with no impact on any code.
@@ -977,18 +977,23 @@ var _tokens = new RegExp(
     //   classifying each token.
     // These are the single-character tokens -- type 1.
     '[(){}\\[\\].]',
-    // Identifiers: variables and named constants -- type 2
-    Toy.identifierPattern,
+    // Identifiers: variables and named constants other than 0 and 1,
+    // excluding operators. -- type 2
+    identifierPattern,
     // Numeric constants.  The parser glues together
     // negative numerals later. -- type 3
     '[0-9]+',
     // Strings -- type 4
     '"(?:\\\\.|[^"])*"',
-    // These are the other operators, treated as constants.
-    // These never include any of the single-character tokens.
-    // TODO: Narrow this to graphic nonalphabetic
-    //   characters. -- type 5
-    '[^_:a-zA-Z0-9(){}\\[\\].\\s]+',
+    // These are the non-identifier operators, treated as constants.
+    // These never include any of the single-character tokens. -- type 5
+    // A "~" can only be at the start, so we can write ~(A|B)==~A&~B
+    // with ==~ and &~ being each two tokens.
+    //
+    // TODO: Narrow this to some set of graphic nonalphabetic characters.
+    // For information about Unicode character classes, see:
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape
+    '[^_$a-zA-Z0-9(){}\\[\\].\\s][^~_$a-zA-Z0-9(){}\\[\\].\\s]*',
   ].join('|'),
   'g'
 );
@@ -1021,10 +1026,9 @@ var _altTokens = _buildAltTokens();
 
 
 /**
- * A token is a parenthesis or brace, or a sequence of characters
- * starting with an alphabetic (possibly preceded by an underscore
- * ("_"), followed by zero or more characters that are alphanumeric or
- * ":", or a sequence containing none of these and no whitespace.
+ * A token is: a single-character token as specified for the _tokens
+ * regex; or an identifier token; or a symbolic operator token; or a
+ * numeric literal; or a string literal.
  * 
  * This returns an array of tokens in the input string, followed by an
  * "(end)" token, omitting whitespace.  All tokens are Atom objects
@@ -1040,6 +1044,8 @@ export function tokenize(str) {
   //   especially ".", and operators (consisting of non-alphanumerics).
   var match;
   var result = [];
+  // This line is just a precaution.
+  _tokens.lastIndex = 0;
   while (match = _tokens.exec(str)) {
     var name = match[0];
     result.push(new Atom(_altTokens[name] || name, match.index));
@@ -1192,15 +1198,6 @@ export function justParse1(input) {
   }
 
   /**
-   * Returns a truthy value iff the token is a unary or binary
-   * operator.  (Not true for brackets.)
-   */
-  function isOperator(token) {
-    var power = getPrecedence(token);
-    return power == unaryPower || isBinaryPower(power);
-  }
-
-  /**
    * Attempts to parse one complete expression, ignoring any left
    * context. Returns the parsed expression or null if none is
    * available, i.e. if the next token is not an opening bracket, a
@@ -1224,9 +1221,9 @@ export function justParse1(input) {
     var expr;
     if (name === '(') {
       var t1 = peek();
-      if (isOperator(t1) && peek2().name === ')') {
-        // Special case of "(<op>)", allowing a bare operator to
-        // appear as an expression.
+      if (t1.isAtomical() && peek2().name === ')') {
+        // Special case of "(<name>)", enables infix operators to
+        // appear wherever needed.
         next();
         next();
         return t1;
@@ -1246,8 +1243,8 @@ export function justParse1(input) {
     }
     var power = getPrecedence(token);
     // Handle unary operators, including "-".
-    if (power === unaryPower) {
-      return new Call(token, mustParseAbove(token));
+    if (power === muchPower) {
+      abort('Illegal precedence')
     } else if (token.name === '-') {
       // If the leading token is '-', treat it as 'neg', or even as
       // part of a negative number.
@@ -1488,32 +1485,34 @@ Expr.prototype.stripSomeDecls = function() {
 };
 
 /**
- * Get a precedence value: 100 for identifiers, defaults to same as
- * multiplication for unknown non-symbols.
- *
- * TODO: Include context in the computation, specifically prefix
- *   versus infix context.
+ * Get a precedence value: if the token name is in the precedence map,
+ * use that; otherwise if the form of the name is designated as infix,
+ * use the default precedence, otherwise namePower (prefix op).
  */
-export function getPrecedence(token) {
-  // TODO: Clean this up.  Without the special case, getPrecedence
-  //   only works for "==" during parsing.  After that it gets treated the
-  //   same as "=".
+export function getPrecedence(token: Atom): number {
+  // Without the special case, getPrecedence only works for "==" during
+  // parsing, not presentation.
   var name = token.isEquivOp() ? '==' : token.pname;
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
-    return (!Toy.isIdentifier(name) && !token.isLiteral()
-            // It's written as an operator, give it the default precedence.
-            ? infixPower
-            // Otherwise it is a name.
-            : namePower);
+    const power =
+      name.match(nonInfixOpCheckRegex)
+        ? namePower
+        : // It's written as an operator, give it the default precedence.
+          infixPower;
+    if (power === infixPower) {
+      console.log(`Using default infix precedence for ${name}`);
+      // Enter the name explicitly.  If nothing else, it prevents
+      // redundant occurrences of the log message.
+      precedence[name] = infixPower;
+    }
+    return power;
   }
 }
 
-// Unary operators should all be the same.
-// No unary operators exist at this time, but the constant
-// is used in rendering.
-export const unaryPower = 200;
+// Some precedence greater than namePower; just used for comparisons.
+export const muchPower = 200;
 
 // Alphanumeric names have this power unless specified otherwise.
 export const namePower = 100;
@@ -1552,6 +1551,12 @@ export const precedence = {
   'in': 20,
   'notin': 20,
   'subset?': 20,
+  'mapsFrom': 20,
+  'mapsTo': 20,
+
+  'intersect': 25,
+  'union': 25,
+  '@@': 25,
 
   '+': 30,
   '-': 30,
@@ -1560,26 +1565,12 @@ export const precedence = {
   div: 40,
   mod: 40,
   '^': 50,
-  // Default infix: 70
-  '~*': unaryPower,  // Unary multiplicative inverse
-  '!': unaryPower,   // Boolean negation
+  // Default infix precedence: 70
+  // namePower (prefix names and ~ operators)
   // Specials
   '(': 1000,
   '[': 1000,
   '{': 1000
-};
-
-export interface Expr {
-  isOperator();
-}
-/**
- * Returns a truthy value iff this Expr is an Atom with a specific
- * precedence, so not a simple named or literal constant, nor a
- * variable.  This is used to control extra parenthesization when
- * such an Expr is rendered (or perhaps printed).
- */
-Expr.prototype.isOperator = function() {
-  return this instanceof Atom && this.pname in precedence;
 };
 
 
@@ -1885,8 +1876,8 @@ export function lambda(bound, body) {
 }
 
 /**
- * This controls the policy over which function names are to be rendered
- * as infix.  Returns truthy iff the term is an Atom with infix
+ * This controls the policy over which references to functions are to be
+ * rendered as infix.  Returns truthy iff the term is an Atom with infix
  * precedence.
  */
 export function isInfixOp(term) {
@@ -1895,17 +1886,6 @@ export function isInfixOp(term) {
   }
   var p = getPrecedence(term);
   return 0 < p && p < namePower;
-}
-
-/**
- * Truthy for atoms with infix or unary precedence.
- */
-export function isOperator(term) {
-  if (!(term instanceof Atom)) {
-    return false;
-  }
-  var p = getPrecedence(term);
-  return (0 < p && p < namePower) || p == unaryPower;
 }
 
 /**

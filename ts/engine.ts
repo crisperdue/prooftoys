@@ -1186,30 +1186,6 @@ function definition_impl(extended: boolean, defn_arg, options?, swap_opts?) {
     assert(!rhsNames.has(name),
            'define: Definition of {1} refers to {1}', name);
   }
-
-  // This checks for a definition in "infix form", with the new constant
-  // function or predicate in the middle of three Atoms on the left.  If
-  // so, register it as infix, and rearrange the candidate so its LHS is
-  // prefix.
-  function convertInfix() {
-    let left = candidate.getLeft();
-    const parts = left.asArray();
-    // If the lhs side has the form v1 C v2, treat C as the constant
-    // being defined, and declare it with a default precedence.
-    if (parts.length == 3) {
-      const mid = parts[1];
-      if (mid.isNamedConst()) {
-        left = call(mid, parts[0], parts[2]);
-        // addConstants([mid]);
-        const name = mid.name;
-        // Give it a default infix binding power unless it
-        // already has a precedence.
-        precedence[name] || (precedence[name] = infixPower);
-        candidate = infixCall(left, '=', candidate.getRight());
-      }
-    }
-  }
-  convertInfix();
   // Now it is safe to calculate type information.
   candidate = candidate.typedCopy();
 

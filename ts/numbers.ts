@@ -4274,7 +4274,7 @@ declare(
 
 declare(
   {statement: 'x ** 1 = x',
-   name: '_pow1',
+   name: 'power1',
    simplifier: true,
    proof: function() {
      return (rules.axiomNextPower()
@@ -4286,7 +4286,7 @@ declare(
   },
 
   {statement: 'x ** 2 = x * x',
-   name: '_pow2',
+   name: 'power2',
    proof: function() {
      return (rules.axiomNextPower()
              .andThen('instVar', '1', 'y')
@@ -4320,7 +4320,7 @@ declare(
   },
 
   {statement: 'x ** 3 = x * x * x',
-   name: '_pow3',
+   name: 'power3',
    proof: function() {
       return (rules.axiomNextPower()
               .andThen('instVar', '2', 'y')
@@ -4330,7 +4330,7 @@ declare(
   },
 
   {statement: 'x ** 4 = x * x * x * x',
-   name: '_pow4',
+   name: 'power4',
    proof: function() {
       return (rules.axiomNextPower()
               .andThen('instVar', '3', 'y')
@@ -4340,7 +4340,7 @@ declare(
   },
 
   {statement: 'x ** 5 = x * x * x * x * x',
-   name: '_pow5',
+   name: 'power5',
    proof: function() {
       return (rules.axiomNextPower()
               .andThen('instVar', '4', 'y')
@@ -4990,10 +4990,10 @@ basicSimpFacts.push
    {stmt: 'x ** (y - 1) * x = x ** y',
     where: $ => !($.x.isNumeral() && $.y.isNumeral())
    },
-   {stmt: '_pow2', where: $ => $.x.isNumeral()},
-   {stmt: '_pow3', where: $ => $.x.isNumeral()},
-   {stmt: '_pow4', where: $ => $.x.isNumeral()},
-   {stmt: '_pow5', where: $ => $.x.isNumeral()},
+   {stmt: 'power2', where: $ => $.x.isNumeral()},
+   {stmt: 'power3', where: $ => $.x.isNumeral()},
+   {stmt: 'power4', where: $ => $.x.isNumeral()},
+   {stmt: 'power5', where: $ => $.x.isNumeral()},
    {stmt: 'x ** y = x ** (y - 1) * x',
     where: $ => $.x.isNumeral() && $.y.isNumeral() && $.y.getNumValue() > 1
    },
