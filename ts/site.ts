@@ -315,6 +315,23 @@ $(function () {
       // The fetch writes into the server access log.
       Toy.checkVisit();
 
+      // Upgrade proofs with generated vars of the form "v1" versus
+      // "v_1" by replacing strings in localStorage.
+      const store = localStorage;
+      let vcount = 0;
+      for (let i = 0; i< store.length; i++) {
+        const k = store.key(i);
+        const v = store.getItem(k);
+        const n = v.replaceAll(/\b([a-zA-Z])_([0-9]+)\b/g, '$1$2');
+        if (n !== v) {
+          vcount++;
+          store[k] = v;
+        }
+      }
+      if (vcount > 0) {
+        console.log('localStorage: upgraded', vcount);
+      }
+
       // Create a proof editor for each div.proof-editor node,
       // initializing its steps from a data-steps attribute if the
       // constructor does not load steps from a document.  Re-visiting a
