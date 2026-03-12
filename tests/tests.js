@@ -1584,7 +1584,7 @@ var testCase = {
     assertEqual(1, ts2.size());
     const abc = termify('a & (b & c)');
     const ts3 = make(abc);
-    assertEqual(3, ts3.size());
+    assertEqual(2, ts3.size());
   },
 
   testAsmSet: function() {

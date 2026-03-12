@@ -350,13 +350,13 @@ export function checkRange(number) {
 
 
 /**
- * Makes a new TermSet of all the conjuncts obtained by
- * applying scanConjuncts to the given term, as for example
- * making the assumptions of a step into a TermSet.
+ * Makes a new TermSet of all the conjuncts obtained by applying
+ * scanConj to the given term, as for example making the assumptions of
+ * a step into a TermSet.
  */
-export function makeConjunctionSet(term, pred = truly) {
+export function makeConjunctionSet(term: Expr, pred = truly) {
   var set = new TermSet();
-  term.scanConjuncts(function (t) {
+  term.scanConj(function (t) {
     if (pred(t)) {
       set.add(t);
     }
@@ -2801,7 +2801,7 @@ export abstract class Expr {
   /**
    * Taking this is a tree of conjuncts, applies the given action
    * function to each leaf node, in order from left to right.  If any
-   * call returns a truthy value, that becomes immediately the result,
+   * call returns a truthy value, that immediately becomes the result,
    * stopping the tree traversal.  The action is applied only to leaf
    * nodes, i.e. nodes that are not themselves conjunctions.
    */
