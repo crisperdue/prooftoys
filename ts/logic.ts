@@ -4512,7 +4512,11 @@ declare(
     converse: {labels: 'higherOrder'},
     proof: function() {
       var step1 = (rules.equivForall().andThen('instVar', 'not a', 'p'));
-      return (rules.applyToBoth('not', step1).andThen('simplifySite', ''));
+      return (
+        rules.applyToBoth('not', step1)
+          .andThen('rewriteOnly', '/left', '~(forall {x. ~(p x)}) == exists p')
+          .andThen('simplifySite', '/right')
+        );
     }
   },
 
