@@ -65,10 +65,12 @@ namespace Toy {
       case 'div':
         return true;
       case '/':
-        if (right === 0) {
+        const rv = right._value;
+        if (rv === 0) {
           return false;
         }
-        var value = left / right;
+        const lv = left._value;
+        var value = lv / rv;
         // abs(value) <= abs(left) since abs(right) >= 1 so the
         // magnitude is not a problem.  The fractional part of a
         // result must have denominator no greater than MAX_INT,
