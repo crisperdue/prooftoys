@@ -1556,7 +1556,9 @@ export const precedence = {
 
   'intersect': 25,
   'union': 25,
+  // '@': ??
   '@@': 25,
+  // "ring" operator, function composition \x2218 ?
 
   '+': 30,
   '-': 30,
