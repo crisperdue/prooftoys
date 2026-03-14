@@ -3166,10 +3166,12 @@ export interface RStep extends Step {
 
 /**
  * Aliases for Atoms for purposes of input only; maps strings to
- * strings, for backward compatibility.
+ * strings, for backward compatibility.  These are undocumented.
+ *
+ * TODO: Remove all uses of these.
  */
 export const inputAliases: Map<string, string> = 
-  asMap({});
+  asMap({'**': '^', minv: '~*'});
 
 //// Atom
 
