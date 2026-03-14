@@ -294,6 +294,28 @@ dd {
   margin-left: 1.5em;
 }
 
+//// Demo links (Supademo)
+
+.demo-link {
+  cursor: pointer;
+  text-align: center;
+  background: #ddf;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+
+// A little animation
+.demo-link:hover {
+  position: relative;
+  top: 3px;
+  left: 3px;
+}
+
+// This helps make the overlay display larger.
+.supademo-standalone-modal-overlay .supademo-standalone-modal-container {
+  aspect-ratio: 1 / 1;
+}
+
 //// Header bar for all new-style pages
 
 header {
