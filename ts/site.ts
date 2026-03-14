@@ -166,6 +166,8 @@ export function mathMarkup0(text, useWords) {
         return '&#x211D;';
       case 'ZZ':
         return '&#x2124;';
+      case 'ZZ1':
+        return '&#x2124;<sup>+</sup>'
       case 'epsilon':
         // "Lunate epsilon", e.g. for epsilon/delta proofs.
         return '&#x03F5;';
