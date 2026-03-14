@@ -285,7 +285,8 @@ declare(
  * it to the user to decide which term to "pull out" and which
  * occurrences of it to replace with the bound variable in the lambda.
  * 
- * Useful as preparation for existential "generalization".
+ * Useful to prepare for existential generalization.
+ * See also eQuantify.
  */
 rule('toRedex', {
   action2: function (step, path, redex) {
@@ -313,17 +314,17 @@ rule('toRedex', {
     const $tpl = $(
       '<span>Enter {v. body} expr <input name=term size=40></span>',
     );
-    const text = step.selection.toString(); // step.selection.node.textContent;
-    $tpl.find('input').val(`{v. ${text}} xyz`);
+    const text = step.selection.toString();
+    $tpl.find('input').val(`{v. ${text}} term`);
     $tpl.append(
-      '<br><br>Edit the input so it beta-reduces to the selected term.' +
+      '<br><br>Edit the input make it equivalent to the selected term.' +
       '<br>You can replace <b>v</b> with a different name.' +
-      '<br>Use any part of the lambda in place of <b>xyz</b>.'
+      '<br>Use any subterm of the lambda in place of <b>term</b>.'
     )
     return $tpl;
   },
-  menu: 'as <b>(p &lt;term&gt;)</b> with <b>p</b> a lambda',
-  description: 'as explicit function call',
+  menu: 'extract a lambda function ({v. ... } &lt;term&gt;)',
+  description: 'extracting lambda function',
   priority: 5,
   // Using this rule generally doesn't make sense if it is already in a
   // simple function call form.
@@ -6808,6 +6809,8 @@ rule('eQuantify', {
       return false;
     }
     const path = step.prettyPathTo(term);
+    // The a => a says that the selection must be part of a
+    // tree of conjuncts rooted at the main part of the step.
     if (!ok(rules.chainOnly.prep(step, path, parse('a => a')))) {
       return false;
     }
@@ -6816,8 +6819,8 @@ rule('eQuantify', {
   menu: 'existence by witness',
   description: 'existence by witness',
   form: 'Witnessing term: <input name=term>',
-  labels: 'advanced',
-  priority: 5,
+  labels: 'basic',
+  priority: 3,
 });
 
 /**
@@ -8086,7 +8089,7 @@ declare(
   //   being careful to keep x distinct from other free variables
   //   along the way.
   {
-    name: 'witnessExists',
+    name: 'witnessExists0',
     precheck: function (step, path) {
       var term = step.get(path);
       // The current check merely excludes booleans.
@@ -8111,12 +8114,12 @@ declare(
       var step2 = rules.r(rules.eqnSwap(eqn), step, '');
       var fact = rules.fact('p x => exists p');
       var result = rules.forwardChain(step2, fact);
-      return result.justify('witnessExists', arguments, [step]);
+      return result.justify('witnessExists0', arguments, [step]);
     },
     inputs: { site: 1 },
     menu: 'conclude existence from {term}',
     description: 'witnessing existence',
-    labels: 'basic',
+    labels: 'uncommon',
   }
 );
 
@@ -8612,17 +8615,7 @@ declare(
   },
 
   // This has the core reasoning for 5242, existential generalization
-  // (EGen / witnessExists / 2126).
-  //
-  // TODO: Consider adding a rule that converts an arbitrary step with
-  //   selected term to an application of a lambda to the selected term.
-  //   The code for that is in witnessExists.
-  //
-  // TODO: Consider for each of the above, a rule that replaces
-  //   another occurrence of the same term with the new bound
-  //   variable.  For existential quantification, the rule may need to
-  //   look at the step from which the selected one is derived, to
-  //   determine whether it is such an occurrence.
+  // (EGen / witnessExists / eQuantify / 2126).
   {statement: 'p x => exists p',
    proof: function() {
       return (rules.r5225()
