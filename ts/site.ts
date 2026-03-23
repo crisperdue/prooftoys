@@ -517,7 +517,40 @@ $(function() {
     footerOnResize();
     $(window).on('resize', footerOnResize);
   }
+  // Add a service worker.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg => console.log("SW registered:", reg.scope))
+      .catch(err => console.error("SW failed:", err));
+  }
 });
+
+/**
+ * Ask the service worker to update the cache.  See static/sw.js in the
+ * psite repository.
+ */
+export function recache() {
+  const sw = navigator.serviceWorker.controller;
+  if (!sw) {
+    console.debug('[sw] No active service worker — try reloading the page.');
+    return;
+  }
+  const { port1, port2 } = new MessageChannel();
+  sw.postMessage({ type: 'REFRESH_CACHE' }, [port2]);
+}
+
+/**
+ * Just flush the cache.
+ */
+export function flushCache() {
+  const sw = navigator.serviceWorker.controller;
+  if (!sw) {
+    console.debug('[sw] No active service worker — try reloading the page.');
+    return;
+  }
+  const { port1, port2 } = new MessageChannel();
+  sw.postMessage({ type: 'FLUSH_CACHE' }, [port2]);
+}
 
 //// The following puts a property on Object.prototype!
 
