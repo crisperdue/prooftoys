@@ -54,6 +54,8 @@ export const unicodeNames = {
   '</': '</',         // Treat this as HTML.
   '/': '\u2215',      // division slash
   neg: '-',           // (different than "minus")
+  sqrt: '\u221a',
+  // Cube root = 221b, fourth root = 221c
   empty: '\u2205',    // Null set
   iota: '\u2129',     // Inverted iota
   none: '\u22a5',     // Bottom / "up tack"
