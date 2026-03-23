@@ -1186,7 +1186,7 @@ function buildProofButtons(editor) {
   // This holds textual representation of the latest selected term.
   // It is writable so the user can scroll it horizontally (using the
   // text cursor).  Alternatively could be readonly.
-  const $copyText = $('<input class=copyText disabled>');
+  const $copyText = $('<input class=copyText size=30 disabled>');
   // The fa and fa-copy classes put a "copy" icon into the
   // text of the button.
   const $copyButton = $('<button class="fa fa-copy" title="copy text">');
