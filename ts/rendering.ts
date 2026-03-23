@@ -778,7 +778,13 @@ export class ProofDisplay {
     function handleGeneralClick(event) {
       var $expr = $(event.target).closest(selector) || $(event.target);
       if ($expr.is('.fn') && !event.shiftKey) {
-        $expr = $expr.parent().closest(selector);
+        const $parent = $expr.parent().closest(selector);
+        // Only choose the parent if it is not already selected.
+        // This way trying again to select the function causes it to be
+        // selected on the second try rather than the parent.
+        if (!$parent.hasClass('selected')) {
+          $expr = $parent;
+        }
       }
       var expr = getExpr(dom($expr));
       // Ignore clicks on tooltips, popups and such that may be
