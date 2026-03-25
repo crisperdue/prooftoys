@@ -523,33 +523,78 @@ $(function() {
       .then(reg => console.log("SW registered:", reg.scope))
       .catch(err => console.error("SW failed:", err));
   }
+  
+  // Use navigator.serviceWorker.addEventListener('message', (ev) => {})
+  // to listen to messages from the SW.
+  // Use navigator.serviceWorker.controller.postMessage
+  // to send to the SW.
+
 });
+
+/**
+ * Utility that sends a message to the service worker with a type and
+ * optional payload, returning a MessagePort usable for replies.
+ * Does not establish any listening on the reply port.
+ */
+export function sendToSW(type: string, payload?: object): MessagePort {
+  const sw = navigator.serviceWorker.controller;
+  if (!sw) {
+    console.debug('[sw] No active service worker.');
+    return;
+  }
+  const { port1, port2 } = new MessageChannel();
+  sw.postMessage({ type, payload }, [port2]);
+  port2.onmessage = eventLogger;
+  return port1;
+}
+
+/**
+ * Set this to a function with a string argument.  Then the eventLogger
+ * will call it with each event data.
+ */
+export var messageLogger;
+
+/**
+ * Logs the event data to the console.
+ */
+function eventLogger(event: MessageEvent<any>) {
+  console.log(event.data);
+  if (messageLogger) {
+    messageLogger(event.data);
+  }
+}
+
+/**
+ * Enable use of the cache to satisfy HTTP requests.
+ */
+export function enableCache() {
+  const port = sendToSW('ENABLE_CACHE');
+  port.onmessage = eventLogger;
+}
+
+/**
+ * Disable the cache.
+ */
+export function disableCache() {
+  const port = sendToSW('DISABLE_CACHE');
+  port.onmessage = eventLogger;
+}
 
 /**
  * Ask the service worker to update the cache.  See static/sw.js in the
  * psite repository.
  */
 export function recache() {
-  const sw = navigator.serviceWorker.controller;
-  if (!sw) {
-    console.debug('[sw] No active service worker — try reloading the page.');
-    return;
-  }
-  const { port1, port2 } = new MessageChannel();
-  sw.postMessage({ type: 'REFRESH_CACHE' }, [port2]);
+  const port = sendToSW('REFILL_CACHE');
+  port.onmessage = eventLogger;
 }
 
 /**
- * Just flush the cache.
+ * Empty the cache.
  */
 export function flushCache() {
-  const sw = navigator.serviceWorker.controller;
-  if (!sw) {
-    console.debug('[sw] No active service worker — try reloading the page.');
-    return;
-  }
-  const { port1, port2 } = new MessageChannel();
-  sw.postMessage({ type: 'FLUSH_CACHE' }, [port2]);
+  const port = sendToSW('FLUSH_CACHE');
+  port.onmessage = eventLogger;
 }
 
 //// The following puts a property on Object.prototype!
