@@ -1213,7 +1213,7 @@ var testCase = {
     assertEqual('b', expr.get(path));
 
     function test(term) { return term.isCall2('*'); }
-    assertEqual('(b * c)', expr.get(expr.findParent(path, test)));
+    assertEqual('(b * c)', expr.get(expr.nearestAncestor(path, test)));
   },
 
   testNumBindings: function() {

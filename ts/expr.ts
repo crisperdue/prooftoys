@@ -2378,7 +2378,7 @@ export abstract class Expr {
    * subexpression that passes the given test.  Returns null if none is
    * found.
    */
-  findParent(path_arg, test) {
+  nearestAncestor(path_arg, test) {
     var p = this.asPath(path_arg);
     // Expression descended to so far.
     var term = this;
@@ -2405,7 +2405,7 @@ export abstract class Expr {
    * Returns the parent subexpression that is a binary call to '=' (or '==')
    */
   parentEqn(path) {
-    return this.findParent(path, function (term) {
+    return this.nearestAncestor(path, function (term) {
       return term.isCall2('=');
     });
   }

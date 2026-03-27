@@ -2431,7 +2431,7 @@ declare
        const term = step.get(ppath);
        // This is the path to the nearest enclosing division.
        const divPath =
-             wff.mainify(wff.findParent(ppath, term => term.isCall2('/')));
+             wff.mainify(wff.nearestAncestor(ppath, term => term.isCall2('/')));
        if (divPath) {
          // Flatten both sides of the ratio.
          const flattened = (step.andThen('flattenTerm',
