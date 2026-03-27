@@ -112,8 +112,8 @@ const aliases = {
 };
 
 
-// TODO: Probably remove this and nearestChain.
-const chainMap = new Map();
+// Map from operator name to its chain group (array).
+const chainMap = new Map<string, string[]>();
 {
   const ops=[['+', '-'], ['*', '/'], ['&'], ['|']];
   ops.forEach(a => a.forEach(op => chainMap.set(op, a)));
@@ -1929,7 +1929,7 @@ export abstract class Expr {
    * "arg" with "left", "right", and "binop" where feasible.  Other
    * segments including "main" are preserved.
    */
-  prettifyPath(path_arg: Pathable) {
+  prettifyPath(path_arg: Pathable): Path {
     const p = this.asPath(path_arg);
     if (p.isEnd()) {
       return p;
@@ -2351,13 +2351,13 @@ export abstract class Expr {
    * Returns an array of the "ancestor" expressions of the subexpression
    * of this referenced by the path, starting with this and including
    * the one at the end of the path.  Returns exactly one ancestor per
-   * segment in the path, plus this.  Note that the expression at the end
-   * of the path is the last element of the array.
+   * segment in the path, plus this.  Note that the expression
+   * referenced by the path is the last element of the array.
    *
    * This traces through the path exactly as given, so if the path uses
    * segments such as /left or /binOp, it will skip terms in the result.
    */
-  ancestors(path_arg) {
+  ancestors(path_arg): Expr[] {
     let p = this.asPath(path_arg);
     let term = this;
     const result = [];
@@ -2532,7 +2532,7 @@ export abstract class Expr {
 
   /**
    * Returns an array of reverse paths to all terms that are either
-   * this; or left-sideward descendents of this and have the named op as
+   * this; or leftward descendents of this and have the named op as
    * their binOp; or are a left or right child of one of those.
    *
    * The paths refer to chain elements or "prefixes" of the chain.

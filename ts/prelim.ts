@@ -116,31 +116,31 @@ export function getBinding(target, bindings) {
 
 export declare class Path {
   constructor(segment: any, ...rest: any[]);
-  segment: any;
-  rest: any;
+  segment: string;
+  rest: Path;
   segments(): any[];
   isMatch(): boolean;
   isEnd(): boolean;
   isLeft(): boolean;
   getLeft(): any;
-  uglify(opt_isImplies: any): any;
+  uglify(opt_isImplies: boolean): Path;
   parent(): Path;
-  nth(n: any): this;
+  nth(n: number): Path;
   length(): number;
   firstN(n: any): any;
   above(n?: number): any;
-  upTo(tail: any): any;
-  last(): any;
+  upTo(tail: Path): any;
+  last(): string;
   isRight(): boolean;
   isJustRight(): boolean;
-  getRight(): any;
-  tail(): any;
+  getRight(): Path;
+  tail(): Path;
   toString(): string;
   concat(p: Pathable): Path;
   expand(): any;
   reverse(): any;
-  remainder(path: any): this;
-  equals(path: any): boolean;
+  remainder(path: Path): this;
+  equals(path: Pathable): boolean;
   /**
    * Returns truthy iff this path is equal to or extends the pathable
    * argument.  Untested.
@@ -311,7 +311,7 @@ Path.prototype.parent = function() {
 
 /**
  * Returns the path that results by getting the "rest" of this path
- * N times in succession.
+ * N times in succession.  So nth(0) returns its input.
  */
 Path.prototype.nth = function(n) {
   var tail = this;
