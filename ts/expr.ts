@@ -3053,6 +3053,32 @@ export abstract class Expr {
   findSubst(schema) {
     return this.matchSchema(schema);
   }
+
+  /**
+   * Given an array of binary operator names, determines whether this
+   * term is a chain of terms connected by "comparable" operators, where
+   * "+" and "-" are comparable, and also "*" and "/".  This must be a
+   * binary call with its operator's name in the given string array.
+   * Binary op subterms are examined if their operator is compatible.
+   */
+  isFlat(opNames: string[], _inner:boolean=false): boolean {
+    // The second argument is private.
+    if (!this.isCall2()) {
+      return _inner;
+    }
+    const op = this.getBinOp().name;
+    if (!opNames.includes(op)) {
+      return _inner;
+    }
+    const right = this.getRight();
+    if (right.isCall2()) {
+      const rtOp = right.getBinOp().name;
+      if (opNames.includes(rtOp)) {
+        return false;
+      }
+    }
+    return this.getLeft().isFlat(opNames, true);
+  }
 }
 
 //// Atoms -- functions

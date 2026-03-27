@@ -2182,11 +2182,13 @@ declare
            }),
     inputs: {site: 1},
     toOffer: function(step, term) {
-      return (term.matchSchema('a + b') || term.matchSchema('a - b'));
+      return ((term.matchSchema('a + b') || term.matchSchema('a - b')) && 
+               !term.isFlat(['+', '-']));
     },
-    menu: 'flatten sum {term}',
-    description: 'flattening sum;; {in step siteStep}',
-    labels: 'algebra'
+    menu: 'as a +, - chain',
+    description: 'as a +, - chain;; {in step siteStep}',
+    labels: 'algebra',
+    priority: 3,
   },
 
   // In a flattened sequence of additions and subtractions, this moves
@@ -2284,9 +2286,14 @@ declare
                parts: {a: 'flatteners'}}}
            ]}),
     inputs: {site: 1},
-    menu: 'flatten product {term}',
-    description: 'flattening term;; {in step siteStep}',
-    labels: 'algebra'
+    toOffer: function(step, term) {
+            return ((term.matchSchema('a * b') || term.matchSchema('a / b')) && 
+               !term.isFlat(['*', '/']));
+    },
+    menu: 'as a *, / chain',
+    description: 'as a *, / chain;; {in step siteStep}',
+    labels: 'algebra',
+    priority: 3,
    },
 
     // This expects a reference to a "term", a composite of

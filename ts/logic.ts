@@ -2576,20 +2576,19 @@ const contextAnd = {
       parts: {a: 'flatteners', b: 'flatteners'}}},
   ]}};
 
-declare(
-  {name: 'flattenAnd',
+rule('flattenAnd', {
    action2: function(step, path) {
      const target = step.get(path);
-     if (target.matchSchema('a & b')) {
+     if (target.matchSchema('a & b') && !target.isFlat(['&'])) {
        return () => arrange(step, path, contextAnd, 'flatteners');
      }
    },
    inputs: {site: 1},
    labels: 'tactic',
-   priority: 1,
-   menu: 'flatten conjunction',
-   description: 'flattening "and"',
-  },
+   priority: 5,
+   menu: 'as an "and" chain',
+   description: 'as an "and" chain',
+  }
 );
 
 declare(
