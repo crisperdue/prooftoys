@@ -7567,41 +7567,54 @@ rule('moveLeftmost', {
 });
 
 /**
- * Given a reference to a prefix of the asms, splits the asms just after
- * the selection into exactly two terms connected as a conjunction.
+ * Given a reference to a prefix of a chain, splits the chain just after
+ * the selection into exactly two terms connected by the "positive"
+ * connective for its kind of chain.  Does not apply unless there is
+ * more than 1 following chain term, so it will not be a no-op.
  */
-rule('splitAsms', {
+rule('asGroup', {
   action2: function (step, path_arg) {
-    const asms = step.getAsms();
-    if (asms) {
-      const target = step.get(path_arg);
-      const prefixes = asms.chainPrefixes('&');
-      const index = prefixes.indexOf(target);
-      if (index > 1) {
-        // The target is a prefix, and is not the entirety of the asms.
-        // Notice that moveRightmost applies to it since its parent is a
-        // binop "&".  If index were 1, the target would already be in
-        // the "a" position.
-        return () => {
-          // This moves the target term to the last, or "b" position
-          // within the asms.
-          const right = rules.moveRightmost(step, path_arg);
-          // This moves it to the "a" position as desired.
-          return rules.rewriteOnly(right, '/left', 'a & b == b & a');
-        };
-      } else if (index === 1) {
-        return () => step;
-      }
+    const path = step.asPath(path_arg);
+    const topPath = step.chainTopPath(path);
+    if (!topPath) {
+      return null;
     }
-    // Otherwise this rule does not apply.
+    const relPath = path.remainder(topPath);
+    if (relPath.length() < 2) {
+      // Don't offer this if it would be a no-op.
+      return null;
+    }
+    // The target is a prefix of a chain, with more than 1 after it.
+    return () => {
+      const herePath = new Path('right').concat(relPath);
+      const chain = step.get(topPath);
+      const s1 = rules.consider(step.get(topPath))
+      const s2 = rules.moveRightmost(s1, herePath);
+      const op1 = chain.getBinOp().name;
+      const op2 = op1 == '-' ? '+' : op1 == '/' ? '*' : op1;
+      // This will commute its operands.
+      let rule = '(x op y) = (y op x)'.replace(/op/g, op2);
+      const s3 = rules.rewrite(s2, '/main/right', rule);
+      const s4 = rules.replace(step, topPath, s3);
+      return s4;
+    };
   },
   labels: 'tactic',
   inputs: { site: 1 },
-  priority: 10,
-  menu: 'split assumptions after {term}',
+  priority: 3,
+  menu: 'as a separate group',
+  description: 'as a separate group',
 });
 
-  // A simplifier that removes all lambda calls.
+// Special-case alias:
+rule('splitAsms', {
+  action: function(step, path_arg) {
+    return rules.asGroup(step, path_arg);
+  },
+  labels: 'ignore',
+});
+
+// A simplifier that removes all lambda calls.
 rule('reduceAll', {
   toOffer: function (step, term) {
     return term && term.search((x) => x.isLambdaCall());

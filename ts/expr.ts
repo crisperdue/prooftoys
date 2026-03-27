@@ -2411,6 +2411,61 @@ export abstract class Expr {
   }
 
   /**
+   * If the target of the path is a prefix of some chain of binop calls
+   * within the given term, returns its topmost parent that has the
+   * target as a proper chain prefix, otherwise null.  Being a proper
+   * prefix implies that the target itself is never the result.
+   */
+  chainTopPath(path_arg: Path): Path {
+    const path = this.prettifyPath(path_arg);
+    const target = this.get(path);
+    const getBop = (term) => term.isCall2() && term.getBinOp().name;
+    if (path.length() < 1) {
+      return null;
+    }
+
+    // This is an array of ancestor terms: target first, this last.
+    const ancestors = this.ancestors(path).reverse();
+    // This has the segment leading up to each ancestor.
+    // It has one less element because no segment leads up to this.
+    const segments = path.segments().reverse();
+    // Treat the item for this term as "compatible".
+    // segments.push('left');
+
+    // Dad must be a chainable binary call.  It sets the constraints for
+    // the binop of more remote ancestors.
+    const dad = ancestors[1];
+    const op = getBop(dad);
+    // Dad's ancestors' binops must be among the choices.
+    const choices = chainMap.get(op);
+    if (!choices || segments[0] !== 'left') {
+      // Dad does not have a chain op; or target not leftward.  Fail.
+      return null;
+    }
+    // Now we know we will succeed.  Find the topmost suitable term.
+
+    // Returns a path to the ancestor at index i.
+    function pathTo(i: number) {
+      // If i is 0, the full input path, and one less for each increment
+      // of i.
+      return asPath(segments.slice(i).reverse());
+    }
+
+    // Look for an ancestor that is not eligible.
+    let i = 2;
+    for (; i < ancestors.length; i++) {
+      if (
+        segments[i - 1] !== 'left' ||
+        !choices.includes(getBop(ancestors[i]))
+      ) {
+        break;
+      }
+    }
+    // All terms up through i - 1 are good.
+    return pathTo(i - 1);
+  }
+
+  /**
    * Returns an array of all of the operands of a chain of calls to a
    * binary operator.  If the current term is not a call to a binary
    * operator there are no such operands and this returns an empty
