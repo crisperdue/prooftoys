@@ -2651,7 +2651,7 @@ var testCase = {
   },
 
   testEQuantify: function() {
-    var result = rules.fact('1 > 0').andThen('witnessExists', '/left');
+    var result = rules.fact('1 > 0').andThen('witnessExists0', '/left');
     assertEqual('(exists {x. (x > 0)})', result);
   },
 
@@ -2983,7 +2983,7 @@ $(function() {
 
   // Define a constant 'posNum', known to be a number greater than 0,
   // which is defined with an existential fact.
-  Toy.definex('posNum', rules.witnessExists(rules.fact('1 > 0'), '/left'));
+  Toy.definex('posNum', rules.witnessExists0(rules.fact('1 > 0'), '/left'));
 
   // Set this to an array of theorem names, test case names, and fact
   // statements to be specifically tested.  Fact statements usually
