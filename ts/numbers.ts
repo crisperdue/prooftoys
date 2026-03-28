@@ -4718,12 +4718,14 @@ declare(
 
 declare(
   // Axiom / definition of floor, and facts about it.
-  // TODO: Redefine in terms of "greatest integer".
-  {statement: `floor x = ifReal x
+  // TODO: Redefine in terms of "greatest integer"?
+  {statement: `floor = {x. ifReal x
                              (if (0 <= x & x < 1)
                                  0
-                                 (floor (x - 1) + 1))`,
+                                 (floor (x - 1) + 1))}`,
    axiom: true,
+   name: 'floorDefn',
+   definitional: 'floor',
    description: 'definition of floor'},
 
   {statement: 'R x => R (floor x)', simplifier: true},  // Asserted
@@ -4732,6 +4734,8 @@ declare(
   {statement: 'R x => x < floor x + 1'},              // Asserted
   
 );
+// Make sure the variant facts are also registered.
+addDefnFacts(rules.fact('floorDefn'));
 
 
 // Note: Need "arithmetic" calculations for floor.

@@ -2650,7 +2650,7 @@ class RuleMenu {
         const mainText = Toy.trimParens(shorty.toHtml());
         const prefix = info.definitional ? '' : ' ';
         const blurb = (info.definitional
-                      ? ' definition of ' + info.definitional
+                      ? '  use definition of ' + info.definitional
                       : using + mainText);
         const classes = 'description' + (isShort ? '' : ' black');
         html = prefix + html + '<span class="' + classes + '">' + 
