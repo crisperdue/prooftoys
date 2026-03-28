@@ -7900,8 +7900,8 @@ declare(
     },
     // The "fact" rule does not accept a selection, and converts its
     // form input as needed.  
-    inputs: {string: 1},
-    form: ('Look up fact <input name=string size=40>'),
+    inputs: {bool: 1},
+    form: ('Look up fact <input name=bool size=40>'),
     autoSimplify: noSimplify,
     menu: 'look up a fact',
     tooltip: (''),

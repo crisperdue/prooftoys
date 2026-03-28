@@ -420,8 +420,11 @@ Expr.prototype.typedCopy = function(mustCopy) {
   const toUnify = [];
   // Unifying substitution to make a consistent assignment of types:
   const unifier = new Map();
+  function reportTypeIssue() {
+    abort('Cannot assign types in {1}', self);
+  }
   // Recursive function that does all the work:
-  const copy = (x: Expr) => {
+  function copy(x: Expr) {
     // Makes a copy with all-new nodes with the possible exception of
     // monomorphic constants).  Consequently if full resolution of
     // type information mutates types in the copy, no part of the
@@ -491,7 +494,7 @@ Expr.prototype.typedCopy = function(mustCopy) {
         console.log('In', self.$$);
         console.log('Failed to unify fn', fn, 'with arg', arg);
         console.log('Types', fn.type.fromType, 'and', arg.type);
-        abort('Not unifiable');
+        reportTypeIssue();
       }
       return new Call(fn, arg)._withType(resultType);
     } else if (cx === Lambda) {
@@ -509,7 +512,7 @@ Expr.prototype.typedCopy = function(mustCopy) {
   };
   const annotated = copy(this);
   if (!Toy.unifTypesList(unifier, toUnify)) {
-    abort('Type assignment failed');
+    reportTypeIssue();
   }
   const finalUnifier = Toy.resolve(unifier);
   annotated.replaceTypes(finalUnifier);
