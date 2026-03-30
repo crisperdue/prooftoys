@@ -370,8 +370,8 @@ Expr.prototype.findUntyped = function() {
 
 tooltipData.set('assignTypes', `
   <p>
-  The error display shows the structure of your term with parentheses.
-  Type assignment does not change this structure.
+  The error display uses parentheses to show the structure of the term.
+  Type matching does not change this structure.
   <p>
   The logic's type system distinguishes between boolean values,
   individuals such as numbers, and functions (including predicates).
@@ -432,7 +432,7 @@ Expr.prototype.typedCopy = function(mustCopy) {
   // Unifying substitution to make a consistent assignment of types:
   const unifier = new Map();
   function reportTypeIssue() {
-    abort('Cannot assign types in {1} <a helptip=assignTypes>(info)</a>', self);
+    abort('Type mismatch in {1} <a helptip=assignTypes>(info)</a>', self);
   }
   // Recursive function that does all the work:
   function copy(x: Expr) {

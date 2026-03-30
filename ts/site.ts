@@ -469,6 +469,10 @@ export function makeHelpTips(where:any) {
     },
     theme: 'tippytoys',
     placement: 'bottom',
+    // Appending to the body enables the tooltip to be wider than the
+    // error message box that would otherwise be its DOM parent.
+    // Alternatively use an explicit CSS width.
+    // appendTo: () => document.body,
     allowHTML: true,
     interactive: true,
     arrow: false,

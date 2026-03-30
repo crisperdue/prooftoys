@@ -260,6 +260,10 @@ figure {
   border-radius: 5px;
 
   .tippy-content {
+    // Tippy supplies a max-width of 350px.
+    // This width seems to avoid narrow helptips when
+    // attached (appended) to a narrow popup.
+    width: 350px;
     max-height: 300px;
     overflow-y: auto;
   }
