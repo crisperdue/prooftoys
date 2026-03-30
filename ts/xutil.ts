@@ -369,9 +369,11 @@ Expr.prototype.findUntyped = function() {
 };
 
 helpTipData.set('assignTypes', `
-  The logic's underlying type system distinguishes boolean values,
-  numbers, functions, and sets.  Types of functions and sets must be
-  compatible with the types of their inputs and outputs.
+  The logic's type system distinguishes between boolean values,
+  individuals (e.g. numbers), and functions (including predicates).
+  Each function has a specific output type and requires specific
+  types for its inputs.  Mismatches are not allowed.
+  <em>(Remember that all numbers have type "individual".)</em>
   `);
 
 export interface Expr {

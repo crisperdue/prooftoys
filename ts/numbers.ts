@@ -4725,7 +4725,6 @@ declare(
                                  (floor (x - 1) + 1))}`,
    axiom: true,
    name: 'floorDefn',
-   definitional: 'floor',
    description: 'definition of floor'},
 
   {statement: 'R x => R (floor x)', simplifier: true},  // Asserted

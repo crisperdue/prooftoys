@@ -466,8 +466,6 @@ export function makeHelpTips(where:any='[helptip]') {
     },
     theme: 'tippytoys',
     placement: 'bottom',
-    // maxWidth: '82vw',
-    // delay: [500, 0],
     allowHTML: true,
     interactive: true,
     arrow: false,
