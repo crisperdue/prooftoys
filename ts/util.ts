@@ -2494,6 +2494,64 @@ namespace Toy {
   }
 
 
+  //// Fetching parts of a different document
+
+  /**
+   * Map from URL to documents fetched by getRemoteDoc.  Private to that
+   * function.
+   */
+  export const _remoteDocs = new Map<string, Document>();
+
+  /**
+   * Accesses the content of the HTML document at the given URL,
+   * returning its document object.  Remembers the content, so
+   * subsequent requests to the same URL fetch the identical object from
+   * its internal store.  Throws in case fetch fails.
+   */
+  export async function getRemoteDoc(url: string) {
+    const got = _remoteDocs.get(url);
+    if (got) {
+      return got;
+    }
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    _remoteDocs.set(url, doc);
+    return doc;
+  }
+
+  /**
+   * Gets the HTML document from the given URL using getRemoteDoc, then
+   * removes the target's children, imports all nodes matching the
+   * selector, and appends them to the target element.  To empty the
+   * target you can use target.replaceChildren() with no arguments.
+   */
+  export async function injectRemote(
+    url: string,
+    selector: string,
+    target: HTMLElement,
+  ) {
+    getRemoteDoc(url)
+      .then((doc) => {
+        target.replaceChildren();
+        let none = true;
+        for (const el of doc.querySelectorAll(selector)) {
+          target.append(document.importNode(el, true));
+          none = false;
+        }
+        if (none) {
+          target.append('???');
+        }
+      })
+      .catch((error) => {
+        console.warn(error);
+        target.replaceChildren();
+        target.append('Oops');
+      });
+  }
+
+
   //// RPC with message queuing
 
   // This section uses ES6 / ES2015 language features
