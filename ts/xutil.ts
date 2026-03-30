@@ -369,11 +369,14 @@ Expr.prototype.findUntyped = function() {
 };
 
 helpTipData.set('assignTypes', `
+  <p>
+  The error display shows the structure of your term with parentheses.
+  Type assignment does not change this structure.
+  <p>
   The logic's type system distinguishes between boolean values,
-  individuals (e.g. numbers), and functions (including predicates).
+  individuals such as numbers, and functions (including predicates).
   Each function has a specific output type and requires specific
   types for its inputs.  Mismatches are not allowed.
-  <em>(Remember that all numbers have type "individual".)</em>
   `);
 
 export interface Expr {
