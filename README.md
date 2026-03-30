@@ -1,7 +1,7 @@
 # Prooftoys
 
 Prooftoys is a visual proof assistant and
-the engine behind Mathtoys (http://mathtoys.org).
+the engine behind Prooftoys (http://prooftoys.org).
 The Prooftoys implementation is based on [Alonzo Church's 
 simple type theory](http://plato.stanford.edu/entries/type-theory-church/)
 as formulated by Carnegie Mellon University
@@ -13,12 +13,11 @@ logic plus set theory.  It uses a minimum of
 simple, understandable concepts, expressing them with
 a handful of axioms and inference rules. 
 
-Prooftoys is written in TypeScript, which runs as
-JavaScript in the user's
-web browser.  It is designed to be highly interactive and delivered
-to users through the Web, so they can play with it instantly.
-Prooftoys has a web site with pages for interacting with it
-at http://prooftoys.org/.
+Prooftoys is written in TypeScript, which runs as JavaScript in the
+user's web browser.  It is designed to be highly interactive and
+delivered to users through the Web, so they can play with it instantly.
+Prooftoys has a web site with pages for interacting with it at
+http://prooftoys.org/.
 
 Files for generating the website are at
 http://github.com/crisperdue/prooftoys-site/.

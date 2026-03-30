@@ -3319,7 +3319,7 @@ function sendRule(name, args) {
 //// INITIALIZATION
 
 /**
- * RPC setup for Mathtoys:
+ * RPC setup for Prooftoys:
  */
 $(function () {
     var receiver = {

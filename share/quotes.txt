@@ -1,6 +1,6 @@
-Mathtoys: Power tools for your math mind
+Prooftoys: Power tools for your math mind
 
-Mathtoys: Math skills and reasoning
+Prooftoys: Math skills and reasoning
 
 Everything should be as simple as possible, but no simpler. -- Albert
 Einstein
