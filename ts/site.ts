@@ -451,18 +451,21 @@ function footerOnResize() {
 }
 
 /**
- * Map to store helpTip data by the value of helptip.
+ * Map to store tooltip data via string key.
  */
-export const helpTipData = new Map<string, string | HTMLElement>();
+export const tooltipData = new Map<string, string | HTMLElement>();
 
 /**
- * Makes image tooltips base
+ * Makes helptips for some HTML elements determined by the argument,
+ * which must be a suitable argument for the tippy constructor, using
+ * each element's "helptip" attribute to get the tooltip content from
+ * the tooltipData map.
  */
-export function makeHelpTips(where:any='[helptip]') {
+export function makeHelpTips(where:any) {
   tippy && tippy(where, {
     content: (reference) => {
       const key = reference.getAttribute('helptip');
-      return helpTipData.get(key) || '???';
+      return tooltipData.get(key) || '???';
     },
     theme: 'tippytoys',
     placement: 'bottom',

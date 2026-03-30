@@ -368,7 +368,7 @@ Expr.prototype.findUntyped = function() {
   }
 };
 
-helpTipData.set('assignTypes', `
+tooltipData.set('assignTypes', `
   <p>
   The error display shows the structure of your term with parentheses.
   Type assignment does not change this structure.
