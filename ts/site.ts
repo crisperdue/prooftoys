@@ -2,7 +2,7 @@
 
 'use strict';
 
-/** Exported constructor */
+/** Exported constructor, set by Tippy's script */
 var tippy;
 
 // Prooftoys scripts should not depend on this file, though it may do
@@ -451,6 +451,31 @@ function footerOnResize() {
 }
 
 /**
+ * Map to store helpTip data by the value of helptip.
+ */
+export const helpTipData = new Map<string, string | HTMLElement>();
+
+/**
+ * Makes image tooltips base
+ */
+export function makeHelpTips(where:any='[helptip]') {
+  tippy && tippy(where, {
+    content: (reference) => {
+      const key = reference.getAttribute('helptip');
+      return helpTipData.get(key) || '???';
+    },
+    theme: 'tippytoys',
+    placement: 'bottom',
+    // maxWidth: '82vw',
+    // delay: [500, 0],
+    allowHTML: true,
+    interactive: true,
+    arrow: false,
+    hideOnClick: 'toggle',
+  });
+}
+
+/**
  * Makes image tooltips base
  */
 function makeImageTips() {
@@ -469,7 +494,7 @@ function makeImageTips() {
     arrow: false,
     hideOnClick: false,
   });
-}    
+}
 
 /**
  * Makes video tooltips based on info in elements -- SPAN or A or B,

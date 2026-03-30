@@ -1727,8 +1727,11 @@ export class StepEditor {
         Toy.renderProof(error.step, $proofErrors);
       }
     } else {
-      // It should be a string.
+      // It should be an HTML string.
       $proofErrors.append(error);
+      const pe = dom($proofErrors);
+      const elts = pe.querySelectorAll('[helptip]');
+      makeHelpTips(elts);
     }
     showPopup($proofErrors);
   }

@@ -253,10 +253,22 @@ figure {
 
 // "tippytoys" tooltips theme
 .tippy-box[data-theme~=tippytoys] {
-  color: darkblue;
+  font-size: 16px;
+  color: brown;
   background-color: white;
   border: 2px solid black;
   border-radius: 5px;
+
+  .tippy-content {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+}
+
+// These are pseudo-links that just trigger "help" tooltips.
+a[helptip] {
+  text-decoration: underline;
+  color: brown;
 }
 
 /* Text wrapping */

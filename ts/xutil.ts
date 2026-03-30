@@ -368,6 +368,12 @@ Expr.prototype.findUntyped = function() {
   }
 };
 
+helpTipData.set('assignTypes', `
+  The logic's underlying type system distinguishes boolean values,
+  numbers, functions, and sets.  Types of functions and sets must be
+  compatible with the types of their inputs and outputs.
+  `);
+
 export interface Expr {
   /**
    * If this already has a type, return it without making a copy.
@@ -421,7 +427,7 @@ Expr.prototype.typedCopy = function(mustCopy) {
   // Unifying substitution to make a consistent assignment of types:
   const unifier = new Map();
   function reportTypeIssue() {
-    abort('Cannot assign types in {1}', self);
+    abort('Cannot assign types in {1} <a helptip=assignTypes>(info)</a>', self);
   }
   // Recursive function that does all the work:
   function copy(x: Expr) {
