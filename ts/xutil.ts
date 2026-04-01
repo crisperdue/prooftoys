@@ -1564,7 +1564,7 @@ export const precedence = {
   // Following Lean for precedence of "in" and "notin"
   'in': 20,
   'notin': 20,
-  'subset?': 20,
+  'subset': 20,
   'mapsFrom': 20,
   'mapsTo': 20,
 

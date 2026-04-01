@@ -70,7 +70,7 @@ export const unicodeNames = {
   exists1: '\u2203!',
   // We are currently using the "@" operator instead of "restrict"
   restrict: '\u21be',  // Restriction to domain; upward harpoon w rt barb
-  'subset?': '\u2286', // Subset (or equal)
+  'subset': '\u2286', // Subset (or equal)
   'intersect': '\u2229',
   'union': '\u222a',
 };
@@ -3254,7 +3254,7 @@ export interface RStep extends Step {
  * TODO: Remove all uses of these.
  */
 export const inputAliases: Map<string, string> = 
-  asMap({'**': '^', minv: '~*'});
+  asMap({'**': '^', minv: '~*', 'subset?': 'subset'});
 
 //// Atom
 

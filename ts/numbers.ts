@@ -560,7 +560,7 @@ declare(
   // Defining NN:
 
   {definition: 'allSucc P == forall {x. P x => P (succ x)}'},
-  {definition: 'smallSucc N == forall {P. allSucc P => N subset? P}'},
+  {definition: 'smallSucc N == forall {P. allSucc P => N subset P}'},
   {definition: 'isRealNN N == N 0 & allSucc N & smallSucc N'},
   {definition: 'NN = the1 {N. isRealNN N}'},
 
@@ -570,14 +570,14 @@ declare(
   {statement: 'isRealNN S == S = NN'},  // Asserted
   // True via zz and smallSucc properties of NN, then expanding definitions.
   {statement:
-   'P 0 & forall {x. P x => P (x + 1)} => NN subset? P'},  // Asserted
+   'P 0 & forall {x. P x => P (x + 1)} => NN subset P'},  // Asserted
 
 
   // Defining ZZ:
 
   // This is like allSucc, but with a biconditional.
   {definition: 'zz1 Z == forall {x. Z x == Z (succ x)}'},
-  {definition: 'zz2 Z == forall {P. zz1 P => Z subset? P}'},
+  {definition: 'zz2 Z == forall {P. zz1 P => Z subset P}'},
   {definition: 'isRealZZ Z == Z 0 & zz1 Z & zz2 Z'},
   {definition: 'ZZ = the1 {Z. isRealZZ Z}'},
 
@@ -587,7 +587,7 @@ declare(
   {statement: 'isRealZZ S == S = ZZ'},  // Asserted
   // True via zz and zz2 properties of ZZ, then expanding definitions.
   {statement:
-   'P 0 & forall {x. R x & P x == P (x + 1)} => ZZ subset? P'},  // Asserted
+   'P 0 & forall {x. R x & P x == P (x + 1)} => ZZ subset P'},  // Asserted
 
   {statement: 'ZZ x == floor x = x'},    // Asserted
 
@@ -960,7 +960,7 @@ declare(
   {statement: 'x < y & z < 0 => y * z < x * z'},  // Asserted
 );
 
-definition('isUB x S == R x & S subset? R & not (empty S) & ' +
+definition('isUB x S == R x & S subset R & not (empty S) & ' +
            'forall {y. S y => y <= x}');
 
 definition('hasUB S == exists {x. isUB x S}');
@@ -969,7 +969,7 @@ definition('isSup x S == isUB x S & forall {y. isUB y S => x <= y}');
 
 definition('sup S = the {x. isSup x S}')
 
-definition('isLB x S == R x & S subset? R & not (empty S) & ' +
+definition('isLB x S == R x & S subset R & not (empty S) & ' +
            'forall {y. S y => y >= x}');
 
 definition('hasLB S == exists {x. isLB x S}');
@@ -978,7 +978,7 @@ definition('isInf x S == isLB x S & forall {y. isLB y S => x <= y}');
 
 definition('inf S = the {x. isInf x S}');
 
-definition('wellOrdered S == forall {P. P subset? S & exists P => ' +
+definition('wellOrdered S == forall {P. P subset S & exists P => ' +
            'exists {x. P x & forall {y. P y => x <= y}}}');
 
 declare(
