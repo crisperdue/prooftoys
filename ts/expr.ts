@@ -335,6 +335,8 @@ export function addFnMatch(schema, fn, expr, map, renamings) {
   }
   // Substitute the lambda term for the function variable.
   map[fn.name] = result;
+  // Debugging
+  // console.log('Fnmatch - schema:', window['schema'].$$, 'map:', map.$$); // XXX
   // Report success without traversing this further.
   return true;
 }
@@ -1463,6 +1465,7 @@ export abstract class Expr {
    */
   matchSchema(schema_arg): null | Record<string, Expr> {
     const schema = schema_arg instanceof Expr ? schema_arg : parse(schema_arg);
+    // window['schema'] = schema;  // XXX debugging
     var substitution = {};
     var result = schema._matchAsSchema(this, substitution, null);
     return result ? substitution : null;
