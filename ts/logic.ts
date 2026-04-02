@@ -2500,6 +2500,9 @@ declare({
    * simplifies to T is removed on the next pass unless it is the last
    * one remaining.  Rewrites may re-order the asms and/or add new ones.
    * 
+   * After all of this, uses subsumeNumerics to simplify asms written as
+   * calls to the usual hierarchy of numeric "types".
+   * 
    * TODO: Break out a function to simplify one time, and call it
    * once to control whether this is offered.
    */

@@ -83,7 +83,7 @@ namespace Toy {
       if (term.fn.isConst()) {
         const nm = term.fn.name;
         return (term.arg.isNumeral() &&
-                (nm == 'neg' || nm == 'R' || nm == 'ZZ' || nm == 'NN'));
+          (nm === 'neg' ||numTypes.includes(nm)));
       }
     }
     return null;
@@ -544,7 +544,6 @@ definition('x > y == y < x');
 definition('x <= y == x < y | x = y');
 definition('x >= y == x > y | x = y');
 
-
 // NN and ZZ
 
 declare(
@@ -619,15 +618,42 @@ declare
 definition('absdiv x d = natdiv (abs x) (abs d)');
 */
 
+// TODO: Rename "/" to something like realDiv, and define "/"
+//   conditionally for the real numbers, with values for non-real,
+//   non-null inputs not defined.
+// TODO: That will require an implementation of "conditional"
+//   definitions that only specify the value of their "constant"
+//   under certain conditions, such as the arguments having values
+//   among the real numbers.
+//
+//   This definition then can serve as a witness that there exist
+//   functions satisfying the conditional definition.
+
+// TODO: Replace these two definitions, with recip based on
+//   facts about fields and "/" based on recip.
+definition('x / y = the1 {z. R x & R y & R z & x = y * z}');
+definition('recip x = 1 / x');
+
+
 
 //// NN, ZZ1, and ZZ facts
+
+definition('ZZ1 x == ZZ x & x > 0');
+
+/**
+ * Definition of a rational number.
+ */
+definition('QQ x == exists {y. exists {z. ZZ y & ZZ1 z & x = y / z}}');
 
 // Mostly without proof.
 declare(
   // ZZ1 facts
+  // ZZ1 narrower than NN, ZZ, QQ, and R.
   { fact: '@ ZZ1 x => NN x'},
   { fact: '@ ZZ1 x => ZZ x'},
+  { fact: '@ ZZ1 x => QQ x'},
   { fact: '@ ZZ1 x => R x'},
+
   { fact: '@ ZZ1 x => x > 0'},
   { fact: '@ ZZ1 x => 0 < x'},
   { fact: '@ ZZ1 x => x != 0'},
@@ -635,17 +661,27 @@ declare(
   { fact: '@ ZZ1 x & ZZ1 y => ZZ1 (x * y)'},
 
   { fact: '@NN x == ZZ x & 0 <= x' },
+
+  // NN: narrower than ZZ, QQ, and R.
   { statement: 'NN x => ZZ x',
+    priority: -5 },
+  { statement: 'NN x => QQ x',
     priority: -5 },
   { statement: 'NN x => R x',
     priority: -5 },
   { statement: 'NN x => 0 <= x'},
 
+  // ZZ: Narrower than QQ and R
   {
     statement: 'ZZ x => R x', axiom: true,
     description: 'ZZ is a subset of R',
     priority: -5,
   },
+  { statement: 'ZZ x => QQ x', priority: -5},
+
+  // QQ: Narrower only than R.
+  { statement: 'QQ x => R x', priority: -5},
+
   {
     statement: '@ ZZ x & ZZ y => ZZ (x + y)', axiom: true,
     description: 'ZZ is closed under addition',
@@ -809,31 +845,8 @@ declare(
   },
 );
 
+
 //// Facts about fields
-
-// TODO: Rename "/" to something like realDiv, and define "/"
-//   conditionally for the real numbers, with values for non-real,
-//   non-null inputs not defined.
-// TODO: That will require an implementation of "conditional"
-//   definitions that only specify the value of their "constant"
-//   under certain conditions, such as the arguments having values
-//   among the real numbers.
-//
-//   This definition then can serve as a witness that there exist
-//   functions satisfying the conditional definition.
-
-// TODO: Replace these two definitions, with recip based on
-//   facts about fields and "/" based on recip.
-definition('x / y = the1 {z. R x & R y & R z & x = y * z}');
-definition('recip x = 1 / x');
-
-
-//// QQ (rational numbers)
-
-/**
- * Definition of a rational number.
- */
-definition('QQ x == exists {y. exists {z. ZZ y & ZZ1 z & x = y / z}}');
 
 /**
  * We desire something like this, but it needs some supporting
@@ -4793,11 +4806,14 @@ definition('odd x == x mod 2 = 1');
 //// Pruning excess numeric type declarations
 
 /**
- * Attempts to subsume one type declaration using a narrower one also in
- * the assumptions.  Also removes nonzero conditions on terms when the
- * same term is declared to be ZZ1, which must be greater than zero.
- * Returns a continuation that provides the simplified step else null.
- * Call this repeatedly to narrow all such decls.
+ * Attempts to subsume one numeric type declaration using a narrower one
+ * also in the assumptions.  Also removes nonzero conditions on terms
+ * when the same term is declared to be ZZ1, which must be greater than
+ * zero. Returns a continuation that provides the simplified step else
+ * null. Call this repeatedly to narrow all such decls.
+ * 
+ * A numeric type declaration is any asm written as a call to one of the
+ * numeric predicates R, QQ, ZZ, NN, ZZ1.
  */
 function subsume1Numeric(step) {
   const aConj = step.getAsms();
@@ -4870,8 +4886,8 @@ function subsumeAllNumerics(step) {
 
 /**
  * Calls subsume1Numeric to determine if any relevant simplifications
- * exist.  If so, does all such simplifications, otherwise indicates
- * failure returning nullish.
+ * exist.  If so, applies it as many times as possible; otherwise
+ * indicates failure returning nullish.  See subsume1Numeric.
  */
 rule('subsumeNumerics', {
   action2: function(step) {
